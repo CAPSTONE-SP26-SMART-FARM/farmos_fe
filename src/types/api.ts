@@ -8,87 +8,33 @@ export type { User } from "@/stores/authStore";
 
 // Generic API response wrapper
 export interface ApiResponse<T = unknown> {
-  success: boolean;
-  message: string;
-  data: T;
+	statusCode: number;
+	message: string;
+	data: T;
 }
 
 // Paginated response
 export interface PaginatedResponse<T> extends ApiResponse<T[]> {
-  meta: PaginationMeta;
+	meta: PaginationMeta;
 }
 
 export interface PaginationMeta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
+	page: number;
+	limit: number;
+	total: number;
+	totalPages: number;
 }
 
 // Error response from API
 export interface ApiErrorResponse {
-  success: false;
-  message: string;
-  errors?: FieldError[];
+	statusCode: number;
+	message: string;
 }
 
-export interface FieldError {
-  field: string;
-  message: string;
+export interface ApiErrorUnprocessableEntityResponse<
+	T extends Record<string, string> = Record<string, string>,
+> extends ApiErrorResponse {
+	errors: Array<{ [K in keyof T]?: string }>;
 }
 
 // Auth specific types
-export interface LoginRequest {
-  username: string;
-  password: string;
-  // mock dummy login
-  expiresInMins?: number;
-}
-
-export interface RegisterRequest {
-  email: string;
-  password: string;
-  fullName: string;
-  role?: string;
-}
-
-export interface AuthResponse {
-  id: number;
-  username: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  gender: string;
-  image: string;
-  accessToken: string;
-  refreshToken: string;
-  // User object for role-based navigation
-  user?: {
-    id: string;
-    email: string;
-    role: string;
-    fullName?: string;
-  };
-}
-
-export interface RefreshTokenRequest {
-  refreshToken: string;
-  // mock dummy login
-  expiresInMins?: number;
-}
-
-export interface RefreshTokenResponse {
-  accessToken: string;
-  refreshToken: string;
-}
-
-// User profile
-export interface UserProfile {
-  id: number;
-  username: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  gender: string;
-  image: string;
-}

@@ -1,41 +1,44 @@
 import { api } from "@/lib/axios";
 import { API_ENDPOINTS } from "@/constants/endpoints";
 import type {
-  AuthResponse,
-  LoginRequest,
-  RegisterRequest,
-  RefreshTokenRequest,
-  RefreshTokenResponse,
-} from "@/types/api";
+	AuthResponseType,
+	LoginBodyType,
+	RegisterBodyType,
+	RefreshTokenBodyType,
+	RefreshTokenResponseType,
+} from "@/types/auth";
 import type { User } from "@/stores/authStore";
 
 const AUTH = API_ENDPOINTS.AUTH;
 
 export const authService = {
-  login: (credentials: LoginRequest) =>
-    api.post<AuthResponse, LoginRequest>(AUTH.LOGIN, {
-      ...credentials,
-      expiresInMins: 1,
-    }),
+	login: (credentials: LoginBodyType) =>
+		api.post<AuthResponseType, LoginBodyType>(AUTH.LOGIN, {
+			...credentials,
+			expiresInMins: 1,
+		}),
 
-  register: (data: RegisterRequest) =>
-    api.post<AuthResponse, RegisterRequest>(AUTH.REGISTER, data),
+	register: (data: RegisterBodyType) =>
+		api.post<AuthResponseType, RegisterBodyType>(AUTH.REGISTER, data),
 
-  refreshToken: (data: RefreshTokenRequest) =>
-    api.post<RefreshTokenResponse, RefreshTokenRequest>(AUTH.REFRESH, {
-      ...data,
-      expiresInMins: 1,
-    }),
+	refreshToken: (data: RefreshTokenBodyType) =>
+		api.post<RefreshTokenResponseType, RefreshTokenBodyType>(AUTH.REFRESH, {
+			...data,
+			expiresInMins: 1,
+		}),
 
-  logout: async () => {
-    try {
-      await api.post(AUTH.LOGOUT);
-    } catch {
-      // Ignore - clear local state anyway
-    }
-  },
+	logout: async () => {
+		try {
+			await api.post(AUTH.LOGOUT);
+		} catch {
+			// Ignore - clear local state anyway
+		}
+	},
 
-  getCurrentUser: () => api.get<User>(AUTH.ME),
+	forgotPassword: (data: { email: string }) =>
+		api.post(`${AUTH.FORGOT_PASSWORD}`, data),
+
+	getCurrentUser: () => api.get<User>(AUTH.ME),
 };
 
 export default authService;
