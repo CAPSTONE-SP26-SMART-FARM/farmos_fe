@@ -19,10 +19,9 @@ interface UserDropDownProps {
 }
 
 const ROLE_DASHBOARD_ROUTES: Record<UserRole, string> = {
+  Admin: "/dashboard/admin",
   Owner: "/dashboard/owner",
   Manager: "/dashboard/manager",
-  Farmer: "/dashboard/farmer",
-  Rancher: "/dashboard/rancher",
   Doctor: "/dashboard/doctor",
 };
 

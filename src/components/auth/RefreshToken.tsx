@@ -3,19 +3,17 @@ import { authService } from "@/services/authService";
 import { jwtDecode } from "jwt-decode";
 import type { JwtPayload } from "jwt-decode";
 import { useEffect } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { useLocation } from "react-router";
 
 // Not check those paths
 const NOT_CHECK_PATHS = ["/login", "/register", "/forgot-password"] as const;
 
 function RefreshToken() {
   const isAuth = useAuthStore((state) => state.isAuth);
-  const logout = useAuthStore((state) => state.logout);
   const setTokens = useAuthStore((state) => state.setTokens);
 
   const location = useLocation();
   const pathName = location.pathname;
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (
@@ -50,21 +48,19 @@ function RefreshToken() {
             });
           } catch (error) {
             console.error("Token refresh failed:", error);
-            logout();
-            navigate("/login");
+            // Do not force logout here. User logs out manually.
           }
         }
       } catch (error) {
         console.error("Token decode error:", error);
-        logout();
-        navigate("/login");
+        // Non-JWT token (e.g., local dummy account) should not force logout.
       }
-    }, 5000);
+    }, 10000);
 
     return () => {
       clearInterval(interval);
     };
-  }, [pathName, logout, setTokens, navigate]);
+  }, [pathName, setTokens]);
 
   if (!isAuth) {
     return null;
