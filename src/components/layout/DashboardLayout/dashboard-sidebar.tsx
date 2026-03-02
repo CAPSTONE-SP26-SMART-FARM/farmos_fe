@@ -23,10 +23,9 @@ const DEFAULT_ITEM = "Dashboard";
 
 const getNavItemsByRole = (role: UserRole): NavItem[] => {
   const roleNavMap: Record<UserRole, NavItem[]> = {
+    Admin: sidebarData.navAdmin,
     Owner: sidebarData.navOwner,
     Manager: sidebarData.navManager,
-    Farmer: sidebarData.navFarmer,
-    Rancher: sidebarData.navRancher,
     Doctor: sidebarData.navDoctor,
   };
 

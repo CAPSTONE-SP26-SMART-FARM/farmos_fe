@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
-export type UserRole = "Owner" | "Manager" | "Farmer" | "Rancher" | "Doctor";
+export type UserRole = "Admin" | "Owner" | "Manager" | "Doctor";
 
 export interface NavItem {
   title: string;
@@ -10,9 +10,8 @@ export interface NavItem {
 }
 
 export interface SidebarData {
+  navAdmin: NavItem[];
   navOwner: NavItem[];
   navManager: NavItem[];
-  navFarmer: NavItem[];
-  navRancher: NavItem[];
   navDoctor: NavItem[];
 }

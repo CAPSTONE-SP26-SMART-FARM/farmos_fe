@@ -1,30 +1,75 @@
 import {
+  Shield,
   LayoutDashboard,
-  FileText,
-  DollarSign,
+  Package,
+  Ticket,
+  ChartColumnIncreasing,
+  SlidersHorizontal,
+  UserCheck,
   Building2,
   Users,
   Bell,
-  Calendar,
-  ClipboardList,
-  Warehouse,
   Activity,
-  Cloud,
-  Lightbulb,
   BookOpen,
   Bug,
-  Syringe,
-  TrendingUp,
-  ListTodo,
   Stethoscope,
   Pill,
-  BarChart3,
   Sprout,
-  Scale,
+  Map,
+  Bot,
+  Settings,
+  ClipboardList,
+  FolderKanban,
+  FileText,
 } from "lucide-react";
 import type { SidebarData } from "./types";
 
 export const sidebarData: SidebarData = {
+  // Admin Navigation
+  navAdmin: [
+    {
+      title: "Dashboard",
+      url: "/dashboard/admin",
+      icon: Shield,
+      isActive: true,
+    },
+    {
+      title: "Subscription Packages",
+      url: "/dashboard/admin/packages",
+      icon: Package,
+    },
+    {
+      title: "Doctor Applications",
+      url: "/dashboard/admin/doctor-applications",
+      icon: UserCheck,
+    },
+    {
+      title: "Doctor Assignment",
+      url: "/dashboard/admin/doctor-assignment",
+      icon: Users,
+    },
+    {
+      title: "Doctor Performance",
+      url: "/dashboard/admin/doctor-performance",
+      icon: ChartColumnIncreasing,
+    },
+    {
+      title: "Ticket Analytics",
+      url: "/dashboard/admin/ticket-analytics",
+      icon: Ticket,
+    },
+    {
+      title: "IoT Templates",
+      url: "/dashboard/admin/iot-templates",
+      icon: SlidersHorizontal,
+    },
+    {
+      title: "User Management",
+      url: "/dashboard/admin/users",
+      icon: Users,
+    },
+  ],
+
   // Owner
   navOwner: [
     {
@@ -34,14 +79,9 @@ export const sidebarData: SidebarData = {
       isActive: true,
     },
     {
-      title: "Report Management",
-      url: "/dashboard/owner/reports",
-      icon: FileText,
-    },
-    {
-      title: "Finance Dashboard",
-      url: "/dashboard/owner/finance",
-      icon: DollarSign,
+      title: "Subscription",
+      url: "/dashboard/owner/subscription",
+      icon: Package,
     },
     {
       title: "Farm Management",
@@ -49,18 +89,38 @@ export const sidebarData: SidebarData = {
       icon: Building2,
     },
     {
-      title: "User Management",
-      url: "/dashboard/owner/users",
+      title: "Zone Management",
+      url: "/dashboard/owner/zones",
+      icon: Map,
+    },
+    {
+      title: "Manager Management",
+      url: "/dashboard/owner/managers",
       icon: Users,
     },
     {
-      title: "Notifications",
-      url: "/dashboard/owner/notifications",
-      icon: Bell,
+      title: "Assigned Doctor",
+      url: "/dashboard/owner/doctor",
+      icon: Stethoscope,
+    },
+    {
+      title: "Production Analytics",
+      url: "/dashboard/owner/analytics",
+      icon: ChartColumnIncreasing,
+    },
+    {
+      title: "AI Insights",
+      url: "/dashboard/owner/ai-insights",
+      icon: Bot,
+    },
+    {
+      title: "Ticket Monitoring",
+      url: "/dashboard/owner/tickets",
+      icon: Ticket,
     },
   ],
 
-  // Manager Navigation - Zone-based (card style first, then sidebar)
+  // Manager Navigation
   navManager: [
     {
       title: "Dashboard",
@@ -69,219 +129,84 @@ export const sidebarData: SidebarData = {
       isActive: true,
     },
     {
-      title: "Periodic Reports",
-      url: "/dashboard/manager/reports",
-      icon: FileText,
+      title: "Assigned Zones",
+      url: "/dashboard/manager/zones",
+      icon: Map,
     },
     {
-      title: "Crop Seasons",
-      url: "/dashboard/manager/crop-seasons",
+      title: "Season Planning",
+      url: "/dashboard/manager/seasons",
       icon: Sprout,
     },
     {
-      title: "Livestock Batches",
-      url: "/dashboard/manager/livestock-batches",
-      icon: Warehouse,
+      title: "IoT Configuration",
+      url: "/dashboard/manager/iot-config",
+      icon: Settings,
     },
     {
-      title: "Staff Management",
-      url: "/dashboard/manager/staff",
-      icon: Users,
+      title: "Task Assignment",
+      url: "/dashboard/manager/tasks",
+      icon: ClipboardList,
     },
     {
-      title: "Production Planning",
-      url: "/dashboard/manager/production-planning",
-      icon: Calendar,
-    },
-    {
-      title: "Expense Management",
-      url: "/dashboard/manager/expenses",
-      icon: DollarSign,
-    },
-    {
-      title: "Disease Coordination",
-      url: "/dashboard/manager/disease-cases",
-      icon: Bug,
-    },
-    {
-      title: "Vaccination Schedule",
-      url: "/dashboard/manager/vaccination",
-      icon: Syringe,
+      title: "Task Progress",
+      url: "/dashboard/manager/progress",
+      icon: FolderKanban,
     },
     {
       title: "Sensor Data",
       url: "/dashboard/manager/sensors",
       icon: Activity,
     },
-  ],
-
-  // Farmer Navigation
-  navFarmer: [
     {
-      title: "My Barns & Batches",
-      url: "/dashboard/farmer",
-      icon: Warehouse,
-      isActive: true,
-    },
-    {
-      title: "Sensor Dashboard",
-      url: "/dashboard/farmer/sensors",
-      icon: Activity,
-    },
-    {
-      title: "Weather Forecast",
-      url: "/dashboard/farmer/weather",
-      icon: Cloud,
-    },
-    {
-      title: "Recommendations",
-      url: "/dashboard/farmer/recommendations",
-      icon: Lightbulb,
-    },
-    {
-      title: "Daily Activity Log",
-      url: "/dashboard/farmer/daily-log",
-      icon: ClipboardList,
-    },
-    {
-      title: "Crop Growth Stages",
-      url: "/dashboard/farmer/crop-stages",
-      icon: Sprout,
-    },
-    {
-      title: "Report Issue",
-      url: "/dashboard/farmer/report-issue",
+      title: "Incident Coordination",
+      url: "/dashboard/manager/incidents",
       icon: Bug,
     },
     {
-      title: "Disease Cases",
-      url: "/dashboard/farmer/disease-cases",
-      icon: Stethoscope,
-    },
-    {
-      title: "Harvest Records",
-      url: "/dashboard/farmer/harvest",
-      icon: Scale,
+      title: "Owner Reports",
+      url: "/dashboard/manager/reports",
+      icon: FileText,
     },
     {
       title: "Notifications",
-      url: "/dashboard/farmer/notifications",
+      url: "/dashboard/manager/notifications",
       icon: Bell,
-    },
-    {
-      title: "Task List",
-      url: "/dashboard/farmer/tasks",
-      icon: ListTodo,
-    },
-  ],
-
-  // Rancher Navigation
-  navRancher: [
-    {
-      title: "My Barns & Batches",
-      url: "/dashboard/rancher",
-      icon: Warehouse,
-      isActive: true,
-    },
-    {
-      title: "Sensor Dashboard",
-      url: "/dashboard/rancher/sensors",
-      icon: Activity,
-    },
-    {
-      title: "Weather Forecast",
-      url: "/dashboard/rancher/weather",
-      icon: Cloud,
-    },
-    {
-      title: "Recommendations",
-      url: "/dashboard/rancher/recommendations",
-      icon: Lightbulb,
-    },
-    {
-      title: "Daily Activity Log",
-      url: "/dashboard/rancher/daily-log",
-      icon: ClipboardList,
-    },
-    {
-      title: "Knowledge Base",
-      url: "/dashboard/rancher/handbook",
-      icon: BookOpen,
-    },
-    {
-      title: "Report Issue",
-      url: "/dashboard/rancher/report-issue",
-      icon: Bug,
-    },
-    {
-      title: "Disease Cases",
-      url: "/dashboard/rancher/disease-cases",
-      icon: Stethoscope,
-    },
-    {
-      title: "Vaccination",
-      url: "/dashboard/rancher/vaccination",
-      icon: Syringe,
-    },
-    {
-      title: "Livestock Count",
-      url: "/dashboard/rancher/livestock-count",
-      icon: TrendingUp,
-    },
-    {
-      title: "Notifications",
-      url: "/dashboard/rancher/notifications",
-      icon: Bell,
-    },
-    {
-      title: "Task List",
-      url: "/dashboard/rancher/tasks",
-      icon: ListTodo,
     },
   ],
 
   // Doctor Navigation
   navDoctor: [
     {
-      title: "Assigned Farms",
+      title: "Dashboard",
       url: "/dashboard/doctor",
-      icon: Building2,
+      icon: LayoutDashboard,
       isActive: true,
     },
     {
-      title: "Sensor Dashboard",
-      url: "/dashboard/doctor/sensors",
-      icon: Activity,
+      title: "Assigned Farms",
+      url: "/dashboard/doctor/assigned-farms",
+      icon: Building2,
     },
     {
-      title: "Crop Diagnosis",
-      url: "/dashboard/doctor/diagnosis-crops",
-      icon: Sprout,
+      title: "Incident Inbox",
+      url: "/dashboard/doctor/incidents",
+      icon: Bug,
     },
     {
-      title: "Livestock Diagnosis",
-      url: "/dashboard/doctor/diagnosis-livestock",
-      icon: Stethoscope,
-    },
-    {
-      title: "Prescriptions",
-      url: "/dashboard/doctor/prescriptions",
+      title: "Diagnosis & Plans",
+      url: "/dashboard/doctor/treatment-plans",
       icon: Pill,
-    },
-    {
-      title: "Crop Growth Stages",
-      url: "/dashboard/doctor/crop-stages",
-      icon: Sprout,
-    },
-    {
-      title: "Vaccination",
-      url: "/dashboard/doctor/vaccination",
-      icon: Syringe,
     },
     {
       title: "Treatment Tracking",
       url: "/dashboard/doctor/treatment-tracking",
-      icon: TrendingUp,
+      icon: Activity,
+    },
+    {
+      title: "Ticket History",
+      url: "/dashboard/doctor/ticket-history",
+      icon: Ticket,
     },
     {
       title: "Knowledge Base",
@@ -296,7 +221,7 @@ export const sidebarData: SidebarData = {
     {
       title: "Reports & Statistics",
       url: "/dashboard/doctor/reports",
-      icon: BarChart3,
+      icon: ChartColumnIncreasing,
     },
   ],
 };

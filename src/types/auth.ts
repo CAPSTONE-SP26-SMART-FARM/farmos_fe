@@ -12,7 +12,7 @@ export const registerBodySchema = z.object({
 	email: z.string().email(),
 	password: z.string().min(6).max(20),
 	fullName: z.string().min(2).max(50),
-	role: z.enum(["Owner", "Manager", "Worker"]).optional(),
+	role: z.enum(["Admin", "Owner", "Manager", "Farmer", "Doctor"]).optional(),
 });
 
 export type RegisterBodyType = z.infer<typeof registerBodySchema>;

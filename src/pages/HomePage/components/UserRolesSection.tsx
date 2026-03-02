@@ -2,8 +2,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   Building2,
   ClipboardList,
+  ShieldCheck,
   Leaf,
-  PawPrint,
   Stethoscope,
   ArrowRight,
 } from "lucide-react";
@@ -44,6 +44,22 @@ const roles = [
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1974&auto=format&fit=crop",
   },
   {
+    icon: ShieldCheck,
+    title: "Admin",
+    subtitle: "Quản trị nền tảng",
+    description:
+      "Quản lý gói subscription, duyệt Doctor, cấu hình template IoT và theo dõi hiệu suất xử lý ticket.",
+    features: [
+      "Package Management",
+      "Doctor Approval",
+      "IoT Templates",
+      "Ticket Analytics",
+    ],
+    gradient: "from-slate-500 to-gray-700",
+    image:
+      "https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2070&auto=format&fit=crop",
+  },
+  {
     icon: Leaf,
     title: "Farmer",
     subtitle: "Nông dân trồng trọt",
@@ -58,22 +74,6 @@ const roles = [
     gradient: "from-green-500 to-emerald-600",
     image:
       "https://images.unsplash.com/photo-1605000797499-95a51c5269ae?q=80&w=2071&auto=format&fit=crop",
-  },
-  {
-    icon: PawPrint,
-    title: "Rancher",
-    subtitle: "Nông dân chăn nuôi",
-    description:
-      "Theo dõi môi trường chuồng trại, quản lý tiêm phòng, ghi nhật ký chăn nuôi và tra cứu cẩm nang.",
-    features: [
-      "Giám sát chuồng",
-      "Sổ tiêm phòng",
-      "Nhật ký chăn nuôi",
-      "Knowledge Base",
-    ],
-    gradient: "from-orange-500 to-red-600",
-    image:
-      "https://images.unsplash.com/photo-1516467508483-a7212febe31a?q=80&w=2073&auto=format&fit=crop",
   },
   {
     icon: Stethoscope,
