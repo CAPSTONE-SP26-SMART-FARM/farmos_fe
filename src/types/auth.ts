@@ -1,7 +1,7 @@
 import z from "zod";
 
 export const loginBodySchema = z.object({
-	username: z.string().min(4).max(6),
+	email: z.string().min(4).max(6),
 	password: z.string().min(3).max(10),
 	expiresInMins: z.number().optional(),
 });
@@ -66,3 +66,9 @@ export const refreshTokenResponseSchema = z.object({
 export type RefreshTokenResponseType = z.infer<
 	typeof refreshTokenResponseSchema
 >;
+
+export const forgotPasswordBodySchema = loginBodySchema.pick({
+	email: true,
+});
+
+export type ForgotPasswordBodyType = z.infer<typeof forgotPasswordBodySchema>;

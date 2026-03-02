@@ -6,6 +6,7 @@ import type {
 	RegisterBodyType,
 	RefreshTokenBodyType,
 	RefreshTokenResponseType,
+	ForgotPasswordBodyType,
 } from "@/types/auth";
 import type { User } from "@/stores/authStore";
 
@@ -35,7 +36,7 @@ export const authService = {
 		}
 	},
 
-	forgotPassword: (data: { email: string }) =>
+	forgotPassword: (data: ForgotPasswordBodyType) =>
 		api.post(`${AUTH.FORGOT_PASSWORD}`, data),
 
 	getCurrentUser: () => api.get<User>(AUTH.ME),

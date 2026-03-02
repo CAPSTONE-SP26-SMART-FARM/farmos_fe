@@ -25,7 +25,7 @@ function LoginPage() {
 	const form = useForm<LoginBodyType>({
 		resolver: zodResolver(loginBodySchema),
 		defaultValues: {
-			username: "",
+			email: "",
 			password: "",
 		},
 	});
@@ -51,13 +51,11 @@ function LoginPage() {
 					<CardContent className="space-y-3">
 						<FieldGroup>
 							<Controller
-								name="username"
+								name="email"
 								control={form.control}
 								render={({ field, fieldState }) => (
 									<Field data-invalid={fieldState.invalid}>
-										<FieldLabel htmlFor="form-rhf-demo-title">
-											Username
-										</FieldLabel>
+										<FieldLabel htmlFor="form-rhf-demo-title">Email</FieldLabel>
 										<Input
 											{...field}
 											id="form-rhf-demo-title"

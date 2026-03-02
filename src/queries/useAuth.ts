@@ -9,7 +9,11 @@ import { toast } from "sonner";
 import { authService } from "@/services/authService";
 import { useAuthStore, type User } from "@/stores/authStore";
 import { QUERY_KEYS } from "@/constants/endpoints";
-import type { LoginBodyType, RegisterBodyType } from "@/types/auth";
+import type {
+	ForgotPasswordBodyType,
+	LoginBodyType,
+	RegisterBodyType,
+} from "@/types/auth";
 
 /**
  * Hook for user login
@@ -137,4 +141,18 @@ export const getAuthState = () => useAuthStore.getState();
 /**
  * Type for user with role
  */
+
+export const useForgotPassword = () => {
+	return useMutation({
+		mutationFn: (data: ForgotPasswordBodyType) =>
+			authService.forgotPassword(data),
+		onSuccess: () => {
+			toast.success("Password reset link sent to your email!");
+		},
+		onError: () => {
+			toast.error("Failed to send password reset link. Please try again.");
+		},
+	});
+};
+
 export type { User };
