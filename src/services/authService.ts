@@ -16,7 +16,7 @@ export const authService = {
 	login: (credentials: LoginBodyType) =>
 		api.post<AuthResponseType, LoginBodyType>(AUTH.LOGIN, {
 			...credentials,
-			expiresInMins: 1,
+			expiresInMins: 60,
 		}),
 
 	register: (data: RegisterBodyType) =>
@@ -25,7 +25,7 @@ export const authService = {
 	refreshToken: (data: RefreshTokenBodyType) =>
 		api.post<RefreshTokenResponseType, RefreshTokenBodyType>(AUTH.REFRESH, {
 			...data,
-			expiresInMins: 1,
+			expiresInMins: 60,
 		}),
 
 	logout: async () => {

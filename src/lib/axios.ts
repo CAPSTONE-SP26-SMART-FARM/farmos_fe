@@ -119,15 +119,7 @@ axiosInstance.interceptors.response.use(
 				return axiosInstance(originalRequest);
 			} catch (refreshError) {
 				processQueue(refreshError as Error, null);
-
-				// Clear auth state and redirect to login
-				localStorage.removeItem("accessToken");
-				localStorage.removeItem("refreshToken");
-				localStorage.removeItem("auth-storage");
-
-				// Redirect to login (handled by components watching auth state)
-				window.location.href = "/login";
-
+				// Do not force logout/redirect; allow manual logout from UI.
 				return Promise.reject(refreshError);
 			} finally {
 				isRefreshing = false;
