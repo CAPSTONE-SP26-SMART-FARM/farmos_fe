@@ -13,6 +13,7 @@ import type {
 	ForgotPasswordBodyType,
 	LoginBodyType,
 	RegisterBodyType,
+	SendOTPBodyType,
 } from "@/schemaValidatation/auth";
 import { decodeAccessToken } from "@/lib/utils";
 
@@ -157,5 +158,29 @@ export const useForgotPassword = () => {
 		onError: () => {
 			toast.error("Failed to send password reset link. Please try again.");
 		},
+	});
+};
+
+export const useSendOtp = () => {
+	return useMutation({
+		mutationFn: (data: SendOTPBodyType) => authService.sendOtp(data),
+		onSuccess: () => {},
+		onError: () => {},
+	});
+};
+
+export const useTwoFactorSetup = () => {
+	return useMutation({
+		mutationFn: (data: object) => authService.twoFactorSetup(data),
+		onSuccess: () => {},
+		onError: () => {},
+	});
+};
+
+export const useTwoFactorDisable = () => {
+	return useMutation({
+		mutationFn: (data: object) => authService.twoFactorDisable(data),
+		onSuccess: () => {},
+		onError: () => {},
 	});
 };

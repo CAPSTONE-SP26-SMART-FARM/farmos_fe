@@ -175,6 +175,7 @@ function LoginPage() {
 								{DUMMY_ACCOUNTS.map((account) => (
 									<p key={account.role}>
 										{account.role}:{" "}
+										<span className="font-medium">{account.email}</span> /
 										<span className="font-medium">{account.username}</span> /{" "}
 										<span className="font-medium">{account.password}</span>
 									</p>

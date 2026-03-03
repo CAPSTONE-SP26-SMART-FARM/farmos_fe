@@ -10,6 +10,7 @@ export const API_ENDPOINTS = {
 		OTP: "/auth/otp",
 		TWO_FACTOR_SETUP: "/auth/2fa/setup",
 		TWO_FACTOR_DISABLE: "/auth/2fa/disable",
+		SEND_OTP: "/auth/otp",
 	},
 	USERS: {
 		BASE: "/users",

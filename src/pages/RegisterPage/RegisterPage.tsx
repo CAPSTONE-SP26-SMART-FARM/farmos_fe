@@ -14,7 +14,9 @@ import {
 	FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { TypeOfVerificationCode } from "@/constants/auth";
 import { useRegister } from "@/queries";
+import { useSendOtp } from "@/queries/useAuth";
 import {
 	RegisterBodySchema,
 	type RegisterBodyType,
@@ -23,7 +25,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 
 import { Controller, useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 function RegisterPage() {
 	const form = useForm<RegisterBodyType>({
@@ -39,13 +41,23 @@ function RegisterPage() {
 	});
 	const { isPending, mutate: register } = useRegister();
 
+	const { isPending: isCodePending, mutate: sendCode } = useSendOtp();
+
 	const handleSubmit = (data: RegisterBodyType) => {
 		console.log("Register data:", data);
 		register(data);
 	};
+
+	const handleSendCode = () => {
+		sendCode({
+			email: form.getValues("email"),
+			type: TypeOfVerificationCode.REGISTER,
+		});
+	};
+
 	return (
 		<div className="min-h-screen flex items-center justify-center bg-background p-4">
-			<Card className="w-full max-w-md">
+			<Card className="w-full max-w-xl">
 				<CardHeader className="space-y-1">
 					<CardTitle className="text-2xl font-bold text-center">
 						FarmOS register
@@ -56,146 +68,146 @@ function RegisterPage() {
 				</CardHeader>
 				<form onSubmit={form.handleSubmit(handleSubmit)}>
 					<CardContent>
-						<CardContent className="space-y-3">
+						<CardContent className="space-y-4 px-2">
 							<FieldGroup>
-								<Controller
-									name="email"
-									control={form.control}
-									render={({ field, fieldState }) => (
-										<Field data-invalid={fieldState.invalid}>
-											<FieldLabel htmlFor="form-rhf-demo-title">
-												Email
-											</FieldLabel>
-											<Input
-												{...field}
-												id="form-rhf-demo-title"
-												aria-invalid={fieldState.invalid}
-												placeholder="hoangday185"
-												autoComplete="off"
-											/>
-											{fieldState.invalid && (
-												<FieldError errors={[fieldState.error]} />
-											)}
-										</Field>
-									)}
-								/>
-								<Controller
-									name="email"
-									control={form.control}
-									render={({ field, fieldState }) => (
-										<Field data-invalid={fieldState.invalid}>
-											<FieldLabel htmlFor="form-rhf-demo-title">
-												Email
-											</FieldLabel>
-											<Input
-												{...field}
-												id="form-rhf-demo-title"
-												aria-invalid={fieldState.invalid}
-												placeholder="hoangday185"
-												autoComplete="off"
-											/>
-											{fieldState.invalid && (
-												<FieldError errors={[fieldState.error]} />
-											)}
-										</Field>
-									)}
-								/>
-								<Controller
-									name="email"
-									control={form.control}
-									render={({ field, fieldState }) => (
-										<Field data-invalid={fieldState.invalid}>
-											<FieldLabel htmlFor="form-rhf-demo-title">
-												Email
-											</FieldLabel>
-											<Input
-												{...field}
-												id="form-rhf-demo-title"
-												aria-invalid={fieldState.invalid}
-												placeholder="hoangday185"
-												autoComplete="off"
-											/>
-											{fieldState.invalid && (
-												<FieldError errors={[fieldState.error]} />
-											)}
-										</Field>
-									)}
-								/>
-								<Controller
-									name="password"
-									control={form.control}
-									render={({ field, fieldState }) => (
-										<Field data-invalid={fieldState.invalid}>
-											<FieldLabel htmlFor="form-rhf-demo-description">
-												Password
-											</FieldLabel>
-											<Input
-												{...field}
-												id="form-rhf-demo-description"
-												type={"password"}
-											/>
-											{fieldState.invalid && (
-												<FieldError errors={[fieldState.error]} />
-											)}
-										</Field>
-									)}
-								/>
-								<Controller
-									name="password"
-									control={form.control}
-									render={({ field, fieldState }) => (
-										<Field data-invalid={fieldState.invalid}>
-											<FieldLabel htmlFor="form-rhf-demo-description">
-												Password
-											</FieldLabel>
-											<Input
-												{...field}
-												id="form-rhf-demo-description"
-												type={"password"}
-											/>
-											{fieldState.invalid && (
-												<FieldError errors={[fieldState.error]} />
-											)}
-										</Field>
-									)}
-								/>
-								<Controller
-									name="password"
-									control={form.control}
-									render={({ field, fieldState }) => (
-										<Field data-invalid={fieldState.invalid}>
-											<FieldLabel htmlFor="form-rhf-demo-description">
-												Password
-											</FieldLabel>
-											<Input
-												{...field}
-												id="form-rhf-demo-description"
-												type={"password"}
-											/>
-											{fieldState.invalid && (
-												<FieldError errors={[fieldState.error]} />
-											)}
-										</Field>
-									)}
-								/>
-							</FieldGroup>
+								<div className="grid grid-cols-2 gap-3 space-y-1">
+									<Controller
+										name="email"
+										control={form.control}
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor="form-rhf-demo-title">
+													Email
+												</FieldLabel>
+												<Input
+													{...field}
+													id="form-rhf-demo-title"
+													aria-invalid={fieldState.invalid}
+													placeholder="example@gmail.com"
+													autoComplete="off"
+												/>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<Controller
+										name="fullName"
+										control={form.control}
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor="form-rhf-demo-title">
+													Fullname
+												</FieldLabel>
+												<Input
+													{...field}
+													id="form-rhf-demo-title"
+													aria-invalid={fieldState.invalid}
+													placeholder="Nguyễn Văn A"
+													autoComplete="off"
+												/>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+								</div>
+								<div className="grid grid-cols-2 gap-3">
+									<Controller
+										name="phone"
+										control={form.control}
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor="form-rhf-demo-title">
+													Phone
+												</FieldLabel>
+												<Input
+													{...field}
+													aria-invalid={fieldState.invalid}
+													placeholder="0123456789"
+													id="form-rhf-demo-title"
+													autoComplete="off"
+													value={field.value ?? ""}
+												/>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+									<div className="p-0 m-0 flex gap-1.5 items-end">
+										<Controller
+											name="code"
+											control={form.control}
+											render={({ field, fieldState }) => (
+												<Field data-invalid={fieldState.invalid}>
+													<FieldLabel htmlFor="form-rhf-demo-description">
+														Code
+													</FieldLabel>
+													<Input {...field} id="form-rhf-demo-description" />
 
-							{/* <div className="text-xs text-muted-foreground bg-muted p-3 rounded-md">
-							<p className="font-medium mb-2">
-								Dummy accounts for previewing role dashboards:
-							</p>
-							<div className="space-y-1">
-								{DUMMY_ACCOUNTS.map((account) => (
-									<p key={account.role}>
-										{account.role}:{" "}
-										<span className="font-medium">{account.username}</span> /{" "}
-										<span className="font-medium">{account.password}</span>
-									</p>
-								))}
-							</div>
-						</div> */}
+													{fieldState.invalid && (
+														<FieldError errors={[fieldState.error]} />
+													)}
+												</Field>
+											)}
+										/>
+										<Button
+											variant="outline"
+											className=""
+											onClick={handleSendCode}
+											disabled={isCodePending}
+										>
+											Send code
+										</Button>
+									</div>
+								</div>
+								<div className="grid grid-cols-2 gap-3">
+									<Controller
+										name="password"
+										control={form.control}
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor="form-rhf-demo-description">
+													Password
+												</FieldLabel>
+												<Input
+													{...field}
+													id="form-rhf-demo-description"
+													type={"password"}
+												/>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+
+									<Controller
+										name="confirmPassword"
+										control={form.control}
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor="form-rhf-demo-description">
+													Confirm Password
+												</FieldLabel>
+												<Input
+													{...field}
+													id="form-rhf-demo-description"
+													type={"password"}
+												/>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+								</div>
+							</FieldGroup>
 						</CardContent>
-						<CardFooter className="flex flex-col gap-4">
+						<CardFooter className="flex flex-col gap-4 mt-6 px-2">
 							<Button type="submit" className="w-full" disabled={isPending}>
 								{isPending ? (
 									<>

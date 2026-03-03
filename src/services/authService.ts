@@ -11,6 +11,7 @@ import type {
 	TwoFactorSetupResType,
 	DisableTwoFactorBodyType,
 	LogoutBodyType,
+	SendOTPBodyType,
 } from "@/schemaValidatation/auth";
 import type { UserResType } from "@/types/user";
 import type { ApiResponse } from "@/types/api";
@@ -50,6 +51,8 @@ export const authService = {
 			`${AUTH.TWO_FACTOR_DISABLE}`,
 			data,
 		),
+	sendOtp: (data: SendOTPBodyType) =>
+		api.post<ApiResponse, SendOTPBodyType>(`${AUTH.SEND_OTP}`, data),
 
 	getCurrentUser: () => api.get<UserResType>(AUTH.ME),
 };

@@ -4,7 +4,6 @@
  */
 
 // Re-export User from authStore for convenience
-export type { User } from "@/stores/authStore";
 
 // Generic API response wrapper
 export interface ApiResponse<T = unknown> {
