@@ -7,6 +7,9 @@ export const API_ENDPOINTS = {
 		LOGOUT: "/auth/logout",
 		ME: "/auth/me",
 		FORGOT_PASSWORD: "/auth/forgot-password",
+		OTP: "/auth/otp",
+		TWO_FACTOR_SETUP: "/auth/2fa/setup",
+		TWO_FACTOR_DISABLE: "/auth/2fa/disable",
 	},
 	USERS: {
 		BASE: "/users",

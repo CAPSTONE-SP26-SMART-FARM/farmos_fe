@@ -1,36 +1,39 @@
 import { api } from "@/lib/axios";
 import { API_ENDPOINTS } from "@/constants/endpoints";
 import type {
-	AuthResponseType,
 	LoginBodyType,
 	RegisterBodyType,
 	RefreshTokenBodyType,
-	RefreshTokenResponseType,
 	ForgotPasswordBodyType,
-} from "@/types/auth";
-import type { User } from "@/stores/authStore";
+	LoginResType,
+	RegisterResType,
+	RefreshTokenResType,
+	TwoFactorSetupResType,
+	DisableTwoFactorBodyType,
+	LogoutBodyType,
+} from "@/schemaValidatation/auth";
+import type { UserResType } from "@/types/user";
+import type { ApiResponse } from "@/types/api";
 
 const AUTH = API_ENDPOINTS.AUTH;
 
 export const authService = {
 	login: (credentials: LoginBodyType) =>
-		api.post<AuthResponseType, LoginBodyType>(AUTH.LOGIN, {
+		api.post<LoginResType, LoginBodyType>(AUTH.LOGIN, {
 			...credentials,
-			expiresInMins: 60,
 		}),
 
 	register: (data: RegisterBodyType) =>
-		api.post<AuthResponseType, RegisterBodyType>(AUTH.REGISTER, data),
+		api.post<RegisterResType, RegisterBodyType>(AUTH.REGISTER, data),
 
 	refreshToken: (data: RefreshTokenBodyType) =>
-		api.post<RefreshTokenResponseType, RefreshTokenBodyType>(AUTH.REFRESH, {
+		api.post<RefreshTokenResType, RefreshTokenBodyType>(AUTH.REFRESH, {
 			...data,
-			expiresInMins: 60,
 		}),
 
-	logout: async () => {
+	logout: async (data: LogoutBodyType) => {
 		try {
-			await api.post(AUTH.LOGOUT);
+			await api.post<LogoutBodyType>(AUTH.LOGOUT, data);
 		} catch {
 			// Ignore - clear local state anyway
 		}
@@ -39,7 +42,16 @@ export const authService = {
 	forgotPassword: (data: ForgotPasswordBodyType) =>
 		api.post(`${AUTH.FORGOT_PASSWORD}`, data),
 
-	getCurrentUser: () => api.get<User>(AUTH.ME),
+	twoFactorSetup: (data: object) =>
+		api.post<TwoFactorSetupResType>(`${AUTH.TWO_FACTOR_SETUP}`, data),
+
+	twoFactorDisable: (data: DisableTwoFactorBodyType) =>
+		api.post<ApiResponse, DisableTwoFactorBodyType>(
+			`${AUTH.TWO_FACTOR_DISABLE}`,
+			data,
+		),
+
+	getCurrentUser: () => api.get<UserResType>(AUTH.ME),
 };
 
 export default authService;

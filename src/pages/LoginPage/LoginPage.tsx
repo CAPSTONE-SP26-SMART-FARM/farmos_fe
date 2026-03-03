@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router";
 import { useLogin } from "@/queries/useAuth";
-import { useAuthStore, type User } from "@/stores/authStore";
+import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,43 +20,40 @@ import {
 	FieldGroup,
 	FieldLabel,
 } from "@/components/ui/field";
-import { loginBodySchema, type LoginBodyType } from "@/types/auth";
+import { LoginBodySchema, type LoginBodyType } from "@/schemaValidatation/auth";
 import { toast } from "sonner";
+import type { UserResType } from "@/types/user";
+import { RoleName } from "@/constants/role";
 
-type SupportedRole = "Admin" | "Owner" | "Manager" | "Doctor";
-
-type DummyAccount = {
-	role: SupportedRole;
+type DummyAccount = Pick<UserResType, "role" | "fullName" | "email"> & {
 	username: string;
 	password: string;
-	fullName: string;
-	email: string;
 };
 
 const DUMMY_ACCOUNTS: DummyAccount[] = [
 	{
-		role: "Admin",
+		role: RoleName.Admin,
 		username: "admin1",
 		password: "admin123",
 		fullName: "System Admin",
 		email: "admin@farmos.local",
 	},
 	{
-		role: "Owner",
+		role: RoleName.Owner,
 		username: "owner1",
 		password: "owner123",
 		fullName: "Farm Owner",
 		email: "owner@farmos.local",
 	},
 	{
-		role: "Manager",
+		role: RoleName.Manager,
 		username: "manag1",
 		password: "manager1",
 		fullName: "Farm Manager",
 		email: "manager@farmos.local",
 	},
 	{
-		role: "Doctor",
+		role: RoleName.Doctor,
 		username: "doc001",
 		password: "doctor1",
 		fullName: "Agronomy Doctor",
@@ -68,7 +65,7 @@ function LoginPage() {
 	const navigate = useNavigate();
 	const loginStore = useAuthStore((state) => state.login);
 	const form = useForm<LoginBodyType>({
-		resolver: zodResolver(loginBodySchema),
+		resolver: zodResolver(LoginBodySchema),
 		defaultValues: {
 			email: "",
 			password: "",
@@ -78,11 +75,18 @@ function LoginPage() {
 	const { mutate: login, isPending } = useLogin();
 
 	const loginWithDummyAccount = (account: DummyAccount) => {
-		const user: User = {
+		const user: UserResType = {
 			id: `demo-${account.role.toLowerCase()}`,
 			email: account.email,
 			role: account.role,
 			fullName: account.fullName,
+			phone: null,
+			avatarUrl: null,
+			isActive: true,
+			emailVerifiedAt: new Date().toISOString(),
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+			deletedAt: null,
 		};
 
 		loginStore(user, {
@@ -97,7 +101,7 @@ function LoginPage() {
 	const handleSubmit = (data: LoginBodyType) => {
 		const matchedDummyAccount = DUMMY_ACCOUNTS.find(
 			(account) =>
-				account.username === data.username && account.password === data.password,
+				account.email === data.email && account.password === data.password,
 		);
 
 		if (matchedDummyAccount) {
@@ -116,7 +120,8 @@ function LoginPage() {
 						FarmOS Login
 					</CardTitle>
 					<CardDescription className="text-center">
-						Sign in to access role-based dashboards for Admin, Owner, Manager, and Doctor.
+						Sign in to access role-based dashboards for Admin, Owner, Manager,
+						and Doctor.
 					</CardDescription>
 				</CardHeader>
 				<form onSubmit={form.handleSubmit(handleSubmit)}>
@@ -169,7 +174,8 @@ function LoginPage() {
 							<div className="space-y-1">
 								{DUMMY_ACCOUNTS.map((account) => (
 									<p key={account.role}>
-										{account.role}: <span className="font-medium">{account.username}</span> /{" "}
+										{account.role}:{" "}
+										<span className="font-medium">{account.username}</span> /{" "}
 										<span className="font-medium">{account.password}</span>
 									</p>
 								))}

@@ -19,14 +19,14 @@ import {
 	FieldLabel,
 } from "@/components/ui/field";
 import {
-	forgotPasswordBodySchema,
+	ForgotPasswordBodySchema,
 	type ForgotPasswordBodyType,
-} from "@/types/auth";
+} from "@/schemaValidatation/auth";
 import { useForgotPassword } from "@/queries/useAuth";
 
 function ForgotPasswordPage() {
 	const form = useForm<ForgotPasswordBodyType>({
-		resolver: zodResolver(forgotPasswordBodySchema),
+		resolver: zodResolver(ForgotPasswordBodySchema),
 		defaultValues: {
 			email: "",
 		},

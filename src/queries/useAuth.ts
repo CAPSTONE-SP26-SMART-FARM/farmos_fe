@@ -7,13 +7,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { authService } from "@/services/authService";
-import { useAuthStore, type User } from "@/stores/authStore";
+import { useAuthStore } from "@/stores/authStore";
 import { QUERY_KEYS } from "@/constants/endpoints";
 import type {
 	ForgotPasswordBodyType,
 	LoginBodyType,
 	RegisterBodyType,
-} from "@/types/auth";
+} from "@/schemaValidatation/auth";
+import { decodeAccessToken } from "@/lib/utils";
 
 /**
  * Hook for user login
@@ -26,15 +27,15 @@ export const useLogin = () => {
 		mutationFn: (credentials: LoginBodyType) => authService.login(credentials),
 		onSuccess: (data) => {
 			// Store user data (construct from response if no user object)
-			const user: User = data.user ?? {
-				id: String(data.id),
-				email: data.email,
-				role: "Owner", // Default role, will be updated from API
-				fullName: `${data.firstName} ${data.lastName}`,
-			};
+			// const user: User = data.user ?? {
+			// 	id: String(data.id),
+			// 	email: data.email,
+			// 	role: "Owner", // Default role, will be updated from API
+			// 	fullName: `${data.firstName} ${data.lastName}`,
+			// };
 
 			// Use login action to set both user and tokens atomically
-			login(user, {
+			login(null, {
 				accessToken: data.accessToken,
 				refreshToken: data.refreshToken,
 			});
@@ -42,7 +43,8 @@ export const useLogin = () => {
 			toast.success("Login successful!");
 
 			// Navigate to role-based dashboard
-			const role = user.role?.toLowerCase() ?? "owner";
+			const role =
+				decodeAccessToken(data.accessToken)?.role.toLowerCase() ?? "owner";
 
 			navigate(`/dashboard/${role}`, { replace: true });
 			console.log("go");
@@ -78,7 +80,10 @@ export const useLogout = () => {
 	const { logout: clearAuthState } = useAuthStore();
 
 	return useMutation({
-		mutationFn: () => authService.logout(),
+		mutationFn: () =>
+			authService.logout({
+				refreshToken: localStorage.getItem("refreshToken")!,
+			}),
 		onSettled: () => {
 			// Always clear local state, even if server logout fails
 			clearAuthState();
@@ -154,5 +159,3 @@ export const useForgotPassword = () => {
 		},
 	});
 };
-
-export type { User };
