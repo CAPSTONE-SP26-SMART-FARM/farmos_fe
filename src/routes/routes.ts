@@ -1,6 +1,13 @@
 import MainLayout from "@/components/layout/MainLayout/MainLayout";
 import SimpleLayout from "@/components/layout/SimpleLayout/SimpleLayout";
-import AdminPage from "@/pages/AdminPage/AdminPage";
+import AdminDashboardPage from "@/pages/AdminPage/AdminDashboardPage";
+import AdminDoctorApplicationsPage from "@/pages/AdminPage/AdminDoctorApplicationsPage";
+import AdminDoctorAssignmentPage from "@/pages/AdminPage/AdminDoctorAssignmentPage";
+import AdminDoctorPerformancePage from "@/pages/AdminPage/AdminDoctorPerformancePage";
+import AdminIotTemplatesPage from "@/pages/AdminPage/AdminIotTemplatesPage";
+import AdminPackagesPage from "@/pages/AdminPage/AdminPackagesPage";
+import AdminTicketAnalyticsPage from "@/pages/AdminPage/AdminTicketAnalyticsPage";
+import AdminUsersPage from "@/pages/AdminPage/AdminUsersPage";
 import DoctorPage from "@/pages/DoctorPage/DoctorPage";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage/ForgotPasswordPage";
 import HomePage from "@/pages/HomePage/HomePage";
@@ -45,12 +52,42 @@ const routes: AppRoutes = [
     children: [
       {
         path: "/dashboard/admin",
-        component: AdminPage,
+        component: AdminDashboardPage,
         allowedRoles: ["Admin"],
       },
       {
-        path: "/dashboard/admin/*",
-        component: AdminPage,
+        path: "/dashboard/admin/packages",
+        component: AdminPackagesPage,
+        allowedRoles: ["Admin"],
+      },
+      {
+        path: "/dashboard/admin/doctor-applications",
+        component: AdminDoctorApplicationsPage,
+        allowedRoles: ["Admin"],
+      },
+      {
+        path: "/dashboard/admin/doctor-assignment",
+        component: AdminDoctorAssignmentPage,
+        allowedRoles: ["Admin"],
+      },
+      {
+        path: "/dashboard/admin/doctor-performance",
+        component: AdminDoctorPerformancePage,
+        allowedRoles: ["Admin"],
+      },
+      {
+        path: "/dashboard/admin/ticket-analytics",
+        component: AdminTicketAnalyticsPage,
+        allowedRoles: ["Admin"],
+      },
+      {
+        path: "/dashboard/admin/iot-templates",
+        component: AdminIotTemplatesPage,
+        allowedRoles: ["Admin"],
+      },
+      {
+        path: "/dashboard/admin/users",
+        component: AdminUsersPage,
         allowedRoles: ["Admin"],
       },
     ],
