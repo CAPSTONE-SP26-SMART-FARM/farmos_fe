@@ -162,22 +162,22 @@ export const api = {
 		axiosInstance.delete<T>(url, config).then((res) => res.data),
 };
 
-export const handleApiErrorUnprocessentity = <
-	T extends Record<string, string> = Record<string, string>,
->(
-	error: AxiosError<ApiErrorUnprocessableEntityResponse<T>>,
-	setError?: UseFormSetError<T>,
-) => {
-	const errors = error.response?.data.errors;
-	if (errors && setError) {
-		Object.entries(errors).forEach((errObj) => {
-			Object.entries(errObj).forEach(([field, message]) => {
-				if (field && message) {
-					setError(field as Path<T>, { message: String(message) });
-				}
+export const handleApiErrorUnprocessentity =
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	<T extends Record<string, any> = Record<string, any>>(
+		errors: ApiErrorUnprocessableEntityResponse<T>["errors"],
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		setError?: UseFormSetError<any>,
+	) => {
+		if (errors && setError) {
+			Object.entries(errors).forEach((errObj) => {
+				Object.entries(errObj).forEach(([field, message]) => {
+					if (field && message) {
+						setError(field as Path<T>, { message: String(message) });
+					}
+				});
 			});
-		});
-	}
+		}
 
-	return Promise.reject(error);
-};
+		return Promise.reject(errors);
+	};

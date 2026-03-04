@@ -3,9 +3,8 @@
  * Centralized query client with default options
  */
 
-import { QueryClient, QueryCache, MutationCache } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { toast } from "sonner";
 import type { ApiErrorResponse } from "@/types/api";
 import {
 	isApiErrorResponse,
@@ -15,7 +14,7 @@ import {
 /**
  * Extract error message from various error types
  */
-const getErrorMessage = (error: unknown): string => {
+export const getErrorMessage = (error: unknown): string => {
 	if (error instanceof AxiosError && isApiErrorResponse(error.response?.data)) {
 		const apiError = error.response?.data as ApiErrorResponse | undefined;
 
@@ -53,20 +52,28 @@ const getErrorMessage = (error: unknown): string => {
  */
 export const createQueryClient = () =>
 	new QueryClient({
-		queryCache: new QueryCache({
-			onError: (error, query) => {
-				// Only show error toast for queries that have already been successful before
-				// This prevents showing errors on initial load failures
-				if (query.state.data !== undefined) {
-					toast.error(getErrorMessage(error));
-				}
-			},
-		}),
-		mutationCache: new MutationCache({
-			onError: (error) => {
-				toast.error(getErrorMessage(error));
-			},
-		}),
+		// queryCache: new QueryCache({
+		// 	onError: (error, query) => {
+		// 		// Only show error toast for queries that have already been successful before
+		// 		// This prevents showing errors on initial load failures
+		// 		if (query.state.data !== undefined) {
+		// 			toast.error(getErrorMessage(error));
+		// 		}
+		// 	},
+		// }),
+		// mutationCache: new MutationCache({
+		// 	onError: (error) => {
+		// 		toast.error(getErrorMessage(error));
+		// 		if (
+		// 			error instanceof AxiosError &&
+		// 			isApiErrorUnprocessableEntityResponse(error.response?.data)
+		// 		) {
+		// 			console.log("Field errors:", error.response?.data);
+		// 			return error;
+		// 		}
+		// 		return error;
+		// 	},
+		// }),
 		defaultOptions: {
 			queries: {
 				staleTime: 1000 * 60 * 5, // 5 minutes

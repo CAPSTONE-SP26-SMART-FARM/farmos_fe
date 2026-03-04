@@ -66,9 +66,6 @@ export const useRegister = () => {
 			toast.success("Registration successful! Please log in.");
 			navigate("/login");
 		},
-		onError: () => {
-			// Error toast is handled globally by queryClient
-		},
 	});
 };
 

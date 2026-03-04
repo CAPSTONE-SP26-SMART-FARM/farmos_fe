@@ -31,9 +31,11 @@ export interface ApiErrorResponse {
 }
 
 export interface ApiErrorUnprocessableEntityResponse<
-	T extends Record<string, string> = Record<string, string>,
+	//disable eslint
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	T extends Record<string, any> = Record<string, any>,
 > extends ApiErrorResponse {
-	errors: Array<{ [K in keyof T]?: string }>;
+	errors: Array<{ field: keyof T; message: string; code: string }>;
 }
 
 // Auth specific types

@@ -11,6 +11,7 @@ export const RegisterBodySchema = UserSchema.pick({
 		password: z.string().min(6).max(100),
 		confirmPassword: z.string().min(6).max(100),
 		code: z.string().length(6),
+		role: z.enum(["owner", "doctor"]),
 	})
 	.strict()
 	.superRefine(({ confirmPassword, password }, ctx) => {
