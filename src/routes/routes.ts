@@ -17,6 +17,7 @@ import OwnerPage from "@/pages/OwnerPage/OwnerPage";
 import RegisterPage from "@/pages/RegisterPage/RegisterPage";
 import type { AppRoutes } from "./types";
 import DashboardLayout from "@/components/layout/DashboardLayout/DashboardLayout";
+import RoleDashboardRedirect from "@/pages/RoleDashboardRedirect";
 
 const routes: AppRoutes = [
   {
@@ -43,6 +44,15 @@ const routes: AppRoutes = [
       {
         path: "/forgot-password",
         component: ForgotPasswordPage,
+      },
+    ],
+  },
+  {
+    layout: DashboardLayout,
+    children: [
+      {
+        path: "/dashboard",
+        component: RoleDashboardRedirect,
       },
     ],
   },

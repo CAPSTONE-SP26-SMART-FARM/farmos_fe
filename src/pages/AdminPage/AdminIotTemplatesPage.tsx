@@ -113,6 +113,7 @@ function AdminIotTemplatesPage() {
     | { type: "update" }
     | null
   >(null);
+  const [isDirty, setIsDirty] = useState(false);
   const pageSize = 8;
 
   const isEditing = mode === "edit" && Boolean(editingTemplateId);
@@ -134,6 +135,7 @@ function AdminIotTemplatesPage() {
     setEditingTemplateId(null);
     setMode("create");
     setErrorMessage("");
+    setIsDirty(false);
   };
 
   const startCreateTemplate = () => {
@@ -141,6 +143,7 @@ function AdminIotTemplatesPage() {
     setEditingTemplateId(null);
     setFormData(createTemplate());
     setErrorMessage("");
+    setIsDirty(false);
   };
 
   const startEditTemplate = (template: IotTemplate) => {
@@ -151,6 +154,7 @@ function AdminIotTemplatesPage() {
       metrics: template.metrics.map((metric) => ({ ...metric })),
     });
     setErrorMessage("");
+    setIsDirty(false);
   };
 
   const deleteTemplate = (templateId: string) => {
@@ -166,11 +170,13 @@ function AdminIotTemplatesPage() {
       setEditingTemplateId(null);
       setFormData(createTemplate());
       setErrorMessage("");
+      setIsDirty(false);
     }
   };
 
   const addMetricRow = () => {
     setFormData((prev) => ({ ...prev, metrics: [...prev.metrics, createMetric()] }));
+    setIsDirty(true);
   };
 
   const removeMetricRow = (metricId: string) => {
@@ -181,6 +187,7 @@ function AdminIotTemplatesPage() {
           ? prev.metrics
           : prev.metrics.filter((item) => item.id !== metricId),
     }));
+    setIsDirty(true);
   };
 
   const updateMetric = (metricId: string, field: keyof IotMetric, value: string) => {
@@ -190,6 +197,7 @@ function AdminIotTemplatesPage() {
         metric.id === metricId ? { ...metric, [field]: value } : metric,
       ),
     }));
+    setIsDirty(true);
   };
 
   const validateForm = () => {
@@ -236,6 +244,7 @@ function AdminIotTemplatesPage() {
     setEditingTemplateId(null);
     setFormData(createTemplate());
     setErrorMessage("");
+    setIsDirty(false);
   };
 
   const applySensorPreset = (sensor: string) => {
@@ -295,6 +304,7 @@ function AdminIotTemplatesPage() {
       );
       return { ...prev, metrics: nextMetrics };
     });
+    setIsDirty(true);
   };
 
   const showResetButton = mode === "create" || mode === "edit";
@@ -315,7 +325,9 @@ function AdminIotTemplatesPage() {
           {showResetButton && (
             <Button
               variant="outline"
+              disabled={!isDirty}
               onClick={() => {
+                if (!isDirty) return;
                 setConfirmState({ type: "reset" });
               }}
             >

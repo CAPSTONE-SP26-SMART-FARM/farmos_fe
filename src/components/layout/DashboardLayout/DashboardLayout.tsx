@@ -26,15 +26,30 @@ function useBreadcrumbs() {
     const paths = location.pathname.split("/").filter(Boolean);
     const breadcrumbs: { label: string; href: string; isLast: boolean }[] = [];
 
-    let currentPath = "";
-    paths.forEach((segment, index) => {
+    if (!paths.length) {
+      return [{ label: "Dashboard", href: "/dashboard", isLast: true }];
+    }
+
+    // Always show top-level Dashboard tab
+    breadcrumbs.push({
+      label: "Dashboard",
+      href: "/dashboard",
+      isLast: paths.length === 1,
+    });
+
+    // Expected dashboard path shape: /dashboard/:role/...
+    const [, roleSegment, ...rest] = paths;
+
+    let currentPath = `/dashboard/${roleSegment ?? ""}`.replace(/\/$/, "");
+
+    rest.forEach((segment, index) => {
       currentPath += `/${segment}`;
       const label =
         segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " ");
       breadcrumbs.push({
         label,
         href: currentPath,
-        isLast: index === paths.length - 1,
+        isLast: index === rest.length - 1,
       });
     });
 

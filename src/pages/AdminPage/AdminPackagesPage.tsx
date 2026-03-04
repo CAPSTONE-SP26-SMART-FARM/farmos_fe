@@ -88,6 +88,7 @@ function AdminPackagesPage() {
     | { type: "update" }
     | null
   >(null);
+  const [isDirty, setIsDirty] = useState(false);
 
   const isEditing = mode === "edit" && Boolean(editingId);
   const showForm = mode !== "idle";
@@ -104,6 +105,7 @@ function AdminPackagesPage() {
     setPriceInput(String(fresh.priceVnd));
     setEditingId(null);
     setErrorMessage("");
+    setIsDirty(false);
   };
 
   const startCreate = () => {
@@ -113,6 +115,7 @@ function AdminPackagesPage() {
     setPriceInput(String(fresh.priceVnd));
     setEditingId(null);
     setErrorMessage("");
+    setIsDirty(false);
   };
 
   const startEdit = (pkg: SubscriptionPackage) => {
@@ -121,6 +124,7 @@ function AdminPackagesPage() {
     setFormData(pkg);
     setPriceInput(String(pkg.priceVnd));
     setErrorMessage("");
+    setIsDirty(false);
   };
 
   const deletePackage = (id: string) => {
@@ -131,6 +135,7 @@ function AdminPackagesPage() {
       setFormData(createPackage());
       setPriceInput("0");
       setErrorMessage("");
+      setIsDirty(false);
     }
   };
 
@@ -174,6 +179,7 @@ function AdminPackagesPage() {
     setFormData(createPackage());
     setPriceInput("0");
     setErrorMessage("");
+    setIsDirty(false);
   };
 
   const showResetButton = mode === "create" || mode === "edit";
@@ -193,6 +199,7 @@ function AdminPackagesPage() {
           {showResetButton && (
             <Button
               variant="outline"
+              disabled={!isDirty}
               onClick={() => setConfirmState({ type: "reset" })}
             >
               Reset Form
@@ -208,6 +215,7 @@ function AdminPackagesPage() {
                   setConfirmState({ type: "update" });
                 } else {
                   savePackage();
+                  setIsDirty(false);
                 }
               }}
             >
@@ -304,6 +312,7 @@ function AdminPackagesPage() {
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, name: e.target.value }))
                   }
+                  onInput={() => setIsDirty(true)}
                 />
               </div>
 
@@ -322,6 +331,7 @@ function AdminPackagesPage() {
                       durationMonths: Number(e.target.value) || 0,
                     }))
                   }
+                  onInput={() => setIsDirty(true)}
                 />
               </div>
 
@@ -339,6 +349,7 @@ function AdminPackagesPage() {
                         iotKits: Number(e.target.value) || 0,
                       }))
                     }
+                  onInput={() => setIsDirty(true)}
                   />
                 </div>
                 <div className="space-y-1">
@@ -356,6 +367,7 @@ function AdminPackagesPage() {
                         doctorTickets: Number(e.target.value) || 0,
                       }))
                     }
+                  onInput={() => setIsDirty(true)}
                   />
                 </div>
               </div>
@@ -373,6 +385,7 @@ function AdminPackagesPage() {
                       priceVnd: parsePriceInput(raw),
                     }));
                   }}
+                  onInput={() => setIsDirty(true)}
                 />
                 <p className="text-xs text-muted-foreground">
                   Hien thi: {formatVnd(formData.priceVnd || 0)}
@@ -389,6 +402,7 @@ function AdminPackagesPage() {
                     onClick={() =>
                       setFormData((prev) => ({ ...prev, status: "Active" }))
                     }
+                    disabled={formData.status === "Active"}
                   >
                     Active
                   </Button>
@@ -399,6 +413,7 @@ function AdminPackagesPage() {
                     onClick={() =>
                       setFormData((prev) => ({ ...prev, status: "Draft" }))
                     }
+                    disabled={formData.status === "Draft"}
                   >
                     Draft
                   </Button>
@@ -416,6 +431,7 @@ function AdminPackagesPage() {
                       description: e.target.value,
                     }))
                   }
+                  onInput={() => setIsDirty(true)}
                 />
               </div>
 
