@@ -24,6 +24,7 @@ import { LoginBodySchema, type LoginBodyType } from "@/schemaValidatation/auth";
 import { toast } from "sonner";
 import type { UserResType } from "@/types/user";
 import { RoleName } from "@/constants/role";
+import { isApiErrorResponse } from "@/lib/utils";
 
 type DummyAccount = Pick<UserResType, "role" | "fullName" | "email"> & {
 	username: string;
@@ -72,7 +73,7 @@ function LoginPage() {
 		},
 	});
 
-	const { mutate: login, isPending } = useLogin();
+	const { mutateAsync: login, isPending } = useLogin();
 
 	const loginWithDummyAccount = (account: DummyAccount) => {
 		const user: UserResType = {
@@ -98,7 +99,7 @@ function LoginPage() {
 		navigate(`/dashboard/${account.role.toLowerCase()}`, { replace: true });
 	};
 
-	const handleSubmit = (data: LoginBodyType) => {
+	const handleSubmit = async (data: LoginBodyType) => {
 		const matchedDummyAccount = DUMMY_ACCOUNTS.find(
 			(account) =>
 				account.email === data.email && account.password === data.password,
@@ -109,7 +110,13 @@ function LoginPage() {
 			return;
 		}
 
-		login({ ...data });
+		try {
+			await login({ ...data });
+		} catch (error) {
+			if (isApiErrorResponse(error) && error.response?.status === 422) {
+				toast.error(error.response.data.message || "Invalid credentials");
+			}
+		}
 	};
 
 	return (

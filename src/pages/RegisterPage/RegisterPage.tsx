@@ -15,6 +15,11 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { TypeOfVerificationCode } from "@/constants/auth";
+import { handleApiErrorUnprocessentity } from "@/lib/axios";
+import {
+	isApiErrorResponse,
+	isApiErrorUnprocessableEntityResponse,
+} from "@/lib/utils";
 import { useRegister } from "@/queries";
 import { useSendOtp } from "@/queries/useAuth";
 import {
@@ -22,10 +27,20 @@ import {
 	type RegisterBodyType,
 } from "@/schemaValidatation/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
+
 import { Loader2 } from "lucide-react";
 
 import { Controller, useForm } from "react-hook-form";
 import { Link } from "react-router";
+
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
 
 function RegisterPage() {
 	const form = useForm<RegisterBodyType>({
@@ -39,20 +54,37 @@ function RegisterPage() {
 			code: "",
 		},
 	});
-	const { isPending, mutate: register } = useRegister();
+
+	const { isPending, mutateAsync: register } = useRegister();
 
 	const { isPending: isCodePending, mutate: sendCode } = useSendOtp();
 
-	const handleSubmit = (data: RegisterBodyType) => {
-		console.log("Register data:", data);
-		register(data);
+	const handleSubmit = async (data: RegisterBodyType) => {
+		try {
+			await register(data);
+		} catch (error) {
+			if (isApiErrorUnprocessableEntityResponse<RegisterBodyType>(error)) {
+				handleApiErrorUnprocessentity<RegisterBodyType>(
+					error.response!.data.errors,
+					form.setError,
+				);
+			}
+			// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+			isApiErrorResponse(error) &&
+				toast.error(error.response?.data.message || "An error occurred");
+		}
 	};
 
-	const handleSendCode = () => {
-		sendCode({
-			email: form.getValues("email"),
-			type: TypeOfVerificationCode.REGISTER,
-		});
+	const handleSendCode = async () => {
+		try {
+			sendCode({
+				email: form.getValues("email"),
+				type: TypeOfVerificationCode.REGISTER,
+			});
+		} catch {
+			// if(isApiErrorResponse(error) && error.response?.status === 400 && error.response.data.message === "") {
+			// }
+		}
 	};
 
 	return (
@@ -155,12 +187,13 @@ function RegisterPage() {
 											)}
 										/>
 										<Button
+											type="button"
 											variant="outline"
 											className=""
 											onClick={handleSendCode}
 											disabled={isCodePending}
 										>
-											Send code
+											Send
 										</Button>
 									</div>
 								</div>
@@ -198,6 +231,55 @@ function RegisterPage() {
 													id="form-rhf-demo-description"
 													type={"password"}
 												/>
+												{fieldState.invalid && (
+													<FieldError errors={[fieldState.error]} />
+												)}
+											</Field>
+										)}
+									/>
+								</div>
+								<div className="grid grid-cols-2 gap-3">
+									<Controller
+										name="role"
+										control={form.control}
+										render={({ field, fieldState }) => (
+											<Field
+												data-invalid={fieldState.invalid}
+												className="capitalize"
+											>
+												<FieldLabel htmlFor="form-rhf-select-language">
+													Role
+												</FieldLabel>
+												<Select
+													name={field.name}
+													value={field.value}
+													onValueChange={field.onChange}
+												>
+													<SelectTrigger
+														id="form-rhf-select-language"
+														aria-invalid={fieldState.invalid}
+														className="capitalize"
+													>
+														<SelectValue
+															placeholder="Select"
+															className="capitalize"
+														/>
+													</SelectTrigger>
+													<SelectContent
+														position="item-aligned"
+														className="capitalize"
+													>
+														{["doctor", "owner"].map((role) => (
+															<SelectItem
+																key={role}
+																value={role}
+																className="capitalize"
+															>
+																{role}
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
 												{fieldState.invalid && (
 													<FieldError errors={[fieldState.error]} />
 												)}
