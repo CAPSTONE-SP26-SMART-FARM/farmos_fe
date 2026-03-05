@@ -11,7 +11,6 @@ interface AuthState {
 }
 
 interface AuthActions {
-	login: (user: UserResType | null, userToken: LoginResType) => void;
 	logout: () => void;
 	setTokens: (userToken: LoginResType) => void;
 	setUser: (user: UserResType) => void;
@@ -33,25 +32,13 @@ export const useAuthStore = create<AuthStore>()(
 	persist(
 		(set) => ({
 			...initialState,
-
-			login: (user, userToken) => {
-				localStorage.setItem("accessToken", userToken.accessToken ?? "");
-				localStorage.setItem("refreshToken", userToken.refreshToken ?? "");
-				set({
-					user,
-					userToken,
-					isAuth: true,
-					isAuthenticated: true,
-				});
-			},
-
 			logout: () => {
 				localStorage.removeItem("accessToken");
 				localStorage.removeItem("refreshToken");
 				set(initialState);
 			},
 
-			setTokens: (userToken) => {
+			setTokens: (userToken: LoginResType) => {
 				localStorage.setItem("accessToken", userToken.accessToken ?? "");
 				localStorage.setItem("refreshToken", userToken.refreshToken ?? "");
 				set({

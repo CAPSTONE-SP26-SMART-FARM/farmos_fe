@@ -16,9 +16,9 @@ import {
 	SidebarMenuItem,
 	useSidebar,
 } from "@/components/ui/sidebar";
-import { useAuthStore } from "@/stores/authStore";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import type { UserResType } from "@/types/user";
+import { useLogout } from "@/queries";
 
 interface NavUserProps {
 	user: UserResType;
@@ -26,12 +26,10 @@ interface NavUserProps {
 
 export function NavUser({ user }: NavUserProps) {
 	const { isMobile } = useSidebar();
-	const logout = useAuthStore((state) => state.logout);
-	const navigate = useNavigate();
+	const logoutMutate = useLogout();
 
-	const handleLogout = () => {
-		logout();
-		navigate("/login");
+	const handleLogout = async () => {
+		await logoutMutate.mutateAsync();
 	};
 
 	const avatarFallback = user.email?.slice(0, 2).toUpperCase() || "U";
