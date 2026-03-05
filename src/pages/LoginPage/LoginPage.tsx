@@ -1,6 +1,5 @@
 import { Link, useNavigate } from "react-router";
 import { useLogin } from "@/queries/useAuth";
-import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -24,8 +23,7 @@ import { LoginBodySchema, type LoginBodyType } from "@/schemaValidatation/auth";
 import { toast } from "sonner";
 import type { UserResType } from "@/types/user";
 import { RoleName } from "@/constants/role";
-import { isApiErrorResponse } from "@/lib/utils";
-
+import { decodeAccessToken, isApiErrorResponse } from "@/lib/utils";
 type DummyAccount = Pick<UserResType, "role" | "fullName" | "email"> & {
 	username: string;
 	password: string;
@@ -34,37 +32,50 @@ type DummyAccount = Pick<UserResType, "role" | "fullName" | "email"> & {
 const DUMMY_ACCOUNTS: DummyAccount[] = [
 	{
 		role: RoleName.Admin,
-		username: "admin1",
-		password: "admin123",
+		username: "admin",
+		password: "123456",
 		fullName: "System Admin",
-		email: "admin@farmos.local",
+		email: "admin@example.com",
 	},
 	{
 		role: RoleName.Owner,
-		username: "owner1",
+		username: "owner",
 		password: "owner123",
 		fullName: "Farm Owner",
-		email: "owner@farmos.local",
+		email: "owner@farmos.test",
 	},
 	{
 		role: RoleName.Manager,
-		username: "manag1",
-		password: "manager1",
+		username: "manager",
+		password: "manager123",
 		fullName: "Farm Manager",
-		email: "manager@farmos.local",
+		email: "manager@farmos.test",
+	},
+	{
+		role: RoleName.Farmer,
+		username: "farmer",
+		password: "farmer123",
+		fullName: "Farm Farmer",
+		email: "farmer@farmos.test",
+	},
+	{
+		role: RoleName.Rancher,
+		username: "rancher",
+		password: "rancher123",
+		fullName: "Farm Rancher",
+		email: "rancher@farmos.test",
 	},
 	{
 		role: RoleName.Doctor,
-		username: "doc001",
-		password: "doctor1",
+		username: "doctor",
+		password: "doctor123",
 		fullName: "Agronomy Doctor",
-		email: "doctor@farmos.local",
+		email: "doctor@farmos.test",
 	},
 ];
 
 function LoginPage() {
 	const navigate = useNavigate();
-	const loginStore = useAuthStore((state) => state.login);
 	const form = useForm<LoginBodyType>({
 		resolver: zodResolver(LoginBodySchema),
 		defaultValues: {
@@ -72,46 +83,13 @@ function LoginPage() {
 			password: "",
 		},
 	});
-
 	const { mutateAsync: login, isPending } = useLogin();
 
-	const loginWithDummyAccount = (account: DummyAccount) => {
-		const user: UserResType = {
-			id: `demo-${account.role.toLowerCase()}`,
-			email: account.email,
-			role: account.role,
-			fullName: account.fullName,
-			phone: null,
-			avatarUrl: null,
-			isActive: true,
-			emailVerifiedAt: new Date().toISOString(),
-			createdAt: new Date().toISOString(),
-			updatedAt: new Date().toISOString(),
-			deletedAt: null,
-		};
-
-		loginStore(user, {
-			accessToken: `demo-access-token-${account.role.toLowerCase()}`,
-			refreshToken: `demo-refresh-token-${account.role.toLowerCase()}`,
-		});
-
-		toast.success(`Signed in as ${account.role} (dummy account)`);
-		navigate(`/dashboard/${account.role.toLowerCase()}`, { replace: true });
-	};
-
 	const handleSubmit = async (data: LoginBodyType) => {
-		const matchedDummyAccount = DUMMY_ACCOUNTS.find(
-			(account) =>
-				account.email === data.email && account.password === data.password,
-		);
-
-		if (matchedDummyAccount) {
-			loginWithDummyAccount(matchedDummyAccount);
-			return;
-		}
-
 		try {
-			await login({ ...data });
+			const result = await login({ ...data });
+			const role = decodeAccessToken(result.data.accessToken)?.role;
+			navigate(`/dashboard/${role}`, { replace: true });
 		} catch (error) {
 			if (isApiErrorResponse(error) && error.response?.status === 422) {
 				toast.error(error.response.data.message || "Invalid credentials");

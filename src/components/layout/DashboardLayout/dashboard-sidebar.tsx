@@ -15,18 +15,22 @@ import {
 import { sidebarData } from "./sidebarItemData";
 import { useAuthStore } from "@/stores/authStore";
 import { Link } from "react-router";
-import type { NavItem, UserRole } from "./types";
+import type { NavItem } from "./types";
 import type { ComponentPropsWithoutRef } from "react";
+import type { RoleNameType } from "@/constants/role";
+import { useCurrentUser } from "@/queries";
 
 const STORAGE_KEY = "dashboard-item";
 const DEFAULT_ITEM = "Dashboard";
 
-const getNavItemsByRole = (role: UserRole): NavItem[] => {
-	const roleNavMap: Record<UserRole, NavItem[]> = {
-		Admin: sidebarData.navAdmin,
-		Owner: sidebarData.navOwner,
-		Manager: sidebarData.navManager,
-		Doctor: sidebarData.navDoctor,
+const getNavItemsByRole = (role: RoleNameType): NavItem[] => {
+	const roleNavMap: Record<RoleNameType, NavItem[]> = {
+		farmer: sidebarData.navFarmer,
+		rancher: sidebarData.navRancher,
+		admin: sidebarData.navAdmin,
+		owner: sidebarData.navOwner,
+		manager: sidebarData.navManager,
+		doctor: sidebarData.navDoctor,
 	};
 
 	return roleNavMap[role] || sidebarData.navOwner;
@@ -38,15 +42,15 @@ export function DashboardSidebar(props: DashboardSidebarProps) {
 	const [clickedItem, setClickedItem] = useState(
 		() => localStorage.getItem(STORAGE_KEY) || DEFAULT_ITEM,
 	);
+	useCurrentUser();
 	const user = useAuthStore((state) => state.user);
 	// TODO: Uncomment when theme-provider is set up
 	// const { theme } = useTheme();
-
 	if (!user) {
 		return null;
 	}
 
-	const navItems = getNavItemsByRole(user.role as UserRole);
+	const navItems = getNavItemsByRole(user.role as RoleNameType);
 
 	return (
 		<Sidebar collapsible="icon" {...props}>

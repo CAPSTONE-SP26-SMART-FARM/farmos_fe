@@ -15,8 +15,8 @@ import {
  * Extract error message from various error types
  */
 export const getErrorMessage = (error: unknown): string => {
-	if (error instanceof AxiosError && isApiErrorResponse(error.response?.data)) {
-		const apiError = error.response?.data as ApiErrorResponse | undefined;
+	if (isApiErrorResponse(error)) {
+		const apiError = error.response?.data as ApiErrorResponse;
 
 		// Check for field-level errors
 

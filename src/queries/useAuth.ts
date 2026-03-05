@@ -15,41 +15,20 @@ import type {
 	RegisterBodyType,
 	SendOTPBodyType,
 } from "@/schemaValidatation/auth";
-import { decodeAccessToken } from "@/lib/utils";
 
 /**
  * Hook for user login
  */
 export const useLogin = () => {
-	const navigate = useNavigate();
-	const { login } = useAuthStore();
+	const { setTokens } = useAuthStore();
 
 	return useMutation({
 		mutationFn: (credentials: LoginBodyType) => authService.login(credentials),
 		onSuccess: (data) => {
-			// Store user data (construct from response if no user object)
-			// const user: User = data.user ?? {
-			// 	id: String(data.id),
-			// 	email: data.email,
-			// 	role: "Owner", // Default role, will be updated from API
-			// 	fullName: `${data.firstName} ${data.lastName}`,
-			// };
-
 			// Use login action to set both user and tokens atomically
-			login(null, {
-				accessToken: data.accessToken,
-				refreshToken: data.refreshToken,
-			});
+			setTokens(data.data);
 
 			toast.success("Login successful!");
-
-			// Navigate to role-based dashboard
-			const role =
-				decodeAccessToken(data.accessToken)?.role.toLowerCase() ?? "owner";
-
-			navigate(`/dashboard/${role}`, { replace: true });
-			console.log("go");
-			console.log(`/dashboard/${role}`);
 		},
 	});
 };
@@ -84,6 +63,7 @@ export const useLogout = () => {
 			}),
 		onSettled: () => {
 			// Always clear local state, even if server logout fails
+			console.log(1);
 			clearAuthState();
 
 			// Clear all cached queries
@@ -105,9 +85,9 @@ export const useCurrentUser = () => {
 	return useQuery({
 		queryKey: QUERY_KEYS.auth.user(),
 		queryFn: async () => {
-			const user = await authService.getCurrentUser();
-			setUser(user);
-			return user;
+			const result = await authService.getCurrentUser();
+			setUser(result.data);
+			return result.data;
 		},
 		enabled: isAuthenticated,
 		staleTime: 1000 * 60 * 10, // 10 minutes
@@ -126,8 +106,8 @@ export const useRefreshToken = () => {
 			authService.refreshToken({ refreshToken }),
 		onSuccess: (data) => {
 			setTokens({
-				accessToken: data.accessToken,
-				refreshToken: data.refreshToken,
+				accessToken: data.data.accessToken,
+				refreshToken: data.data.refreshToken,
 			});
 		},
 		onError: () => {
