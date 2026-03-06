@@ -6,7 +6,7 @@ import axios, {
 import type {
 	ApiErrorResponse,
 	ApiErrorUnprocessableEntityResponse,
-	ApiResponse,
+	ApiResponseType,
 } from "@/types/api";
 import type { Path, UseFormSetError } from "react-hook-form";
 
@@ -139,7 +139,7 @@ export default axiosInstance;
  */
 export const api = {
 	get: <T>(url: string, config?: InternalAxiosRequestConfig) =>
-		axiosInstance.get<ApiResponse<T>>(url, config).then((res) => res.data),
+		axiosInstance.get<ApiResponseType<T>>(url, config).then((res) => res.data),
 
 	post: <T, D = unknown>(
 		url: string,
@@ -147,7 +147,7 @@ export const api = {
 		config?: InternalAxiosRequestConfig,
 	) =>
 		axiosInstance
-			.post<ApiResponse<T>>(url, data, config)
+			.post<ApiResponseType<T>>(url, data, config)
 			.then((res) => res.data),
 
 	put: <T, D = unknown>(
@@ -156,7 +156,7 @@ export const api = {
 		config?: InternalAxiosRequestConfig,
 	) =>
 		axiosInstance
-			.put<ApiResponse<T>>(url, data, config)
+			.put<ApiResponseType<T>>(url, data, config)
 			.then((res) => res.data),
 
 	patch: <T, D = unknown>(
@@ -165,11 +165,13 @@ export const api = {
 		config?: InternalAxiosRequestConfig,
 	) =>
 		axiosInstance
-			.patch<ApiResponse<T>>(url, data, config)
+			.patch<ApiResponseType<T>>(url, data, config)
 			.then((res) => res.data),
 
 	delete: <T>(url: string, config?: InternalAxiosRequestConfig) =>
-		axiosInstance.delete<ApiResponse<T>>(url, config).then((res) => res.data),
+		axiosInstance
+			.delete<ApiResponseType<T>>(url, config)
+			.then((res) => res.data),
 };
 
 export const handleApiErrorUnprocessentity =
