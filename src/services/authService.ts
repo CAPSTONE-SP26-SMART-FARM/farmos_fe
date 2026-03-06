@@ -14,7 +14,7 @@ import type {
 	SendOTPBodyType,
 } from "@/schemaValidatation/auth";
 import type { UserResType } from "@/types/user";
-import type { ApiResponse } from "@/types/api";
+import type { ApiResponseType } from "@/types/api";
 
 const AUTH = API_ENDPOINTS.AUTH;
 
@@ -47,12 +47,12 @@ export const authService = {
 		api.post<TwoFactorSetupResType>(`${AUTH.TWO_FACTOR_SETUP}`, data),
 
 	twoFactorDisable: (data: DisableTwoFactorBodyType) =>
-		api.post<ApiResponse, DisableTwoFactorBodyType>(
+		api.post<ApiResponseType, DisableTwoFactorBodyType>(
 			`${AUTH.TWO_FACTOR_DISABLE}`,
 			data,
 		),
 	sendOtp: (data: SendOTPBodyType) =>
-		api.post<ApiResponse, SendOTPBodyType>(`${AUTH.SEND_OTP}`, data),
+		api.post<ApiResponseType, SendOTPBodyType>(`${AUTH.SEND_OTP}`, data),
 
 	getCurrentUser: () => api.get<UserResType>(AUTH.ME),
 };
