@@ -62,7 +62,7 @@ function AdminTicketAnalyticsPage() {
 				<h1 className="text-2xl font-bold">Ticket Analytics</h1>
 				<p className="text-muted-foreground">
 					Phân tích ticket theo bộ lọc thời gian: số lượng đang xử lý và đã xử lý
-					của từng Doctor.
+					của từng Doctor. Dữ liệu mẫu; khi có API sẽ gọi theo khoảng thời gian đã chọn.
 				</p>
 			</div>
 
