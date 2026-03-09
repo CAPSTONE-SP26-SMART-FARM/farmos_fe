@@ -17,6 +17,8 @@ import OwnerPage from "@/pages/OwnerPage/OwnerPage";
 import RegisterPage from "@/pages/RegisterPage/RegisterPage";
 import type { AppRoutes } from "./types";
 import DashboardLayout from "@/components/layout/DashboardLayout/DashboardLayout";
+import UpsertProfile from "@/pages/DoctorPage/UpsertProfile/UpsertProfile";
+import ListRequest from "@/pages/DoctorPage/ListRequest/ListRequest";
 
 const routes: AppRoutes = [
 	{
@@ -136,6 +138,16 @@ const routes: AppRoutes = [
 			{
 				path: "/dashboard/doctor/*",
 				component: DoctorPage,
+				allowedRoles: ["Doctor"],
+			},
+			{
+				path: "/dashboard/doctor/update-profile",
+				component: UpsertProfile,
+				allowedRoles: ["Doctor"],
+			},
+			{
+				path: "/dashboard/doctor/my-request",
+				component: ListRequest,
 				allowedRoles: ["Doctor"],
 			},
 		],

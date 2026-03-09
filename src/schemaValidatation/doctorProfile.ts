@@ -1,6 +1,6 @@
+import { DoctorTypeName, RegistrationStatusName } from "@/constants/profile";
+import { PagingRequestSchema, PagingResponseSchema } from "@/types/api";
 import { UserResSchema } from "@/types/user";
-import { DoctorTypeName, RegistrationStatusName } from "src/constants/profile";
-import { PagingRequestSchema, PagingResponseSchema } from "src/types/api";
 
 import { z } from "zod";
 

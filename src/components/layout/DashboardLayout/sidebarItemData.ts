@@ -21,6 +21,8 @@ import {
 	ClipboardList,
 	FolderKanban,
 	FileText,
+	User,
+	Send,
 } from "lucide-react";
 import type { SidebarData } from "./types";
 
@@ -177,6 +179,16 @@ export const sidebarData: SidebarData = {
 
 	// Doctor Navigation
 	navDoctor: [
+		{
+			title: "Update profile",
+			url: "/dashboard/doctor/update-profile",
+			icon: User,
+		},
+		{
+			title: "List request",
+			url: "/dashboard/doctor/my-request",
+			icon: Send,
+		},
 		{
 			title: "Dashboard",
 			url: "/dashboard/doctor",
