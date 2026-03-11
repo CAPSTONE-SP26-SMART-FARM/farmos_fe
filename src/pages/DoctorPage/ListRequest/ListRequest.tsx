@@ -5,6 +5,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import RequestTable from "./RequestTable/RequestTable";
 
 const ListRequest = () => {
 	return (
@@ -17,7 +18,9 @@ const ListRequest = () => {
 							Request to admin to become a doctor of platform
 						</CardDescription>
 					</CardHeader>
-					<CardContent></CardContent>
+					<CardContent>
+						<RequestTable />
+					</CardContent>
 				</Card>
 			</div>
 		</main>

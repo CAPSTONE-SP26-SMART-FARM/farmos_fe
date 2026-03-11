@@ -10,12 +10,17 @@ import {
 	type SortingState,
 	type VisibilityState,
 } from "@tanstack/react-table";
-import type { DoctorRequestType } from "@/schemaValidatation/doctorProfile";
+import type {
+	DoctorRequestResType,
+	DoctorRequestType,
+	ListDoctorRequestsQueryType,
+	ListDoctorRequestsResType,
+} from "@/schemaValidatation/doctorProfile";
 import { Button } from "@/components/ui/button";
 import { Info, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
 	Select,
 	SelectContent,
@@ -32,8 +37,12 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import ProPagination from "@/components/common/pro-pagination";
+import { useDoctorListRequest } from "@/queries/useDoctor";
+import { type RegistrationStatusNameType } from "@/constants/profile";
+import useDebounce from "@/hooks/useDebounce";
+import AddRequest from "../AddRequest/AddRequest";
 
-export const columns: ColumnDef<DoctorRequestType>[] = [
+export const columns: ColumnDef<DoctorRequestResType>[] = [
 	{
 		accessorKey: "id",
 		header: "ID",
@@ -67,29 +76,27 @@ export const columns: ColumnDef<DoctorRequestType>[] = [
 	},
 ];
 const RequestTable = () => {
+	const navigate = useNavigate();
 	const [searchParam] = useSearchParams();
 	const page = searchParam.get("page") ? Number(searchParam.get("page")) : 1;
 	const pageIndex = page - 1;
-	// const [filters, setFilters] = useState<{
-	// 	email?: string;
-	// 	role?: UserRole | "all";
-	// 	status?: UserStatus | "all";
-	// }>({
-	// 	email: undefined,
-	// 	role: "all",
-	// 	status: "all",
-	// });
-	// const debouncedEmail = useDebounce(filters.email || "", 500);
-	// const accountListQuery = useGetAccountListQuery({
-	// 	page: pageIndex + 1, // API thường bắt đầu từ 1
-	// 	limit: PAGE_SIZE,
-	// 	search: filters.email || undefined,
-	// 	role: filters.role !== "all" ? filters.role : undefined,
-	// 	status: filters.status !== "all" ? filters.status : undefined,
-	// });
-	const data: DoctorRequestType[] = [];
-	// const totalPages = accountListQuery?.data?.payload.meta.totalPages ?? 0;
-	// const totalRecords = accountListQuery?.data?.payload.meta.totalRecords ?? 0;
+	const [filters, setFilters] = useState<Partial<ListDoctorRequestsQueryType>>({
+		status: undefined,
+		search: "",
+	});
+
+	const debouncedSearch = useDebounce(filters.search || "", 500);
+
+	const listRequestDoctor = useDoctorListRequest({
+		...filters,
+		page,
+		limit: 10,
+	});
+	console.log(filters);
+
+	const data: DoctorRequestType[] = listRequestDoctor.data?.data.data ?? [];
+	const totalPages = listRequestDoctor?.data?.data.meta.totalPages ?? 0;
+	const totalRecords = listRequestDoctor?.data?.data.meta.totalItems ?? 0;
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -98,31 +105,21 @@ const RequestTable = () => {
 		pageIndex, // Gía trị mặc định ban đầu, không có ý nghĩa khi data được fetch bất đồng bộ
 		pageSize: 10, //default page size
 	});
-
+	console.log(columnFilters);
 	useEffect(() => {
-		// const emailFilter = columnFilters.find(
-		// 	(filter) => filter.id === "email",
-		// );
-		// const roleFilter = columnFilters.find((filter) => filter.id === "role");
-		// const statusFilter = columnFilters.find(
-		// 	(filter) => filter.id === "status",
-		// );
-		// setFilters({
-		// 	email: (emailFilter?.value as string) || undefined,
-		// 	role: (roleFilter?.value as UserRole) || "all",
-		// 	status: (statusFilter?.value as UserStatus) || "all",
-		// });
+		const searchFilter = columnFilters.find((filter) => filter.id === "title");
+		const statusFilter = columnFilters.find((filter) => filter.id === "status");
+		setFilters({
+			status: (statusFilter?.value as RegistrationStatusNameType) || undefined,
+			search: (searchFilter?.value as string) || "",
+		});
 	}, [columnFilters]);
 
-	// Về trang 1 khi filters thay đổi
-	// useEffect(() => {
-	// 	if (
-	// 		page > 1 &&
-	// 		(filters.email || filters.role !== "all" || filters.status !== "all")
-	// 	) {
-	// 		router.push("/admin/account?page=1");
-	// 	}
-	// }, [debouncedEmail, filters, page, router]); // Chỉ chạy khi giá trị đã debounce thay đổi
+	useEffect(() => {
+		if (page > 1 && filters.status !== undefined) {
+			navigate("/dashboard/doctor/my-request?page=1", { replace: true });
+		}
+	}, [debouncedSearch, filters, page, navigate]); // Chỉ chạy khi giá trị đã debounce thay đổi
 
 	const table = useReactTable({
 		data,
@@ -164,38 +161,17 @@ const RequestTable = () => {
 		<div className="w-full">
 			<div className="flex items-center py-4 gap-2">
 				<Input
-					placeholder="Filter emails..."
-					value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
+					placeholder="Filter title..."
+					value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
 					onChange={(event) =>
-						table.getColumn("email")?.setFilterValue(event.target.value)
+						table.getColumn("title")?.setFilterValue(event.target.value ?? "")
 					}
 					className="max-w-sm"
 				/>
-				<Select
-					onValueChange={(value) =>
-						table
-							.getColumn("role")
-							?.setFilterValue(value === "all" ? undefined : value)
-					}
-					defaultValue="all"
-				>
-					<SelectTrigger className="w-[180px]">
-						<SelectValue placeholder="Filter by role" />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value="all">All Roles</SelectItem>
-
-						<SelectItem value="ADMIN">Admin</SelectItem>
-						<SelectItem value="MEMBER">Member</SelectItem>
-						<SelectItem value="COACH">Coach</SelectItem>
-					</SelectContent>
-				</Select>
 
 				<Select
 					onValueChange={(value) =>
-						table
-							.getColumn("status")
-							?.setFilterValue(value === "all" ? undefined : value)
+						table.getColumn("status")?.setFilterValue(value ? value : undefined)
 					}
 					defaultValue="all"
 				>
@@ -235,11 +211,11 @@ const RequestTable = () => {
 						<X className="ml-2 h-4 w-4" />
 					</Button>
 
-					{/* <AddEmployee /> */}
+					<AddRequest />
 				</div>
 			</div>
 			<div className="rounded-md border">
-				{/* {accountListQuery.isLoading && <SkeletonTableBasic />} */}
+				{/* {listRequestDoctor.isLoading && <SkeletonTableBasic />} */}
 				{
 					<Table>
 						<TableHeader>
@@ -294,12 +270,12 @@ const RequestTable = () => {
 			<div className="flex items-center justify-end space-x-2 py-4">
 				<div className="text-xs text-muted-foreground py-4 flex-1 ">
 					Show <strong>{table.getPaginationRowModel().rows.length}</strong> in{" "}
-					{/* <strong>{totalRecords}</strong> result */}
+					<strong>{totalRecords}</strong> result
 				</div>
 				<div>
 					<ProPagination
-						currentPage={1}
-						totalPages={100}
+						currentPage={page}
+						totalPages={totalPages}
 						buildHref={(page: number | null | undefined) => {
 							const params = new URLSearchParams(searchParam);
 							if (page) {

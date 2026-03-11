@@ -21,7 +21,7 @@ export const useDoctorRequest = () => {
 	});
 };
 
-export const useDoctorListRequest = (query: ListDoctorRequestsQueryType) => {
+export const useDoctorListRequest = (query?: ListDoctorRequestsQueryType) => {
 	return useQuery({
 		queryKey: ["doctors-request", query],
 		queryFn: () => doctorService.listRequest(query),
