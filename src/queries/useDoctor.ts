@@ -32,10 +32,11 @@ export const useDoctorListRequest = (query?: ListDoctorRequestsQueryType) => {
 	});
 };
 
-export const useDoctorRequestDetail = (id: string) => {
+export const useDoctorRequestDetail = (id: string, enable: boolean) => {
 	return useQuery({
 		queryKey: ["doctors-request", id],
 		queryFn: () => doctorService.requestDetail(id),
+		enabled: enable,
 	});
 };
 

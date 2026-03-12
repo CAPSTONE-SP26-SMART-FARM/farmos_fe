@@ -19,7 +19,7 @@ import type {
 import { Button } from "@/components/ui/button";
 import { Info, X, type LucideIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
 	Select,
@@ -46,14 +46,22 @@ import useDebounce from "@/hooks/useDebounce";
 import AddRequest from "../AddRequest/AddRequest";
 import { Clock, CheckCircle2, XCircle, PauseCircle } from "lucide-react";
 import TableSkeleton from "@/components/common/TableSkeleton";
-import { Skeleton } from "@/components/ui/skeleton";
+import DetailRequest from "../DetailRequest/DetailRequest";
 
-const statusIcon: Record<RegistrationStatusNameType, LucideIcon> = {
+export const statusIcon: Record<RegistrationStatusNameType, LucideIcon> = {
 	pending: Clock,
 	approved: CheckCircle2,
 	rejected: XCircle,
 	suspended: PauseCircle,
 };
+
+const RequestTableContext = createContext<{
+	setRequestIdDetail: (id: string | undefined) => void;
+	requestIdDetail: string | undefined;
+}>({
+	setRequestIdDetail: (id: string | undefined) => {},
+	requestIdDetail: undefined,
+});
 
 export const columns: ColumnDef<DoctorRequestResType>[] = [
 	{
@@ -82,13 +90,17 @@ export const columns: ColumnDef<DoctorRequestResType>[] = [
 	{
 		accessorKey: "action",
 		header: "Action",
-		cell: ({ row }) => (
-			<div>
-				<Button variant={"ghost"}>
+		cell: ({ row }) => {
+			const { setRequestIdDetail } = useContext(RequestTableContext);
+			const onClick = () => {
+				setRequestIdDetail(row.original.id);
+			};
+			return (
+				<Button variant="ghost" onClick={onClick}>
 					<Info />
 				</Button>
-			</div>
-		),
+			);
+		},
 	},
 ];
 const RequestTable = () => {
@@ -96,6 +108,9 @@ const RequestTable = () => {
 	const [searchParam] = useSearchParams();
 	const page = searchParam.get("page") ? Number(searchParam.get("page")) : 1;
 	const pageIndex = page - 1;
+	const [requestIdDetail, setRequestIdDetail] = useState<string | undefined>(
+		undefined,
+	);
 	const [filters, setFilters] = useState<Partial<ListDoctorRequestsQueryType>>({
 		status: undefined,
 		search: "",
@@ -175,138 +190,143 @@ const RequestTable = () => {
 		});
 	}, [table, pageIndex]);
 	return (
-		<div className="w-full">
-			<div className="flex items-center py-4 gap-2">
-				<Input
-					placeholder="Filter title..."
-					value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
-					onChange={(event) =>
-						table.getColumn("title")?.setFilterValue(event.target.value ?? "")
-					}
-					className="max-w-sm"
-				/>
-
-				<Select
-					onValueChange={(value) =>
-						table.getColumn("status")?.setFilterValue(value ? value : "all")
-					}
-					defaultValue="all"
-				>
-					<SelectTrigger className="w-[180px] capitalize">
-						<SelectValue
-							placeholder="Filter by status"
-							className="capitalize"
-						/>
-					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value={"all"} className="capitalize">
-							all
-						</SelectItem>
-						{Object.values(RegistrationStatusName).map((r) => (
-							<SelectItem value={r} key={r} className="capitalize">
-								{r}
-							</SelectItem>
-						))}
-					</SelectContent>
-				</Select>
-
-				<div className="ml-auto flex items-center gap-2">
-					<Button
-						variant="outline"
-						size="sm"
-						onClick={clearFilters}
-						disabled={!filters.search && !filters.status}
-						className={`transition-all ${
-							filters.search || filters.status !== undefined
-								? "font-medium opacity-100"
-								: "opacity-50 font-normal"
-						}`}
-					>
-						Clear filters
-						<X className="ml-2 h-4 w-4" />
-					</Button>
-
-					<AddRequest />
-				</div>
-			</div>
-			<div className="rounded-md border">
-				{
-					<Table>
-						<TableHeader>
-							{table.getHeaderGroups().map((headerGroup) => (
-								<TableRow key={headerGroup.id}>
-									{headerGroup.headers.map((header) => {
-										return (
-											<TableHead key={header.id}>
-												{header.isPlaceholder
-													? null
-													: flexRender(
-															header.column.columnDef.header,
-															header.getContext(),
-														)}
-											</TableHead>
-										);
-									})}
-								</TableRow>
-							))}
-						</TableHeader>
-						<TableBody>
-							{listRequestDoctor.isLoading && <TableSkeleton />}
-							{table.getRowModel().rows?.length ? (
-								table.getRowModel().rows.map((row) => (
-									<TableRow
-										key={row.id}
-										data-state={row.getIsSelected() && "selected"}
-									>
-										{row.getVisibleCells().map((cell) => (
-											<TableCell key={cell.id}>
-												{flexRender(
-													cell.column.columnDef.cell,
-													cell.getContext(),
-												)}
-											</TableCell>
-										))}
-									</TableRow>
-								))
-							) : (
-								<TableRow>
-									<TableCell
-										colSpan={columns.length}
-										className="h-24 text-center"
-									>
-										No results.
-									</TableCell>
-								</TableRow>
-							)}
-						</TableBody>
-					</Table>
-				}
-			</div>
-			<div className="flex items-center justify-end space-x-2 py-4">
-				<div className="text-xs text-muted-foreground py-4 flex-1 ">
-					Show <strong>{table.getPaginationRowModel().rows.length}</strong> in{" "}
-					<strong>{totalRecords}</strong> result
-				</div>
-				<div>
-					<ProPagination
-						currentPage={page}
-						totalPages={totalPages}
-						buildHref={(page: number | null | undefined) => {
-							const params = new URLSearchParams(searchParam);
-							if (page) {
-								params.set("page", String(page));
-							} else {
-								params.delete("page");
-							}
-							return {
-								pathname: location.pathname,
-								search: params.toString(),
-							};
-						}}
+		<RequestTableContext.Provider
+			value={{ requestIdDetail, setRequestIdDetail }}
+		>
+			<div className="w-full">
+				<div className="flex items-center py-4 gap-2">
+					<Input
+						placeholder="Filter title..."
+						value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
+						onChange={(event) =>
+							table.getColumn("title")?.setFilterValue(event.target.value ?? "")
+						}
+						className="max-w-sm"
 					/>
+
+					<Select
+						onValueChange={(value) =>
+							table.getColumn("status")?.setFilterValue(value ? value : "all")
+						}
+						defaultValue="all"
+					>
+						<SelectTrigger className="w-[180px] capitalize">
+							<SelectValue
+								placeholder="Filter by status"
+								className="capitalize"
+							/>
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value={"all"} className="capitalize">
+								all
+							</SelectItem>
+							{Object.values(RegistrationStatusName).map((r) => (
+								<SelectItem value={r} key={r} className="capitalize">
+									{r}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+
+					<div className="ml-auto flex items-center gap-2">
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={clearFilters}
+							disabled={!filters.search && !filters.status}
+							className={`transition-all ${
+								filters.search || filters.status !== undefined
+									? "font-medium opacity-100"
+									: "opacity-50 font-normal"
+							}`}
+						>
+							Clear filters
+							<X className="ml-2 h-4 w-4" />
+						</Button>
+
+						<AddRequest />
+						<DetailRequest id={requestIdDetail} setId={setRequestIdDetail} />
+					</div>
+				</div>
+				<div className="rounded-md border">
+					{
+						<Table>
+							<TableHeader>
+								{table.getHeaderGroups().map((headerGroup) => (
+									<TableRow key={headerGroup.id}>
+										{headerGroup.headers.map((header) => {
+											return (
+												<TableHead key={header.id}>
+													{header.isPlaceholder
+														? null
+														: flexRender(
+																header.column.columnDef.header,
+																header.getContext(),
+															)}
+												</TableHead>
+											);
+										})}
+									</TableRow>
+								))}
+							</TableHeader>
+							<TableBody>
+								{listRequestDoctor.isLoading && <TableSkeleton />}
+								{table.getRowModel().rows?.length ? (
+									table.getRowModel().rows.map((row) => (
+										<TableRow
+											key={row.id}
+											data-state={row.getIsSelected() && "selected"}
+										>
+											{row.getVisibleCells().map((cell) => (
+												<TableCell key={cell.id}>
+													{flexRender(
+														cell.column.columnDef.cell,
+														cell.getContext(),
+													)}
+												</TableCell>
+											))}
+										</TableRow>
+									))
+								) : (
+									<TableRow>
+										<TableCell
+											colSpan={columns.length}
+											className="h-24 text-center"
+										>
+											No results.
+										</TableCell>
+									</TableRow>
+								)}
+							</TableBody>
+						</Table>
+					}
+				</div>
+				<div className="flex items-center justify-end space-x-2 py-4">
+					<div className="text-xs text-muted-foreground py-4 flex-1 ">
+						Show <strong>{table.getPaginationRowModel().rows.length}</strong> in{" "}
+						<strong>{totalRecords}</strong> result
+					</div>
+					<div>
+						<ProPagination
+							currentPage={page}
+							totalPages={totalPages}
+							buildHref={(page: number | null | undefined) => {
+								const params = new URLSearchParams(searchParam);
+								if (page) {
+									params.set("page", String(page));
+								} else {
+									params.delete("page");
+								}
+								return {
+									pathname: location.pathname,
+									search: params.toString(),
+								};
+							}}
+						/>
+					</div>
 				</div>
 			</div>
-		</div>
+		</RequestTableContext.Provider>
 	);
 };
 
