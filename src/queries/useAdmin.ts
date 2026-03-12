@@ -7,7 +7,7 @@ import type {
 	UpdateDoctorRequestStatusBodyType,
 } from "@/schemaValidatation/doctorProfile";
 import adminService from "@/services/adminService";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const useAdminListDoctorRequest = (
 	query: ListDoctorRequestsQueryType,
@@ -18,14 +18,16 @@ export const useAdminListDoctorRequest = (
 	});
 };
 
-export const useAdminDoctorRequestDetail = (id: string) => {
+export const useAdminDoctorRequestDetail = (id: string, enabled: boolean) => {
 	return useQuery({
 		queryKey: ["admin-doctor-requests", id],
 		queryFn: () => adminService.doctorRequestDetail(id),
+		enabled,
 	});
 };
 
 export const useAdminChangeStatusDoctorRequest = () => {
+	const qc = useQueryClient();
 	return useMutation({
 		mutationFn: (
 			data: UpdateDoctorRequestStatusBodyType & {
@@ -33,8 +35,12 @@ export const useAdminChangeStatusDoctorRequest = () => {
 			},
 		) =>
 			adminService.changeStatus(data.id, {
-				...data,
+				status: data.status,
+				reason: data.reason,
 			}),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["admin-doctor-requests"] });
+		},
 	});
 };
 
