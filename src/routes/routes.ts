@@ -19,6 +19,7 @@ import type { AppRoutes } from "./types";
 import DashboardLayout from "@/components/layout/DashboardLayout/DashboardLayout";
 import UpsertProfile from "@/pages/DoctorPage/UpsertProfile/UpsertProfile";
 import ListRequest from "@/pages/DoctorPage/ListRequest/ListRequest";
+import ListRequestAdmin from "@/pages/AdminPage/RequestDoctor/ListRequest";
 
 const routes: AppRoutes = [
 	{
@@ -90,6 +91,11 @@ const routes: AppRoutes = [
 			{
 				path: "/dashboard/admin/users",
 				component: AdminUsersPage,
+				allowedRoles: ["Admin"],
+			},
+			{
+				path: "/dashboard/admin/doctor-requests",
+				component: ListRequestAdmin,
 				allowedRoles: ["Admin"],
 			},
 		],

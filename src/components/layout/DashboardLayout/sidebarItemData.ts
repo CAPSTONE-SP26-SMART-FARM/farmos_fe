@@ -30,6 +30,11 @@ export const sidebarData: SidebarData = {
 	// Admin Navigation
 	navAdmin: [
 		{
+			title: "List Request",
+			url: "/dashboard/admin/doctor-requests",
+			icon: Send,
+		},
+		{
 			title: "Dashboard",
 			url: "/dashboard/admin",
 			icon: Shield,

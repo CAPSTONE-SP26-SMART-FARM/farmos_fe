@@ -9,7 +9,6 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { useDoctorRequestDetail } from "@/queries/useDoctor";
-import { Badge } from "@/components/ui/badge";
 import {
 	Card,
 	CardContent,
@@ -25,13 +24,6 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-	CheckCircle2,
-	Clock,
-	PauseCircle,
-	XCircle,
-	type LucideIcon,
-} from "lucide-react";
 import { statusIcon } from "../RequestTable/RequestTable";
 
 interface Props {
@@ -50,21 +42,6 @@ const DetailRequest = ({ id, setId }: Props) => {
 		const d = new Date(value);
 		if (Number.isNaN(d.getTime())) return value;
 		return d.toLocaleString();
-	};
-
-	const statusBadgeVariant = (
-		status: DoctorRequestWithProfileResType["registrationStatus"] | undefined,
-	) => {
-		switch (status) {
-			case "approved":
-				return "secondary" as const;
-			case "rejected":
-			case "suspended":
-				return "destructive" as const;
-			case "pending":
-			default:
-				return "outline" as const;
-		}
 	};
 
 	const reset = () => {
