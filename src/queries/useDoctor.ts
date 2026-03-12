@@ -5,7 +5,7 @@ import type {
 	UpsertDoctorProfileBodyType,
 } from "@/schemaValidatation/doctorProfile";
 import doctorService from "@/services/doctorService";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const useDoctorUpsertProfile = () => {
 	return useMutation({
@@ -15,9 +15,13 @@ export const useDoctorUpsertProfile = () => {
 };
 
 export const useDoctorRequest = () => {
+	const queryClient = useQueryClient();
 	return useMutation({
 		mutationFn: (data: SubmitDoctorRequestBodyType) =>
 			doctorService.request(data),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["doctors-request"] });
+		},
 	});
 };
 

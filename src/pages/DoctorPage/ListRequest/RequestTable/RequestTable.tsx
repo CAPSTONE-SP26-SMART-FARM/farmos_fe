@@ -17,7 +17,7 @@ import type {
 	ListDoctorRequestsResType,
 } from "@/schemaValidatation/doctorProfile";
 import { Button } from "@/components/ui/button";
-import { Info, X } from "lucide-react";
+import { Info, X, type LucideIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -38,9 +38,22 @@ import {
 } from "@/components/ui/table";
 import ProPagination from "@/components/common/pro-pagination";
 import { useDoctorListRequest } from "@/queries/useDoctor";
-import { type RegistrationStatusNameType } from "@/constants/profile";
+import {
+	RegistrationStatusName,
+	type RegistrationStatusNameType,
+} from "@/constants/profile";
 import useDebounce from "@/hooks/useDebounce";
 import AddRequest from "../AddRequest/AddRequest";
+import { Clock, CheckCircle2, XCircle, PauseCircle } from "lucide-react";
+import TableSkeleton from "@/components/common/TableSkeleton";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const statusIcon: Record<RegistrationStatusNameType, LucideIcon> = {
+	pending: Clock,
+	approved: CheckCircle2,
+	rejected: XCircle,
+	suspended: PauseCircle,
+};
 
 export const columns: ColumnDef<DoctorRequestResType>[] = [
 	{
@@ -61,14 +74,17 @@ export const columns: ColumnDef<DoctorRequestResType>[] = [
 	{
 		accessorKey: "status",
 		header: "Status",
-		cell: ({ row }) => <div>{row.getValue("status")}</div>,
+		cell: ({ row }) => {
+			const Icon = statusIcon[row.original.registrationStatus];
+			return <Icon />;
+		},
 	},
 	{
 		accessorKey: "action",
 		header: "Action",
 		cell: ({ row }) => (
 			<div>
-				<Button>
+				<Button variant={"ghost"}>
 					<Info />
 				</Button>
 			</div>
@@ -92,7 +108,6 @@ const RequestTable = () => {
 		page,
 		limit: 10,
 	});
-	console.log(filters);
 
 	const data: DoctorRequestType[] = listRequestDoctor.data?.data.data ?? [];
 	const totalPages = listRequestDoctor?.data?.data.meta.totalPages ?? 0;
@@ -105,12 +120,14 @@ const RequestTable = () => {
 		pageIndex, // Gía trị mặc định ban đầu, không có ý nghĩa khi data được fetch bất đồng bộ
 		pageSize: 10, //default page size
 	});
-	console.log(columnFilters);
 	useEffect(() => {
 		const searchFilter = columnFilters.find((filter) => filter.id === "title");
 		const statusFilter = columnFilters.find((filter) => filter.id === "status");
 		setFilters({
-			status: (statusFilter?.value as RegistrationStatusNameType) || undefined,
+			status:
+				(statusFilter?.value as string) !== "all"
+					? (statusFilter?.value as RegistrationStatusNameType)
+					: undefined,
 			search: (searchFilter?.value as string) || "",
 		});
 	}, [columnFilters]);
@@ -171,21 +188,25 @@ const RequestTable = () => {
 
 				<Select
 					onValueChange={(value) =>
-						table.getColumn("status")?.setFilterValue(value ? value : undefined)
+						table.getColumn("status")?.setFilterValue(value ? value : "all")
 					}
 					defaultValue="all"
 				>
-					<SelectTrigger className="w-[180px]">
-						<SelectValue placeholder="Filter by status" />
+					<SelectTrigger className="w-[180px] capitalize">
+						<SelectValue
+							placeholder="Filter by status"
+							className="capitalize"
+						/>
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value="all">All Status</SelectItem>
-						<SelectItem value="ACTIVE">Active</SelectItem>
-						<SelectItem value="INACTIVE">Inactive</SelectItem>
-						<SelectItem value="BANNED">Banned</SelectItem>
-						<SelectItem value="PENDING_VERIFICATION">
-							Pending Verification
+						<SelectItem value={"all"} className="capitalize">
+							all
 						</SelectItem>
+						{Object.values(RegistrationStatusName).map((r) => (
+							<SelectItem value={r} key={r} className="capitalize">
+								{r}
+							</SelectItem>
+						))}
 					</SelectContent>
 				</Select>
 
@@ -194,18 +215,12 @@ const RequestTable = () => {
 						variant="outline"
 						size="sm"
 						onClick={clearFilters}
-						// disabled={
-						// 	!filters.email &&
-						// 	filters.role === "all" &&
-						// 	filters.status === "all"
-						// }
-						// className={`transition-all ${
-						// 	filters.email ||
-						// 	filters.role !== "all" ||
-						// 	filters.status !== "all"
-						// 		? "font-medium opacity-100"
-						// 		: "opacity-50 font-normal"
-						// }`}
+						disabled={!filters.search && !filters.status}
+						className={`transition-all ${
+							filters.search || filters.status !== undefined
+								? "font-medium opacity-100"
+								: "opacity-50 font-normal"
+						}`}
 					>
 						Clear filters
 						<X className="ml-2 h-4 w-4" />
@@ -215,7 +230,6 @@ const RequestTable = () => {
 				</div>
 			</div>
 			<div className="rounded-md border">
-				{/* {listRequestDoctor.isLoading && <SkeletonTableBasic />} */}
 				{
 					<Table>
 						<TableHeader>
@@ -237,6 +251,7 @@ const RequestTable = () => {
 							))}
 						</TableHeader>
 						<TableBody>
+							{listRequestDoctor.isLoading && <TableSkeleton />}
 							{table.getRowModel().rows?.length ? (
 								table.getRowModel().rows.map((row) => (
 									<TableRow
