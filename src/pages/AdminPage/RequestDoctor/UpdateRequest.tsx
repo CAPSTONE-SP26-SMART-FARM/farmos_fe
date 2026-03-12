@@ -59,7 +59,7 @@ const UpdateRequest = ({ id, setId }: Props) => {
 		},
 	});
 
-	const detailQuery = useAdminDoctorRequestDetail(id ?? "");
+	const detailQuery = useAdminDoctorRequestDetail(id!, !!id);
 	const request: DoctorRequestWithProfileAndUserResType | undefined = id
 		? detailQuery.data?.data
 		: undefined;
@@ -76,35 +76,30 @@ const UpdateRequest = ({ id, setId }: Props) => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [request?.id]);
 
-	const formatDateTime = (value: string | null | undefined) => {
-		if (!value) return "—";
-		const d = new Date(value);
-		if (Number.isNaN(d.getTime())) return value;
-		return d.toLocaleString();
-	};
-
 	const reset = () => {
 		setId(undefined);
 		form.reset();
 	};
 
-	const onSubmit = form.handleSubmit((data) => {
-		if (!id) return;
-		mutation.mutate(
-			{
-				id,
-				status: data.status,
-				reason: data.reason?.trim() || undefined,
-			},
-			{
-				onSuccess: () => {
-					reset();
-				},
-			},
-		);
-	});
-
-	const disabled = mutation.isPending || !id;
+	const onSubmit = form.handleSubmit(
+		async (data: UpdateDoctorRequestStatusBodyType) => {
+			if (!id) return;
+			try {
+				await mutation.mutateAsync(
+					{
+						id,
+						status: data.status,
+						reason: data.reason?.trim() || undefined,
+					},
+					{
+						onSuccess: () => {
+							reset();
+						},
+					},
+				);
+			} catch (error) {}
+		},
+	);
 
 	return (
 		<Dialog
@@ -114,7 +109,7 @@ const UpdateRequest = ({ id, setId }: Props) => {
 			}}
 		>
 			<DialogContent className="sm:max-w-3xl">
-				<form onSubmit={onSubmit} className="space-y-4">
+				<form className="space-y-4">
 					<DialogHeader>
 						<DialogTitle>Doctor request detail</DialogTitle>
 						<DialogDescription>
@@ -205,21 +200,6 @@ const UpdateRequest = ({ id, setId }: Props) => {
 										) : null}
 
 										<Separator />
-
-										<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-											<div className="space-y-1">
-												<div className="text-muted-foreground">Created at</div>
-												<div className="font-medium">
-													{formatDateTime(request.createdAt)}
-												</div>
-											</div>
-											<div className="space-y-1">
-												<div className="text-muted-foreground">Updated at</div>
-												<div className="font-medium">
-													{formatDateTime(request.updatedAt)}
-												</div>
-											</div>
-										</div>
 									</CardContent>
 								</Card>
 								<Card>
@@ -378,7 +358,11 @@ const UpdateRequest = ({ id, setId }: Props) => {
 								Close
 							</Button>
 						</DialogClose>
-						<Button type="submit" disabled={disabled}>
+						<Button
+							onClick={onSubmit}
+							type="button"
+							disabled={mutation.isPending}
+						>
 							{mutation.isPending ? "Updating..." : "Update status"}
 						</Button>
 					</DialogFooter>
