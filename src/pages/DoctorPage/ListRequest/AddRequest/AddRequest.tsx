@@ -50,11 +50,23 @@ const AddRequest = () => {
 					form.setError,
 				);
 			}
+		} finally {
+			reset();
 		}
 	});
 
+	const reset = () => {
+		form.reset();
+	};
+
 	return (
-		<Dialog>
+		<Dialog
+			onOpenChange={(open) => {
+				if (open) {
+					reset();
+				}
+			}}
+		>
 			<form onSubmit={onSubmit}>
 				<DialogTrigger asChild>
 					<Button variant="outline">Request</Button>
@@ -110,7 +122,9 @@ const AddRequest = () => {
 						<DialogClose asChild>
 							<Button variant="outline">Cancel</Button>
 						</DialogClose>
-						<Button onClick={onSubmit}>Submit</Button>
+						<Button onClick={onSubmit} disabled={isPending}>
+							{isPending ? "Submitting..." : "Submit"}
+						</Button>
 					</DialogFooter>
 				</DialogContent>
 			</form>
