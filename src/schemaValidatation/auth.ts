@@ -157,6 +157,21 @@ export const TwoFactorSetupResSchema = z.object({
 	uri: z.string(),
 });
 
+export const UpdateProfileSchema = UserSchema.pick({
+	fullName: true,
+	phone: true,
+	avatarUrl: true,
+});
+
+export const UpdateProfileResSchema = UserSchema.omit({
+	passwordHash: true,
+	totpSecret: true,
+});
+
+//* <== Type Export ==>
+export type UpdateProfileType = z.infer<typeof UpdateProfileSchema>;
+export type UpdateProfileResType = z.infer<typeof UpdateProfileResSchema>;
+
 export type RegisterBodyType = z.infer<typeof RegisterBodySchema>;
 export type RegisterResType = z.infer<typeof RegisterResSchema>;
 export type VerificationCodeType = z.infer<typeof VerificationCodeSchema>;

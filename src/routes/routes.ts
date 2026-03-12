@@ -20,6 +20,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout/DashboardLayout
 import UpsertProfile from "@/pages/DoctorPage/UpsertProfile/UpsertProfile";
 import ListRequest from "@/pages/DoctorPage/ListRequest/ListRequest";
 import ListRequestAdmin from "@/pages/AdminPage/RequestDoctor/ListRequest";
+import Profile from "@/pages/Profile/Profile";
 
 const routes: AppRoutes = [
 	{
@@ -98,6 +99,11 @@ const routes: AppRoutes = [
 				component: ListRequestAdmin,
 				allowedRoles: ["Admin"],
 			},
+			{
+				path: "/dashboard/admin/profile",
+				component: Profile,
+				allowedRoles: ["Admin"],
+			},
 		],
 	},
 	// Owner Dashboard Routes
@@ -114,6 +120,11 @@ const routes: AppRoutes = [
 				component: OwnerPage,
 				allowedRoles: ["Owner"],
 			},
+			{
+				path: "/dashboard/owner/profile",
+				component: Profile,
+				allowedRoles: ["Owner"],
+			},
 		],
 	},
 	// Manager Dashboard Routes
@@ -128,6 +139,11 @@ const routes: AppRoutes = [
 			{
 				path: "/dashboard/manager/*",
 				component: ManagerPage,
+				allowedRoles: ["Manager"],
+			},
+			{
+				path: "/dashboard/manager/profile",
+				component: Profile,
 				allowedRoles: ["Manager"],
 			},
 		],
@@ -154,6 +170,11 @@ const routes: AppRoutes = [
 			{
 				path: "/dashboard/doctor/my-request",
 				component: ListRequest,
+				allowedRoles: ["Doctor"],
+			},
+			{
+				path: "/dashboard/doctor/profile",
+				component: Profile,
 				allowedRoles: ["Doctor"],
 			},
 		],

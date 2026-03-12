@@ -11,6 +11,7 @@ export const API_ENDPOINTS = {
 		TWO_FACTOR_SETUP: "/auth/2fa/setup",
 		TWO_FACTOR_DISABLE: "/auth/2fa/disable",
 		SEND_OTP: "/auth/otp",
+		UPDATE_PROFLIE: "/profile/update",
 	},
 	USERS: {
 		BASE: "/users",
@@ -56,6 +57,7 @@ export const API_ENDPOINTS = {
 			DETAIL: (id: string) => `/doctor-assignment/owner/my-doctors/${id}`,
 		},
 	},
+	PROFILE: {},
 } as const;
 
 //query keys

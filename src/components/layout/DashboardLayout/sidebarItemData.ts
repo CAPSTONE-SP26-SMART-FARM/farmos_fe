@@ -23,6 +23,7 @@ import {
 	FileText,
 	User,
 	Send,
+	UserRoundPen,
 } from "lucide-react";
 import type { SidebarData } from "./types";
 
@@ -75,6 +76,11 @@ export const sidebarData: SidebarData = {
 			url: "/dashboard/admin/users",
 			icon: Users,
 		},
+		{
+			title: "Profile",
+			url: "/dashboard/admin/profile",
+			icon: UserRoundPen,
+		},
 	],
 
 	// Owner
@@ -124,6 +130,11 @@ export const sidebarData: SidebarData = {
 			title: "Ticket Monitoring",
 			url: "/dashboard/owner/tickets",
 			icon: Ticket,
+		},
+		{
+			title: "Profile",
+			url: "/dashboard/owner/profile",
+			icon: UserRoundPen,
 		},
 	],
 
@@ -179,6 +190,11 @@ export const sidebarData: SidebarData = {
 			title: "Notifications",
 			url: "/dashboard/manager/notifications",
 			icon: Bell,
+		},
+		{
+			title: "Profile",
+			url: "/dashboard/manager/profile",
+			icon: UserRoundPen,
 		},
 	],
 
@@ -240,6 +256,11 @@ export const sidebarData: SidebarData = {
 			url: "/dashboard/doctor/reports",
 			icon: ChartColumnIncreasing,
 		},
+		{
+			title: "Profile",
+			url: "/dashboard/doctor/profile",
+			icon: UserRoundPen,
+		},
 	],
 	navFarmer: [
 		{
@@ -247,12 +268,22 @@ export const sidebarData: SidebarData = {
 			url: "/dashboard/farmer/notifications",
 			icon: Bell,
 		},
+		{
+			title: "Profile",
+			url: "/dashboard/farmer/profile",
+			icon: UserRoundPen,
+		},
 	],
 	navRancher: [
 		{
 			title: "Notifications",
 			url: "/dashboard/farmer/notifications",
 			icon: Bell,
+		},
+		{
+			title: "Profile",
+			url: "/dashboard/rancher/profile",
+			icon: UserRoundPen,
 		},
 	],
 };

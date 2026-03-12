@@ -12,6 +12,8 @@ import type {
 	DisableTwoFactorBodyType,
 	LogoutBodyType,
 	SendOTPBodyType,
+	UpdateProfileType,
+	UpdateProfileResType,
 } from "@/schemaValidatation/auth";
 import type { UserResType } from "@/types/user";
 import type { ApiResponseType } from "@/types/api";
@@ -55,6 +57,11 @@ export const authService = {
 		api.post<ApiResponseType, SendOTPBodyType>(`${AUTH.SEND_OTP}`, data),
 
 	getCurrentUser: () => api.get<UserResType>(AUTH.ME),
+
+	updateProfile: (data: UpdateProfileType) =>
+		api.post<UpdateProfileResType, UpdateProfileType>(AUTH.UPDATE_PROFLIE, {
+			...data,
+		}),
 };
 
 export default authService;
