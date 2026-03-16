@@ -10,9 +10,10 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOwnerGetMyFarm } from "@/queries/useOwner";
 import type { FarmResType } from "@/schemaValidatation/farmManagement";
-import { Building2, MapPin, Plus, Ruler } from "lucide-react";
+import { Building2, MapPin, Pencil, Plus, Ruler } from "lucide-react";
 import { useState } from "react";
-import CreateFarmDialog from "./CreateFarmDialog";
+import CreateFarmForm from "./CreateFarmForm";
+import UpdateFarmForm from "./UpdateFarmForm";
 
 const FarmInfoRow = ({
   label,
@@ -120,11 +121,25 @@ const EmptyFarmState = ({ onCreate }: { onCreate: () => void }) => (
 
 function FarmManagement() {
   const [showCreate, setShowCreate] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
   const { data, isLoading, isError } = useOwnerGetMyFarm();
   const farm = data?.data;
 
+  if (showCreate) {
+    return <CreateFarmForm onBack={() => setShowCreate(false)} />;
+  }
+
+  if (showEdit && farm) {
+    return (
+      <UpdateFarmForm
+        farm={farm}
+        onBack={() => setShowEdit(false)}
+      />
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-300">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <Badge className="mb-2">Owner Portal</Badge>
@@ -134,9 +149,9 @@ function FarmManagement() {
           </p>
         </div>
         {farm && (
-          <Button onClick={() => setShowCreate(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Farm
+          <Button onClick={() => setShowEdit(true)}>
+            <Pencil className="mr-2 h-4 w-4" />
+            Edit Farm
           </Button>
         )}
       </div>
@@ -186,11 +201,6 @@ function FarmManagement() {
           <FarmDetailCard farm={farm} />
         </>
       )}
-
-      <CreateFarmDialog
-        open={showCreate}
-        onClose={() => setShowCreate(false)}
-      />
     </div>
   );
 }
