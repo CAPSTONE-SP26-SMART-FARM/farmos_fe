@@ -97,7 +97,7 @@ function UserRolesSection() {
   const [activeIndex, setActiveIndex] = useState(0);
 
   return (
-    <section className="py-24 bg-gradient-to-b from-green-50 to-green-100 relative overflow-hidden">
+    <section className="py-24 bg-linear-to-b from-green-50 to-green-100 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-green-200/30 rounded-full blur-3xl" />
@@ -126,7 +126,7 @@ function UserRolesSection() {
 
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-green-900 mb-6">
             Thiết kế cho
-            <span className="block bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+            <span className="block bg-linear-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
               mọi người dùng
             </span>
           </h2>
@@ -160,7 +160,7 @@ function UserRolesSection() {
                 >
                   <div className="flex items-center gap-4">
                     <div
-                      className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${role.gradient} flex items-center justify-center shadow-lg transition-transform duration-300 ${
+                      className={`w-14 h-14 rounded-2xl bg-linear-to-br ${role.gradient} flex items-center justify-center shadow-lg transition-transform duration-300 ${
                         isActive ? "scale-110" : "group-hover:scale-105"
                       }`}
                     >
@@ -207,7 +207,7 @@ function UserRolesSection() {
                       {role.features.map((feature, idx) => (
                         <Badge
                           key={idx}
-                          className={`bg-gradient-to-r ${role.gradient} text-white border-0 text-xs`}
+                          className={`bg-linear-to-r ${role.gradient} text-white border-0 text-xs`}
                         >
                           {feature}
                         </Badge>
@@ -235,16 +235,16 @@ function UserRolesSection() {
                 transition={{ duration: 0.4 }}
                 className="relative rounded-3xl overflow-hidden shadow-2xl"
               >
-                <div className="aspect-[4/3]">
+                <div className="aspect-4/3">
                   <img
                     src={roles[activeIndex].image}
                     alt={roles[activeIndex].title}
                     className="w-full h-full object-cover"
                   />
                   <div
-                    className={`absolute inset-0 bg-gradient-to-t ${roles[activeIndex].gradient} mix-blend-multiply opacity-40`}
+                    className={`absolute inset-0 bg-linear-to-t ${roles[activeIndex].gradient} mix-blend-multiply opacity-40`}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/70 via-transparent to-transparent" />
                 </div>
 
                 {/* Content Overlay */}
@@ -256,7 +256,7 @@ function UserRolesSection() {
                   >
                     <div className="flex items-center gap-3 mb-3">
                       <div
-                        className={`w-12 h-12 rounded-xl bg-gradient-to-br ${roles[activeIndex].gradient} flex items-center justify-center`}
+                        className={`w-12 h-12 rounded-xl bg-linear-to-br ${roles[activeIndex].gradient} flex items-center justify-center`}
                       >
                         {(() => {
                           const Icon = roles[activeIndex].icon;

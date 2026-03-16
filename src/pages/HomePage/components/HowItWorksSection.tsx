@@ -61,7 +61,7 @@ function HowItWorksSection() {
   return (
     <section
       ref={containerRef}
-      className="py-24 bg-gradient-to-b from-green-950 via-green-900 to-green-950 relative overflow-hidden"
+      className="py-24 bg-linear-to-b from-green-950 via-green-900 to-green-950 relative overflow-hidden"
     >
       {/* Background Pattern */}
       <div className="absolute inset-0">
@@ -110,7 +110,7 @@ function HowItWorksSection() {
           {/* Vertical Line */}
           <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-green-800 hidden lg:block">
             <motion.div
-              className="w-full bg-gradient-to-b from-green-400 to-emerald-500"
+              className="w-full bg-linear-to-b from-green-400 to-emerald-500"
               style={{ height: lineHeight }}
             />
           </div>

@@ -86,7 +86,7 @@ const contactOptions = [
 
 function FAQSection() {
   return (
-    <section className="py-24 bg-gradient-to-b from-green-950 via-green-900 to-green-950 relative overflow-hidden">
+    <section className="py-24 bg-linear-to-b from-green-950 via-green-900 to-green-950 relative overflow-hidden">
       {/* Background decorations */}
       <div className="absolute inset-0">
         <div
