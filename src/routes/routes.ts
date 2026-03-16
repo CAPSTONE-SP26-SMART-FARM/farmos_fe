@@ -4,6 +4,7 @@ import AdminDashboardPage from "@/pages/AdminPage/AdminDashboardPage";
 import AdminDoctorApplicationsPage from "@/pages/AdminPage/AdminDoctorApplicationsPage";
 import AdminDoctorAssignmentPage from "@/pages/AdminPage/AdminDoctorAssignmentPage";
 import AdminDoctorPerformancePage from "@/pages/AdminPage/AdminDoctorPerformancePage";
+import AdminFarmsPage from "@/pages/AdminPage/AdminFarmsPage";
 import AdminIotTemplatesPage from "@/pages/AdminPage/AdminIotTemplatesPage";
 import AdminPackagesPage from "@/pages/AdminPage/AdminPackagesPage";
 import AdminTicketAnalyticsPage from "@/pages/AdminPage/AdminTicketAnalyticsPage";
@@ -78,6 +79,11 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/admin/users",
         component: AdminUsersPage,
+        allowedRoles: ["admin"],
+      },
+      {
+        path: "/dashboard/admin/farms",
+        component: AdminFarmsPage,
         allowedRoles: ["admin"],
       },
       {

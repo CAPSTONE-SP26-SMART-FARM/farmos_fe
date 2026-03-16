@@ -20,7 +20,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   if (isRestricted) {
     if (user && isAuth) {
       const role = user.role?.toLowerCase() ?? "owner";
-      return <Navigate to={`/dashboard/${role}`} replace />;
+      return (
+        <Navigate
+          to={`/dashboard/${role}`}
+          replace
+        />
+      );
     }
     return <>{children}</>;
   }
@@ -29,11 +34,21 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   if (allowedRoles) {
     if (!user || !isAuth) {
       toast.error("Bạn cần đăng nhập để truy cập trang này");
-      return <Navigate to="/login" replace />;
+      return (
+        <Navigate
+          to="/login"
+          replace
+        />
+      );
     }
     if (!allowedRoles.includes(user.role)) {
       toast.error("Bạn không có quyền truy cập trang này");
-      return <Navigate to={`/dashboard/${user.role}`} replace />;
+      return (
+        <Navigate
+          to={`/dashboard/${user.role}`}
+          replace
+        />
+      );
     }
   }
 
