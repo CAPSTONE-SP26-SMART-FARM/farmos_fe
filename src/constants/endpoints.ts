@@ -56,6 +56,30 @@ export const API_ENDPOINTS = {
 			DETAIL: (id: string) => `/doctor-assignment/owner/my-doctors/${id}`,
 		},
 	},
+	CROP_SEASON: {
+		MANAGER: {
+			CREATE: "/crop-seasons",
+			LIST_BY_ZONE: (zoneId: string) => `/crop-seasons/zone/${zoneId}`,
+			DETAIL: (id: string) => `/crop-seasons/${id}`,
+			UPDATE: (id: string) => `/crop-seasons/${id}`,
+			SEND_REQUEST: (id: string) => `/crop-seasons/${id}/send-request`,
+			LIST_REQUESTS: (cropSeasonId: string) =>
+				`/crop-seasons/${cropSeasonId}/requests`,
+			REQUEST_DETAIL: (requestId: string) =>
+				`/production-requests/${requestId}`,
+		},
+		OWNER: {
+			LIST_BY_ZONE: (zoneId: string) =>
+				`/owner/crop-seasons/zone/${zoneId}`,
+			DETAIL: (id: string) => `/owner/crop-seasons/${id}`,
+			LIST_REQUESTS: (cropSeasonId: string) =>
+				`/owner/crop-seasons/${cropSeasonId}/requests`,
+			REQUEST_DETAIL: (requestId: string) =>
+				`/owner/production-requests/${requestId}`,
+			REPLY_REQUEST: (requestId: string) =>
+				`/owner/production-requests/${requestId}/reply`,
+		},
+	},
 } as const;
 
 //query keys
@@ -79,5 +103,25 @@ export const QUERY_KEYS = {
 		list: (farmId?: string | number) => ["sensors", "list", farmId],
 		detail: (id: string | number) => ["sensors", id],
 		data: (id: string | number) => ["sensors", id, "data"],
+	},
+	cropSeasons: {
+		all: ["crop-seasons"],
+		listByZone: (zoneId: string, filters?: Record<string, unknown>) => [
+			"crop-seasons",
+			"zone",
+			zoneId,
+			filters,
+		],
+		detail: (id: string) => ["crop-seasons", id],
+		requests: (cropSeasonId: string, filters?: Record<string, unknown>) => [
+			"crop-seasons",
+			cropSeasonId,
+			"requests",
+			filters,
+		],
+		requestDetail: (requestId: string) => [
+			"production-requests",
+			requestId,
+		],
 	},
 } as const;

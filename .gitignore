@@ -25,3 +25,8 @@ dist-ssr
 .github
 .shared
 .env
+
+# Agent skills
+.claude
+.agents
+skills-lock.json

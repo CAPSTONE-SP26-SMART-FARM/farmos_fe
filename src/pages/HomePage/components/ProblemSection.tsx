@@ -66,7 +66,7 @@ function ProblemSection() {
   const [activeCard, setActiveCard] = useState<number | null>(null);
 
   return (
-    <section className="py-24 bg-gradient-to-b from-green-950 via-green-900 to-green-950 overflow-hidden relative">
+    <section className="py-24 bg-linear-to-b from-green-950 via-green-900 to-green-950 overflow-hidden relative">
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-20">
         <div
