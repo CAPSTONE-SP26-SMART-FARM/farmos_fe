@@ -4,6 +4,11 @@ import type {
   CreateFarmBodyType,
   UpdateFarmBodyType,
 } from "@/schemaValidatation/farmManagement";
+import type {
+  CreateFarmMemberBodyType,
+  ListFarmMembersQueryType,
+  UpdateFarmMemberBodyType,
+} from "@/schemaValidatation/farmMember";
 import ownerService from "@/services/ownerService";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -45,6 +50,53 @@ export const useOwnerUpdateFarm = () => {
       ownerService.updateFarm(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.owner.farm.my() });
+    },
+  });
+};
+
+// ── Farm Members ──────────────────────────────────────────────
+
+export const useOwnerListFarmMembers = (query: ListFarmMembersQueryType) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.farmMembers.list(query),
+    queryFn: () => ownerService.listFarmMembers(query),
+  });
+};
+
+export const useOwnerGetFarmMemberDetail = (id: string) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.farmMembers.detail(id),
+    queryFn: () => ownerService.getFarmMemberDetail(id),
+  });
+};
+
+export const useOwnerCreateFarmMember = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateFarmMemberBodyType) =>
+      ownerService.createFarmMember(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.farmMembers.all,
+      });
+    },
+  });
+};
+
+export const useOwnerUpdateFarmMember = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateFarmMemberBodyType;
+    }) => ownerService.updateFarmMember(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.farmMembers.all,
+      });
     },
   });
 };

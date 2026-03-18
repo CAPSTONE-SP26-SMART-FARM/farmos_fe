@@ -7,13 +7,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOwnerGetMyFarm } from "@/queries/useOwner";
 import type { FarmResType } from "@/schemaValidatation/farmManagement";
+import type { ZoneType } from "@/types/zone";
 import { Building2, MapPin, Pencil, Plus, Ruler } from "lucide-react";
 import { useState } from "react";
 import CreateFarmForm from "./CreateFarmForm";
+import CreateZonePanel from "./CreateZonePanel";
+import EditZonePanel from "./EditZonePanel";
 import UpdateFarmForm from "./UpdateFarmForm";
+import ZoneListSection from "./ZoneListSection";
 
 const FarmInfoRow = ({
   label,
@@ -122,6 +127,8 @@ const EmptyFarmState = ({ onCreate }: { onCreate: () => void }) => (
 function FarmManagement() {
   const [showCreate, setShowCreate] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
+  const [showCreateZone, setShowCreateZone] = useState(false);
+  const [editingZone, setEditingZone] = useState<ZoneType | null>(null);
   const { data, isLoading, isError } = useOwnerGetMyFarm();
   const farm = data?.data;
 
@@ -134,6 +141,26 @@ function FarmManagement() {
       <UpdateFarmForm
         farm={farm}
         onBack={() => setShowEdit(false)}
+      />
+    );
+  }
+
+  if (showCreateZone && farm) {
+    return (
+      <CreateZonePanel
+        farmCode={farm.code}
+        farmId={farm.id}
+        onBack={() => setShowCreateZone(false)}
+      />
+    );
+  }
+
+  if (editingZone && farm) {
+    return (
+      <EditZonePanel
+        zone={editingZone}
+        farmId={farm.id}
+        onBack={() => setEditingZone(null)}
       />
     );
   }
@@ -199,6 +226,14 @@ function FarmManagement() {
           </div>
 
           <FarmDetailCard farm={farm} />
+
+          <Separator />
+
+          <ZoneListSection
+            farmId={farm.id}
+            onCreateZone={() => setShowCreateZone(true)}
+            onEditZone={(zone) => setEditingZone(zone)}
+          />
         </>
       )}
     </div>

@@ -98,6 +98,11 @@ export const sidebarData: SidebarData = {
     },
     { title: "Zone Management", url: "/dashboard/owner/zones", icon: Map },
     {
+      title: "Crop Seasons",
+      url: "/dashboard/owner/crop-seasons",
+      icon: Sprout,
+    },
+    {
       title: "Manager Management",
       url: "/dashboard/owner/managers",
       icon: Users,
