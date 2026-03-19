@@ -9,6 +9,9 @@ import {
 } from "@/components/ui/card";
 import { useLocation } from "react-router";
 import FarmManagement from "./FarmManagement/FarmManagement";
+import OwnerCropSeasonsPage from "./CropSeasons/OwnerCropSeasonsPage";
+import OwnerFarmMemberPage from "./FarmMember/OwnerFarmMemberPage";
+import OwnerZonePage from "./ZoneManagement/OwnerZonePage";
 
 type OwnerView = {
   title: string;
@@ -113,6 +116,18 @@ function OwnerPage() {
   // Render dedicated components for implemented sections
   if (section === "farms") {
     return <FarmManagement />;
+  }
+
+  if (section === "zones") {
+    return <OwnerZonePage />;
+  }
+
+  if (section === "crop-seasons") {
+    return <OwnerCropSeasonsPage />;
+  }
+
+  if (section === "managers") {
+    return <OwnerFarmMemberPage />;
   }
 
   const view = ownerViews[section] ?? ownerViews.dashboard;

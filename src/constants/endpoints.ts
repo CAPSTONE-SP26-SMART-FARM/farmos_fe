@@ -61,6 +61,26 @@ export const API_ENDPOINTS = {
       DETAIL: (id: string) => `/doctor-assignment/owner/my-doctors/${id}`,
     },
   },
+  FARM_MEMBERS: {
+    BASE: "/farm-members",
+    BY_ID: (id: string) => `/farm-members/${id}`,
+  },
+  ZONES: {
+    LIST_BY_FARM: (farmId: string) => `/farms/${farmId}/zones`,
+    DETAIL: (id: string) => `/zones/${id}`,
+    CREATE: "/zones",
+    UPDATE: (id: string) => `/zones/${id}`,
+    MANAGERS: {
+      LIST: (zoneId: string) => `/zones/${zoneId}/managers`,
+      ASSIGN: (zoneId: string) => `/zones/${zoneId}/managers/assign`,
+      ASSIGN_BULK: (zoneId: string) => `/zones/${zoneId}/managers/assign-bulk`,
+      REMOVE: (zoneId: string, managerId: string) =>
+        `/zones/${zoneId}/managers/${managerId}`,
+      REMOVE_BULK: (zoneId: string) => `/zones/${zoneId}/managers/bulk`,
+      UPDATE_PRIMARY: (zoneId: string, managerId: string) =>
+        `/zones/${zoneId}/managers/${managerId}/primary`,
+    },
+  },
   CROP_SEASON: {
     MANAGER: {
       CREATE: "/crop-seasons",
@@ -122,6 +142,35 @@ export const QUERY_KEYS = {
   owner: {
     farm: {
       my: () => ["owner", "farm", "my"],
+    },
+  },
+  farmMembers: {
+    all: ["farm-members"],
+    list: (filters?: Record<string, unknown>) => [
+      "farm-members",
+      "list",
+      filters,
+    ],
+    detail: (id: string) => ["farm-members", id],
+  },
+  zones: {
+    all: ["zones"],
+    byFarm: (farmId: string) => ["zones", "farm", farmId],
+    listByFarm: (farmId: string, filters?: Record<string, unknown>) => [
+      "zones",
+      "farm",
+      farmId,
+      filters,
+    ],
+    detail: (id: string) => ["zones", id],
+    managers: {
+      byZone: (zoneId: string) => ["zones", zoneId, "managers"],
+      list: (zoneId: string, filters?: Record<string, unknown>) => [
+        "zones",
+        zoneId,
+        "managers",
+        filters,
+      ],
     },
   },
   cropSeasons: {
