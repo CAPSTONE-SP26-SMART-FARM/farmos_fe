@@ -107,7 +107,7 @@ const routes: AppRoutes = [
 			{
 				path: "/dashboard/owner/my-doctor",
 				component: OwnerMyDoctorsPage,
-				allowedRoles: ["Owner"],
+				allowedRoles: ["owner"],
 			},
 			{
 				path: "/dashboard/owner/*",
@@ -164,7 +164,7 @@ const routes: AppRoutes = [
 			{
 				path: "/dashboard/doctor/my-assignments",
 				component: DoctorAssignmentsPage,
-				allowedRoles: ["Doctor"],
+				allowedRoles: ["doctor"],
 			},
 		],
 	},

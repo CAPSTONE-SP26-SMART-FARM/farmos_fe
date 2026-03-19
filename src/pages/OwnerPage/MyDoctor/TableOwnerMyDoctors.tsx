@@ -42,23 +42,16 @@ import OwnerDoctorDetailDialog from "./OwnerDoctorDetailDialog";
 
 const columns: ColumnDef<AssignmentWithDoctorResType>[] = [
 	{
-		accessorKey: "id",
-		header: "ID",
-		cell: ({ row }) => (
-			<div className="max-w-[180px] truncate">{row.getValue("id")}</div>
-		),
-	},
-	{
 		id: "doctor",
 		header: "Doctor",
-		accessorFn: (row) => row.doctor.email,
+		accessorFn: (row) => row.doctor?.email ?? "",
 		cell: ({ row }) => {
 			const original = row.original;
 			return (
 				<div className="min-w-[180px]">
-					<div className="font-medium">{original.doctor.fullName ?? "—"}</div>
+					<div className="font-medium">{original.doctor?.fullName ?? "—"}</div>
 					<div className="text-xs text-muted-foreground">
-						{original.doctor.email}
+						{original.doctor?.email ?? "—"}
 					</div>
 				</div>
 			);
@@ -74,7 +67,9 @@ const columns: ColumnDef<AssignmentWithDoctorResType>[] = [
 	{
 		accessorKey: "isPrimary",
 		header: "Primary",
-		cell: ({ row }) => <div>{row.getValue("isPrimary") ? "Yes" : "No"}</div>,
+		cell: ({ row }) => (
+			<div>{row.getValue("isPrimary") === true ? "Yes" : "No"}</div>
+		),
 	},
 	{
 		accessorKey: "assignedAt",

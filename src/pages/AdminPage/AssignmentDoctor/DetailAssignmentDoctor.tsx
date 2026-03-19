@@ -87,16 +87,13 @@ const DetailAssignmentDoctor = ({ id, setId }: Props) => {
 						<Card>
 							<CardHeader>
 								<CardTitle>Assignment</CardTitle>
-								<CardDescription className="break-all">
-									ID: {detail.id}
-								</CardDescription>
 							</CardHeader>
 							<CardContent className="space-y-3 text-sm">
 								<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 									<div className="space-y-1">
 										<div className="text-muted-foreground">Status</div>
 										<div className="font-medium capitalize">
-											{detail.status}
+											{detail.status || "—"}
 										</div>
 									</div>
 									<div className="space-y-1">
@@ -125,7 +122,9 @@ const DetailAssignmentDoctor = ({ id, setId }: Props) => {
 									</div>
 									<div className="space-y-1">
 										<div className="text-muted-foreground">Assigned by</div>
-										<div className="font-medium">{detail.assigner.email}</div>
+										<div className="font-medium">
+											{detail.assigner?.email ?? "—"}
+										</div>
 									</div>
 								</div>
 							</CardContent>
@@ -135,19 +134,16 @@ const DetailAssignmentDoctor = ({ id, setId }: Props) => {
 							<Card>
 								<CardHeader>
 									<CardTitle>Doctor</CardTitle>
-									<CardDescription className="break-all">
-										ID: {detail.doctor.id}
-									</CardDescription>
 								</CardHeader>
 								<CardContent className="space-y-2 text-sm">
 									<div>
 										<div className="text-muted-foreground">Email</div>
-										<div className="font-medium">{detail.doctor.email}</div>
+										<div className="font-medium">{detail.doctor?.email ?? "—"}</div>
 									</div>
 									<div>
 										<div className="text-muted-foreground">Full name</div>
 										<div className="font-medium">
-											{detail.doctor.fullName ?? "—"}
+											{detail.doctor?.fullName ?? "—"}
 										</div>
 									</div>
 								</CardContent>
@@ -156,19 +152,16 @@ const DetailAssignmentDoctor = ({ id, setId }: Props) => {
 							<Card>
 								<CardHeader>
 									<CardTitle>Owner</CardTitle>
-									<CardDescription className="break-all">
-										ID: {detail.owner.id}
-									</CardDescription>
 								</CardHeader>
 								<CardContent className="space-y-2 text-sm">
 									<div>
 										<div className="text-muted-foreground">Email</div>
-										<div className="font-medium">{detail.owner.email}</div>
+										<div className="font-medium">{detail.owner?.email ?? "—"}</div>
 									</div>
 									<div>
 										<div className="text-muted-foreground">Full name</div>
 										<div className="font-medium">
-											{detail.owner.fullName ?? "—"}
+											{detail.owner?.fullName ?? "—"}
 										</div>
 									</div>
 								</CardContent>
@@ -188,4 +181,3 @@ const DetailAssignmentDoctor = ({ id, setId }: Props) => {
 };
 
 export default DetailAssignmentDoctor;
-
