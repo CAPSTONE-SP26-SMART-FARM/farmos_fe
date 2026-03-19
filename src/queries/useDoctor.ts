@@ -42,14 +42,15 @@ export const useDoctorRequestDetail = (id: string, enable: boolean) => {
 
 export const useDoctorMyAssignmentDetail = (id: string) => {
 	return useQuery({
-		queryKey: ["doctors-assignment", id],
+		queryKey: ["doctor", "assignments", "detail", id],
 		queryFn: () => doctorService.detailAssignment(id),
+		enabled: Boolean(id),
 	});
 };
 
 export const useDoctorListAssignment = (query: ListAssignmentsQueryType) => {
 	return useQuery({
-		queryKey: ["doctors-assignments", query],
+		queryKey: ["doctor", "assignments", "list", query],
 		queryFn: () => doctorService.assignMe(query),
 	});
 };

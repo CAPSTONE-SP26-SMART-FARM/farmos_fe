@@ -1,0 +1,159 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { QUERY_KEYS } from "@/constants/endpoints";
+import { cropSeasonService } from "@/services/cropSeasonService";
+import type {
+  CreateCropSeasonBodyType,
+  UpdateCropSeasonBodyType,
+  SendProductionRequestBodyType,
+  ReplyProductionRequestBodyType,
+  ListCropSeasonsQueryType,
+  ListProductionRequestsQueryType,
+} from "@/types/cropSeason";
+
+export const useManagerListCropSeasons = (
+  zoneId: string,
+  query: ListCropSeasonsQueryType,
+) =>
+  useQuery({
+    queryKey: QUERY_KEYS.cropSeasons.listByZone(zoneId, query),
+    queryFn: () => cropSeasonService.listByZone(zoneId, query),
+    enabled: !!zoneId,
+  });
+
+export const useManagerCropSeasonDetail = (id: string) =>
+  useQuery({
+    queryKey: QUERY_KEYS.cropSeasons.detail(id),
+    queryFn: () => cropSeasonService.detail(id),
+    enabled: !!id,
+  });
+
+export const useManagerListRequests = (
+  cropSeasonId: string,
+  query: ListProductionRequestsQueryType,
+) =>
+  useQuery({
+    queryKey: QUERY_KEYS.cropSeasons.requests(cropSeasonId, query),
+    queryFn: () => cropSeasonService.listRequests(cropSeasonId, query),
+    enabled: !!cropSeasonId,
+  });
+
+export const useManagerRequestDetail = (requestId: string) =>
+  useQuery({
+    queryKey: QUERY_KEYS.cropSeasons.requestDetail(requestId),
+    queryFn: () => cropSeasonService.requestDetail(requestId),
+    enabled: !!requestId,
+  });
+
+export const useCreateCropSeason = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: CreateCropSeasonBodyType) =>
+      cropSeasonService.create(body),
+    onSuccess: async (data) => {
+      await qc.invalidateQueries({
+        queryKey: ["crop-seasons", "zone", data.data.zoneId],
+      });
+      await qc.refetchQueries({
+        queryKey: ["crop-seasons", "zone", data.data.zoneId],
+      });
+      toast.success("Tạo mùa vụ thành công!");
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message ?? "Tạo mùa vụ thất bại");
+    },
+  });
+};
+
+export const useUpdateCropSeason = (id: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: UpdateCropSeasonBodyType) =>
+      cropSeasonService.update(id, body),
+    onSuccess: async (data) => {
+      await qc.invalidateQueries({
+        queryKey: QUERY_KEYS.cropSeasons.detail(id),
+      });
+      await qc.invalidateQueries({
+        queryKey: ["crop-seasons", "zone", data.data.zoneId],
+      });
+      await qc.refetchQueries({
+        queryKey: ["crop-seasons", "zone", data.data.zoneId],
+      });
+      toast.success("Cập nhật mùa vụ thành công!");
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message ?? "Cập nhật thất bại");
+    },
+  });
+};
+
+export const useSendProductionRequest = (cropSeasonId: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: SendProductionRequestBodyType) =>
+      cropSeasonService.sendRequest(cropSeasonId, body),
+    onSuccess: async () => {
+      // Invalidate + refetch ngay để UI update trước khi dialog đóng
+      await qc.invalidateQueries({ queryKey: ["crop-seasons"] });
+      await qc.refetchQueries({ queryKey: ["crop-seasons"] });
+      toast.success("Đã gửi yêu cầu phê duyệt lên Owner!");
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message ?? "Gửi yêu cầu thất bại");
+    },
+  });
+};
+
+export const useOwnerListCropSeasons = (
+  zoneId: string,
+  query: ListCropSeasonsQueryType,
+) =>
+  useQuery({
+    queryKey: [...QUERY_KEYS.cropSeasons.listByZone(zoneId, query), "owner"],
+    queryFn: () => cropSeasonService.ownerListByZone(zoneId, query),
+    enabled: !!zoneId,
+  });
+
+export const useOwnerCropSeasonDetail = (id: string) =>
+  useQuery({
+    queryKey: [...QUERY_KEYS.cropSeasons.detail(id), "owner"],
+    queryFn: () => cropSeasonService.ownerDetail(id),
+    enabled: !!id,
+  });
+
+export const useOwnerListRequests = (
+  cropSeasonId: string,
+  query: ListProductionRequestsQueryType,
+) =>
+  useQuery({
+    queryKey: [
+      ...QUERY_KEYS.cropSeasons.requests(cropSeasonId, query),
+      "owner",
+    ],
+    queryFn: () => cropSeasonService.ownerListRequests(cropSeasonId, query),
+    enabled: !!cropSeasonId,
+  });
+
+export const useOwnerRequestDetail = (requestId: string) =>
+  useQuery({
+    queryKey: [...QUERY_KEYS.cropSeasons.requestDetail(requestId), "owner"],
+    queryFn: () => cropSeasonService.ownerRequestDetail(requestId),
+    enabled: !!requestId,
+  });
+
+export const useReplyProductionRequest = (requestId: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: ReplyProductionRequestBodyType) =>
+      cropSeasonService.replyRequest(requestId, body),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["crop-seasons"] });
+      await qc.refetchQueries({ queryKey: ["crop-seasons"] });
+      toast.success("Đã phản hồi yêu cầu thành công!");
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message ?? "Phản hồi thất bại");
+    },
+  });
+};

@@ -24,6 +24,8 @@ import {
 	User,
 	Send,
 	UserRoundPen,
+	Calendar,
+	ContactRound,
 } from "lucide-react";
 import type { SidebarData } from "./types";
 
@@ -71,10 +73,11 @@ export const sidebarData: SidebarData = {
 			url: "/dashboard/admin/iot-templates",
 			icon: SlidersHorizontal,
 		},
+		{ title: "User Management", url: "/dashboard/admin/users", icon: Users },
 		{
-			title: "User Management",
-			url: "/dashboard/admin/users",
-			icon: Users,
+			title: "Farm Management",
+			url: "/dashboard/admin/farms",
+			icon: Building2,
 		},
 		{
 			title: "Profile",
@@ -83,8 +86,13 @@ export const sidebarData: SidebarData = {
 		},
 	],
 
-	// Owner
+	// Owner Navigation
 	navOwner: [
+		{
+			title: "My doctor",
+			url: "/dashboard/owner/my-doctor",
+			icon: ContactRound,
+		},
 		{
 			title: "Dashboard",
 			url: "/dashboard/owner",
@@ -101,10 +109,11 @@ export const sidebarData: SidebarData = {
 			url: "/dashboard/owner/farms",
 			icon: Building2,
 		},
+		{ title: "Zone Management", url: "/dashboard/owner/zones", icon: Map },
 		{
-			title: "Zone Management",
-			url: "/dashboard/owner/zones",
-			icon: Map,
+			title: "Crop Seasons",
+			url: "/dashboard/owner/crop-seasons",
+			icon: Sprout,
 		},
 		{
 			title: "Manager Management",
@@ -121,11 +130,7 @@ export const sidebarData: SidebarData = {
 			url: "/dashboard/owner/analytics",
 			icon: ChartColumnIncreasing,
 		},
-		{
-			title: "AI Insights",
-			url: "/dashboard/owner/ai-insights",
-			icon: Bot,
-		},
+		{ title: "AI Insights", url: "/dashboard/owner/ai-insights", icon: Bot },
 		{
 			title: "Ticket Monitoring",
 			url: "/dashboard/owner/tickets",
@@ -146,14 +151,10 @@ export const sidebarData: SidebarData = {
 			icon: LayoutDashboard,
 			isActive: true,
 		},
+		{ title: "Assigned Zones", url: "/dashboard/manager/zones", icon: Map },
 		{
-			title: "Assigned Zones",
-			url: "/dashboard/manager/zones",
-			icon: Map,
-		},
-		{
-			title: "Season Planning",
-			url: "/dashboard/manager/seasons",
+			title: "Manage Crop Seasons",
+			url: "/dashboard/manager/crop-seasons",
 			icon: Sprout,
 		},
 		{
@@ -171,11 +172,7 @@ export const sidebarData: SidebarData = {
 			url: "/dashboard/manager/progress",
 			icon: FolderKanban,
 		},
-		{
-			title: "Sensor Data",
-			url: "/dashboard/manager/sensors",
-			icon: Activity,
-		},
+		{ title: "Sensor Data", url: "/dashboard/manager/sensors", icon: Activity },
 		{
 			title: "Incident Coordination",
 			url: "/dashboard/manager/incidents",
@@ -205,10 +202,11 @@ export const sidebarData: SidebarData = {
 			url: "/dashboard/doctor/update-profile",
 			icon: User,
 		},
+		{ title: "List request", url: "/dashboard/doctor/my-request", icon: Send },
 		{
-			title: "List request",
-			url: "/dashboard/doctor/my-request",
-			icon: Send,
+			title: "My Assignment",
+			url: "/dashboard/doctor/my-assignments",
+			icon: Calendar,
 		},
 		{
 			title: "Dashboard",
@@ -221,11 +219,7 @@ export const sidebarData: SidebarData = {
 			url: "/dashboard/doctor/assigned-farms",
 			icon: Building2,
 		},
-		{
-			title: "Incident Inbox",
-			url: "/dashboard/doctor/incidents",
-			icon: Bug,
-		},
+		{ title: "Incident Inbox", url: "/dashboard/doctor/incidents", icon: Bug },
 		{
 			title: "Diagnosis & Plans",
 			url: "/dashboard/doctor/treatment-plans",
@@ -262,6 +256,7 @@ export const sidebarData: SidebarData = {
 			icon: UserRoundPen,
 		},
 	],
+
 	navFarmer: [
 		{
 			title: "Notifications",
@@ -277,7 +272,7 @@ export const sidebarData: SidebarData = {
 	navRancher: [
 		{
 			title: "Notifications",
-			url: "/dashboard/farmer/notifications",
+			url: "/dashboard/rancher/notifications",
 			icon: Bell,
 		},
 		{

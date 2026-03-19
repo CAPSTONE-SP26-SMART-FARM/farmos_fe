@@ -8,6 +8,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useLocation } from "react-router";
+import FarmManagement from "./FarmManagement/FarmManagement";
+import OwnerCropSeasonsPage from "./CropSeasons/OwnerCropSeasonsPage";
+import OwnerFarmMemberPage from "./FarmMember/OwnerFarmMemberPage";
+import OwnerZonePage from "./ZoneManagement/OwnerZonePage";
 
 type OwnerView = {
   title: string;
@@ -19,32 +23,63 @@ const ownerViews: Record<string, OwnerView> = {
   dashboard: {
     title: "Owner Dashboard",
     description: "Tổng quan nông trại, sản lượng và trạng thái ticket tư vấn.",
-    highlights: ["Farm Health", "Zone Coverage", "Open Tickets", "Season Yield"],
+    highlights: [
+      "Farm Health",
+      "Zone Coverage",
+      "Open Tickets",
+      "Season Yield",
+    ],
   },
   subscription: {
     title: "Subscription & Billing",
     description: "Quản lý gói dịch vụ, gia hạn và mua thêm doctor tickets.",
-    highlights: ["Current Plan", "Remaining Tickets", "Renewal Date", "Payment Status"],
+    highlights: [
+      "Current Plan",
+      "Remaining Tickets",
+      "Renewal Date",
+      "Payment Status",
+    ],
   },
   farms: {
     title: "Farm Management",
-    description: "Quản lý thông tin nông trại: diện tích, vị trí, thông số vận hành.",
-    highlights: ["Total Farms", "Active Farms", "Sensor Coverage", "Last Update"],
+    description:
+      "Quản lý thông tin nông trại: diện tích, vị trí, thông số vận hành.",
+    highlights: [
+      "Total Farms",
+      "Active Farms",
+      "Sensor Coverage",
+      "Last Update",
+    ],
   },
   zones: {
     title: "Zone Management",
     description: "Tạo và quản lý zone trong từng farm.",
-    highlights: ["Total Zones", "Unassigned Zones", "Active Seasons", "Sensor Alerts"],
+    highlights: [
+      "Total Zones",
+      "Unassigned Zones",
+      "Active Seasons",
+      "Sensor Alerts",
+    ],
   },
   managers: {
     title: "Manager Management",
     description: "Quản lý tài khoản Manager và phân quyền theo vùng.",
-    highlights: ["Total Managers", "Assigned Managers", "Pending Invitations", "Workload Balance"],
+    highlights: [
+      "Total Managers",
+      "Assigned Managers",
+      "Pending Invitations",
+      "Workload Balance",
+    ],
   },
   doctor: {
     title: "Assigned Doctor",
     description: "Theo dõi Doctor phụ trách và trạng thái hỗ trợ hiện tại.",
-    highlights: ["Assigned Doctors", "Open Consultations", "Avg Response", "Closed Tickets"],
+    highlights: [
+      "Assigned Doctors",
+      "Open Consultations",
+      "Avg Response",
+      "Closed Tickets",
+    ],
   },
   analytics: {
     title: "Production Analytics",
@@ -53,8 +88,14 @@ const ownerViews: Record<string, OwnerView> = {
   },
   "ai-insights": {
     title: "AI Insights",
-    description: "Insight AI để giải thích chênh lệch năng suất và đề xuất tối ưu.",
-    highlights: ["Top Insight", "Risk Signals", "Optimization Tips", "Anomaly Notes"],
+    description:
+      "Insight AI để giải thích chênh lệch năng suất và đề xuất tối ưu.",
+    highlights: [
+      "Top Insight",
+      "Risk Signals",
+      "Optimization Tips",
+      "Anomaly Notes",
+    ],
   },
   tickets: {
     title: "Ticket Monitoring",
@@ -71,6 +112,24 @@ const getOwnerSection = (pathname: string) => {
 function OwnerPage() {
   const { pathname } = useLocation();
   const section = getOwnerSection(pathname);
+
+  // Render dedicated components for implemented sections
+  if (section === "farms") {
+    return <FarmManagement />;
+  }
+
+  if (section === "zones") {
+    return <OwnerZonePage />;
+  }
+
+  if (section === "crop-seasons") {
+    return <OwnerCropSeasonsPage />;
+  }
+
+  if (section === "managers") {
+    return <OwnerFarmMemberPage />;
+  }
+
   const view = ownerViews[section] ?? ownerViews.dashboard;
 
   return (
@@ -95,7 +154,9 @@ function OwnerPage() {
               <CardTitle className="text-2xl">--</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-xs text-muted-foreground">UI placeholder for owner metrics.</p>
+              <p className="text-xs text-muted-foreground">
+                UI placeholder for owner metrics.
+              </p>
             </CardContent>
           </Card>
         ))}
@@ -105,7 +166,8 @@ function OwnerPage() {
         <CardHeader>
           <CardTitle>Work Area</CardTitle>
           <CardDescription>
-            Màn hình `{section}` đã sẵn route và khung bố cục để nối dữ liệu thật.
+            Màn hình `{section}` đã sẵn route và khung bố cục để nối dữ liệu
+            thật.
           </CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">

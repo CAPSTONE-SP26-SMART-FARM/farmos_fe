@@ -11,16 +11,19 @@ import { queryClient } from "./lib/queryClient.ts";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 createRoot(document.getElementById("root")!).render(
-	<StrictMode>
-		<ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-			<QueryClientProvider client={queryClient}>
-				<ReactQueryDevtools initialIsOpen={false} />
-				<BrowserRouter>
-					<App />
-					<Toaster />
-					<RefreshToken />
-				</BrowserRouter>
-			</QueryClientProvider>
-		</ThemeProvider>
-	</StrictMode>,
+  <StrictMode>
+    <ThemeProvider
+      defaultTheme="light"
+      storageKey="vite-ui-theme"
+    >
+      <QueryClientProvider client={queryClient}>
+        <ReactQueryDevtools initialIsOpen={false} />
+        <BrowserRouter>
+          <App />
+          <Toaster />
+          <RefreshToken />
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ThemeProvider>
+  </StrictMode>,
 );

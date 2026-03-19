@@ -88,7 +88,7 @@ function DashboardPreviewSection() {
   const [activeChart, setActiveChart] = useState<"1H" | "24H" | "7D">("24H");
 
   return (
-    <section className="py-24 bg-gradient-to-b from-green-50 to-green-100 relative overflow-hidden">
+    <section className="py-24 bg-linear-to-b from-green-50 to-green-100 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 left-0 w-96 h-96 bg-green-200/30 rounded-full blur-3xl" />
