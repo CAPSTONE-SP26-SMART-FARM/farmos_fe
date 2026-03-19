@@ -44,11 +44,7 @@ interface Props {
   onBack: () => void;
 }
 
-const FARM_TYPES = [
-  { value: "cultivation", label: "Cultivation" },
-  { value: "livestock", label: "Livestock" },
-  { value: "mixed", label: "Mixed" },
-] as const;
+const FARM_TYPES = [{ value: "cultivation", label: "Cultivation" }] as const;
 
 const UpdateFarmForm = ({ farm, onBack }: Props) => {
   const [show, setShow] = useState(false);

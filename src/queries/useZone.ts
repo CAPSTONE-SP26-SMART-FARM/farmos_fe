@@ -6,6 +6,11 @@ import type {
   ListZonesQueryType,
   UpdateZoneBodyType,
 } from "@/types/zone";
+import type {
+  AssignBulkManagerBodyType,
+  AssignManagerBodyType,
+  ListZoneManagersQueryType,
+} from "@/schemaValidatation/zoneMember";
 
 export const useOwnerListZones = (farmId: string, query: ListZonesQueryType) =>
   useQuery({
@@ -49,6 +54,78 @@ export const useOwnerUpdateZone = (id: string, farmId: string) => {
       // Invalidate the specific zone detail
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.zones.detail(id),
+      });
+    },
+  });
+};
+
+// ── Zone Member Management Hooks ────────────────────────────
+
+export const useOwnerListZoneManagers = (
+  zoneId: string,
+  query: ListZoneManagersQueryType,
+) =>
+  useQuery({
+    queryKey: QUERY_KEYS.zones.managers.list(
+      zoneId,
+      query as Record<string, unknown>,
+    ),
+    queryFn: () => zoneService.listManagers(zoneId, query),
+    enabled: !!zoneId,
+  });
+
+export const useOwnerAssignManager = (zoneId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: AssignManagerBodyType) =>
+      zoneService.assignManager(zoneId, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.zones.managers.byZone(zoneId),
+      });
+    },
+  });
+};
+
+export const useOwnerAssignBulkManagers = (zoneId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: AssignBulkManagerBodyType) =>
+      zoneService.assignBulkManagers(zoneId, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.zones.managers.byZone(zoneId),
+      });
+    },
+  });
+};
+
+export const useOwnerRemoveZoneManager = (zoneId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (managerId: string) =>
+      zoneService.removeManager(zoneId, managerId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.zones.managers.byZone(zoneId),
+      });
+    },
+  });
+};
+
+export const useOwnerUpdatePrimaryManager = (zoneId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      managerId,
+      isPrimary,
+    }: {
+      managerId: string;
+      isPrimary: boolean;
+    }) => zoneService.updatePrimaryManager(zoneId, managerId, { isPrimary }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.zones.managers.byZone(zoneId),
       });
     },
   });

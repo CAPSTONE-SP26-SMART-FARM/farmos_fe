@@ -16,11 +16,14 @@ import {
   Sprout,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import ZoneManagersSection from "./ZoneManagersSection";
 
 interface Props {
   zone: ZoneType;
   onBack: () => void;
   onEdit: (zone: ZoneType) => void;
+  onAssignManager: (zone: ZoneType) => void;
+  onAssignBulk: (zone: ZoneType) => void;
 }
 
 function formatDate(d: string | null | undefined) {
@@ -70,7 +73,13 @@ const DetailSkeleton = () => (
   </Card>
 );
 
-export default function ZoneDetailPanel({ zone, onBack, onEdit }: Props) {
+export default function ZoneDetailPanel({
+  zone,
+  onBack,
+  onEdit,
+  onAssignManager,
+  onAssignBulk,
+}: Props) {
   const [show, setShow] = useState(false);
 
   const { data, isLoading } = useOwnerGetZoneDetail(zone.id);
@@ -114,9 +123,9 @@ export default function ZoneDetailPanel({ zone, onBack, onEdit }: Props) {
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
-            <Badge className="mb-1">Zone Detail</Badge>
+          <div className="flex items-center justify-center gap-3">
             <h1 className="text-2xl font-bold">{detail.name}</h1>
+            <Badge className="mb-1 flex items-center m-0">Zone Detail</Badge>
           </div>
         </div>
         <Button
@@ -193,6 +202,14 @@ export default function ZoneDetailPanel({ zone, onBack, onEdit }: Props) {
           </CardContent>
         </Card>
       )}
+
+      {/* Zone Managers Section */}
+      <Separator />
+      <ZoneManagersSection
+        zoneId={detail.id}
+        onAssignSingle={() => onAssignManager(detail)}
+        onAssignBulk={() => onAssignBulk(detail)}
+      />
     </div>
   );
 }

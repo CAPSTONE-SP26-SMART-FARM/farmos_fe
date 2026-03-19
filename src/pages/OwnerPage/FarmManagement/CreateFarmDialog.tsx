@@ -43,11 +43,7 @@ interface Props {
   onClose: () => void;
 }
 
-const FARM_TYPES = [
-  { value: "cultivation", label: "Cultivation" },
-  { value: "livestock", label: "Livestock" },
-  { value: "mixed", label: "Mixed" },
-] as const;
+const FARM_TYPES = [{ value: "cultivation", label: "Cultivation" }] as const;
 
 const CreateFarmDialog = ({ open, onClose }: Props) => {
   const form = useForm<CreateFarmBodyType>({

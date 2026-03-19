@@ -2,6 +2,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -19,7 +25,7 @@ import {
 } from "@/components/ui/table";
 import { useOwnerListZones } from "@/queries/useZone";
 import type { ZoneType } from "@/schemaValidatation/zone";
-import { Beef, Eye, Pencil, Plus, Sprout } from "lucide-react";
+import { Beef, Eye, MoreVertical, Pencil, Plus, Sprout } from "lucide-react";
 import { useState } from "react";
 
 interface Props {
@@ -32,7 +38,6 @@ interface Props {
 const ZONE_TYPE_OPTIONS = [
   { value: "all", label: "All Types" },
   { value: "cultivation", label: "Cultivation" },
-  { value: "livestock", label: "Livestock" },
 ] as const;
 
 const ZoneTypeIcon = ({ type }: { type: ZoneType["zoneType"] }) =>
@@ -48,9 +53,7 @@ const ZoneListSection = ({
   onViewZone,
   onEditZone,
 }: Props) => {
-  const [typeFilter, setTypeFilter] = useState<
-    "all" | "cultivation" | "livestock"
-  >("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | "cultivation">("all");
   const [page, setPage] = useState(1);
   const limit = 10;
 
@@ -65,7 +68,7 @@ const ZoneListSection = ({
   const meta = data?.data.meta;
 
   const handleTypeChange = (value: string) => {
-    setTypeFilter(value as "all" | "cultivation" | "livestock");
+    setTypeFilter(value as "all" | "cultivation");
     setPage(1);
   };
 
@@ -117,7 +120,7 @@ const ZoneListSection = ({
                 <TableHead>Type</TableHead>
                 <TableHead>Area (sq.m)</TableHead>
                 <TableHead>Created</TableHead>
-                <TableHead className="text-center">Actions</TableHead>
+                <TableHead className="w-12.5"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -135,8 +138,8 @@ const ZoneListSection = ({
                   <TableCell>
                     <Skeleton className="h-4 w-24" />
                   </TableCell>
-                  <TableCell className="text-center">
-                    <Skeleton className="h-8 w-20 mx-auto" />
+                  <TableCell>
+                    <Skeleton className="h-8 w-8 mx-auto" />
                   </TableCell>
                 </TableRow>
               ))}
@@ -181,7 +184,7 @@ const ZoneListSection = ({
                   <TableHead>Type</TableHead>
                   <TableHead>Area (sq.m)</TableHead>
                   <TableHead>Created</TableHead>
-                  <TableHead className="text-center">Actions</TableHead>
+                  <TableHead className="w-12.5"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -210,28 +213,29 @@ const ZoneListSection = ({
                       {new Date(zone.createdAt).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center justify-center gap-2">
-                        {onViewZone && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
                           <Button
                             variant="ghost"
-                            size="sm"
-                            onClick={() => onViewZone(zone)}
-                            className="gap-1.5"
+                            size="icon"
+                            className="h-8 w-8"
                           >
-                            <Eye className="h-3.5 w-3.5" />
-                            View
+                            <MoreVertical className="h-4 w-4" />
                           </Button>
-                        )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onEditZone(zone)}
-                          className="gap-1.5"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                          Edit
-                        </Button>
-                      </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {onViewZone && (
+                            <DropdownMenuItem onClick={() => onViewZone(zone)}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              View
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem onClick={() => onEditZone(zone)}>
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}

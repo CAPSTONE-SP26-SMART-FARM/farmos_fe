@@ -8,6 +8,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -28,7 +34,7 @@ import type {
   CropSeasonType,
   ProductionStatusNameType,
 } from "@/types/cropSeason";
-import { ArrowLeft, ChevronRight, Layers } from "lucide-react";
+import { ArrowLeft, Eye, Layers, MoreVertical } from "lucide-react";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 
@@ -196,7 +202,7 @@ export default function CropSeasonListPanel({
                       <TableHead>Ngày trồng</TableHead>
                       <TableHead>Thu hoạch dự kiến</TableHead>
                       <TableHead>Trạng thái</TableHead>
-                      <TableHead className="text-right">Chi tiết</TableHead>
+                      <TableHead className="w-12.5"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -219,17 +225,27 @@ export default function CropSeasonListPanel({
                         <TableCell>
                           <StatusBadge status={season.status} />
                         </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onViewDetail(season.id);
-                            }}
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => onViewDetail(season.id)}
+                              >
+                                <Eye className="h-4 w-4 mr-2" />
+                                Xem chi tiết
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))}

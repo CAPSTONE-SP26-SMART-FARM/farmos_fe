@@ -1,6 +1,12 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -22,7 +28,15 @@ import useDebounce from "@/hooks/useDebounce";
 import { useOwnerListFarmMembers } from "@/queries/useOwner";
 import type { FarmMemberResType } from "@/schemaValidatation/farmMember";
 import { format } from "date-fns";
-import { Eye, Search, Tractor, UserCog, UserPlus, Users } from "lucide-react";
+import {
+  Eye,
+  MoreVertical,
+  Search,
+  Tractor,
+  UserCog,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import { useState } from "react";
 
 interface Props {
@@ -130,7 +144,7 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
                 <TableHead>Phone</TableHead>
                 <TableHead>Farm</TableHead>
                 <TableHead>Assigned</TableHead>
-                <TableHead className="text-center">Actions</TableHead>
+                <TableHead className="w-12.5"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -151,8 +165,8 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
                   <TableCell>
                     <Skeleton className="h-4 w-24" />
                   </TableCell>
-                  <TableCell className="text-center">
-                    <Skeleton className="h-8 w-16 mx-auto" />
+                  <TableCell>
+                    <Skeleton className="h-8 w-8 mx-auto" />
                   </TableCell>
                 </TableRow>
               ))}
@@ -197,7 +211,7 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
                   <TableHead>Phone</TableHead>
                   <TableHead>Farm</TableHead>
                   <TableHead>Assigned</TableHead>
-                  <TableHead className="text-center">Actions</TableHead>
+                  <TableHead className="w-12.5"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -232,17 +246,25 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
                       {format(new Date(member.assignedAt), "dd/MM/yyyy")}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center justify-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onViewMember(member)}
-                          className="gap-1.5"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                          View
-                        </Button>
-                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => onViewMember(member)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}

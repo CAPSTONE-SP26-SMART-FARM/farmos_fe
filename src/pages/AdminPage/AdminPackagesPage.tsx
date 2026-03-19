@@ -7,9 +7,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 type PackageStatus = "Active" | "Draft";
@@ -26,7 +33,9 @@ type SubscriptionPackage = {
   updatedAt: string;
 };
 
-const createPackage = (seed?: Partial<SubscriptionPackage>): SubscriptionPackage => ({
+const createPackage = (
+  seed?: Partial<SubscriptionPackage>,
+): SubscriptionPackage => ({
   id: seed?.id ?? crypto.randomUUID(),
   name: seed?.name ?? "",
   durationMonths: seed?.durationMonths ?? 12,
@@ -45,7 +54,8 @@ const initialPackages: SubscriptionPackage[] = [
     iotKits: 10,
     doctorTickets: 20,
     priceVnd: 9_900_000,
-    description: "Goi khoi dong cho nho le voi 1 farm va toi da 10 bo IoT kits.",
+    description:
+      "Goi khoi dong cho nho le voi 1 farm va toi da 10 bo IoT kits.",
     status: "Active",
   }),
   createPackage({
@@ -76,10 +86,12 @@ const formatVnd = (value: number) =>
   }).format(value);
 
 function AdminPackagesPage() {
-  const [packages, setPackages] = useState<SubscriptionPackage[]>(initialPackages);
+  const [packages, setPackages] =
+    useState<SubscriptionPackage[]>(initialPackages);
   const [mode, setMode] = useState<"idle" | "create" | "edit">("idle");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<SubscriptionPackage>(createPackage());
+  const [formData, setFormData] =
+    useState<SubscriptionPackage>(createPackage());
   const [priceInput, setPriceInput] = useState<string>("9990000");
   const [errorMessage, setErrorMessage] = useState("");
   const [confirmState, setConfirmState] = useState<
@@ -186,7 +198,8 @@ function AdminPackagesPage() {
           <Badge className="mb-2">Admin Portal</Badge>
           <h1 className="text-2xl font-bold">Subscription Packages</h1>
           <p className="text-muted-foreground">
-            Quan ly goi dang ky theo thoi luong, so IoT kits, doctor tickets va gia VND.
+            Quan ly goi dang ky theo thoi luong, so IoT kits, doctor tickets va
+            gia VND.
           </p>
         </div>
         <div className="flex gap-2">
@@ -222,7 +235,8 @@ function AdminPackagesPage() {
           <CardHeader>
             <CardTitle>Package List</CardTitle>
             <CardDescription>
-              {packages.length} goi | Tong gia niem yet: {formatVnd(totalRevenueVnd)}
+              {packages.length} goi | Tong gia niem yet:{" "}
+              {formatVnd(totalRevenueVnd)}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -236,12 +250,15 @@ function AdminPackagesPage() {
                     <th className="p-3">Doctor Tickets</th>
                     <th className="p-3">Gia (VND)</th>
                     <th className="p-3">Status</th>
-                    <th className="p-3">Actions</th>
+                    <th className="p-3 w-12.5"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {packages.map((pkg) => (
-                    <tr key={pkg.id} className="border-t">
+                    <tr
+                      key={pkg.id}
+                      className="border-t"
+                    >
                       <td className="p-3">
                         <div className="font-medium">{pkg.name}</div>
                         <div className="text-xs text-muted-foreground">
@@ -253,29 +270,41 @@ function AdminPackagesPage() {
                       <td className="p-3">{pkg.doctorTickets}</td>
                       <td className="p-3">{formatVnd(pkg.priceVnd)}</td>
                       <td className="p-3">
-                        <Badge variant={pkg.status === "Active" ? "default" : "secondary"}>
+                        <Badge
+                          variant={
+                            pkg.status === "Active" ? "default" : "secondary"
+                          }
+                        >
                           {pkg.status}
                         </Badge>
                       </td>
                       <td className="p-3">
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => startEdit(pkg)}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() =>
-                              setConfirmState({ type: "delete", id: pkg.id })
-                            }
-                          >
-                            Delete
-                          </Button>
-                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => startEdit(pkg)}>
+                              <Pencil className="h-4 w-4 mr-2" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() =>
+                                setConfirmState({ type: "delete", id: pkg.id })
+                              }
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </td>
                     </tr>
                   ))}
@@ -292,12 +321,15 @@ function AdminPackagesPage() {
                 {isEditing ? "Cap nhat goi dich vu" : "Tao goi dich vu moi"}
               </CardTitle>
               <CardDescription>
-                Gia se duoc tinh bang VND, phu hop mo hinh subscription trong tai lieu.
+                Gia se duoc tinh bang VND, phu hop mo hinh subscription trong
+                tai lieu.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">Ten goi</p>
+                <p className="text-xs font-medium text-muted-foreground">
+                  Ten goi
+                </p>
                 <Input
                   placeholder="Ten goi (vi du: Starter, Growth...)"
                   value={formData.name}
@@ -327,7 +359,9 @@ function AdminPackagesPage() {
 
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground">So IoT kits</p>
+                  <p className="text-xs font-medium text-muted-foreground">
+                    So IoT kits
+                  </p>
                   <Input
                     type="number"
                     min={0}
@@ -361,7 +395,9 @@ function AdminPackagesPage() {
               </div>
 
               <div className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">Gia (VND)</p>
+                <p className="text-xs font-medium text-muted-foreground">
+                  Gia (VND)
+                </p>
                 <Input
                   placeholder="Gia VND (chi nhap so, vd: 19900000)"
                   value={priceInput}
@@ -380,12 +416,16 @@ function AdminPackagesPage() {
               </div>
 
               <div className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">Trang thai</p>
+                <p className="text-xs font-medium text-muted-foreground">
+                  Trang thai
+                </p>
                 <div className="flex gap-2 text-xs">
                   <Button
                     type="button"
                     size="sm"
-                    variant={formData.status === "Active" ? "default" : "outline"}
+                    variant={
+                      formData.status === "Active" ? "default" : "outline"
+                    }
                     onClick={() =>
                       setFormData((prev) => ({ ...prev, status: "Active" }))
                     }
@@ -395,7 +435,9 @@ function AdminPackagesPage() {
                   <Button
                     type="button"
                     size="sm"
-                    variant={formData.status === "Draft" ? "default" : "outline"}
+                    variant={
+                      formData.status === "Draft" ? "default" : "outline"
+                    }
                     onClick={() =>
                       setFormData((prev) => ({ ...prev, status: "Draft" }))
                     }
@@ -406,7 +448,9 @@ function AdminPackagesPage() {
               </div>
 
               <div className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground">Mo ta</p>
+                <p className="text-xs font-medium text-muted-foreground">
+                  Mo ta
+                </p>
                 <Textarea
                   placeholder="Mo ta ngan ve goi dich vu"
                   value={formData.description}

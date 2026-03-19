@@ -9,7 +9,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 type IotMetric = {
@@ -102,7 +109,9 @@ const initialTemplates: IotTemplate[] = [
 
 function AdminIotTemplatesPage() {
   const [templates, setTemplates] = useState<IotTemplate[]>(initialTemplates);
-  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(
+    null,
+  );
   const [mode, setMode] = useState<"idle" | "create" | "edit">("idle");
   const [formData, setFormData] = useState<IotTemplate>(createTemplate());
   const [errorMessage, setErrorMessage] = useState("");
@@ -170,7 +179,10 @@ function AdminIotTemplatesPage() {
   };
 
   const addMetricRow = () => {
-    setFormData((prev) => ({ ...prev, metrics: [...prev.metrics, createMetric()] }));
+    setFormData((prev) => ({
+      ...prev,
+      metrics: [...prev.metrics, createMetric()],
+    }));
   };
 
   const removeMetricRow = (metricId: string) => {
@@ -183,7 +195,11 @@ function AdminIotTemplatesPage() {
     }));
   };
 
-  const updateMetric = (metricId: string, field: keyof IotMetric, value: string) => {
+  const updateMetric = (
+    metricId: string,
+    field: keyof IotMetric,
+    value: string,
+  ) => {
     setFormData((prev) => ({
       ...prev,
       metrics: prev.metrics.map((metric) =>
@@ -195,7 +211,8 @@ function AdminIotTemplatesPage() {
   const validateForm = () => {
     if (!formData.templateName.trim()) return "Vui long nhap ten template.";
     if (!formData.cropName.trim()) return "Vui long nhap ten cay trong.";
-    if (!formData.growthStage.trim()) return "Vui long nhap giai doan sinh truong.";
+    if (!formData.growthStage.trim())
+      return "Vui long nhap giai doan sinh truong.";
     if (!formData.metrics.length) return "Can it nhat 1 chi so IoT.";
 
     const invalidMetric = formData.metrics.find(
@@ -352,35 +369,52 @@ function AdminIotTemplatesPage() {
           <CardContent className="space-y-4">
             <div className="grid gap-3 md:grid-cols-2">
               {paginatedTemplates.map((template) => (
-                <div key={template.id} className="rounded-md border p-3">
-                  <p className="font-medium">{template.templateName}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {template.cropName} - {template.growthStage}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {template.metrics.length} chi so | Updated{" "}
-                    {new Date(template.updatedAt).toLocaleDateString()}
-                  </p>
-                  <div className="mt-2 flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => startEditTemplate(template)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() =>
-                        setConfirmState({
-                          type: "delete",
-                          templateId: template.id,
-                        })
-                      }
-                    >
-                      Delete
-                    </Button>
+                <div
+                  key={template.id}
+                  className="rounded-md border p-3"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-medium">{template.templateName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {template.cropName} - {template.growthStage}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {template.metrics.length} chi so | Updated{" "}
+                        {new Date(template.updatedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => startEditTemplate(template)}
+                        >
+                          <Pencil className="h-4 w-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() =>
+                            setConfirmState({
+                              type: "delete",
+                              templateId: template.id,
+                            })
+                          }
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               ))}
@@ -423,8 +457,8 @@ function AdminIotTemplatesPage() {
                 {isEditing ? "Cap nhat Template" : "Tao Template moi"}
               </CardTitle>
               <CardDescription>
-                Admin co the CRUD template va CRUD tung chi so trong template mot
-                cach linh hoat.
+                Admin co the CRUD template va CRUD tung chi so trong template
+                mot cach linh hoat.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -498,14 +532,23 @@ function AdminIotTemplatesPage() {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium">Danh sach chi so (dynamic)</p>
-                  <Button size="sm" variant="outline" onClick={addMetricRow}>
+                  <p className="text-sm font-medium">
+                    Danh sach chi so (dynamic)
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={addMetricRow}
+                  >
                     Add metric
                   </Button>
                 </div>
 
                 {formData.metrics.map((metric, index) => (
-                  <div key={metric.id} className="rounded-md border p-3">
+                  <div
+                    key={metric.id}
+                    className="rounded-md border p-3"
+                  >
                     <div className="mb-3 flex items-center justify-between">
                       <p className="text-sm font-medium">Chi so #{index + 1}</p>
                       <Button

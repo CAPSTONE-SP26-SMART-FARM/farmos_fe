@@ -45,10 +45,7 @@ interface Props {
   onBack: () => void;
 }
 
-const ZONE_TYPES = [
-  { value: "cultivation", label: "Cultivation" },
-  { value: "livestock", label: "Livestock" },
-] as const;
+const ZONE_TYPES = [{ value: "cultivation", label: "Cultivation" }] as const;
 
 const EditZonePanel = ({ zone, farmId, onBack }: Props) => {
   const [show, setShow] = useState(false);

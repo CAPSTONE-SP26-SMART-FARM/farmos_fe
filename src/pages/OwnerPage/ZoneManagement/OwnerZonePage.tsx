@@ -11,6 +11,8 @@ import { useOwnerGetMyFarm } from "@/queries/useOwner";
 import type { ZoneType } from "@/schemaValidatation/zone";
 import { Building2, Layers, Sprout, Beef, MapPin } from "lucide-react";
 import { useState } from "react";
+import AssignBulkManagerPanel from "./components/AssignBulkManagerPanel";
+import AssignManagerPanel from "./components/AssignManagerPanel";
 import CreateZonePanel from "./components/CreateZonePanel";
 import EditZonePanel from "./components/EditZonePanel";
 import ZoneDetailPanel from "./components/ZoneDetailPanel";
@@ -27,6 +29,10 @@ function OwnerZonePage() {
   const [showCreate, setShowCreate] = useState(false);
   const [viewingZone, setViewingZone] = useState<ZoneType | null>(null);
   const [editingZone, setEditingZone] = useState<ZoneType | null>(null);
+  const [assigningZone, setAssigningZone] = useState<ZoneType | null>(null);
+  const [bulkAssigningZone, setBulkAssigningZone] = useState<ZoneType | null>(
+    null,
+  );
 
   const { data, isLoading, isError } = useOwnerGetMyFarm();
   const farm = data?.data;
@@ -41,6 +47,36 @@ function OwnerZonePage() {
     );
   }
 
+  if (assigningZone && farm) {
+    return (
+      <AssignManagerPanel
+        zoneId={assigningZone.id}
+        farmId={farm.id}
+        zoneName={assigningZone.name}
+        onBack={() => {
+          const zone = assigningZone;
+          setAssigningZone(null);
+          setViewingZone(zone);
+        }}
+      />
+    );
+  }
+
+  if (bulkAssigningZone && farm) {
+    return (
+      <AssignBulkManagerPanel
+        zoneId={bulkAssigningZone.id}
+        farmId={farm.id}
+        zoneName={bulkAssigningZone.name}
+        onBack={() => {
+          const zone = bulkAssigningZone;
+          setBulkAssigningZone(null);
+          setViewingZone(zone);
+        }}
+      />
+    );
+  }
+
   if (viewingZone && farm) {
     return (
       <ZoneDetailPanel
@@ -49,6 +85,14 @@ function OwnerZonePage() {
         onEdit={(zone) => {
           setViewingZone(null);
           setEditingZone(zone);
+        }}
+        onAssignManager={(zone) => {
+          setViewingZone(null);
+          setAssigningZone(zone);
+        }}
+        onAssignBulk={(zone) => {
+          setViewingZone(null);
+          setBulkAssigningZone(zone);
         }}
       />
     );

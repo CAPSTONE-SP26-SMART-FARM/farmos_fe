@@ -7,6 +7,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import {
   Select,
@@ -32,9 +38,10 @@ import type { ProductionRequestType } from "@/types/cropSeason";
 import {
   ArrowLeft,
   Calendar,
-  ChevronRight,
   ClipboardList,
+  Eye,
   Layers,
+  MoreVertical,
   Ruler,
   Sprout,
 } from "lucide-react";
@@ -366,7 +373,7 @@ export default function CropSeasonDetailPanel({
                           <TableHead>Trạng thái</TableHead>
                           <TableHead>Ngày phản hồi</TableHead>
                           <TableHead className="max-w-50">Mô tả</TableHead>
-                          <TableHead className="text-right">Chi tiết</TableHead>
+                          <TableHead className="w-12.5"></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -393,17 +400,27 @@ export default function CropSeasonDetailPanel({
                               <TableCell className="text-sm max-w-50 truncate text-muted-foreground">
                                 {req.description ?? "—"}
                               </TableCell>
-                              <TableCell className="text-right">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onViewRequest(req.id);
-                                  }}
-                                >
-                                  <ChevronRight className="h-4 w-4" />
-                                </Button>
+                              <TableCell>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                      onClick={() => onViewRequest(req.id)}
+                                    >
+                                      <Eye className="h-4 w-4 mr-2" />
+                                      Xem chi tiết
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               </TableCell>
                             </TableRow>
                           );
