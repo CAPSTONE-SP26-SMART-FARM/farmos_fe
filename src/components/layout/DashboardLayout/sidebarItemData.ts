@@ -23,6 +23,8 @@ import {
 	FileText,
 	User,
 	Send,
+	Calendar,
+	ContactRound,
 } from "lucide-react";
 import type { SidebarData } from "./types";
 
@@ -79,6 +81,11 @@ export const sidebarData: SidebarData = {
 
 	// Owner
 	navOwner: [
+		{
+			title: "My doctor",
+			url: "/dashboard/owner/my-doctor",
+			icon: ContactRound,
+		},
 		{
 			title: "Dashboard",
 			url: "/dashboard/owner",
@@ -193,6 +200,11 @@ export const sidebarData: SidebarData = {
 			title: "List request",
 			url: "/dashboard/doctor/my-request",
 			icon: Send,
+		},
+		{
+			title: "My Assignment",
+			url: "/dashboard/doctor/my-assignments",
+			icon: Calendar,
 		},
 		{
 			title: "Dashboard",

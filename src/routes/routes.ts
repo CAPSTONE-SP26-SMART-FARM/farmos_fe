@@ -20,6 +20,8 @@ import DashboardLayout from "@/components/layout/DashboardLayout/DashboardLayout
 import UpsertProfile from "@/pages/DoctorPage/UpsertProfile/UpsertProfile";
 import ListRequest from "@/pages/DoctorPage/ListRequest/ListRequest";
 import ListRequestAdmin from "@/pages/AdminPage/RequestDoctor/ListRequest";
+import DoctorAssignmentsPage from "@/pages/DoctorPage/Assignment/DoctorAssignmentsPage";
+import OwnerMyDoctorsPage from "@/pages/OwnerPage/MyDoctor/OwnerMyDoctorsPage";
 
 const routes: AppRoutes = [
 	{
@@ -110,6 +112,11 @@ const routes: AppRoutes = [
 				allowedRoles: ["Owner"],
 			},
 			{
+				path: "/dashboard/owner/my-doctor",
+				component: OwnerMyDoctorsPage,
+				allowedRoles: ["Owner"],
+			},
+			{
 				path: "/dashboard/owner/*",
 				component: OwnerPage,
 				allowedRoles: ["Owner"],
@@ -154,6 +161,11 @@ const routes: AppRoutes = [
 			{
 				path: "/dashboard/doctor/my-request",
 				component: ListRequest,
+				allowedRoles: ["Doctor"],
+			},
+			{
+				path: "/dashboard/doctor/my-assignments",
+				component: DoctorAssignmentsPage,
 				allowedRoles: ["Doctor"],
 			},
 		],

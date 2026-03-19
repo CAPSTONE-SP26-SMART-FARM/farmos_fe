@@ -45,9 +45,13 @@ export const useAdminChangeStatusDoctorRequest = () => {
 };
 
 export const useAdminAsignDoctor = () => {
+	const qc = useQueryClient();
 	return useMutation({
 		mutationFn: (data: CreateAssignmentBodyType) =>
 			adminService.assignDoctor(data),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["admin-doctor-assignment"] });
+		},
 	});
 };
 
@@ -64,5 +68,6 @@ export const useAdminDoctorAssginmentDetail = (id: string) => {
 	return useQuery({
 		queryKey: ["admin-doctor-assignment", id],
 		queryFn: () => adminService.detailDoctorAssignment(id),
+		enabled: Boolean(id),
 	});
 };

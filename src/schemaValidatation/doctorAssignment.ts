@@ -1,11 +1,11 @@
 import { z } from "zod";
 import { UserResSchema } from "@/types/user";
-import { PagingRequestSchema, PagingResponseSchema } from "src/types/api";
+import { PagingRequestSchema, PagingResponseSchema } from "@/types/api";
 // ============================================================
 // DoctorOwnerAssignment — maps to table doctor_owner_assignments
 // ============================================================
 export const DoctorOwnerAssignmentSchema = z.object({
-	id: z.uuid(),
+	id: z.string(),
 	doctorId: z.uuid(),
 	ownerId: z.uuid(),
 	assignedBy: z.uuid(),
@@ -25,7 +25,7 @@ export const CreateAssignmentBodySchema = z
 		doctorId: z.uuid(),
 		ownerId: z.uuid(),
 		isPrimary: z.boolean().optional().default(true),
-		notes: z.string().optional(),
+		notes: z.string().optional().default(""),
 	})
 	.strict();
 
