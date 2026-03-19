@@ -25,6 +25,7 @@ import ListRequestAdmin from "@/pages/AdminPage/RequestDoctor/ListRequest";
 import Profile from "@/pages/Profile/Profile";
 import DoctorAssignmentsPage from "@/pages/DoctorPage/Assignment/DoctorAssignmentsPage";
 import OwnerMyDoctorsPage from "@/pages/OwnerPage/MyDoctor/OwnerMyDoctorsPage";
+import { RoleName } from "@/constants/role";
 
 const routes: AppRoutes = [
 	{
@@ -47,57 +48,57 @@ const routes: AppRoutes = [
 			{
 				path: "/dashboard/admin",
 				component: AdminDashboardPage,
-				allowedRoles: ["admin"],
+				allowedRoles: [RoleName.Admin],
 			},
 			{
 				path: "/dashboard/admin/packages",
 				component: AdminPackagesPage,
-				allowedRoles: ["admin"],
+				allowedRoles: [RoleName.Admin],
 			},
 			{
 				path: "/dashboard/admin/doctor-applications",
 				component: AdminDoctorApplicationsPage,
-				allowedRoles: ["admin"],
+				allowedRoles: [RoleName.Admin],
 			},
 			{
 				path: "/dashboard/admin/doctor-assignment",
 				component: AdminDoctorAssignmentPage,
-				allowedRoles: ["admin"],
+				allowedRoles: [RoleName.Admin],
 			},
 			{
 				path: "/dashboard/admin/doctor-performance",
 				component: AdminDoctorPerformancePage,
-				allowedRoles: ["admin"],
+				allowedRoles: [RoleName.Admin],
 			},
 			{
 				path: "/dashboard/admin/ticket-analytics",
 				component: AdminTicketAnalyticsPage,
-				allowedRoles: ["admin"],
+				allowedRoles: [RoleName.Admin],
 			},
 			{
 				path: "/dashboard/admin/iot-templates",
 				component: AdminIotTemplatesPage,
-				allowedRoles: ["admin"],
+				allowedRoles: [RoleName.Admin],
 			},
 			{
 				path: "/dashboard/admin/users",
 				component: AdminUsersPage,
-				allowedRoles: ["admin"],
+				allowedRoles: [RoleName.Admin],
 			},
 			{
 				path: "/dashboard/admin/farms",
 				component: AdminFarmsPage,
-				allowedRoles: ["admin"],
+				allowedRoles: [RoleName.Admin],
 			},
 			{
 				path: "/dashboard/admin/doctor-requests",
 				component: ListRequestAdmin,
-				allowedRoles: ["admin"],
+				allowedRoles: [RoleName.Admin],
 			},
 			{
 				path: "/dashboard/admin/profile",
 				component: Profile,
-				allowedRoles: ["Admin"],
+				allowedRoles: [RoleName.Admin],
 			},
 		],
 	},
@@ -108,22 +109,22 @@ const routes: AppRoutes = [
 			{
 				path: "/dashboard/owner",
 				component: OwnerPage,
-				allowedRoles: ["owner"],
+				allowedRoles: [RoleName.Owner],
 			},
 			{
 				path: "/dashboard/owner/my-doctor",
 				component: OwnerMyDoctorsPage,
-				allowedRoles: ["owner"],
+				allowedRoles: [RoleName.Owner],
 			},
 			{
 				path: "/dashboard/owner/*",
 				component: OwnerPage,
-				allowedRoles: ["owner"],
+				allowedRoles: [RoleName.Owner],
 			},
 			{
 				path: "/dashboard/owner/profile",
 				component: Profile,
-				allowedRoles: ["Owner"],
+				allowedRoles: [RoleName.Owner],
 			},
 		],
 	},
@@ -134,22 +135,22 @@ const routes: AppRoutes = [
 			{
 				path: "/dashboard/manager",
 				component: ManagerPage,
-				allowedRoles: ["manager"],
+				allowedRoles: [RoleName.Manager],
 			},
 			{
 				path: "/dashboard/manager/crop-seasons",
 				component: ManagerCropSeasonsPage,
-				allowedRoles: ["manager"],
+				allowedRoles: [RoleName.Manager],
 			},
 			{
 				path: "/dashboard/manager/*",
 				component: ManagerPage,
-				allowedRoles: ["manager"],
+				allowedRoles: [RoleName.Manager],
 			},
 			{
 				path: "/dashboard/manager/profile",
 				component: Profile,
-				allowedRoles: ["Manager"],
+				allowedRoles: [RoleName.Manager],
 			},
 		],
 	},
@@ -160,32 +161,32 @@ const routes: AppRoutes = [
 			{
 				path: "/dashboard/doctor",
 				component: DoctorPage,
-				allowedRoles: ["doctor"],
+				allowedRoles: [RoleName.Doctor],
 			},
 			{
 				path: "/dashboard/doctor/update-profile",
 				component: UpsertProfile,
-				allowedRoles: ["doctor"],
+				allowedRoles: [RoleName.Doctor],
 			},
 			{
 				path: "/dashboard/doctor/my-request",
 				component: ListRequest,
-				allowedRoles: ["doctor"],
+				allowedRoles: [RoleName.Doctor],
 			},
 			{
 				path: "/dashboard/doctor/*",
 				component: DoctorPage,
-				allowedRoles: ["doctor"],
+				allowedRoles: [RoleName.Doctor],
 			},
 			{
 				path: "/dashboard/doctor/my-assignments",
 				component: DoctorAssignmentsPage,
-				allowedRoles: ["doctor"],
+				allowedRoles: [RoleName.Doctor],
 			},
 			{
 				path: "/dashboard/doctor/profile",
 				component: Profile,
-				allowedRoles: ["Doctor"],
+				allowedRoles: [RoleName.Doctor],
 			},
 		],
 	},
