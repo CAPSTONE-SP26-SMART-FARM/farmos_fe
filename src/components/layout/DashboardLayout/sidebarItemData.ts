@@ -1,30 +1,4 @@
 import {
-	Shield,
-	LayoutDashboard,
-	Package,
-	Ticket,
-	ChartColumnIncreasing,
-	SlidersHorizontal,
-	UserCheck,
-	Building2,
-	Users,
-	Bell,
-	Activity,
-	BookOpen,
-	Bug,
-	Stethoscope,
-	Pill,
-	Sprout,
-	Map,
-	Bot,
-	Settings,
-	ClipboardList,
-	FolderKanban,
-	FileText,
-	User,
-	Send,
-	Calendar,
-	ContactRound,
   Shield,
   LayoutDashboard,
   Package,
@@ -104,60 +78,6 @@ export const sidebarData: SidebarData = {
     },
   ],
 
-	// Owner
-	navOwner: [
-		{
-			title: "My doctor",
-			url: "/dashboard/owner/my-doctor",
-			icon: ContactRound,
-		},
-		{
-			title: "Dashboard",
-			url: "/dashboard/owner",
-			icon: LayoutDashboard,
-			isActive: true,
-		},
-		{
-			title: "Subscription",
-			url: "/dashboard/owner/subscription",
-			icon: Package,
-		},
-		{
-			title: "Farm Management",
-			url: "/dashboard/owner/farms",
-			icon: Building2,
-		},
-		{
-			title: "Zone Management",
-			url: "/dashboard/owner/zones",
-			icon: Map,
-		},
-		{
-			title: "Manager Management",
-			url: "/dashboard/owner/managers",
-			icon: Users,
-		},
-		{
-			title: "Assigned Doctor",
-			url: "/dashboard/owner/doctor",
-			icon: Stethoscope,
-		},
-		{
-			title: "Production Analytics",
-			url: "/dashboard/owner/analytics",
-			icon: ChartColumnIncreasing,
-		},
-		{
-			title: "AI Insights",
-			url: "/dashboard/owner/ai-insights",
-			icon: Bot,
-		},
-		{
-			title: "Ticket Monitoring",
-			url: "/dashboard/owner/tickets",
-			icon: Ticket,
-		},
-	],
   // Owner Navigation
   navOwner: [
     {
@@ -247,84 +167,6 @@ export const sidebarData: SidebarData = {
     },
   ],
 
-	// Doctor Navigation
-	navDoctor: [
-		{
-			title: "Update profile",
-			url: "/dashboard/doctor/update-profile",
-			icon: User,
-		},
-		{
-			title: "List request",
-			url: "/dashboard/doctor/my-request",
-			icon: Send,
-		},
-		{
-			title: "My Assignment",
-			url: "/dashboard/doctor/my-assignments",
-			icon: Calendar,
-		},
-		{
-			title: "Dashboard",
-			url: "/dashboard/doctor",
-			icon: LayoutDashboard,
-			isActive: true,
-		},
-		{
-			title: "Assigned Farms",
-			url: "/dashboard/doctor/assigned-farms",
-			icon: Building2,
-		},
-		{
-			title: "Incident Inbox",
-			url: "/dashboard/doctor/incidents",
-			icon: Bug,
-		},
-		{
-			title: "Diagnosis & Plans",
-			url: "/dashboard/doctor/treatment-plans",
-			icon: Pill,
-		},
-		{
-			title: "Treatment Tracking",
-			url: "/dashboard/doctor/treatment-tracking",
-			icon: Activity,
-		},
-		{
-			title: "Ticket History",
-			url: "/dashboard/doctor/ticket-history",
-			icon: Ticket,
-		},
-		{
-			title: "Knowledge Base",
-			url: "/dashboard/doctor/knowledge-base",
-			icon: BookOpen,
-		},
-		{
-			title: "Notifications",
-			url: "/dashboard/doctor/notifications",
-			icon: Bell,
-		},
-		{
-			title: "Reports & Statistics",
-			url: "/dashboard/doctor/reports",
-			icon: ChartColumnIncreasing,
-		},
-	],
-	navFarmer: [
-		{
-			title: "Notifications",
-			url: "/dashboard/farmer/notifications",
-			icon: Bell,
-		},
-	],
-	navRancher: [
-		{
-			title: "Notifications",
-			url: "/dashboard/farmer/notifications",
-			icon: Bell,
-		},
-	],
   // Doctor Navigation
   navDoctor: [
     {
