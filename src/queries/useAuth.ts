@@ -164,7 +164,11 @@ export const useTwoFactorDisable = () => {
 };
 
 export const useUpdateProfile = () => {
+	const qc = useQueryClient();
 	return useMutation({
 		mutationFn: (data: UpdateProfileType) => authService.updateProfile(data),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: QUERY_KEYS.auth.user() });
+		},
 	});
 };
