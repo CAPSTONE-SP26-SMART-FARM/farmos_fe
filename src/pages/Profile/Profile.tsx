@@ -14,7 +14,7 @@ import {
 	FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { useUpdateProfile } from "@/queries/useAuth";
+import { useCurrentUser, useUpdateProfile } from "@/queries/useAuth";
 import {
 	UpdateProfileSchema,
 	type UpdateProfileType,
@@ -22,13 +22,14 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import envConfig from "@/config";
 
 const Profile = () => {
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
 	const [uploading, setUploading] = useState(false);
 	const [file, setFile] = useState<File | null>(null);
+	const didInitFromMeRef = useRef(false);
 
 	const form = useForm<UpdateProfileType>({
 		resolver: zodResolver(UpdateProfileSchema),
@@ -39,6 +40,21 @@ const Profile = () => {
 		},
 	});
 	const { mutateAsync: update, isPending } = useUpdateProfile();
+	const meQuery = useCurrentUser();
+
+	useEffect(() => {
+		const me = meQuery.data;
+		if (!me) return;
+		if (didInitFromMeRef.current) return;
+		if (form.formState.isDirty) return;
+
+		form.reset({
+			avatarUrl: me.avatarUrl ?? null,
+			fullName: me.fullName ?? "",
+			phone: me.phone ?? "",
+		});
+		didInitFromMeRef.current = true;
+	}, [meQuery.data, form]);
 
 	const avatar = form.watch("avatarUrl");
 	const previewAvatarFromFile = useMemo(() => {
