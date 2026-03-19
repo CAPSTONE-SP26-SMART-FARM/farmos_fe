@@ -1,6 +1,11 @@
+import { QUERY_KEYS } from "@/constants/endpoints";
 import type { ListAssignmentsQueryType } from "@/schemaValidatation/doctorAssignment";
+import type {
+  CreateFarmBodyType,
+  UpdateFarmBodyType,
+} from "@/schemaValidatation/farmManagement";
 import ownerService from "@/services/ownerService";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const useOwnerGetListDoctor = (query: ListAssignmentsQueryType) => {
 	return useQuery({

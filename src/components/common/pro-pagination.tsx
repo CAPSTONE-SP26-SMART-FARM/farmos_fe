@@ -1,12 +1,12 @@
 import type { To } from "react-router";
 import {
-	Pagination,
-	PaginationContent,
-	PaginationEllipsis,
-	PaginationItem,
-	PaginationLink,
-	PaginationNext,
-	PaginationPrevious,
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
 } from "../ui/pagination";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -14,10 +14,10 @@ import usePaginateRange from "@/hooks/usePaginateRange";
 import { Button } from "../ui/button";
 
 interface Props<T extends Record<string, any> = Record<string, any>> {
-	queryConfig?: T;
-	totalPages: number;
-	currentPage: number;
-	buildHref: (page: number | undefined | null) => To;
+  queryConfig?: T;
+  totalPages: number;
+  currentPage: number;
+  buildHref: (page: number | undefined | null) => To;
 }
 
 const ProPagination = ({

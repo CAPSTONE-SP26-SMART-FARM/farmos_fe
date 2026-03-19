@@ -141,7 +141,7 @@ function FeaturesSection() {
 
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
             Mọi thứ bạn cần
-            <span className="block bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+            <span className="block bg-linear-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
               trong một nền tảng
             </span>
           </h2>
@@ -181,15 +181,15 @@ function FeaturesSection() {
                     }`}
                   />
                   <div
-                    className={`absolute inset-0 bg-gradient-to-t ${feature.gradient} mix-blend-multiply opacity-80`}
+                    className={`absolute inset-0 bg-linear-to-t ${feature.gradient} mix-blend-multiply opacity-80`}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
                 </div>
 
                 {/* Content */}
                 <div
                   className={`relative h-full flex flex-col justify-between ${
-                    isLarge ? "p-8 min-h-[400px]" : "p-6 min-h-[240px]"
+                    isLarge ? "p-8 min-h-100" : "p-6 min-h-60"
                   }`}
                 >
                   {/* Top */}
