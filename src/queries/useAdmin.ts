@@ -47,10 +47,14 @@ export const useAdminChangeStatusDoctorRequest = () => {
 };
 
 export const useAdminAsignDoctor = () => {
-  return useMutation({
-    mutationFn: (data: CreateAssignmentBodyType) =>
-      adminService.assignDoctor(data),
-  });
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: (data: CreateAssignmentBodyType) =>
+			adminService.assignDoctor(data),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["admin-doctor-assignment"] });
+		},
+	});
 };
 
 export const useAdminListDoctorAssignment = (
@@ -63,23 +67,9 @@ export const useAdminListDoctorAssignment = (
 };
 
 export const useAdminDoctorAssginmentDetail = (id: string) => {
-  return useQuery({
-    queryKey: ["admin-doctor-assignment", id],
-    queryFn: () => adminService.detailDoctorAssignment(id),
-  });
-};
-
-export const useAdminListFarms = (query: ListFarmsQueryType) => {
-  return useQuery({
-    queryKey: QUERY_KEYS.admin.farms.list(query),
-    queryFn: () => adminService.listFarms(query),
-  });
-};
-
-export const useAdminFarmDetail = (id: string, enabled: boolean) => {
-  return useQuery({
-    queryKey: QUERY_KEYS.admin.farms.detail(id),
-    queryFn: () => adminService.farmDetail(id),
-    enabled,
-  });
+	return useQuery({
+		queryKey: ["admin-doctor-assignment", id],
+		queryFn: () => adminService.detailDoctorAssignment(id),
+		enabled: Boolean(id),
+	});
 };

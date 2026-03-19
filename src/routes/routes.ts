@@ -22,8 +22,156 @@ import DashboardLayout from "@/components/layout/DashboardLayout/DashboardLayout
 import UpsertProfile from "@/pages/DoctorPage/UpsertProfile/UpsertProfile";
 import ListRequest from "@/pages/DoctorPage/ListRequest/ListRequest";
 import ListRequestAdmin from "@/pages/AdminPage/RequestDoctor/ListRequest";
+import DoctorAssignmentsPage from "@/pages/DoctorPage/Assignment/DoctorAssignmentsPage";
+import OwnerMyDoctorsPage from "@/pages/OwnerPage/MyDoctor/OwnerMyDoctorsPage";
 
 const routes: AppRoutes = [
+	{
+		layout: MainLayout,
+		children: [
+			{
+				path: "/",
+				component: HomePage,
+			},
+		],
+	},
+	{
+		layout: SimpleLayout,
+		isRestricted: true,
+		children: [
+			{
+				path: "/login",
+				component: LoginPage,
+			},
+			{
+				path: "/register",
+				component: RegisterPage,
+			},
+			{
+				path: "/forgot-password",
+				component: ForgotPasswordPage,
+			},
+		],
+	},
+	// Admin Dashboard Routes
+	{
+		layout: DashboardLayout,
+		children: [
+			{
+				path: "/dashboard/admin",
+				component: AdminDashboardPage,
+				allowedRoles: ["Admin"],
+			},
+			{
+				path: "/dashboard/admin/packages",
+				component: AdminPackagesPage,
+				allowedRoles: ["Admin"],
+			},
+			{
+				path: "/dashboard/admin/doctor-applications",
+				component: AdminDoctorApplicationsPage,
+				allowedRoles: ["Admin"],
+			},
+			{
+				path: "/dashboard/admin/doctor-assignment",
+				component: AdminDoctorAssignmentPage,
+				allowedRoles: ["Admin"],
+			},
+			{
+				path: "/dashboard/admin/doctor-performance",
+				component: AdminDoctorPerformancePage,
+				allowedRoles: ["Admin"],
+			},
+			{
+				path: "/dashboard/admin/ticket-analytics",
+				component: AdminTicketAnalyticsPage,
+				allowedRoles: ["Admin"],
+			},
+			{
+				path: "/dashboard/admin/iot-templates",
+				component: AdminIotTemplatesPage,
+				allowedRoles: ["Admin"],
+			},
+			{
+				path: "/dashboard/admin/users",
+				component: AdminUsersPage,
+				allowedRoles: ["Admin"],
+			},
+			{
+				path: "/dashboard/admin/doctor-requests",
+				component: ListRequestAdmin,
+				allowedRoles: ["Admin"],
+			},
+		],
+	},
+	// Owner Dashboard Routes
+	{
+		layout: DashboardLayout,
+		children: [
+			{
+				path: "/dashboard/owner",
+				component: OwnerPage,
+				allowedRoles: ["Owner"],
+			},
+			{
+				path: "/dashboard/owner/my-doctor",
+				component: OwnerMyDoctorsPage,
+				allowedRoles: ["Owner"],
+			},
+			{
+				path: "/dashboard/owner/*",
+				component: OwnerPage,
+				allowedRoles: ["Owner"],
+			},
+		],
+	},
+	// Manager Dashboard Routes
+	{
+		layout: DashboardLayout,
+		children: [
+			{
+				path: "/dashboard/manager",
+				component: ManagerPage,
+				allowedRoles: ["Manager"],
+			},
+			{
+				path: "/dashboard/manager/*",
+				component: ManagerPage,
+				allowedRoles: ["Manager"],
+			},
+		],
+	},
+	// Doctor Dashboard Routes
+	{
+		layout: DashboardLayout,
+		children: [
+			{
+				path: "/dashboard/doctor",
+				component: DoctorPage,
+				allowedRoles: ["Doctor"],
+			},
+			{
+				path: "/dashboard/doctor/*",
+				component: DoctorPage,
+				allowedRoles: ["Doctor"],
+			},
+			{
+				path: "/dashboard/doctor/update-profile",
+				component: UpsertProfile,
+				allowedRoles: ["Doctor"],
+			},
+			{
+				path: "/dashboard/doctor/my-request",
+				component: ListRequest,
+				allowedRoles: ["Doctor"],
+			},
+			{
+				path: "/dashboard/doctor/my-assignments",
+				component: DoctorAssignmentsPage,
+				allowedRoles: ["Doctor"],
+			},
+		],
+	},
   {
     layout: MainLayout,
     children: [{ path: "/", component: HomePage }],
