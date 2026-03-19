@@ -23,6 +23,7 @@ import {
 	FileText,
 	User,
 	Send,
+	UserRoundPen,
 	Calendar,
 	ContactRound,
 } from "lucide-react";
@@ -78,6 +79,11 @@ export const sidebarData: SidebarData = {
 			url: "/dashboard/admin/farms",
 			icon: Building2,
 		},
+		{
+			title: "Profile",
+			url: "/dashboard/admin/profile",
+			icon: UserRoundPen,
+		},
 	],
 
 	// Owner Navigation
@@ -130,6 +136,11 @@ export const sidebarData: SidebarData = {
 			url: "/dashboard/owner/tickets",
 			icon: Ticket,
 		},
+		{
+			title: "Profile",
+			url: "/dashboard/owner/profile",
+			icon: UserRoundPen,
+		},
 	],
 
 	// Manager Navigation
@@ -176,6 +187,11 @@ export const sidebarData: SidebarData = {
 			title: "Notifications",
 			url: "/dashboard/manager/notifications",
 			icon: Bell,
+		},
+		{
+			title: "Profile",
+			url: "/dashboard/manager/profile",
+			icon: UserRoundPen,
 		},
 	],
 
@@ -234,6 +250,11 @@ export const sidebarData: SidebarData = {
 			url: "/dashboard/doctor/reports",
 			icon: ChartColumnIncreasing,
 		},
+		{
+			title: "Profile",
+			url: "/dashboard/doctor/profile",
+			icon: UserRoundPen,
+		},
 	],
 
 	navFarmer: [
@@ -242,12 +263,22 @@ export const sidebarData: SidebarData = {
 			url: "/dashboard/farmer/notifications",
 			icon: Bell,
 		},
+		{
+			title: "Profile",
+			url: "/dashboard/farmer/profile",
+			icon: UserRoundPen,
+		},
 	],
 	navRancher: [
 		{
 			title: "Notifications",
 			url: "/dashboard/rancher/notifications",
 			icon: Bell,
+		},
+		{
+			title: "Profile",
+			url: "/dashboard/rancher/profile",
+			icon: UserRoundPen,
 		},
 	],
 };

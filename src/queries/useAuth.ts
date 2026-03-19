@@ -14,6 +14,7 @@ import type {
 	LoginBodyType,
 	RegisterBodyType,
 	SendOTPBodyType,
+	UpdateProfileType,
 } from "@/schemaValidatation/auth";
 
 /**
@@ -159,5 +160,11 @@ export const useTwoFactorDisable = () => {
 		mutationFn: (data: object) => authService.twoFactorDisable(data),
 		onSuccess: () => {},
 		onError: () => {},
+	});
+};
+
+export const useUpdateProfile = () => {
+	return useMutation({
+		mutationFn: (data: UpdateProfileType) => authService.updateProfile(data),
 	});
 };
