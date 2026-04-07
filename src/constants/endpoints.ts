@@ -59,6 +59,13 @@ export const API_ENDPOINTS = {
 			LIST: "/admin/users",
 			DETAIL: (id: string) => `/admin/users/${id}`,
 		},
+		MILESTONE_TEMPLATES: {
+			CREATE: "/template-product-milestone-for-crop-season",
+			LIST: "/template-product-milestone-for-crop-season/admin",
+			DETAIL: (id: string) => `/template-product-milestone-for-crop-season/${id}/admin`,
+			UPDATE: (id: string) => `/template-product-milestone-for-crop-season/${id}/admin`,
+			DELETE: (id: string) => `/template-product-milestone-for-crop-season/${id}/admin`,
+		},
 	},
 	OWNER: {
 		MY_DOCTOR: {
@@ -151,6 +158,15 @@ export const QUERY_KEYS = {
 				query,
 			],
 			detail: (id: string) => ["admin", "users", id],
+		},
+		milestoneTemplates: {
+			list: (query?: Record<string, unknown>) => [
+				"admin",
+				"milestone-templates",
+				"list",
+				query,
+			],
+			detail: (id: string) => ["admin", "milestone-templates", id],
 		},
 	},
 	owner: {

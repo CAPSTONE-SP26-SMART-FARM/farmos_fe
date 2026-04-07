@@ -8,6 +8,11 @@ import type {
 } from "@/schemaValidatation/doctorProfile";
 import type { ListFarmsQueryType } from "@/schemaValidatation/farmManagement";
 import type { ListUsersQueryType } from "@/schemaValidatation/user";
+import type {
+  CreateMilestoneTemplateBodyType,
+  ListMilestoneTemplatesQueryType,
+  UpdateMilestoneTemplateBodyType,
+} from "@/schemaValidatation/milestoneTemplate";
 import { QUERY_KEYS } from "@/constants";
 import adminService from "@/services/adminService";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -97,5 +102,60 @@ export const useAdminUserDetail = (id: string, enabled: boolean) => {
 		queryKey: QUERY_KEYS.admin.users.detail(id),
 		queryFn: () => adminService.userDetail(id),
 		enabled,
+	});
+};
+
+export const useAdminListMilestoneTemplates = (
+	query: ListMilestoneTemplatesQueryType,
+) => {
+	return useQuery({
+		queryKey: QUERY_KEYS.admin.milestoneTemplates.list(query),
+		queryFn: () => adminService.listMilestoneTemplates(query),
+	});
+};
+
+export const useAdminCreateMilestoneTemplate = () => {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: (data: CreateMilestoneTemplateBodyType) =>
+			adminService.createMilestoneTemplate(data),
+		onSuccess: () => {
+			qc.invalidateQueries({
+				queryKey: QUERY_KEYS.admin.milestoneTemplates.list({}),
+			});
+		},
+	});
+};
+
+export const useAdminUpdateMilestoneTemplate = () => {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			id,
+			data,
+		}: {
+			id: string;
+			data: UpdateMilestoneTemplateBodyType;
+		}) => adminService.updateMilestoneTemplate(id, data),
+		onSuccess: (_res, { id }) => {
+			qc.invalidateQueries({
+				queryKey: QUERY_KEYS.admin.milestoneTemplates.list({}),
+			});
+			qc.invalidateQueries({
+				queryKey: QUERY_KEYS.admin.milestoneTemplates.detail(id),
+			});
+		},
+	});
+};
+
+export const useAdminDeleteMilestoneTemplate = () => {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: (id: string) => adminService.deleteMilestoneTemplate(id),
+		onSuccess: () => {
+			qc.invalidateQueries({
+				queryKey: QUERY_KEYS.admin.milestoneTemplates.list({}),
+			});
+		},
 	});
 };
