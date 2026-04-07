@@ -1,6 +1,9 @@
 import { RoleName } from "@/constants/role";
 import { z } from "zod";
 
+export const UserStatusEnum = z.enum(["ACTIVE", "INACTIVE", "BLOCKED"]);
+export type UserStatusType = z.infer<typeof UserStatusEnum>;
+
 export const UserSchema = z.object({
 	id: z.uuid(),
 	email: z.email().max(255),
@@ -16,6 +19,7 @@ export const UserSchema = z.object({
 		RoleName.Doctor,
 		RoleName.Admin,
 	]),
+	status: UserStatusEnum,
 	isActive: z.boolean(),
 	emailVerifiedAt: z.iso.datetime().nullable(),
 	totpSecret: z.string().nullable(),
