@@ -7,11 +7,21 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import UserTable from "./UserManagement/UserTable";
+import UserDetailPanel from "./UserManagement/UserDetailPanel";
 
 const AdminUsersPage = () => {
-  const [_selectedUserId, setSelectedUserId] = useState<string | undefined>(
+  const [selectedUserId, setSelectedUserId] = useState<string | undefined>(
     undefined,
   );
+
+  if (selectedUserId) {
+    return (
+      <UserDetailPanel
+        id={selectedUserId}
+        onBack={() => setSelectedUserId(undefined)}
+      />
+    );
+  }
 
   return (
     <div className="animate-in fade-in duration-300">
