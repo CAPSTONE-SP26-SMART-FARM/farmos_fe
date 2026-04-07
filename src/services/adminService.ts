@@ -19,6 +19,8 @@ import type {
   ListFarmsQueryType,
   ListFarmsResType,
 } from "@/schemaValidatation/farmManagement";
+import type { ListUsersQueryType, ListUsersResType } from "@/schemaValidatation/user";
+import type { UserResType } from "@/types/user";
 import queryString from "query-string";
 
 const ADMIN = API_ENDPOINTS.ADMIN;
@@ -66,5 +68,11 @@ const adminService = {
     ),
   farmDetail: (id: string) =>
     api.get<FarmWithOwnerResType>(ADMIN.FARMS.DETAIL(id)),
+  listUsers: (query: ListUsersQueryType) =>
+    api.get<ListUsersResType>(
+      ADMIN.USERS.LIST + "?" + queryString.stringify({ ...query }),
+    ),
+  userDetail: (id: string) =>
+    api.get<UserResType>(ADMIN.USERS.DETAIL(id)),
 };
 export default adminService;

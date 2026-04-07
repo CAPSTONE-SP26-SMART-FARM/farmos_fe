@@ -7,6 +7,7 @@ import type {
 	UpdateDoctorRequestStatusBodyType,
 } from "@/schemaValidatation/doctorProfile";
 import type { ListFarmsQueryType } from "@/schemaValidatation/farmManagement";
+import type { ListUsersQueryType } from "@/schemaValidatation/user";
 import { QUERY_KEYS } from "@/constants";
 import adminService from "@/services/adminService";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -80,6 +81,21 @@ export const useAdminFarmDetail = (id: string, enabled: boolean) => {
 	return useQuery({
 		queryKey: QUERY_KEYS.admin.farms.detail(id),
 		queryFn: () => adminService.farmDetail(id),
+		enabled,
+	});
+};
+
+export const useAdminListUsers = (query: ListUsersQueryType) => {
+	return useQuery({
+		queryKey: QUERY_KEYS.admin.users.list(query),
+		queryFn: () => adminService.listUsers(query),
+	});
+};
+
+export const useAdminUserDetail = (id: string, enabled: boolean) => {
+	return useQuery({
+		queryKey: QUERY_KEYS.admin.users.detail(id),
+		queryFn: () => adminService.userDetail(id),
 		enabled,
 	});
 };

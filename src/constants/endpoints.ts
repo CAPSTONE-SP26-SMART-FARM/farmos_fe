@@ -55,6 +55,10 @@ export const API_ENDPOINTS = {
 			LIST: "/admin/farms",
 			DETAIL: (id: string) => `/admin/farms/${id}`,
 		},
+		USERS: {
+			LIST: "/admin/users",
+			DETAIL: (id: string) => `/admin/users/${id}`,
+		},
 	},
 	OWNER: {
 		MY_DOCTOR: {
@@ -138,6 +142,15 @@ export const QUERY_KEYS = {
 				query,
 			],
 			detail: (id: string) => ["admin", "farms", id],
+		},
+		users: {
+			list: (query?: Record<string, unknown>) => [
+				"admin",
+				"users",
+				"list",
+				query,
+			],
+			detail: (id: string) => ["admin", "users", id],
 		},
 	},
 	owner: {
