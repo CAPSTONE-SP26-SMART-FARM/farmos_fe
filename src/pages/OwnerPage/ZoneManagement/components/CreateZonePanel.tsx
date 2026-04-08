@@ -32,6 +32,7 @@ import {
   CreateZoneBodySchema,
   type CreateZoneBodyType,
 } from "@/schemaValidatation/zone";
+import { useFarmStore } from "@/stores/farmStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -49,6 +50,7 @@ const ZONE_TYPES = [{ value: "cultivation", label: "Cultivation" }] as const;
 const CreateZonePanel = ({ farmCode, farmId, onBack }: Props) => {
   const [show, setShow] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const farmAreaSqm = useFarmStore((s) => s.farm?.areaSqm ?? null);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setShow(true));
@@ -73,6 +75,12 @@ const CreateZonePanel = ({ farmCode, farmId, onBack }: Props) => {
   };
 
   const handleSubmit = async (data: CreateZoneBodyType) => {
+    if (farmAreaSqm && data.areaSqm && data.areaSqm > farmAreaSqm) {
+      form.setError("areaSqm", {
+        message: `Zone area cannot exceed farm area (${farmAreaSqm.toLocaleString()} sq.m)`,
+      });
+      return;
+    }
     try {
       await mutateAsync(data);
       toast.success("Zone created successfully");
@@ -181,28 +189,46 @@ const CreateZonePanel = ({ farmCode, farmId, onBack }: Props) => {
                 <Controller
                   name="areaSqm"
                   control={form.control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="zone-area">
-                        Area (sq. meters) — optional
-                      </FieldLabel>
-                      <Input
-                        id="zone-area"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="e.g. 5000"
-                        value={field.value ?? ""}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          field.onChange(val === "" ? undefined : Number(val));
-                        }}
-                      />
-                      {fieldState.invalid && (
-                        <FieldError errors={[fieldState.error]} />
-                      )}
-                    </Field>
-                  )}
+                  render={({ field, fieldState }) => {
+                    const exceeds =
+                      farmAreaSqm != null &&
+                      field.value != null &&
+                      field.value > farmAreaSqm;
+                    return (
+                      <Field data-invalid={fieldState.invalid || exceeds}>
+                        <FieldLabel htmlFor="zone-area">
+                          Area (sq. meters) — optional
+                        </FieldLabel>
+                        <Input
+                          id="zone-area"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max={farmAreaSqm ?? undefined}
+                          placeholder="e.g. 5000"
+                          value={field.value ?? ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            field.onChange(
+                              val === "" ? undefined : Number(val),
+                            );
+                          }}
+                        />
+                        {farmAreaSqm != null && (
+                          <p
+                            className={`text-xs ${exceeds ? "text-destructive" : "text-muted-foreground"}`}
+                          >
+                            {exceeds
+                              ? `Exceeds farm area (${farmAreaSqm.toLocaleString()} sq.m)`
+                              : `Farm total area: ${farmAreaSqm.toLocaleString()} sq.m`}
+                          </p>
+                        )}
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
+                      </Field>
+                    );
+                  }}
                 />
 
                 <Controller

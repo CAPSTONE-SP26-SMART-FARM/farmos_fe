@@ -231,11 +231,4 @@ export const sidebarData: SidebarData = {
       icon: Bell,
     },
   ],
-  navRancher: [
-    {
-      title: "Notifications",
-      url: "/dashboard/rancher/notifications",
-      icon: Bell,
-    },
-  ],
 };

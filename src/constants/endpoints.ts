@@ -54,6 +54,20 @@ export const API_ENDPOINTS = {
       LIST: "/admin/farms",
       DETAIL: (id: string) => `/admin/farms/${id}`,
     },
+    IOT_DEVICE_TEMPLATE: {
+      CREATE: "/iot-device-template",
+      LIST: "/iot-device-template/admin",
+      DETAIL: (id: string) => `/iot-device-template/${id}/admin`,
+      UPDATE: (id: string) => `/iot-device-template/${id}/admin`,
+      DELETE: (id: string) => `/iot-device-template/${id}/admin`,
+    },
+    SENSOR_TEMPLATE: {
+      CREATE: "/sensor-template",
+      LIST: "/sensor-template/admin",
+      DETAIL: (id: string) => `/sensor-template/${id}/admin`,
+      UPDATE: (id: string) => `/sensor-template/${id}/admin`,
+      DELETE: (id: string) => `/sensor-template/${id}/admin`,
+    },
   },
   OWNER: {
     MY_DOCTOR: {
@@ -137,6 +151,24 @@ export const QUERY_KEYS = {
         query,
       ],
       detail: (id: string) => ["admin", "farms", id],
+    },
+    iotDeviceTemplates: {
+      list: (query?: Record<string, unknown>) => [
+        "admin",
+        "iot-device-templates",
+        "list",
+        query,
+      ],
+      detail: (id: string) => ["admin", "iot-device-templates", id],
+    },
+    sensorTemplates: {
+      list: (query?: Record<string, unknown>) => [
+        "admin",
+        "sensor-templates",
+        "list",
+        query,
+      ],
+      detail: (id: string) => ["admin", "sensor-templates", id],
     },
   },
   owner: {

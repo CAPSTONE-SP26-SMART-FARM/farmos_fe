@@ -10,6 +10,7 @@ import type {
   UpdateFarmMemberBodyType,
 } from "@/schemaValidatation/farmMember";
 import ownerService from "@/services/ownerService";
+import { useFarmStore } from "@/stores/farmStore";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const useOwnerGetListDoctor = (query: ListAssignmentsQueryType) => {
@@ -37,7 +38,8 @@ export const useOwnerCreateFarm = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateFarmBodyType) => ownerService.createFarm(data),
-    onSuccess: () => {
+    onSuccess: (result) => {
+      useFarmStore.getState().setFarm(result.data);
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.owner.farm.my() });
     },
   });
@@ -48,7 +50,8 @@ export const useOwnerUpdateFarm = () => {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateFarmBodyType }) =>
       ownerService.updateFarm(id, data),
-    onSuccess: () => {
+    onSuccess: (result) => {
+      useFarmStore.getState().setFarm(result.data);
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.owner.farm.my() });
     },
   });

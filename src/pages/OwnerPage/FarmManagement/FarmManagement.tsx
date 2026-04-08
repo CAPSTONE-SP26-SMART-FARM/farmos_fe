@@ -12,8 +12,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useOwnerGetMyFarm } from "@/queries/useOwner";
 import type { FarmResType } from "@/schemaValidatation/farmManagement";
 import type { ZoneType } from "@/types/zone";
+import { useFarmStore } from "@/stores/farmStore";
 import { Building2, MapPin, Pencil, Plus, Ruler } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CreateFarmForm from "./CreateFarmForm";
 import CreateZonePanel from "./CreateZonePanel";
 import EditZonePanel from "./EditZonePanel";
@@ -131,6 +132,11 @@ function FarmManagement() {
   const [editingZone, setEditingZone] = useState<ZoneType | null>(null);
   const { data, isLoading, isError } = useOwnerGetMyFarm();
   const farm = data?.data;
+  const setFarm = useFarmStore((s) => s.setFarm);
+
+  useEffect(() => {
+    if (farm) setFarm(farm);
+  }, [farm, setFarm]);
 
   if (showCreate) {
     return <CreateFarmForm onBack={() => setShowCreate(false)} />;

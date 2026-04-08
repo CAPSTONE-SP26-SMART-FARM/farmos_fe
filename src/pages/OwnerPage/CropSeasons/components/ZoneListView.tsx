@@ -20,7 +20,6 @@ interface Props {
 
 const ZONE_TYPE_LABEL: Record<string, string> = {
   cultivation: "Trồng trọt",
-  livestock: "Chăn nuôi",
 };
 
 function ZoneCard({

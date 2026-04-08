@@ -6,8 +6,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useState } from "react";
-import FarmTable from "./FarmManagement/FarmTable";
-import FarmDetailPanel from "./FarmManagement/FarmDetailPanel";
+import FarmTable from "./FarmTable";
+import FarmDetailPanel from "./FarmDetailPanel";
 
 const AdminFarmsPage = () => {
   const [selectedFarmId, setSelectedFarmId] = useState<string | undefined>(

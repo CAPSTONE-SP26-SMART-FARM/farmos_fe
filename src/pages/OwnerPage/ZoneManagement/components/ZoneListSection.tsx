@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/table";
 import { useOwnerListZones } from "@/queries/useZone";
 import type { ZoneType } from "@/schemaValidatation/zone";
-import { Beef, Eye, MoreVertical, Pencil, Plus, Sprout } from "lucide-react";
+import { Eye, MoreVertical, Pencil, Plus, Sprout } from "lucide-react";
 import { useState } from "react";
 
 interface Props {
@@ -41,11 +41,7 @@ const ZONE_TYPE_OPTIONS = [
 ] as const;
 
 const ZoneTypeIcon = ({ type }: { type: ZoneType["zoneType"] }) =>
-  type === "cultivation" ? (
-    <Sprout className="h-4 w-4 text-green-600" />
-  ) : (
-    <Beef className="h-4 w-4 text-amber-600" />
-  );
+  type === "cultivation" ? <Sprout className="h-4 w-4 text-green-600" /> : null;
 
 const ZoneListSection = ({
   farmId,
