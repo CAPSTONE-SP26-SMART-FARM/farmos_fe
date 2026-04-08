@@ -3,6 +3,14 @@ import { Link } from "react-router";
 import { Leaf, ArrowRight, Sparkles, Play } from "lucide-react";
 import { motion } from "framer-motion";
 
+const PARTICLE_COUNT = 20;
+const PARTICLES = Array.from({ length: PARTICLE_COUNT }, () => ({
+  left: Math.random() * 100,
+  top: Math.random() * 100,
+  duration: 3 + Math.random() * 2,
+  delay: Math.random() * 2,
+}));
+
 function CTASection() {
   return (
     <section className="py-32 relative overflow-hidden">
@@ -18,22 +26,22 @@ function CTASection() {
 
       {/* Animated particles */}
       <div className="absolute inset-0 overflow-hidden">
-        {[...Array(20)].map((_, i) => (
+        {PARTICLES.map((p, i) => (
           <motion.div
             key={i}
             className="absolute w-1 h-1 bg-green-400/40 rounded-full"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
+              left: `${p.left}%`,
+              top: `${p.top}%`,
             }}
             animate={{
               y: [0, -30, 0],
               opacity: [0, 1, 0],
             }}
             transition={{
-              duration: 3 + Math.random() * 2,
+              duration: p.duration,
               repeat: Infinity,
-              delay: Math.random() * 2,
+              delay: p.delay,
             }}
           />
         ))}

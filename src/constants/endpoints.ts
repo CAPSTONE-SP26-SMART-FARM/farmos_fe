@@ -12,6 +12,9 @@ export const API_ENDPOINTS = {
     TWO_FACTOR_DISABLE: "/auth/2fa/disable",
     SEND_OTP: "/auth/otp",
   },
+  PROFILE: {
+    UPDATE: "/profile/update",
+  },
   USERS: {
     BASE: "/users",
     BY_ID: (id: string | number) => `/users/${id}`,
@@ -53,6 +56,20 @@ export const API_ENDPOINTS = {
     FARMS: {
       LIST: "/admin/farms",
       DETAIL: (id: string) => `/admin/farms/${id}`,
+    },
+    USERS: {
+      LIST: "/admin/users",
+      DETAIL: (id: string) => `/admin/users/${id}`,
+    },
+    MILESTONE_TEMPLATES: {
+      CREATE: "/template-product-milestone-for-crop-season",
+      LIST: "/template-product-milestone-for-crop-season/admin",
+      DETAIL: (id: string) =>
+        `/template-product-milestone-for-crop-season/${id}/admin`,
+      UPDATE: (id: string) =>
+        `/template-product-milestone-for-crop-season/${id}/admin`,
+      DELETE: (id: string) =>
+        `/template-product-milestone-for-crop-season/${id}/admin`,
     },
     IOT_DEVICE_TEMPLATE: {
       CREATE: "/iot-device-template",
@@ -152,12 +169,30 @@ export const QUERY_KEYS = {
       ],
       detail: (id: string) => ["admin", "farms", id],
     },
+    users: {
+      list: (query?: Record<string, unknown>) => [
+        "admin",
+        "users",
+        "list",
+        query,
+      ],
+      detail: (id: string) => ["admin", "users", id],
+    },
+    milestoneTemplates: {
+      list: (query?: Record<string, unknown>) => [
+        "admin",
+        "milestone-templates",
+        "list",
+        query,
+      ],
+      detail: (id: string) => ["admin", "milestone-templates", id],
+    },
     iotDeviceTemplates: {
       list: (query?: Record<string, unknown>) => [
         "admin",
         "iot-device-templates",
         "list",
-        query,
+        ...(query !== undefined ? [query] : []),
       ],
       detail: (id: string) => ["admin", "iot-device-templates", id],
     },
@@ -166,7 +201,7 @@ export const QUERY_KEYS = {
         "admin",
         "sensor-templates",
         "list",
-        query,
+        ...(query !== undefined ? [query] : []),
       ],
       detail: (id: string) => ["admin", "sensor-templates", id],
     },

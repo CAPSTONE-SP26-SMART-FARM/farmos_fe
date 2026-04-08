@@ -756,6 +756,33 @@ function CreateForm() {
 
 All hooks live in `src/queries/`.
 
+### Critical Cache Invalidation (MUST)
+
+- Every successful create/update/delete mutation must invalidate related query keys.
+- Do not skip invalidation after mutation (including IoT templates).
+- For update/delete with `id`, invalidate both list key and detail key when applicable.
+- This is required to avoid stale data after create/update/delete actions.
+
+```ts
+// Required pattern for mutations
+onSuccess: (_res, variables) => {
+  queryClient.invalidateQueries({ queryKey: QUERY_KEYS.entity.list() });
+  if (variables?.id) {
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.entity.detail(variables.id),
+    });
+  }
+};
+
+// IoT example (must do after create/update/delete)
+queryClient.invalidateQueries({
+  queryKey: QUERY_KEYS.admin.iotDeviceTemplates.list(),
+});
+queryClient.invalidateQueries({
+  queryKey: QUERY_KEYS.admin.sensorTemplates.list(),
+});
+```
+
 ### Query Hook Pattern
 
 ```ts
@@ -900,6 +927,9 @@ If a request gets 401:
 ## Styling Guidelines
 
 ### Tailwind CSS (v4)
+
+- Avoid gradient colors in UI (`bg-gradient-*`, text gradients, radial/linear custom gradients).
+- Prefer solid semantic tokens (`bg-card`, `bg-muted`, `text-foreground`, `border`) for consistency.
 
 ```tsx
 // ✅ Use Tailwind utility classes

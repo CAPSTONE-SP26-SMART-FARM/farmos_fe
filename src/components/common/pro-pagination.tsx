@@ -21,18 +21,21 @@ interface Props<T extends Record<string, any> = Record<string, any>> {
 }
 
 const ProPagination = ({
-  queryConfig,
+  queryConfig: _queryConfig,
   totalPages,
   currentPage,
   buildHref,
 }: Props) => {
   const pages = usePaginateRange(totalPages, currentPage);
   if (totalPages < 1) return null;
+  const isPrevDisabled = totalPages <= 1 || currentPage <= 1;
+  const isNextDisabled = totalPages <= 1 || currentPage >= totalPages;
+
   return (
     <Pagination className="mt-8">
       <PaginationContent>
         <PaginationItem>
-          {currentPage === 1 ? (
+          {isPrevDisabled ? (
             <Button
               size={"sm"}
               disabled
@@ -63,7 +66,7 @@ const ProPagination = ({
         )}
 
         <PaginationItem>
-          {currentPage === totalPages ? (
+          {isNextDisabled ? (
             <Button
               size={"sm"}
               disabled

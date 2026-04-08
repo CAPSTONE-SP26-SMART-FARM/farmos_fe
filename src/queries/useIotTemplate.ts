@@ -69,10 +69,13 @@ export const useAdminUpdateIotDeviceTemplate = () => {
       id: string;
       body: UpdateIotDeviceTemplateBodyType;
     }) => iotDeviceTemplateService.update(id, body),
-    onSuccess: () => {
+    onSuccess: (_res, { id }) => {
       toast.success("Cập nhật template thiết bị IoT thành công!");
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.admin.iotDeviceTemplates.list(),
+      });
+      qc.invalidateQueries({
+        queryKey: QUERY_KEYS.admin.iotDeviceTemplates.detail(id),
       });
     },
     onError: (error: AxiosError<ApiResponseType>) => {
@@ -87,10 +90,13 @@ export const useAdminDeleteIotDeviceTemplate = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => iotDeviceTemplateService.delete(id),
-    onSuccess: () => {
+    onSuccess: (_res, id) => {
       toast.success("Xóa template thiết bị IoT thành công!");
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.admin.iotDeviceTemplates.list(),
+      });
+      qc.removeQueries({
+        queryKey: QUERY_KEYS.admin.iotDeviceTemplates.detail(id),
       });
     },
     onError: (error: AxiosError<ApiResponseType>) => {
@@ -151,10 +157,13 @@ export const useAdminUpdateSensorTemplate = () => {
       id: string;
       body: UpdateSensorTemplateBodyType;
     }) => sensorTemplateService.update(id, body),
-    onSuccess: () => {
+    onSuccess: (_res, { id }) => {
       toast.success("Cập nhật template cảm biến thành công!");
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.admin.sensorTemplates.list(),
+      });
+      qc.invalidateQueries({
+        queryKey: QUERY_KEYS.admin.sensorTemplates.detail(id),
       });
     },
     onError: (error: AxiosError<ApiResponseType>) => {
@@ -169,10 +178,13 @@ export const useAdminDeleteSensorTemplate = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => sensorTemplateService.delete(id),
-    onSuccess: () => {
+    onSuccess: (_res, id) => {
       toast.success("Xóa template cảm biến thành công!");
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.admin.sensorTemplates.list(),
+      });
+      qc.removeQueries({
+        queryKey: QUERY_KEYS.admin.sensorTemplates.detail(id),
       });
     },
     onError: (error: AxiosError<ApiResponseType>) => {

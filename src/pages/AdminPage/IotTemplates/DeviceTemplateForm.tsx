@@ -1,4 +1,5 @@
-import { Button } from "@/components/ui/button";
+﻿import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -15,37 +16,61 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { ArrowLeft, Plus, Trash2, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowLeft, Plus, Trash2, Loader2, Cpu } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   useAdminCreateIotDeviceTemplate,
   useAdminUpdateIotDeviceTemplate,
 } from "@/queries/useIotTemplate";
-import type {
-  IotDeviceTemplateResType,
-  CreateIotDeviceTemplateBodyType,
-  UpdateIotDeviceTemplateBodyType,
+import {
+  IotDeviceTemplateTypeSchema,
+  FarmTypeForTemplateSchema,
+  type IotDeviceTemplateResType,
+  type CreateIotDeviceTemplateBodyType,
+  type UpdateIotDeviceTemplateBodyType,
 } from "@/schemaValidatation/iotTemplate";
+
+const DeviceItemFormSchema = z
+  .object({
+    deviceName: z.string().min(1, "Tên thiết bị là bắt buộc").max(255),
+    deviceType: z.string().min(1, "Loại thiết bị là bắt buộc").max(255),
+    notes: z.string().max(2000).nullable().optional(),
+  })
+  .strict();
+
+const DeviceTemplateFormSchema = z.object({
+  name: z.string().min(1, "Tên template là bắt buộc").max(255),
+  description: z.string().max(5000).nullable().optional(),
+  type: IotDeviceTemplateTypeSchema,
+  farmType: FarmTypeForTemplateSchema,
+  isActive: z.boolean(),
+  items: z.array(DeviceItemFormSchema),
+});
+
+type DeviceTemplateFormSchemaType = z.infer<typeof DeviceTemplateFormSchema>;
+import { isApiErrorUnprocessableEntityResponse } from "@/lib/utils";
+import { handleApiErrorUnprocessentity } from "@/lib/axios";
 
 interface DeviceTemplateFormProps {
   template?: IotDeviceTemplateResType;
   onBack: () => void;
 }
 
-interface DeviceItemRow {
-  key: string;
-  deviceName: string;
-  deviceType: string;
-  notes: string;
-}
-
-const createItemRow = (seed?: Partial<DeviceItemRow>): DeviceItemRow => ({
-  key: crypto.randomUUID(),
-  deviceName: seed?.deviceName ?? "",
-  deviceType: seed?.deviceType ?? "",
-  notes: seed?.notes ?? "",
-});
+const DEVICE_TYPE_LABEL: Record<string, string> = {
+  board_module: "Board Module",
+  wifi_module: "WiFi Module",
+  lora_module: "LoRa Module",
+};
 
 export default function DeviceTemplateForm({
   template,
@@ -55,93 +80,100 @@ export default function DeviceTemplateForm({
 
   const [show, setShow] = useState(false);
   const [confirmSave, setConfirmSave] = useState(false);
+  const pendingDataRef = useRef<DeviceTemplateFormSchemaType | null>(null);
 
-  const [name, setName] = useState(template?.name ?? "");
-  const [description, setDescription] = useState(template?.description ?? "");
-  const [type, setType] = useState<string>(template?.type ?? "board_module");
-  const [farmType, setFarmType] = useState<string>(
-    template?.farmType ?? "cultivation",
-  );
-  const [isActive, setIsActive] = useState(template?.isActive ?? true);
-  const [items, setItems] = useState<DeviceItemRow[]>(
-    template?.items.map((item) =>
-      createItemRow({
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setShow(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  const form = useForm<DeviceTemplateFormSchemaType>({
+    resolver: zodResolver(DeviceTemplateFormSchema),
+    defaultValues: {
+      name: template?.name ?? "",
+      description: template?.description ?? "",
+      type: template?.type ?? "board_module",
+      farmType: template?.farmType ?? "cultivation",
+      isActive: template?.isActive ?? true,
+      items: template?.items.map((item) => ({
         deviceName: item.deviceName,
         deviceType: item.deviceType,
         notes: item.notes ?? "",
-      }),
-    ) ?? [createItemRow()],
-  );
+      })) ?? [{ deviceName: "", deviceType: "", notes: "" }],
+    },
+  });
 
-  const createMutation = useAdminCreateIotDeviceTemplate();
-  const updateMutation = useAdminUpdateIotDeviceTemplate();
-  const isSaving = createMutation.isPending || updateMutation.isPending;
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "items",
+  });
 
-  useEffect(() => {
-    requestAnimationFrame(() => setShow(true));
-  }, []);
+  const { mutateAsync: createAsync, isPending: isCreating } =
+    useAdminCreateIotDeviceTemplate();
+  const { mutateAsync: updateAsync, isPending: isUpdating } =
+    useAdminUpdateIotDeviceTemplate();
+  const isSaving = isCreating || isUpdating;
 
   const handleBack = () => {
     setShow(false);
     setTimeout(onBack, 300);
   };
 
-  const addItem = () => setItems((prev) => [...prev, createItemRow()]);
-
-  const removeItem = (key: string) => {
-    setItems((prev) =>
-      prev.length === 1 ? prev : prev.filter((i) => i.key !== key),
+  const doSave = async (data: DeviceTemplateFormSchemaType) => {
+    const itemPayload = (data.items ?? []).map(
+      ({ deviceName, deviceType, notes }) => ({
+        deviceName,
+        deviceType,
+        notes: notes || null,
+      }),
     );
-  };
 
-  const updateItem = (
-    key: string,
-    field: keyof DeviceItemRow,
-    value: string,
-  ) => {
-    setItems((prev) =>
-      prev.map((i) => (i.key === key ? { ...i, [field]: value } : i)),
-    );
-  };
-
-  const handleSave = () => {
-    const itemPayload = items.map(({ deviceName, deviceType, notes }) => ({
-      deviceName,
-      deviceType,
-      notes: notes || null,
-    }));
-
-    if (isEdit && template) {
-      const body: UpdateIotDeviceTemplateBodyType = {
-        name,
-        description: description || null,
-        type: type as UpdateIotDeviceTemplateBodyType["type"],
-        farmType: farmType as UpdateIotDeviceTemplateBodyType["farmType"],
-        isActive,
-        items: itemPayload,
-      };
-      updateMutation.mutate(
-        { id: template.id, body },
-        { onSuccess: () => handleBack() },
-      );
-    } else {
-      const body: CreateIotDeviceTemplateBodyType = {
-        name,
-        description: description || null,
-        type: type as CreateIotDeviceTemplateBodyType["type"],
-        farmType: farmType as CreateIotDeviceTemplateBodyType["farmType"],
-        isActive,
-        items: itemPayload,
-      };
-      createMutation.mutate(body, { onSuccess: () => handleBack() });
+    try {
+      if (isEdit && template) {
+        const body: UpdateIotDeviceTemplateBodyType = {
+          name: data.name,
+          description: data.description || null,
+          type: data.type,
+          farmType: data.farmType,
+          isActive: data.isActive,
+          items: itemPayload,
+        };
+        await updateAsync({ id: template.id, body });
+      } else {
+        const body: CreateIotDeviceTemplateBodyType = {
+          ...data,
+          description: data.description || null,
+          items: itemPayload,
+        };
+        await createAsync(body);
+      }
+      handleBack();
+    } catch (error) {
+      if (isApiErrorUnprocessableEntityResponse(error)) {
+        handleApiErrorUnprocessentity(
+          error.response!.data.errors,
+          form.setError,
+        );
+      }
     }
   };
+
+  const onValidSubmit = (data: DeviceTemplateFormSchemaType) => {
+    if (isEdit) {
+      pendingDataRef.current = data;
+      setConfirmSave(true);
+    } else {
+      void doSave(data);
+    }
+  };
+
+  const type = form.watch("type");
 
   return (
     <div
       className={`transition-all duration-300 ease-out ${show ? "translate-x-0 opacity-100" : "translate-x-4 opacity-0"}`}
     >
-      <div className="mb-4 flex items-center gap-3">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <Button
           variant="ghost"
           size="icon"
@@ -149,156 +181,274 @@ export default function DeviceTemplateForm({
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h2 className="text-xl font-bold">
-          {isEdit ? "Chỉnh sửa template thiết bị" : "Tạo template thiết bị mới"}
-        </h2>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-xl font-bold tracking-tight">
+            {isEdit
+              ? "Chỉnh sửa template thiết bị"
+              : "Tạo template thiết bị mới"}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Chuẩn hóa module phần cứng cho hạ tầng IoT theo từng farm profile.
+          </p>
+        </div>
+        <Badge
+          variant="secondary"
+          className="gap-1"
+        >
+          <Cpu className="h-3 w-3" />
+          {DEVICE_TYPE_LABEL[type] ?? type}
+        </Badge>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Thông tin cơ bản</CardTitle>
-          <CardDescription>
-            Định nghĩa tên, loại và mô tả cho template thiết bị IoT.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-2">
-            <Input
-              placeholder="Tên template *"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-            <Select
-              value={type}
-              onValueChange={setType}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Loại thiết bị" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="board_module">Board Module</SelectItem>
-                <SelectItem value="wifi_module">WiFi Module</SelectItem>
-                <SelectItem value="lora_module">LoRa Module</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            <Select
-              value={farmType}
-              onValueChange={setFarmType}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Loại trang trại" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="cultivation">Trồng trọt</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={isActive ? "true" : "false"}
-              onValueChange={(v) => setIsActive(v === "true")}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Trạng thái" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="true">Hoạt động</SelectItem>
-                <SelectItem value="false">Tắt</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Textarea
-            placeholder="Mô tả template (tùy chọn)"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </CardContent>
-      </Card>
-
-      <Card className="mt-4">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Danh sách thiết bị</CardTitle>
-              <CardDescription>
-                Thêm các thiết bị mặc định cho template này.
-              </CardDescription>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={addItem}
-            >
-              <Plus className="mr-1 h-4 w-4" />
-              Thêm thiết bị
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {items.map((item, index) => (
-            <div
-              key={item.key}
-              className="rounded-md border p-3"
-            >
-              <div className="mb-2 flex items-center justify-between">
-                <p className="text-sm font-medium">Thiết bị #{index + 1}</p>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  disabled={items.length === 1}
-                  onClick={() => removeItem(item.key)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+      <form onSubmit={form.handleSubmit(onValidSubmit)}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Thông tin cơ bản</CardTitle>
+            <CardDescription>
+              Định nghĩa tên, loại và mô tả cho template thiết bị IoT.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <FieldGroup>
               <div className="grid gap-3 md:grid-cols-2">
-                <Input
-                  placeholder="Tên thiết bị *"
-                  value={item.deviceName}
-                  onChange={(e) =>
-                    updateItem(item.key, "deviceName", e.target.value)
-                  }
+                <Controller
+                  name="name"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>Tên template *</FieldLabel>
+                      <Input
+                        {...field}
+                        placeholder="Ví dụ: Bộ điều khiển nhà kính"
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
                 />
-                <Input
-                  placeholder="Loại thiết bị *"
-                  value={item.deviceType}
-                  onChange={(e) =>
-                    updateItem(item.key, "deviceType", e.target.value)
-                  }
+                <Controller
+                  name="type"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>Loại thiết bị</FieldLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Loại thiết bị" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="board_module">
+                            Board Module
+                          </SelectItem>
+                          <SelectItem value="wifi_module">
+                            WiFi Module
+                          </SelectItem>
+                          <SelectItem value="lora_module">
+                            LoRa Module
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
                 />
               </div>
-              <Textarea
-                className="mt-3"
-                placeholder="Ghi chú (tùy chọn)"
-                value={item.notes}
-                onChange={(e) => updateItem(item.key, "notes", e.target.value)}
-              />
-            </div>
-          ))}
-        </CardContent>
-      </Card>
 
-      <div className="mt-4 flex justify-end gap-2">
-        <Button
-          variant="outline"
-          onClick={handleBack}
-        >
-          Hủy
-        </Button>
-        <Button
-          disabled={isSaving || !name.trim()}
-          onClick={() => {
-            if (isEdit) {
-              setConfirmSave(true);
-            } else {
-              handleSave();
-            }
-          }}
-        >
-          {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isEdit ? "Cập nhật" : "Tạo mới"}
-        </Button>
-      </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                <Controller
+                  name="farmType"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>Loại trang trại</FieldLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Loại trang trại" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="cultivation">
+                            Trồng trọt
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+                <Controller
+                  name="isActive"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>Trạng thái</FieldLabel>
+                      <Select
+                        value={String(field.value)}
+                        onValueChange={(v) => field.onChange(v === "true")}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Trạng thái" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="true">Hoạt động</SelectItem>
+                          <SelectItem value="false">Tắt</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+              </div>
+
+              <Controller
+                name="description"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Mô tả</FieldLabel>
+                    <Textarea
+                      {...field}
+                      value={field.value ?? ""}
+                      placeholder="Mô tả phạm vi sử dụng và tiêu chuẩn cấu hình cho template này"
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+            </FieldGroup>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-4">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Danh sách thiết bị</CardTitle>
+                <CardDescription>
+                  Thêm các thiết bị mặc định cho template này.
+                </CardDescription>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  append({ deviceName: "", deviceType: "", notes: "" })
+                }
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                Thêm thiết bị
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {fields.map((field, index) => (
+              <div
+                key={field.id}
+                className="rounded-lg border border-border/80 p-3"
+              >
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-sm font-medium">Thiết bị #{index + 1}</p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={fields.length === 1}
+                    onClick={() => remove(index)}
+                  >
+                    <Trash2 className="mr-1 h-4 w-4" />
+                    Xóa
+                  </Button>
+                </div>
+                <FieldGroup>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <Controller
+                      name={`items.${index}.deviceName`}
+                      control={form.control}
+                      render={({ field: itemField, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                          <FieldLabel>Tên thiết bị *</FieldLabel>
+                          <Input
+                            {...itemField}
+                            placeholder="Ví dụ: Main Controller"
+                          />
+                          {fieldState.invalid && (
+                            <FieldError errors={[fieldState.error]} />
+                          )}
+                        </Field>
+                      )}
+                    />
+                    <Controller
+                      name={`items.${index}.deviceType`}
+                      control={form.control}
+                      render={({ field: itemField, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                          <FieldLabel>Loại thiết bị *</FieldLabel>
+                          <Input
+                            {...itemField}
+                            placeholder="Ví dụ: ESP32 DevKit"
+                          />
+                          {fieldState.invalid && (
+                            <FieldError errors={[fieldState.error]} />
+                          )}
+                        </Field>
+                      )}
+                    />
+                  </div>
+                  <Controller
+                    name={`items.${index}.notes`}
+                    control={form.control}
+                    render={({ field: itemField, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>Ghi chú</FieldLabel>
+                        <Textarea
+                          {...itemField}
+                          value={itemField.value ?? ""}
+                          placeholder="Ngữ cảnh sử dụng, vị trí lắp đặt, lưu ý bảo trì..."
+                        />
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
+                      </Field>
+                    )}
+                  />
+                </FieldGroup>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <div className="mt-4 flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleBack}
+          >
+            Hủy
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSaving}
+          >
+            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isEdit ? "Cập nhật" : "Tạo mới"}
+          </Button>
+        </div>
+      </form>
 
       <ConfirmDialog
         open={confirmSave}
@@ -309,7 +459,9 @@ export default function DeviceTemplateForm({
         onCancel={() => setConfirmSave(false)}
         onConfirm={() => {
           setConfirmSave(false);
-          handleSave();
+          if (pendingDataRef.current) {
+            void doSave(pendingDataRef.current);
+          }
         }}
       />
     </div>

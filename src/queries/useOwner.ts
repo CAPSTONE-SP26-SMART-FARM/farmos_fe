@@ -15,7 +15,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const useOwnerGetListDoctor = (query: ListAssignmentsQueryType) => {
   return useQuery({
-    queryKey: [["owner-doctors"], query],
+    queryKey: ["owner-doctors", "list", query],
     queryFn: () => ownerService.listDoctor(query),
   });
 };
