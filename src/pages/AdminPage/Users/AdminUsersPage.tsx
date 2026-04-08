@@ -6,8 +6,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import UserTable from "./UserManagement/UserTable";
-import UserDetailPanel from "./UserManagement/UserDetailPanel";
+import UserTable from "../UserManagement/UserTable";
+import UserDetailPanel from "../UserManagement/UserDetailPanel";
 
 const AdminUsersPage = () => {
   const [selectedUserId, setSelectedUserId] = useState<string | undefined>(

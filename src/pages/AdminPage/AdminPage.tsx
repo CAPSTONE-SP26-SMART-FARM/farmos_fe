@@ -1,3 +1,3 @@
-import AdminDashboardPage from "./AdminDashboardPage";
+import AdminDashboardPage from "./Dashboard/AdminDashboardPage";
 
 export default AdminDashboardPage;

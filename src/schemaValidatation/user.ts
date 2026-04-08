@@ -14,7 +14,6 @@ export const ListUsersQuerySchema = PagingRequestSchema.extend({
       RoleName.Owner,
       RoleName.Manager,
       RoleName.Farmer,
-      RoleName.Rancher,
       RoleName.Doctor,
     ])
     .optional(),

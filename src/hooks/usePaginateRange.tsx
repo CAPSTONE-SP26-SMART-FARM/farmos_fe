@@ -1,5 +1,3 @@
-import React from "react";
-
 const RANGE = 2;
 
 /**
@@ -75,79 +73,79 @@ pageNumber > RANGE
  */
 
 const usePaginateRange = (totalPages: number, currentPage: number) => {
-	let dotBefore = false;
-	let dotAfter = false;
+  let dotBefore = false;
+  let dotAfter = false;
 
-	return Array.from({ length: totalPages }, (_, index) => {
-		const pageNumber = index + 1;
-		if (currentPage <= RANGE * 2 + 1) {
-			if (pageNumber <= currentPage + RANGE) {
-				return pageNumber;
-			}
+  return Array.from({ length: totalPages }, (_, index) => {
+    const pageNumber = index + 1;
+    if (currentPage <= RANGE * 2 + 1) {
+      if (pageNumber <= currentPage + RANGE) {
+        return pageNumber;
+      }
 
-			if (pageNumber >= totalPages - RANGE + 1) {
-				return pageNumber;
-			}
+      if (pageNumber >= totalPages - RANGE + 1) {
+        return pageNumber;
+      }
 
-			if (!dotAfter) {
-				dotAfter = true;
-				return "ellispsis-after";
-			}
-			return null;
-		}
+      if (!dotAfter) {
+        dotAfter = true;
+        return "ellispsis-after";
+      }
+      return null;
+    }
 
-		if (currentPage > RANGE * 2 + 1 && currentPage < totalPages - RANGE * 2) {
-			if (pageNumber <= RANGE) {
-				return pageNumber;
-			}
+    if (currentPage > RANGE * 2 + 1 && currentPage < totalPages - RANGE * 2) {
+      if (pageNumber <= RANGE) {
+        return pageNumber;
+      }
 
-			if (pageNumber < currentPage - RANGE) {
-				if (!dotBefore) {
-					dotBefore = true;
-					return "ellispsis-before";
-				}
-				return null;
-			}
+      if (pageNumber < currentPage - RANGE) {
+        if (!dotBefore) {
+          dotBefore = true;
+          return "ellispsis-before";
+        }
+        return null;
+      }
 
-			if (
-				pageNumber >= currentPage - RANGE &&
-				pageNumber <= currentPage + RANGE
-			) {
-				return pageNumber;
-			}
+      if (
+        pageNumber >= currentPage - RANGE &&
+        pageNumber <= currentPage + RANGE
+      ) {
+        return pageNumber;
+      }
 
-			if (
-				pageNumber > currentPage + RANGE &&
-				pageNumber <= totalPages - RANGE
-			) {
-				if (!dotAfter) {
-					dotAfter = true;
-					return "ellipsis-after";
-				}
-				return null;
-			}
+      if (
+        pageNumber > currentPage + RANGE &&
+        pageNumber <= totalPages - RANGE
+      ) {
+        if (!dotAfter) {
+          dotAfter = true;
+          return "ellipsis-after";
+        }
+        return null;
+      }
 
-			if (pageNumber > totalPages - RANGE) {
-				return pageNumber;
-			}
-		}
+      if (pageNumber > totalPages - RANGE) {
+        return pageNumber;
+      }
+    }
 
-		if (currentPage >= totalPages - RANGE * 2) {
-			if (pageNumber < RANGE) {
-				return pageNumber;
-			}
+    if (currentPage >= totalPages - RANGE * 2) {
+      if (pageNumber < RANGE) {
+        return pageNumber;
+      }
 
-			if (pageNumber >= currentPage - 2) {
-				return pageNumber;
-			}
+      if (pageNumber >= currentPage - 2) {
+        return pageNumber;
+      }
 
-			if (!dotBefore) {
-				dotBefore = true;
-				return "ellipsis-before";
-			}
-			return null;
-		}
-	}).filter(Boolean);
+      if (!dotBefore) {
+        dotBefore = true;
+        return "ellipsis-before";
+      }
+      return null;
+    }
+  }).filter(Boolean);
 };
 
 export default usePaginateRange;

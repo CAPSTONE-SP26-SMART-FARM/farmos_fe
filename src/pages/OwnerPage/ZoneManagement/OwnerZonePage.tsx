@@ -9,8 +9,9 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOwnerGetMyFarm } from "@/queries/useOwner";
 import type { ZoneType } from "@/schemaValidatation/zone";
-import { Building2, Layers, Sprout, Beef, MapPin } from "lucide-react";
-import { useState } from "react";
+import { useFarmStore } from "@/stores/farmStore";
+import { Building2, Layers, Sprout, MapPin } from "lucide-react";
+import { useEffect, useState } from "react";
 import AssignBulkManagerPanel from "./components/AssignBulkManagerPanel";
 import AssignManagerPanel from "./components/AssignManagerPanel";
 import CreateZonePanel from "./components/CreateZonePanel";
@@ -21,7 +22,6 @@ import ZoneListSection from "./components/ZoneListSection";
 const ZONE_SUMMARY_CARDS = [
   { title: "Total Zones", value: "--", icon: Layers },
   { title: "Cultivation", value: "--", icon: Sprout },
-  { title: "Livestock", value: "--", icon: Beef },
   { title: "Total Area", value: "--", icon: MapPin },
 ] as const;
 
@@ -36,6 +36,11 @@ function OwnerZonePage() {
 
   const { data, isLoading, isError } = useOwnerGetMyFarm();
   const farm = data?.data;
+  const setFarm = useFarmStore((s) => s.setFarm);
+
+  useEffect(() => {
+    if (farm) setFarm(farm);
+  }, [farm, setFarm]);
 
   if (showCreate && farm) {
     return (

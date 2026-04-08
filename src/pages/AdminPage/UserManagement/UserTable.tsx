@@ -45,7 +45,6 @@ const ROLE_OPTIONS = [
   { label: "Manager", value: RoleName.Manager },
   { label: "Doctor", value: RoleName.Doctor },
   { label: "Farmer", value: RoleName.Farmer },
-  { label: "Rancher", value: RoleName.Rancher },
 ];
 
 const STATUS_OPTIONS = [
@@ -61,7 +60,6 @@ const roleVariant: Record<string, "default" | "secondary" | "outline"> = {
   manager: "outline",
   doctor: "outline",
   farmer: "outline",
-  rancher: "outline",
 };
 
 const statusVariant: Record<
@@ -124,7 +122,10 @@ const UserTable = ({ onViewDetail }: UserTableProps) => {
       cell: ({ row }) => {
         const role = row.getValue("role") as string;
         return (
-          <Badge variant={roleVariant[role] ?? "outline"} className="capitalize">
+          <Badge
+            variant={roleVariant[role] ?? "outline"}
+            className="capitalize"
+          >
             {role}
           </Badge>
         );
@@ -212,25 +213,37 @@ const UserTable = ({ onViewDetail }: UserTableProps) => {
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-sm"
         />
-        <Select value={roleFilter} onValueChange={setRoleFilter}>
+        <Select
+          value={roleFilter}
+          onValueChange={setRoleFilter}
+        >
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Role" />
           </SelectTrigger>
           <SelectContent>
             {ROLE_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
+              <SelectItem
+                key={opt.value}
+                value={opt.value}
+              >
                 {opt.label}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select
+          value={statusFilter}
+          onValueChange={setStatusFilter}
+        >
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
             {STATUS_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
+              <SelectItem
+                key={opt.value}
+                value={opt.value}
+              >
                 {opt.label}
               </SelectItem>
             ))}

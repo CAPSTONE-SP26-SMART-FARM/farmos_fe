@@ -8,7 +8,6 @@ import type { ZoneType } from "@/schemaValidatation/zone";
 import { format } from "date-fns";
 import {
   ArrowLeft,
-  Beef,
   Calendar,
   FileText,
   Pencil,
@@ -100,12 +99,7 @@ export default function ZoneDetailPanel({
     setTimeout(() => onEdit(detail), 300);
   };
 
-  const ZoneIcon =
-    detail.zoneType === "cultivation" ? (
-      <Sprout className="h-5 w-5 text-green-600" />
-    ) : (
-      <Beef className="h-5 w-5 text-amber-600" />
-    );
+  const ZoneIcon = <Sprout className="h-5 w-5 text-green-600" />;
 
   return (
     <div

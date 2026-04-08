@@ -8,7 +8,7 @@ export const ZoneSchema = z.object({
   id: z.string().uuid(),
   farmId: z.string().uuid(),
   name: z.string(),
-  zoneType: z.enum(["cultivation", "livestock"]),
+  zoneType: z.enum(["cultivation"]),
   description: z.string().nullable(),
   areaSqm: z.number().nullable(),
   createdAt: z.string(),
@@ -24,7 +24,7 @@ export const CreateZoneBodySchema = z
   .object({
     farmCode: z.string().min(1).max(50),
     name: z.string().min(1).max(255),
-    zoneType: z.enum(["cultivation", "livestock"]),
+    zoneType: z.enum(["cultivation"]),
     description: z.string().optional(),
     areaSqm: z.number().positive().optional(),
   })
@@ -34,7 +34,7 @@ export const CreateZoneBodySchema = z
 export const UpdateZoneBodySchema = z
   .object({
     name: z.string().min(1).max(255).optional(),
-    zoneType: z.enum(["cultivation", "livestock"]).optional(),
+    zoneType: z.enum(["cultivation"]).optional(),
     description: z.string().optional(),
     areaSqm: z.number().positive().optional(),
   })
@@ -46,7 +46,7 @@ export const UpdateZoneBodySchema = z
 
 /** 5.2 — List Zones (Owner, paginated) */
 export const ListZonesQuerySchema = PagingRequestSchema.extend({
-  zoneType: z.enum(["cultivation", "livestock"]).optional(),
+  zoneType: z.enum(["cultivation"]).optional(),
 }).strict();
 
 // ============================================================

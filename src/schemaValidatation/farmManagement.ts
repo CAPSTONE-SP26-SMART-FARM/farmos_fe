@@ -10,7 +10,7 @@ export const FarmSchema = z.object({
   code: z.string().min(1).max(50),
   name: z.string().min(1).max(255),
   description: z.string().nullable(),
-  farmType: z.enum(["cultivation", "livestock", "mixed"]),
+  farmType: z.enum(["cultivation"]),
   address: z.string().nullable(),
   latitude: z.number().nullable(),
   longitude: z.number().nullable(),
@@ -31,7 +31,7 @@ export const CreateFarmBodySchema = z
   .object({
     code: z.string().min(1).max(50),
     name: z.string().min(1).max(255),
-    farmType: z.enum(["cultivation", "livestock", "mixed"]),
+    farmType: z.enum(["cultivation"]),
     description: z.string().optional(),
     address: z.string().optional(),
     areaHectares: z.number().positive().optional(),
@@ -44,7 +44,7 @@ export const UpdateFarmBodySchema = z
   .object({
     code: z.string().min(1).max(50).optional(),
     name: z.string().min(1).max(255).optional(),
-    farmType: z.enum(["cultivation", "livestock", "mixed"]).optional(),
+    farmType: z.enum(["cultivation"]).optional(),
     description: z.string().optional(),
     address: z.string().optional(),
     areaHectares: z.number().positive().optional(),
