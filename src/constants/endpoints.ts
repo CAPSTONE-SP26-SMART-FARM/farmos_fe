@@ -85,11 +85,28 @@ export const API_ENDPOINTS = {
       UPDATE: (id: string) => `/sensor-template/${id}/admin`,
       DELETE: (id: string) => `/sensor-template/${id}/admin`,
     },
+    EMPLOYEE_TASK_TEMPLATE: {
+      CREATE: "/employee-task-template",
+      LIST: "/employee-task-template/admin",
+      DETAIL: (id: string) => `/employee-task-template/${id}/admin`,
+      UPDATE: (id: string) => `/employee-task-template/${id}/admin`,
+      DELETE: (id: string) => `/employee-task-template/${id}/admin`,
+    },
+  },
+  MANAGER: {
+    EMPLOYEE_TASK_TEMPLATE: {
+      LIST: "/manager/employee-task-template",
+      DETAIL: (id: string) => `/manager/employee-task-template/${id}`,
+    },
   },
   OWNER: {
     MY_DOCTOR: {
       LIST: "/doctor-assignment/owner/my-doctors",
       DETAIL: (id: string) => `/doctor-assignment/owner/my-doctors/${id}`,
+    },
+    EMPLOYEE_TASK_TEMPLATE: {
+      LIST: "/owner/employee-task-template",
+      DETAIL: (id: string) => `/owner/employee-task-template/${id}`,
     },
   },
   FARM_MEMBERS: {
@@ -205,10 +222,39 @@ export const QUERY_KEYS = {
       ],
       detail: (id: string) => ["admin", "sensor-templates", id],
     },
+    employeeTaskTemplates: {
+      list: (query?: Record<string, unknown>) => [
+        "admin",
+        "employee-task-templates",
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ],
+      detail: (id: string) => ["admin", "employee-task-templates", id],
+    },
+  },
+  manager: {
+    employeeTaskTemplates: {
+      list: (query?: Record<string, unknown>) => [
+        "manager",
+        "employee-task-templates",
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ],
+      detail: (id: string) => ["manager", "employee-task-templates", id],
+    },
   },
   owner: {
     farm: {
       my: () => ["owner", "farm", "my"],
+    },
+    employeeTaskTemplates: {
+      list: (query?: Record<string, unknown>) => [
+        "owner",
+        "employee-task-templates",
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ],
+      detail: (id: string) => ["owner", "employee-task-templates", id],
     },
   },
   farmMembers: {

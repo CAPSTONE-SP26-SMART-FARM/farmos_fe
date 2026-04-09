@@ -76,6 +76,11 @@ export const sidebarData: SidebarData = {
       url: "/dashboard/admin/farms",
       icon: Building2,
     },
+    {
+      title: "Employee Task Templates",
+      url: "/dashboard/admin/employee-task-templates",
+      icon: ClipboardList,
+    },
   ],
 
   // Owner Navigation
@@ -119,6 +124,11 @@ export const sidebarData: SidebarData = {
     },
     { title: "AI Insights", url: "/dashboard/owner/ai-insights", icon: Bot },
     {
+      title: "Task Templates",
+      url: "/dashboard/owner/employee-task-templates",
+      icon: ClipboardList,
+    },
+    {
       title: "Ticket Monitoring",
       url: "/dashboard/owner/tickets",
       icon: Ticket,
@@ -145,8 +155,8 @@ export const sidebarData: SidebarData = {
       icon: Settings,
     },
     {
-      title: "Task Assignment",
-      url: "/dashboard/manager/tasks",
+      title: "Task Templates",
+      url: "/dashboard/manager/employee-task-templates",
       icon: ClipboardList,
     },
     {

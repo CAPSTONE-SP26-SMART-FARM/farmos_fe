@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,7 +32,7 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <Card className="w-full max-w-sm shadow-xl">
         <CardHeader>
@@ -60,7 +61,7 @@ export function ConfirmDialog({
           </Button>
         </CardFooter>
       </Card>
-    </div>
+    </div>,
+    document.body,
   );
 }
-

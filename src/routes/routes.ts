@@ -6,6 +6,7 @@ import AdminDoctorAssignmentPage from "@/pages/AdminPage/DoctorAssignment/AdminD
 import AdminDoctorPerformancePage from "@/pages/AdminPage/DoctorPerformance/AdminDoctorPerformancePage";
 import AdminFarmsPage from "@/pages/AdminPage/Farms/AdminFarmsPage";
 import AdminIotTemplatesPage from "@/pages/AdminPage/IotTemplates/AdminIotTemplatesPage";
+import AdminEmployeeTaskTemplatesPage from "@/pages/AdminPage/EmployeeTaskTemplates/AdminEmployeeTaskTemplatesPage";
 import AdminMilestoneTemplatePage from "@/pages/AdminPage/AdminMilestoneTemplatePage";
 import AdminPackagesPage from "@/pages/AdminPage/Packages/AdminPackagesPage";
 import AdminTicketAnalyticsPage from "@/pages/AdminPage/TicketAnalytics/AdminTicketAnalyticsPage";
@@ -16,6 +17,8 @@ import HomePage from "@/pages/HomePage/HomePage";
 import LoginPage from "@/pages/LoginPage/LoginPage";
 import ManagerPage from "@/pages/ManagerPage/ManagerPage";
 import ManagerCropSeasonsPage from "@/pages/ManagerPage/CropSeasons/ManagerCropSeasonsPage";
+import ManagerEmployeeTaskTemplatesPage from "@/pages/ManagerPage/EmployeeTaskTemplates/ManagerEmployeeTaskTemplatesPage";
+import OwnerEmployeeTaskTemplatesPage from "@/pages/OwnerPage/EmployeeTaskTemplates/OwnerEmployeeTaskTemplatesPage";
 import OwnerPage from "@/pages/OwnerPage/OwnerPage";
 import RegisterPage from "@/pages/RegisterPage/RegisterPage";
 import type { AppRoutes } from "./types";
@@ -97,6 +100,11 @@ const routes: AppRoutes = [
         allowedRoles: [RoleName.Admin],
       },
       {
+        path: "/dashboard/admin/employee-task-templates",
+        component: AdminEmployeeTaskTemplatesPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
         path: "/dashboard/admin/doctor-requests",
         component: ListRequestAdmin,
         allowedRoles: [RoleName.Admin],
@@ -123,6 +131,11 @@ const routes: AppRoutes = [
         allowedRoles: [RoleName.Owner],
       },
       {
+        path: "/dashboard/owner/employee-task-templates",
+        component: OwnerEmployeeTaskTemplatesPage,
+        allowedRoles: [RoleName.Owner],
+      },
+      {
         path: "/dashboard/owner/*",
         component: OwnerPage,
         allowedRoles: [RoleName.Owner],
@@ -146,6 +159,11 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/manager/crop-seasons",
         component: ManagerCropSeasonsPage,
+        allowedRoles: [RoleName.Manager],
+      },
+      {
+        path: "/dashboard/manager/employee-task-templates",
+        component: ManagerEmployeeTaskTemplatesPage,
         allowedRoles: [RoleName.Manager],
       },
       {
