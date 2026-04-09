@@ -43,8 +43,6 @@ import {
 const DeviceItemFormSchema = z
   .object({
     deviceName: z.string().min(1, "Tên thiết bị là bắt buộc").max(255),
-    deviceType: z.string().min(1, "Loại thiết bị là bắt buộc").max(255),
-    notes: z.string().max(2000).nullable().optional(),
   })
   .strict();
 
@@ -97,9 +95,7 @@ export default function DeviceTemplateForm({
       isActive: template?.isActive ?? true,
       items: template?.items.map((item) => ({
         deviceName: item.deviceName,
-        deviceType: item.deviceType,
-        notes: item.notes ?? "",
-      })) ?? [{ deviceName: "", deviceType: "", notes: "" }],
+      })) ?? [{ deviceName: "" }],
     },
   });
 
@@ -120,13 +116,9 @@ export default function DeviceTemplateForm({
   };
 
   const doSave = async (data: DeviceTemplateFormSchemaType) => {
-    const itemPayload = (data.items ?? []).map(
-      ({ deviceName, deviceType, notes }) => ({
-        deviceName,
-        deviceType,
-        notes: notes || null,
-      }),
-    );
+    const itemPayload = (data.items ?? []).map(({ deviceName }) => ({
+      deviceName,
+    }));
 
     try {
       if (isEdit && template) {
@@ -346,9 +338,7 @@ export default function DeviceTemplateForm({
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={() =>
-                  append({ deviceName: "", deviceType: "", notes: "" })
-                }
+                onClick={() => append({ deviceName: "" })}
               >
                 <Plus className="mr-1 h-4 w-4" />
                 Thêm thiết bị
@@ -375,50 +365,15 @@ export default function DeviceTemplateForm({
                   </Button>
                 </div>
                 <FieldGroup>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <Controller
-                      name={`items.${index}.deviceName`}
-                      control={form.control}
-                      render={({ field: itemField, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Tên thiết bị *</FieldLabel>
-                          <Input
-                            {...itemField}
-                            placeholder="Ví dụ: Main Controller"
-                          />
-                          {fieldState.invalid && (
-                            <FieldError errors={[fieldState.error]} />
-                          )}
-                        </Field>
-                      )}
-                    />
-                    <Controller
-                      name={`items.${index}.deviceType`}
-                      control={form.control}
-                      render={({ field: itemField, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Loại thiết bị *</FieldLabel>
-                          <Input
-                            {...itemField}
-                            placeholder="Ví dụ: ESP32 DevKit"
-                          />
-                          {fieldState.invalid && (
-                            <FieldError errors={[fieldState.error]} />
-                          )}
-                        </Field>
-                      )}
-                    />
-                  </div>
                   <Controller
-                    name={`items.${index}.notes`}
+                    name={`items.${index}.deviceName`}
                     control={form.control}
                     render={({ field: itemField, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>Ghi chú</FieldLabel>
-                        <Textarea
+                        <FieldLabel>Tên thiết bị *</FieldLabel>
+                        <Input
                           {...itemField}
-                          value={itemField.value ?? ""}
-                          placeholder="Ngữ cảnh sử dụng, vị trí lắp đặt, lưu ý bảo trì..."
+                          placeholder="Ví dụ: Main Controller"
                         />
                         {fieldState.invalid && (
                           <FieldError errors={[fieldState.error]} />

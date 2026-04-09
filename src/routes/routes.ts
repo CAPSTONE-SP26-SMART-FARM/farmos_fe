@@ -19,6 +19,7 @@ import ManagerPage from "@/pages/ManagerPage/ManagerPage";
 import ManagerCropSeasonsPage from "@/pages/ManagerPage/CropSeasons/ManagerCropSeasonsPage";
 import ManagerEmployeeTaskTemplatesPage from "@/pages/ManagerPage/EmployeeTaskTemplates/ManagerEmployeeTaskTemplatesPage";
 import OwnerEmployeeTaskTemplatesPage from "@/pages/OwnerPage/EmployeeTaskTemplates/OwnerEmployeeTaskTemplatesPage";
+import OwnerIotDevicesPage from "@/pages/OwnerPage/IotDevices/OwnerIotDevicesPage";
 import OwnerPage from "@/pages/OwnerPage/OwnerPage";
 import RegisterPage from "@/pages/RegisterPage/RegisterPage";
 import type { AppRoutes } from "./types";
@@ -133,6 +134,11 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/owner/employee-task-templates",
         component: OwnerEmployeeTaskTemplatesPage,
+        allowedRoles: [RoleName.Owner],
+      },
+      {
+        path: "/dashboard/owner/iot-devices",
+        component: OwnerIotDevicesPage,
         allowedRoles: [RoleName.Owner],
       },
       {

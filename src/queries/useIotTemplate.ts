@@ -2,6 +2,8 @@ import { QUERY_KEYS } from "@/constants";
 import {
   iotDeviceTemplateService,
   sensorTemplateService,
+  ownerIotDeviceTemplateService,
+  ownerSensorTemplateService,
 } from "@/services/iotTemplateService";
 import type {
   CreateIotDeviceTemplateBodyType,
@@ -192,5 +194,50 @@ export const useAdminDeleteSensorTemplate = () => {
         error?.response?.data?.message ?? "Xóa template cảm biến thất bại",
       );
     },
+  });
+};
+
+// ============================================================
+// Owner — IoT Device Template (read-only)
+// ============================================================
+
+export const useOwnerListIotDeviceTemplates = (
+  query: ListIotDeviceTemplateQueryType,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.owner.iotDeviceTemplates.list(query),
+    queryFn: () => ownerIotDeviceTemplateService.list(query),
+  });
+};
+
+export const useOwnerIotDeviceTemplateDetail = (
+  id: string,
+  enabled: boolean,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.owner.iotDeviceTemplates.detail(id),
+    queryFn: () => ownerIotDeviceTemplateService.detail(id),
+    enabled,
+  });
+};
+
+// ============================================================
+// Owner — Sensor Template (read-only)
+// ============================================================
+
+export const useOwnerListSensorTemplates = (
+  query: ListSensorTemplatesQueryType,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.owner.sensorTemplates.list(query),
+    queryFn: () => ownerSensorTemplateService.list(query),
+  });
+};
+
+export const useOwnerSensorTemplateDetail = (id: string, enabled: boolean) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.owner.sensorTemplates.detail(id),
+    queryFn: () => ownerSensorTemplateService.detail(id),
+    enabled,
   });
 };
