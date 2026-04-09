@@ -34,8 +34,6 @@ export const TemplateItemTypeSchema = z.enum([
 export const IotDeviceTemplateItemConfigSchema = z
   .object({
     deviceName: z.string().min(1).max(255),
-    deviceType: z.string().min(1).max(255),
-    notes: z.string().max(2000).nullable().optional(),
   })
   .strict();
 
@@ -45,8 +43,7 @@ export const IotDeviceTemplateItemResSchema = z
     id: z.string().uuid(),
     itemType: TemplateItemTypeSchema.nullable(),
     deviceName: z.string(),
-    deviceType: z.string(),
-    notes: z.string().nullable(),
+    deviceType: IotDeviceTemplateTypeSchema,
   })
   .strict();
 

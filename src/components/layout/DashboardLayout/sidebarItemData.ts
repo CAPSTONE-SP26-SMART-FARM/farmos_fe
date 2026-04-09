@@ -1,4 +1,5 @@
 import {
+  Cpu,
   Shield,
   LayoutDashboard,
   Package,
@@ -127,6 +128,11 @@ export const sidebarData: SidebarData = {
       title: "Task Templates",
       url: "/dashboard/owner/employee-task-templates",
       icon: ClipboardList,
+    },
+    {
+      title: "IoT Devices",
+      url: "/dashboard/owner/iot-devices",
+      icon: Cpu,
     },
     {
       title: "Ticket Monitoring",

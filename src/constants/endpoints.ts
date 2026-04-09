@@ -108,6 +108,35 @@ export const API_ENDPOINTS = {
       LIST: "/owner/employee-task-template",
       DETAIL: (id: string) => `/owner/employee-task-template/${id}`,
     },
+    IOT_DEVICE: {
+      LIST: (farmId: string) => `/iot-device/owner/farm/${farmId}`,
+      CREATE: (farmId: string) => `/iot-device/owner/farm/${farmId}`,
+      DETAIL: (deviceId: string, farmId: string) =>
+        `/iot-device/owner/farm/${farmId}/${deviceId}`,
+      UPDATE: (deviceId: string, farmId: string) =>
+        `/iot-device/owner/farm/${farmId}/${deviceId}`,
+      DELETE: (deviceId: string, farmId: string) =>
+        `/iot-device/owner/farm/${farmId}/${deviceId}`,
+      LOCK_SENSORS: (deviceId: string, farmId: string) =>
+        `/iot-device/owner/farm/${farmId}/${deviceId}/lock-sensors`,
+    },
+    SENSOR: {
+      LIST: (iotDeviceId: string) => `/sensor/owner/iot-device/${iotDeviceId}`,
+      CREATE: (iotDeviceId: string) =>
+        `/sensor/owner/iot-device/${iotDeviceId}`,
+      UPDATE: (sensorId: string, iotDeviceId: string) =>
+        `/sensor/${sensorId}/owner/iot-device/${iotDeviceId}`,
+      DELETE: (sensorId: string, iotDeviceId: string) =>
+        `/sensor/${sensorId}/owner/iot-device/${iotDeviceId}`,
+    },
+    IOT_DEVICE_TEMPLATE: {
+      LIST: "/owner/iot-device-template",
+      DETAIL: (id: string) => `/owner/iot-device-template/${id}`,
+    },
+    SENSOR_TEMPLATE: {
+      LIST: "/owner/sensor-template",
+      DETAIL: (id: string) => `/owner/sensor-template/${id}`,
+    },
   },
   FARM_MEMBERS: {
     BASE: "/farm-members",
@@ -255,6 +284,58 @@ export const QUERY_KEYS = {
         ...(query !== undefined ? [query] : []),
       ],
       detail: (id: string) => ["owner", "employee-task-templates", id],
+    },
+    iotDevices: {
+      list: (farmId: string, query?: Record<string, unknown>) => [
+        "owner",
+        "iot-devices",
+        "farm",
+        farmId,
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ],
+      detail: (deviceId: string, farmId: string) => [
+        "owner",
+        "iot-devices",
+        deviceId,
+        "farm",
+        farmId,
+      ],
+    },
+    sensors: {
+      list: (iotDeviceId: string, query?: Record<string, unknown>) => [
+        "owner",
+        "sensors",
+        "device",
+        iotDeviceId,
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ],
+      detail: (sensorId: string, iotDeviceId: string) => [
+        "owner",
+        "sensors",
+        sensorId,
+        "device",
+        iotDeviceId,
+      ],
+    },
+    iotDeviceTemplates: {
+      list: (query?: Record<string, unknown>) => [
+        "owner",
+        "iot-device-templates",
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ],
+      detail: (id: string) => ["owner", "iot-device-templates", id],
+    },
+    sensorTemplates: {
+      list: (query?: Record<string, unknown>) => [
+        "owner",
+        "sensor-templates",
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ],
+      detail: (id: string) => ["owner", "sensor-templates", id],
     },
   },
   farmMembers: {
