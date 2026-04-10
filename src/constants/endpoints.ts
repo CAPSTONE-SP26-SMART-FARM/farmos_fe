@@ -98,6 +98,48 @@ export const API_ENDPOINTS = {
       LIST: "/manager/employee-task-template",
       DETAIL: (id: string) => `/manager/employee-task-template/${id}`,
     },
+    PRODUCTION_MILESTONE: {
+      LIST: (cropSeasonId: string) =>
+        `/production-milestone/manager/crop-season/${cropSeasonId}`,
+      DETAIL: (milestoneId: string, cropSeasonId: string) =>
+        `/production-milestone/${milestoneId}/manager/crop-season/${cropSeasonId}`,
+      CREATE_ITEM: (cropSeasonId: string) =>
+        `/production-milestone/manager/crop-season/${cropSeasonId}/item`,
+      UPDATE: (milestoneId: string, cropSeasonId: string) =>
+        `/production-milestone/${milestoneId}/manager/crop-season/${cropSeasonId}`,
+      DELETE: (milestoneId: string, cropSeasonId: string) =>
+        `/production-milestone/${milestoneId}/manager/crop-season/${cropSeasonId}`,
+    },
+    MILESTONE_IOT_DEVICE: {
+      ASSIGNMENT: (milestoneId: string) =>
+        `/production-milestone-iot-device/manager/milestone/${milestoneId}/assignment`,
+      AVAILABLE: (milestoneId: string) =>
+        `/production-milestone-iot-device/manager/milestone/${milestoneId}/available`,
+      ASSIGN: (milestoneId: string) =>
+        `/production-milestone-iot-device/manager/milestone/${milestoneId}/assign`,
+      UNASSIGN: (milestoneId: string) =>
+        `/production-milestone-iot-device/manager/milestone/${milestoneId}/unassign`,
+    },
+    MILESTONE_SENSOR_BINDING: {
+      LIST: (assignmentId: string) =>
+        `/production-milestone-iot-device-sensor-binding/manager/assignment/${assignmentId}`,
+      BIND: (assignmentId: string) =>
+        `/production-milestone-iot-device-sensor-binding/manager/assignment/${assignmentId}/bind`,
+      UNBIND: (assignmentId: string) =>
+        `/production-milestone-iot-device-sensor-binding/manager/assignment/${assignmentId}/unbind`,
+    },
+    SENSOR_THRESHOLD: {
+      GET: (assignmentId: string) =>
+        `/sensor-threshold/manager/assignment/${assignmentId}`,
+      CREATE: (assignmentId: string) =>
+        `/sensor-threshold/manager/assignment/${assignmentId}`,
+      UPDATE: (assignmentId: string) =>
+        `/sensor-threshold/manager/assignment/${assignmentId}`,
+    },
+    SENSOR: {
+      LIST: (iotDeviceId: string) =>
+        `/sensor/manager/iot-device/${iotDeviceId}`,
+    },
   },
   OWNER: {
     MY_DOCTOR: {
@@ -270,6 +312,57 @@ export const QUERY_KEYS = {
         ...(query !== undefined ? [query] : []),
       ],
       detail: (id: string) => ["manager", "employee-task-templates", id],
+    },
+    productionMilestones: {
+      list: (cropSeasonId: string, query?: Record<string, unknown>) => [
+        "manager",
+        "production-milestones",
+        cropSeasonId,
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ],
+      detail: (milestoneId: string) => [
+        "manager",
+        "production-milestones",
+        milestoneId,
+      ],
+      assignment: (milestoneId: string) => [
+        "manager",
+        "production-milestones",
+        milestoneId,
+        "assignment",
+      ],
+      availableDevices: (milestoneId: string, query?: Record<string, unknown>) => [
+        "manager",
+        "production-milestones",
+        milestoneId,
+        "available-devices",
+        ...(query !== undefined ? [query] : []),
+      ],
+      boundSensors: (assignmentId: string) => [
+        "manager",
+        "production-milestones",
+        "assignment",
+        assignmentId,
+        "sensors",
+      ],
+      thresholds: (assignmentId: string) => [
+        "manager",
+        "production-milestones",
+        "assignment",
+        assignmentId,
+        "thresholds",
+      ],
+    },
+    sensors: {
+      list: (iotDeviceId: string, query?: Record<string, unknown>) => [
+        "manager",
+        "sensors",
+        "device",
+        iotDeviceId,
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ],
     },
   },
   owner: {

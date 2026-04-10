@@ -17,6 +17,7 @@ import HomePage from "@/pages/HomePage/HomePage";
 import LoginPage from "@/pages/LoginPage/LoginPage";
 import ManagerPage from "@/pages/ManagerPage/ManagerPage";
 import ManagerCropSeasonsPage from "@/pages/ManagerPage/CropSeasons/ManagerCropSeasonsPage";
+import ManagerMilestonesPage from "@/pages/ManagerPage/CropSeasons/ManagerMilestonesPage";
 import ManagerEmployeeTaskTemplatesPage from "@/pages/ManagerPage/EmployeeTaskTemplates/ManagerEmployeeTaskTemplatesPage";
 import OwnerEmployeeTaskTemplatesPage from "@/pages/OwnerPage/EmployeeTaskTemplates/OwnerEmployeeTaskTemplatesPage";
 import OwnerIotDevicesPage from "@/pages/OwnerPage/IotDevices/OwnerIotDevicesPage";
@@ -165,6 +166,11 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/manager/crop-seasons",
         component: ManagerCropSeasonsPage,
+        allowedRoles: [RoleName.Manager],
+      },
+      {
+        path: "/dashboard/manager/crop-seasons/:cropSeasonId/milestones",
+        component: ManagerMilestonesPage,
         allowedRoles: [RoleName.Manager],
       },
       {
