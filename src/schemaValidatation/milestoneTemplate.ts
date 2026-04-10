@@ -5,7 +5,7 @@ import { z } from "zod";
 // Enums
 // ============================================================
 
-export const FarmTypeEnum = z.enum(["cultivation", "livestock", "mixed"]);
+export const FarmTypeEnum = z.enum(["cultivation"]);
 export type FarmTypeType = z.infer<typeof FarmTypeEnum>;
 
 // ============================================================

@@ -67,8 +67,6 @@ type ConfirmState =
 
 const FARM_TYPE_LABELS: Record<FarmTypeType, string> = {
   cultivation: "Cultivation",
-  livestock: "Livestock",
-  mixed: "Mixed",
 };
 
 const emptyItem = (): FormItem => ({
@@ -504,8 +502,6 @@ const AdminMilestoneTemplatePage = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="cultivation">Cultivation</SelectItem>
-                    <SelectItem value="livestock">Livestock</SelectItem>
-                    <SelectItem value="mixed">Mixed</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select
