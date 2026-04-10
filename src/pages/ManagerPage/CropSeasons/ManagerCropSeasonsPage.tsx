@@ -47,8 +47,8 @@ import {
   type CropSeasonType,
 } from "@/types/cropSeason";
 import { useState } from "react";
-import { useSearchParams } from "react-router";
-import { Plus, Eye, Send, Pencil, Loader2, Clock } from "lucide-react";
+import { useSearchParams, useNavigate } from "react-router";
+import { Plus, Eye, Send, Pencil, Loader2, Clock, Milestone } from "lucide-react";
 import { format } from "date-fns";
 import ProPagination from "@/components/common/pro-pagination";
 
@@ -627,6 +627,7 @@ function CropSeasonDetailDialog({ season }: { season: CropSeasonType }) {
 // ── Main Page ─────────────────────────────────────────────────────────────
 
 export default function ManagerCropSeasonsPage() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Number(searchParams.get("page") ?? "1");
   const statusFilter = (searchParams.get("status") ?? "") as any;
@@ -796,6 +797,18 @@ export default function ManagerCropSeasonsPage() {
                     <TableCell>
                       <div className="flex gap-1 justify-end flex-wrap">
                         <CropSeasonDetailDialog season={s} />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() =>
+                            navigate(
+                              `/dashboard/manager/crop-seasons/${s.id}/milestones`,
+                            )
+                          }
+                        >
+                          <Milestone className="h-3 w-3 mr-1" />
+                          Milestones
+                        </Button>
                         <UpdateCropSeasonDialog season={s} />
                         <SendRequestDialog season={s} />
                       </div>
