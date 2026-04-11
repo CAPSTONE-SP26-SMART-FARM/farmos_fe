@@ -1,4 +1,11 @@
 import { Badge } from "@/components/ui/badge";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -34,6 +41,7 @@ import {
   useOwnerCropSeasonDetail,
   useOwnerListRequests,
 } from "@/queries/useCropSeason";
+import { useOwnerListProductionMilestones } from "@/queries/useProductionMilestone";
 import type { ProductionRequestType } from "@/types/cropSeason";
 import {
   ArrowLeft,
@@ -41,6 +49,7 @@ import {
   ClipboardList,
   Eye,
   Layers,
+  Milestone,
   MoreVertical,
   Ruler,
   Sprout,
@@ -78,6 +87,15 @@ const REQUEST_STATUS_MAP: Record<
   pending: { label: "Chờ duyệt", variant: "secondary" },
   approved: { label: "Đã duyệt", variant: "default" },
   rejected: { label: "Từ chối", variant: "destructive" },
+};
+
+const MILESTONE_STATUS_MAP: Record<
+  string,
+  { label: string; variant: "default" | "secondary" | "outline" }
+> = {
+  pending: { label: "Chờ xử lý", variant: "secondary" },
+  in_progress: { label: "Đang thực hiện", variant: "default" },
+  completed: { label: "Hoàn thành", variant: "outline" },
 };
 
 function formatDate(d: string | null | undefined) {
@@ -148,21 +166,32 @@ export default function CropSeasonDetailPanel({
   onViewRequest,
 }: Props) {
   const [show, setShow] = useState(false);
-  const [page, setPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState<
+  const [requestPage, setRequestPage] = useState(1);
+  const [requestStatusFilter, setRequestStatusFilter] = useState<
     "pending" | "approved" | "rejected" | ""
+  >("");
+  const [milestonePage, setMilestonePage] = useState(1);
+  const [milestoneStatusFilter, setMilestoneStatusFilter] = useState<
+    "pending" | "in_progress" | "completed" | ""
   >("");
 
   const detailQuery = useOwnerCropSeasonDetail(cropSeasonId);
+  const milestonesQuery = useOwnerListProductionMilestones(cropSeasonId, {
+    page: milestonePage,
+    limit: 8,
+    status: milestoneStatusFilter || undefined,
+  });
   const requestsQuery = useOwnerListRequests(cropSeasonId, {
-    page,
+    page: requestPage,
     limit: 10,
-    status: statusFilter || undefined,
+    status: requestStatusFilter || undefined,
   });
 
   const season = detailQuery.data?.data;
+  const milestones = milestonesQuery.data?.data.data ?? [];
+  const milestoneMeta = milestonesQuery.data?.data.meta;
   const requests = requestsQuery.data?.data.data ?? [];
-  const meta = requestsQuery.data?.data.meta;
+  const requestMeta = requestsQuery.data?.data.meta;
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setShow(true));
@@ -180,6 +209,7 @@ export default function CropSeasonDetailPanel({
         variant: "secondary" as const,
       })
     : null;
+  const seasonName = season?.cropName ?? "Mùa vụ";
 
   return (
     <div
@@ -188,6 +218,33 @@ export default function CropSeasonDetailPanel({
       }`}
     >
       <div>
+        <Breadcrumb className="mb-2">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <span className="text-muted-foreground">Khu vực</span>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <span className="text-muted-foreground font-medium">
+                {zoneName}
+              </span>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <span className="text-muted-foreground">Mùa vụ</span>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <span className="text-muted-foreground font-medium">
+                {seasonName}
+              </span>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Mốc</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
         <Button
           variant="ghost"
           size="sm"
@@ -213,7 +270,7 @@ export default function CropSeasonDetailPanel({
               )}
             </h1>
             <p className="text-muted-foreground text-sm">
-              Zone: <span className="font-medium">{zoneName}</span>
+              Khu vực: <span className="font-medium">{zoneName}</span>
             </p>
           </div>
           {seasonStatus && (
@@ -307,6 +364,146 @@ export default function CropSeasonDetailPanel({
             </CardContent>
           </Card>
 
+          {/* ── Production Milestones ────────────────────────── */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Milestone className="h-4 w-4" />
+                    Mốc sản xuất
+                  </CardTitle>
+                  <CardDescription>
+                    {milestoneMeta
+                      ? `${milestoneMeta.totalItems} mốc`
+                      : "Danh sách mốc của mùa vụ"}
+                  </CardDescription>
+                </div>
+                <Select
+                  value={milestoneStatusFilter || "all"}
+                  onValueChange={(v) => {
+                    setMilestoneStatusFilter(
+                      v === "all"
+                        ? ""
+                        : (v as "pending" | "in_progress" | "completed"),
+                    );
+                    setMilestonePage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-44">
+                    <SelectValue placeholder="Lọc mốc" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả</SelectItem>
+                    <SelectItem value="pending">Chờ xử lý</SelectItem>
+                    <SelectItem value="in_progress">Đang thực hiện</SelectItem>
+                    <SelectItem value="completed">Hoàn thành</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {milestonesQuery.isLoading ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton
+                      key={i}
+                      className="h-12 w-full"
+                    />
+                  ))}
+                </div>
+              ) : milestones.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-center">
+                  <Milestone className="h-7 w-7 text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    Không có mốc nào
+                    {milestoneStatusFilter ? " với trạng thái này" : ""}.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12">#</TableHead>
+                          <TableHead>Giai đoạn</TableHead>
+                          <TableHead>Dự kiến</TableHead>
+                          <TableHead>Thực tế</TableHead>
+                          <TableHead>Trạng thái</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {milestones
+                          .slice()
+                          .sort((a, b) => a.milestoneOrder - b.milestoneOrder)
+                          .map((milestone) => {
+                            const status = MILESTONE_STATUS_MAP[
+                              milestone.status
+                            ] ?? {
+                              label: milestone.status,
+                              variant: "secondary" as const,
+                            };
+                            return (
+                              <TableRow key={milestone.id}>
+                                <TableCell className="font-mono text-xs text-muted-foreground">
+                                  {milestone.milestoneOrder}
+                                </TableCell>
+                                <TableCell className="font-medium">
+                                  {milestone.stageName}
+                                </TableCell>
+                                <TableCell className="text-sm text-muted-foreground">
+                                  {formatDate(milestone.expectedStartDate)}
+                                  {milestone.expectedEndDate
+                                    ? ` → ${formatDate(milestone.expectedEndDate)}`
+                                    : ""}
+                                </TableCell>
+                                <TableCell className="text-sm text-muted-foreground">
+                                  {formatDate(milestone.actualStartDate)}
+                                  {milestone.actualEndDate
+                                    ? ` → ${formatDate(milestone.actualEndDate)}`
+                                    : ""}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant={status.variant}>
+                                    {status.label}
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {milestoneMeta && milestoneMeta.totalPages > 1 && (
+                    <div className="flex justify-center items-center gap-2 pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!milestoneMeta.hasPreviousPage}
+                        onClick={() => setMilestonePage((p) => p - 1)}
+                      >
+                        Trước
+                      </Button>
+                      <span className="text-sm text-muted-foreground">
+                        {milestoneMeta.page} / {milestoneMeta.totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!milestoneMeta.hasNextPage}
+                        onClick={() => setMilestonePage((p) => p + 1)}
+                      >
+                        Sau
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+
           {/* ── Production Requests (#56 / #57) ──────────────── */}
           <Card>
             <CardHeader>
@@ -317,20 +514,20 @@ export default function CropSeasonDetailPanel({
                     Yêu cầu phê duyệt sản xuất
                   </CardTitle>
                   <CardDescription>
-                    {meta
-                      ? `${meta.totalItems} yêu cầu`
-                      : "Danh sách yêu cầu từ Manager"}
+                    {requestMeta
+                      ? `${requestMeta.totalItems} yêu cầu`
+                      : "Danh sách yêu cầu từ quản lý"}
                   </CardDescription>
                 </div>
                 <Select
-                  value={statusFilter || "all"}
+                  value={requestStatusFilter || "all"}
                   onValueChange={(v) => {
-                    setStatusFilter(
+                    setRequestStatusFilter(
                       v === "all"
                         ? ""
                         : (v as "pending" | "approved" | "rejected"),
                     );
-                    setPage(1);
+                    setRequestPage(1);
                   }}
                 >
                   <SelectTrigger className="w-40">
@@ -360,7 +557,7 @@ export default function CropSeasonDetailPanel({
                   <ClipboardList className="h-7 w-7 text-muted-foreground mb-2" />
                   <p className="text-sm text-muted-foreground">
                     Không có yêu cầu nào
-                    {statusFilter ? " với trạng thái này" : ""}.
+                    {requestStatusFilter ? " với trạng thái này" : ""}.
                   </p>
                 </div>
               ) : (
@@ -429,24 +626,24 @@ export default function CropSeasonDetailPanel({
                     </Table>
                   </div>
 
-                  {meta && meta.totalPages > 1 && (
+                  {requestMeta && requestMeta.totalPages > 1 && (
                     <div className="flex justify-center items-center gap-2 pt-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        disabled={!meta.hasPreviousPage}
-                        onClick={() => setPage((p) => p - 1)}
+                        disabled={!requestMeta.hasPreviousPage}
+                        onClick={() => setRequestPage((p) => p - 1)}
                       >
                         Trước
                       </Button>
                       <span className="text-sm text-muted-foreground">
-                        {meta.page} / {meta.totalPages}
+                        {requestMeta.page} / {requestMeta.totalPages}
                       </span>
                       <Button
                         variant="outline"
                         size="sm"
-                        disabled={!meta.hasNextPage}
-                        onClick={() => setPage((p) => p + 1)}
+                        disabled={!requestMeta.hasNextPage}
+                        onClick={() => setRequestPage((p) => p + 1)}
                       >
                         Sau
                       </Button>

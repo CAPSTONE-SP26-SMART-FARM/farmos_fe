@@ -153,26 +153,18 @@ export default function SensorTemplateForm({
       version: template?.version ?? 1,
       isActive: template?.isActive ?? true,
       items: template?.items.map((item) => ({
-        sensorType: item.sensorType,
-        sensorModel: item.sensorModel ?? "",
-        gpioPin: item.gpioPin ?? "",
-        calibrationOffset: item.calibrationOffset ?? null,
-        stageName: item.stageName ?? "",
-        minValue: item.minValue ?? null,
-        maxValue: item.maxValue ?? null,
-        optimalMin: item.optimalMin ?? null,
-        optimalMax: item.optimalMax ?? null,
+        sensorModelName: item.sensorModelName ?? "",
+        minValue: item.minValue ?? 0,
+        maxValue: item.maxValue ?? 0,
+        optimalMin: item.optimalMin ?? 0,
+        optimalMax: item.optimalMax ?? 0,
       })) ?? [
         {
-          sensorType: "soil_moisture_sensor" as const,
-          sensorModel: "",
-          gpioPin: "",
-          calibrationOffset: null,
-          stageName: "",
-          minValue: null,
-          maxValue: null,
-          optimalMin: null,
-          optimalMax: null,
+          sensorModelName: "",
+          minValue: 0,
+          maxValue: 0,
+          optimalMin: 0,
+          optimalMax: 0,
         },
       ],
     },
@@ -196,15 +188,11 @@ export default function SensorTemplateForm({
 
   const doSave = async (data: SensorTemplateFormType) => {
     const itemPayload = data.items.map((item) => ({
-      sensorType: item.sensorType,
-      sensorModel: item.sensorModel || null,
-      gpioPin: item.gpioPin || null,
-      calibrationOffset: item.calibrationOffset ?? null,
-      stageName: item.stageName || null,
-      minValue: item.minValue ?? null,
-      maxValue: item.maxValue ?? null,
-      optimalMin: item.optimalMin ?? null,
-      optimalMax: item.optimalMax ?? null,
+      sensorModelName: item.sensorModelName,
+      minValue: item.minValue,
+      maxValue: item.maxValue,
+      optimalMin: item.optimalMin,
+      optimalMax: item.optimalMax,
     }));
 
     try {
@@ -456,15 +444,11 @@ export default function SensorTemplateForm({
                 variant="outline"
                 onClick={() =>
                   append({
-                    sensorType: currentType,
-                    sensorModel: "",
-                    gpioPin: "",
-                    calibrationOffset: null,
-                    stageName: "",
-                    minValue: null,
-                    maxValue: null,
-                    optimalMin: null,
-                    optimalMax: null,
+                    sensorModelName: "",
+                    minValue: 0,
+                    maxValue: 0,
+                    optimalMin: 0,
+                    optimalMax: 0,
                   })
                 }
               >
@@ -494,106 +478,17 @@ export default function SensorTemplateForm({
                 </div>
 
                 <FieldGroup>
-                  <div className="grid gap-3 md:grid-cols-3">
+                  <div className="grid gap-3 md:grid-cols-1">
                     <Controller
-                      name={`items.${index}.sensorType`}
+                      name={`items.${index}.sensorModelName`}
                       control={form.control}
                       render={({ field: itemField, fieldState }) => (
                         <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Loại cảm biến</FieldLabel>
-                          <Select
-                            value={itemField.value}
-                            onValueChange={itemField.onChange}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Loại cảm biến" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Object.entries(SENSOR_TYPE_LABEL).map(
-                                ([val, label]) => (
-                                  <SelectItem
-                                    key={val}
-                                    value={val}
-                                  >
-                                    {label}
-                                  </SelectItem>
-                                ),
-                              )}
-                            </SelectContent>
-                          </Select>
-                          {fieldState.invalid && (
-                            <FieldError errors={[fieldState.error]} />
-                          )}
-                        </Field>
-                      )}
-                    />
-                    <Controller
-                      name={`items.${index}.sensorModel`}
-                      control={form.control}
-                      render={({ field: itemField, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Model</FieldLabel>
+                          <FieldLabel>Tên model cảm biến</FieldLabel>
                           <Input
                             {...itemField}
                             value={itemField.value ?? ""}
-                            placeholder="Ví dụ: DHT11"
-                          />
-                          {fieldState.invalid && (
-                            <FieldError errors={[fieldState.error]} />
-                          )}
-                        </Field>
-                      )}
-                    />
-                    <Controller
-                      name={`items.${index}.gpioPin`}
-                      control={form.control}
-                      render={({ field: itemField, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>GPIO Pin</FieldLabel>
-                          <Input
-                            {...itemField}
-                            value={itemField.value ?? ""}
-                            placeholder="Ví dụ: D4"
-                          />
-                          {fieldState.invalid && (
-                            <FieldError errors={[fieldState.error]} />
-                          )}
-                        </Field>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <Controller
-                      name={`items.${index}.stageName`}
-                      control={form.control}
-                      render={({ field: itemField, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Giai đoạn</FieldLabel>
-                          <Input
-                            {...itemField}
-                            value={itemField.value ?? ""}
-                            placeholder="Ví dụ: Ươm cây"
-                          />
-                          {fieldState.invalid && (
-                            <FieldError errors={[fieldState.error]} />
-                          )}
-                        </Field>
-                      )}
-                    />
-                    <Controller
-                      name={`items.${index}.calibrationOffset`}
-                      control={form.control}
-                      render={({ field: itemField, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Calibration Offset</FieldLabel>
-                          <Input
-                            type="number"
-                            placeholder="0"
-                            value={itemField.value ?? ""}
-                            onChange={(e) =>
-                              itemField.onChange(toNum(e.target.value))
-                            }
+                            placeholder="Ví dụ: Cảm biến độ ẩm đất điện dung V2.0"
                           />
                           {fieldState.invalid && (
                             <FieldError errors={[fieldState.error]} />

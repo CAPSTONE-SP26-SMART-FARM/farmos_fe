@@ -65,9 +65,9 @@ interface DeviceTemplateFormProps {
 }
 
 const DEVICE_TYPE_LABEL: Record<string, string> = {
-  board_module: "Board Module",
-  wifi_module: "WiFi Module",
-  lora_module: "LoRa Module",
+  board_module: "Mô-đun bo mạch",
+  wifi_module: "Mô-đun WiFi",
+  lora_module: "Mô-đun LoRa",
 };
 
 export default function DeviceTemplateForm({
@@ -234,13 +234,13 @@ export default function DeviceTemplateForm({
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="board_module">
-                            Board Module
+                            Mô-đun bo mạch
                           </SelectItem>
                           <SelectItem value="wifi_module">
-                            WiFi Module
+                            Mô-đun WiFi
                           </SelectItem>
                           <SelectItem value="lora_module">
-                            LoRa Module
+                            Mô-đun LoRa
                           </SelectItem>
                         </SelectContent>
                       </Select>
@@ -373,7 +373,7 @@ export default function DeviceTemplateForm({
                         <FieldLabel>Tên thiết bị *</FieldLabel>
                         <Input
                           {...itemField}
-                          placeholder="Ví dụ: Main Controller"
+                          placeholder="Ví dụ: Bộ điều khiển chính"
                         />
                         {fieldState.invalid && (
                           <FieldError errors={[fieldState.error]} />

@@ -94,12 +94,42 @@ export const API_ENDPOINTS = {
     },
   },
   MANAGER: {
+    ZONES: {
+      LIST: "/manager/zones",
+    },
     EMPLOYEE_TASK_TEMPLATE: {
       LIST: "/manager/employee-task-template",
       DETAIL: (id: string) => `/manager/employee-task-template/${id}`,
     },
+    IOT_DEVICE: {
+      LIST: (farmId: string) => `/iot-device/manager/farm/${farmId}`,
+      CREATE: (farmId: string) => `/iot-device/manager/farm/${farmId}`,
+      DETAIL: (deviceId: string, farmId: string) =>
+        `/iot-device/manager/farm/${farmId}/${deviceId}`,
+      UPDATE: (deviceId: string, farmId: string) =>
+        `/iot-device/manager/farm/${farmId}/${deviceId}`,
+      DELETE: (deviceId: string, farmId: string) =>
+        `/iot-device/manager/farm/${farmId}/${deviceId}`,
+      LOCK_SENSORS: (deviceId: string, farmId: string) =>
+        `/iot-device/manager/farm/${farmId}/${deviceId}/lock-sensors`,
+    },
+    IOT_DEVICE_TEMPLATE: {
+      LIST: "/manager/iot-device-template",
+      DETAIL: (id: string) => `/manager/iot-device-template/${id}`,
+    },
+    SENSOR_TEMPLATE: {
+      LIST: "/manager/sensor-template",
+      DETAIL: (id: string) => `/manager/sensor-template/${id}`,
+    },
+    MILESTONE_TEMPLATE: {
+      LIST: "/manager/template-product-milestone-for-crop-season",
+      DETAIL: (id: string) =>
+        `/manager/template-product-milestone-for-crop-season/${id}`,
+    },
     PRODUCTION_MILESTONE: {
       LIST: (cropSeasonId: string) =>
+        `/production-milestone/manager/crop-season/${cropSeasonId}`,
+      CREATE_BATCH: (cropSeasonId: string) =>
         `/production-milestone/manager/crop-season/${cropSeasonId}`,
       DETAIL: (milestoneId: string, cropSeasonId: string) =>
         `/production-milestone/${milestoneId}/manager/crop-season/${cropSeasonId}`,
@@ -139,6 +169,14 @@ export const API_ENDPOINTS = {
     SENSOR: {
       LIST: (iotDeviceId: string) =>
         `/sensor/manager/iot-device/${iotDeviceId}`,
+      CREATE: (iotDeviceId: string) =>
+        `/sensor/manager/iot-device/${iotDeviceId}`,
+      DETAIL: (sensorId: string, iotDeviceId: string) =>
+        `/sensor/${sensorId}/manager/iot-device/${iotDeviceId}`,
+      UPDATE: (sensorId: string, iotDeviceId: string) =>
+        `/sensor/${sensorId}/manager/iot-device/${iotDeviceId}`,
+      DELETE: (sensorId: string, iotDeviceId: string) =>
+        `/sensor/${sensorId}/manager/iot-device/${iotDeviceId}`,
     },
   },
   OWNER: {
@@ -178,6 +216,17 @@ export const API_ENDPOINTS = {
     SENSOR_TEMPLATE: {
       LIST: "/owner/sensor-template",
       DETAIL: (id: string) => `/owner/sensor-template/${id}`,
+    },
+    MILESTONE_TEMPLATE: {
+      LIST: "/owner/template-product-milestone-for-crop-season",
+      DETAIL: (id: string) =>
+        `/owner/template-product-milestone-for-crop-season/${id}`,
+    },
+    PRODUCTION_MILESTONE: {
+      LIST: (cropSeasonId: string) =>
+        `/production-milestone/owner/crop-season/${cropSeasonId}`,
+      DETAIL: (milestoneId: string, cropSeasonId: string) =>
+        `/production-milestone/${milestoneId}/owner/crop-season/${cropSeasonId}`,
     },
   },
   FARM_MEMBERS: {
@@ -304,6 +353,15 @@ export const QUERY_KEYS = {
     },
   },
   manager: {
+    zones: {
+      list: (query?: Record<string, unknown>) => [
+        "manager",
+        "zones",
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ],
+      detail: (id: string) => ["manager", "zones", id],
+    },
     employeeTaskTemplates: {
       list: (query?: Record<string, unknown>) => [
         "manager",
@@ -312,6 +370,50 @@ export const QUERY_KEYS = {
         ...(query !== undefined ? [query] : []),
       ],
       detail: (id: string) => ["manager", "employee-task-templates", id],
+    },
+    iotDevices: {
+      list: (farmId: string, query?: Record<string, unknown>) => [
+        "manager",
+        "iot-devices",
+        "farm",
+        farmId,
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ],
+      detail: (deviceId: string, farmId: string) => [
+        "manager",
+        "iot-devices",
+        deviceId,
+        "farm",
+        farmId,
+      ],
+    },
+    iotDeviceTemplates: {
+      list: (query?: Record<string, unknown>) => [
+        "manager",
+        "iot-device-templates",
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ],
+      detail: (id: string) => ["manager", "iot-device-templates", id],
+    },
+    sensorTemplates: {
+      list: (query?: Record<string, unknown>) => [
+        "manager",
+        "sensor-templates",
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ],
+      detail: (id: string) => ["manager", "sensor-templates", id],
+    },
+    milestoneTemplates: {
+      list: (query?: Record<string, unknown>) => [
+        "manager",
+        "milestone-templates",
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ],
+      detail: (id: string) => ["manager", "milestone-templates", id],
     },
     productionMilestones: {
       list: (cropSeasonId: string, query?: Record<string, unknown>) => [
@@ -332,7 +434,10 @@ export const QUERY_KEYS = {
         milestoneId,
         "assignment",
       ],
-      availableDevices: (milestoneId: string, query?: Record<string, unknown>) => [
+      availableDevices: (
+        milestoneId: string,
+        query?: Record<string, unknown>,
+      ) => [
         "manager",
         "production-milestones",
         milestoneId,
@@ -429,6 +534,29 @@ export const QUERY_KEYS = {
         ...(query !== undefined ? [query] : []),
       ],
       detail: (id: string) => ["owner", "sensor-templates", id],
+    },
+    milestoneTemplates: {
+      list: (query?: Record<string, unknown>) => [
+        "owner",
+        "milestone-templates",
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ],
+      detail: (id: string) => ["owner", "milestone-templates", id],
+    },
+    productionMilestones: {
+      list: (cropSeasonId: string, query?: Record<string, unknown>) => [
+        "owner",
+        "production-milestones",
+        cropSeasonId,
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ],
+      detail: (milestoneId: string) => [
+        "owner",
+        "production-milestones",
+        milestoneId,
+      ],
     },
   },
   farmMembers: {

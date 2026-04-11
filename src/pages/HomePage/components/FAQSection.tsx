@@ -25,19 +25,19 @@ const faqs = [
   {
     question: "Dữ liệu của tôi có được bảo mật không?",
     answer:
-      "Chắc chắn! FarmOS sử dụng mã hóa end-to-end cho toàn bộ dữ liệu. Dữ liệu được lưu trữ trên server với tiêu chuẩn bảo mật ISO 27001. Chúng tôi không chia sẻ dữ liệu của bạn với bất kỳ bên thứ ba nào mà không có sự đồng ý.",
+      "Chắc chắn! FarmOS sử dụng mã hóa đầu cuối cho toàn bộ dữ liệu. Dữ liệu được lưu trữ trên máy chủ với tiêu chuẩn bảo mật ISO 27001. Chúng tôi không chia sẻ dữ liệu của bạn với bất kỳ bên thứ ba nào mà không có sự đồng ý.",
     category: "Bảo mật",
   },
   {
     question: "FarmOS có hoạt động offline không?",
     answer:
-      "Có, ứng dụng mobile của FarmOS có khả năng hoạt động offline. Dữ liệu sẽ được lưu trữ cục bộ và tự động đồng bộ khi có kết nối internet trở lại. Các cảm biến cũng có bộ nhớ đệm để lưu dữ liệu trong trường hợp mất kết nối.",
+      "Có, ứng dụng di động của FarmOS có khả năng hoạt động ngoại tuyến. Dữ liệu sẽ được lưu trữ cục bộ và tự động đồng bộ khi có kết nối internet trở lại. Các cảm biến cũng có bộ nhớ đệm để lưu dữ liệu trong trường hợp mất kết nối.",
     category: "Kỹ thuật",
   },
   {
     question: "Làm thế nào để được tư vấn từ chuyên gia?",
     answer:
-      "Với gói Professional trở lên, bạn có thể đặt lịch tư vấn trực tiếp với các bác sĩ thú y và chuyên gia nông nghiệp qua hệ thống. Chuyên gia sẽ xem xét dữ liệu từ cảm biến của bạn và đưa ra khuyến nghị cụ thể.",
+      "Với gói Chuyên nghiệp trở lên, bạn có thể đặt lịch tư vấn trực tiếp với các bác sĩ thú y và chuyên gia nông nghiệp qua hệ thống. Chuyên gia sẽ xem xét dữ liệu từ cảm biến của bạn và đưa ra khuyến nghị cụ thể.",
     category: "Dịch vụ",
   },
   {
@@ -55,7 +55,7 @@ const faqs = [
   {
     question: "Có API để tích hợp với hệ thống khác không?",
     answer:
-      "Với gói Enterprise, chúng tôi cung cấp REST API đầy đủ để tích hợp FarmOS với các hệ thống ERP, CRM, hoặc phần mềm quản lý của bạn. Documentation chi tiết sẽ được cung cấp cùng với technical support.",
+      "Với gói Doanh nghiệp, chúng tôi cung cấp REST API đầy đủ để tích hợp FarmOS với các hệ thống ERP, CRM, hoặc phần mềm quản lý của bạn. Tài liệu chi tiết sẽ được cung cấp cùng với đội ngũ hỗ trợ kỹ thuật.",
     category: "Kỹ thuật",
   },
 ];
@@ -63,9 +63,9 @@ const faqs = [
 const contactOptions = [
   {
     icon: MessageCircle,
-    title: "Live Chat",
+    title: "Chat trực tuyến",
     description: "Trò chuyện trực tiếp",
-    action: "Chat ngay",
+    action: "Trò chuyện ngay",
     gradient: "from-green-500 to-emerald-600",
   },
   {
@@ -122,7 +122,7 @@ function FAQSection() {
 
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
             Câu hỏi
-            <span className="block bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+            <span className="block bg-linear-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
               thường gặp
             </span>
           </h2>
@@ -175,7 +175,7 @@ function FAQSection() {
             viewport={{ once: true }}
             className="lg:col-span-1"
           >
-            <div className="sticky top-8 bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl p-8 border border-white/10">
+            <div className="sticky top-8 bg-linear-to-br from-slate-800 to-slate-900 rounded-3xl p-8 border border-white/10">
               <h3 className="text-xl font-bold text-white mb-2">
                 Vẫn còn thắc mắc?
               </h3>
@@ -197,7 +197,7 @@ function FAQSection() {
                       className="group flex items-center gap-4 p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 cursor-pointer transition-all"
                     >
                       <div
-                        className={`w-12 h-12 rounded-xl bg-gradient-to-br ${option.gradient} flex items-center justify-center shadow-lg`}
+                        className={`w-12 h-12 rounded-xl bg-linear-to-br ${option.gradient} flex items-center justify-center shadow-lg`}
                       >
                         <Icon className="w-6 h-6 text-white" />
                       </div>
@@ -217,7 +217,7 @@ function FAQSection() {
               <div className="mt-8 pt-6 border-t border-white/10">
                 <Button
                   asChild
-                  className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-6 rounded-2xl font-semibold hover:shadow-lg hover:shadow-green-500/30 transition-all"
+                  className="w-full bg-linear-to-r from-green-500 to-emerald-500 text-white py-6 rounded-2xl font-semibold hover:shadow-lg hover:shadow-green-500/30 transition-all"
                 >
                   <Link
                     to="/contact"

@@ -48,9 +48,9 @@ const DetailAssignmentDoctor = ({ id, setId }: Props) => {
 		>
 			<DialogContent className="sm:max-w-3xl">
 				<DialogHeader>
-					<DialogTitle>Assignment detail</DialogTitle>
+					<DialogTitle>Chi tiết phân công</DialogTitle>
 					<DialogDescription>
-						Doctor-owner assignment information for admin.
+						Thông tin phân công bác sĩ và chủ vườn dành cho quản trị.
 					</DialogDescription>
 				</DialogHeader>
 
@@ -71,42 +71,42 @@ const DetailAssignmentDoctor = ({ id, setId }: Props) => {
 				) : detailQuery.isError ? (
 					<Card>
 						<CardHeader>
-							<CardTitle className="text-destructive">Failed to load</CardTitle>
-							<CardDescription>Please try again.</CardDescription>
+							<CardTitle className="text-destructive">Không thể tải dữ liệu</CardTitle>
+							<CardDescription>Vui lòng thử lại.</CardDescription>
 						</CardHeader>
 					</Card>
 				) : !detail ? (
 					<Card>
 						<CardHeader>
-							<CardTitle>No data</CardTitle>
-							<CardDescription>Assignment was not found.</CardDescription>
+							<CardTitle>Không có dữ liệu</CardTitle>
+							<CardDescription>Không tìm thấy phân công.</CardDescription>
 						</CardHeader>
 					</Card>
 				) : (
 					<div className="grid gap-4 md:grid-cols-2">
 						<Card>
 							<CardHeader>
-								<CardTitle>Assignment</CardTitle>
+								<CardTitle>Phân công</CardTitle>
 							</CardHeader>
 							<CardContent className="space-y-3 text-sm">
 								<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 									<div className="space-y-1">
-										<div className="text-muted-foreground">Status</div>
+										<div className="text-muted-foreground">Trạng thái</div>
 										<div className="font-medium capitalize">
 											{detail.status || "—"}
 										</div>
 									</div>
 									<div className="space-y-1">
-										<div className="text-muted-foreground">Primary</div>
+										<div className="text-muted-foreground">Phân công chính</div>
 										<div className="font-medium">
-											{detail.isPrimary ? "Yes" : "No"}
+											{detail.isPrimary ? "Có" : "Không"}
 										</div>
 									</div>
 								</div>
 
 								{detail.notes ? (
 									<div className="space-y-1">
-										<div className="text-muted-foreground">Notes</div>
+										<div className="text-muted-foreground">Ghi chú</div>
 										<div className="whitespace-pre-wrap">{detail.notes}</div>
 									</div>
 								) : null}
@@ -115,13 +115,13 @@ const DetailAssignmentDoctor = ({ id, setId }: Props) => {
 
 								<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 									<div className="space-y-1">
-										<div className="text-muted-foreground">Assigned at</div>
+										<div className="text-muted-foreground">Ngày phân công</div>
 										<div className="font-medium">
 											{formatDateTime(detail.assignedAt)}
 										</div>
 									</div>
 									<div className="space-y-1">
-										<div className="text-muted-foreground">Assigned by</div>
+										<div className="text-muted-foreground">Người phân công</div>
 										<div className="font-medium">
 											{detail.assigner?.email ?? "—"}
 										</div>
@@ -133,7 +133,7 @@ const DetailAssignmentDoctor = ({ id, setId }: Props) => {
 						<div className="space-y-4">
 							<Card>
 								<CardHeader>
-									<CardTitle>Doctor</CardTitle>
+									<CardTitle>Bác sĩ</CardTitle>
 								</CardHeader>
 								<CardContent className="space-y-2 text-sm">
 									<div>
@@ -141,7 +141,7 @@ const DetailAssignmentDoctor = ({ id, setId }: Props) => {
 										<div className="font-medium">{detail.doctor?.email ?? "—"}</div>
 									</div>
 									<div>
-										<div className="text-muted-foreground">Full name</div>
+										<div className="text-muted-foreground">Họ tên</div>
 										<div className="font-medium">
 											{detail.doctor?.fullName ?? "—"}
 										</div>
@@ -151,7 +151,7 @@ const DetailAssignmentDoctor = ({ id, setId }: Props) => {
 
 							<Card>
 								<CardHeader>
-									<CardTitle>Owner</CardTitle>
+									<CardTitle>Chủ vườn</CardTitle>
 								</CardHeader>
 								<CardContent className="space-y-2 text-sm">
 									<div>
@@ -159,7 +159,7 @@ const DetailAssignmentDoctor = ({ id, setId }: Props) => {
 										<div className="font-medium">{detail.owner?.email ?? "—"}</div>
 									</div>
 									<div>
-										<div className="text-muted-foreground">Full name</div>
+										<div className="text-muted-foreground">Họ tên</div>
 										<div className="font-medium">
 											{detail.owner?.fullName ?? "—"}
 										</div>
@@ -172,7 +172,7 @@ const DetailAssignmentDoctor = ({ id, setId }: Props) => {
 
 				<DialogFooter>
 					<DialogClose asChild>
-						<Button variant="outline">Close</Button>
+						<Button variant="outline">Đóng</Button>
 					</DialogClose>
 				</DialogFooter>
 			</DialogContent>

@@ -67,6 +67,18 @@ const DUMMY_ACCOUNTS: DummyAccount[] = [
   },
 ];
 
+const getRoleLabel = (role: RoleName) => {
+  const roleLabels: Partial<Record<RoleName, string>> = {
+    [RoleName.Admin]: "Quản trị viên",
+    [RoleName.Owner]: "Chủ vườn",
+    [RoleName.Manager]: "Quản lý",
+    [RoleName.Farmer]: "Nông dân",
+    [RoleName.Doctor]: "Bác sĩ",
+  };
+
+  return roleLabels[role] ?? role;
+};
+
 function LoginPage() {
   const navigate = useNavigate();
   const form = useForm<LoginBodyType>({
@@ -85,7 +97,9 @@ function LoginPage() {
       navigate(`/dashboard/${role}`, { replace: true });
     } catch (error) {
       if (isApiErrorResponse(error) && error.response?.status === 422) {
-        toast.error(error.response.data.message || "Invalid credentials");
+        toast.error(
+          error.response.data.message || "Thông tin đăng nhập không hợp lệ",
+        );
       }
     }
   };
@@ -95,11 +109,11 @@ function LoginPage() {
       <Card className="w-full max-w-xl">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">
-            FarmOS Login
+            Đăng nhập FarmOS
           </CardTitle>
           <CardDescription className="text-center">
-            Sign in to access role-based dashboards for Admin, Owner, Manager,
-            and Doctor.
+            Đăng nhập để truy cập bảng điều khiển theo vai trò cho quản trị
+            viên, chủ vườn, quản lý và bác sĩ.
           </CardDescription>
         </CardHeader>
         <form onSubmit={form.handleSubmit(handleSubmit)}>
@@ -130,7 +144,7 @@ function LoginPage() {
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="form-rhf-demo-description">
-                      Password
+                      Mật khẩu
                     </FieldLabel>
                     <Input
                       {...field}
@@ -147,12 +161,12 @@ function LoginPage() {
 
             <div className="text-xs text-muted-foreground bg-muted p-3 rounded-md">
               <p className="font-medium mb-2">
-                Dummy accounts for previewing role dashboards:
+                Tài khoản mẫu để xem nhanh dashboard theo vai trò:
               </p>
               <div className="space-y-1">
                 {DUMMY_ACCOUNTS.map((account) => (
                   <p key={account.role}>
-                    {account.role}:{" "}
+                    {getRoleLabel(account.role)}:{" "}
                     <span className="font-medium">{account.email}</span> /
                     <span className="font-medium">{account.username}</span> /{" "}
                     <span className="font-medium">{account.password}</span>
@@ -170,26 +184,26 @@ function LoginPage() {
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
+                  Đang đăng nhập...
                 </>
               ) : (
-                "Sign In"
+                "Đăng nhập"
               )}
             </Button>
             <div className="text-sm text-center text-muted-foreground">
-              Don't have an account?{" "}
+              Chưa có tài khoản?{" "}
               <Link
                 to="/register"
                 className="text-primary underline-offset-4 hover:underline"
               >
-                Register
+                Đăng ký
               </Link>
             </div>
             <Link
               to="/forgot-password"
               className="text-sm text-center text-muted-foreground hover:underline"
             >
-              Forgot your password?
+              Quên mật khẩu?
             </Link>
           </CardFooter>
         </form>

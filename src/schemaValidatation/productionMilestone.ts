@@ -26,6 +26,10 @@ export const CreateProductionMilestoneItemBodySchema = z.object({
   status: ProductionMilestoneStatusSchema.optional(),
 });
 
+export const CreateProductionMilestoneBatchBodySchema = z.object({
+  items: z.array(CreateProductionMilestoneItemBodySchema).min(1),
+});
+
 export const UpdateProductionMilestoneBodySchema = z
   .object({
     stageName: z.string().min(1).max(100).optional(),
@@ -73,6 +77,9 @@ export type ListProductionMilestonesResType = z.infer<
 >;
 export type CreateProductionMilestoneItemBodyType = z.infer<
   typeof CreateProductionMilestoneItemBodySchema
+>;
+export type CreateProductionMilestoneBatchBodyType = z.infer<
+  typeof CreateProductionMilestoneBatchBodySchema
 >;
 export type UpdateProductionMilestoneBodyType = z.infer<
   typeof UpdateProductionMilestoneBodySchema

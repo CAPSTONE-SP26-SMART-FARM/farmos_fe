@@ -41,7 +41,6 @@ import {
   Radio,
   Wifi,
   FileText,
-  Eye,
   Check,
   Info,
   Droplets,
@@ -50,17 +49,34 @@ import {
   Sun,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
+import {
+  Controller,
+  type UseFormSetValue,
+  useFieldArray,
+  useForm,
+  useWatch,
+} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
+  useManagerCreateIotDevices,
+  useManagerUpdateIotDevice,
   useOwnerCreateIotDevices,
   useOwnerUpdateIotDevice,
 } from "@/queries/useIotDevice";
-import { useOwnerCreateSensors } from "@/queries/useSensor";
 import {
-  useOwnerListIotDeviceTemplates,
+  useManagerCreateSensors,
+  useManagerListSensors,
+  useOwnerCreateSensors,
+  useOwnerListSensors,
+} from "@/queries/useSensor";
+import {
+  useManagerIotDeviceTemplateDetail,
+  useManagerListIotDeviceTemplates,
+  useManagerListSensorTemplates,
+  useManagerSensorTemplateDetail,
   useOwnerIotDeviceTemplateDetail,
+  useOwnerListIotDeviceTemplates,
   useOwnerListSensorTemplates,
   useOwnerSensorTemplateDetail,
 } from "@/queries/useIotTemplate";
@@ -78,11 +94,17 @@ import type {
 import { isApiErrorUnprocessableEntityResponse } from "@/lib/utils";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
 
+type IotActor = "owner" | "manager";
+
 // ── Form schemas ───────────────────────────────────────────────────────
 
 const DeviceItemFormSchema = z
   .object({
-    deviceName: z.string().min(1, "Tên thiết bị là bắt buộc").max(255),
+    deviceName: z
+      .string()
+      .trim()
+      .min(1, "Tên thiết bị là bắt buộc")
+      .max(255),
     deviceType: IotDeviceTypeSchema,
     macAddress: z
       .string()
@@ -98,7 +120,15 @@ const DeviceItemFormSchema = z
     if (data.deviceType === "wifi_module" && !data.macAddress) {
       ctx.addIssue({
         code: "custom",
-        message: "MAC address là bắt buộc cho WiFi Module",
+        message: "Địa chỉ MAC là bắt buộc cho mô-đun WiFi",
+        path: ["macAddress"],
+      });
+    }
+
+    if (data.deviceType !== "wifi_module" && data.macAddress) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Chỉ mô-đun WiFi mới cần địa chỉ MAC",
         path: ["macAddress"],
       });
     }
@@ -119,7 +149,7 @@ const BatchCreateFormSchema = z
     if (boardCount !== 1) {
       ctx.addIssue({
         code: "custom",
-        message: `Phải có đúng 1 Board Module (hiện có ${boardCount})`,
+        message: `Phải có đúng 1 bo mạch (hiện có ${boardCount})`,
         path: ["devices"],
       });
     }
@@ -156,40 +186,92 @@ const BatchCreateFormSchema = z
     });
   });
 
-const EditFormSchema = z.object({
-  deviceName: z.string().min(1, "Tên thiết bị là bắt buộc").max(255),
-  deviceType: IotDeviceTypeSchema,
-  macAddress: z
-    .string()
-    .max(17)
-    .regex(
-      /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/,
-      "Định dạng MAC không hợp lệ",
-    )
-    .nullable()
-    .or(z.literal("")),
-  status: DeviceStatusSchema,
-});
+const EditFormSchema = z
+  .object({
+    deviceName: z
+      .string()
+      .trim()
+      .min(1, "Tên thiết bị là bắt buộc")
+      .max(255),
+    deviceType: IotDeviceTypeSchema,
+    macAddress: z
+      .string()
+      .max(17)
+      .regex(
+        /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/,
+        "Định dạng MAC không hợp lệ",
+      )
+      .or(z.literal("")),
+    status: DeviceStatusSchema,
+  })
+  .superRefine((data, ctx) => {
+    if (data.deviceType === "wifi_module" && !data.macAddress) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Địa chỉ MAC là bắt buộc cho mô-đun WiFi",
+        path: ["macAddress"],
+      });
+    }
+
+    if (data.deviceType !== "wifi_module" && data.macAddress) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Chỉ mô-đun WiFi mới cần địa chỉ MAC",
+        path: ["macAddress"],
+      });
+    }
+  });
 
 // Sensor batch form for adding sensors to a board
 const SensorItemFormSchema = z.object({
   sensorType: SensorTypeSchema,
-  minValue: z.number(),
-  maxValue: z.number(),
+  minValue: z
+    .number()
+    .refine(Number.isFinite, "Giá trị tối thiểu không hợp lệ"),
+  maxValue: z
+    .number()
+    .refine(Number.isFinite, "Giá trị tối đa không hợp lệ"),
 });
 
-const SensorBatchFormSchema = z.object({
-  items: z.array(SensorItemFormSchema).min(1, "Cần ít nhất 1 cảm biến"),
-});
+const SensorBatchFormSchema = z
+  .object({
+    items: z
+      .array(SensorItemFormSchema)
+      .min(1, "Cần ít nhất 1 cảm biến")
+      .max(4, "Mỗi lần chỉ thêm tối đa 4 cảm biến"),
+  })
+  .superRefine((data, ctx) => {
+    const seen = new Set<string>();
+
+    data.items.forEach((item, index) => {
+      if (seen.has(item.sensorType)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Mỗi loại cảm biến chỉ được xuất hiện 1 lần",
+          path: ["items", index, "sensorType"],
+        });
+      }
+
+      seen.add(item.sensorType);
+
+      if (item.minValue > item.maxValue) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Giá trị tối thiểu phải nhỏ hơn hoặc bằng tối đa",
+          path: ["items", index, "minValue"],
+        });
+      }
+    });
+  });
 
 type BatchCreateFormType = z.infer<typeof BatchCreateFormSchema>;
 type EditFormType = z.infer<typeof EditFormSchema>;
 type SensorBatchFormType = z.infer<typeof SensorBatchFormSchema>;
 
 const DEVICE_TYPE_LABEL: Record<string, string> = {
-  board_module: "Board Module",
-  lora_module: "LoRa Module",
-  wifi_module: "WiFi Module",
+  board_module: "Bo mạch",
+  lora_module: "Mô-đun LoRa",
+  wifi_module: "Mô-đun WiFi",
 };
 
 const DEVICE_TYPE_ICON: Record<string, typeof Cpu> = {
@@ -212,6 +294,10 @@ const SENSOR_TYPE_LABEL: Record<string, string> = {
   light_intensity: "Cường độ ánh sáng",
 };
 
+const SENSOR_TYPE_VALUES = Object.keys(SENSOR_TYPE_LABEL) as Array<
+  z.infer<typeof SensorTypeSchema>
+>;
+
 const SENSOR_TEMPLATE_TYPE_LABEL: Record<string, string> = {
   soil_moisture_sensor: "Độ ẩm đất",
   air_temperature_sensor: "Nhiệt độ không khí",
@@ -233,19 +319,48 @@ const SENSOR_TYPE_ICON: Record<string, typeof Cpu> = {
 // ── IoT Device Template Picker ─────────────────────────────────────────
 
 function DeviceTemplatePicker({
+  actor,
+  deviceType,
   onApply,
 }: {
+  actor: IotActor;
+  deviceType: z.infer<typeof IotDeviceTypeSchema>;
   onApply: (template: IotDeviceTemplateResType) => void;
 }) {
   const [previewId, setPreviewId] = useState<string | null>(null);
-  const { data: templatesRes, isLoading } = useOwnerListIotDeviceTemplates({
-    page: 1,
-    limit: 50,
-  });
-  const { data: detailRes } = useOwnerIotDeviceTemplateDetail(
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const { data: ownerTemplatesRes, isLoading: ownerLoading } =
+    useOwnerListIotDeviceTemplates(
+      {
+        page: 1,
+        limit: 50,
+        type: deviceType,
+      },
+      actor === "owner",
+    );
+  const { data: managerTemplatesRes, isLoading: managerLoading } =
+    useManagerListIotDeviceTemplates(
+      {
+        page: 1,
+        limit: 50,
+        type: deviceType,
+      },
+      actor === "manager",
+    );
+
+  const { data: ownerDetailRes } = useOwnerIotDeviceTemplateDetail(
     previewId ?? "",
-    !!previewId,
+    actor === "owner" && !!previewId,
   );
+  const { data: managerDetailRes } = useManagerIotDeviceTemplateDetail(
+    previewId ?? "",
+    actor === "manager" && !!previewId,
+  );
+
+  const templatesRes =
+    actor === "owner" ? ownerTemplatesRes : managerTemplatesRes;
+  const detailRes = actor === "owner" ? ownerDetailRes : managerDetailRes;
+  const isLoading = actor === "owner" ? ownerLoading : managerLoading;
 
   const templates = templatesRes?.data?.data ?? [];
   const detail = detailRes?.data;
@@ -267,11 +382,11 @@ function DeviceTemplatePicker({
 
   return (
     <>
-      <Card className="border-dashed border-primary/30 bg-primary/[0.02]">
+      <Card className="border-dashed border-primary/30 bg-primary/2">
         <CardHeader className="py-3">
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-primary" />
-            <CardTitle className="text-sm">Áp dụng từ Template</CardTitle>
+            <CardTitle className="text-sm">Áp dụng từ mẫu</CardTitle>
             <Badge
               variant="outline"
               className="text-xs font-normal"
@@ -280,8 +395,10 @@ function DeviceTemplatePicker({
             </Badge>
           </div>
           <CardDescription className="text-xs">
-            Chọn template để tự động điền tên và loại thiết bị. Bạn vẫn có thể
-            chỉnh sửa sau khi áp dụng.
+            Chọn mẫu để tự động điền cho thiết bị hiện tại (
+            {DEVICE_TYPE_LABEL[deviceType] ?? deviceType}). Nếu mẫu có
+            nhiều thiết bị, hệ thống chỉ áp dụng một thiết bị phù hợp với loại
+            đang chọn.
           </CardDescription>
         </CardHeader>
         <CardContent className="pb-3">
@@ -289,33 +406,20 @@ function DeviceTemplatePicker({
             {templates.map((t) => {
               const TIcon = DEVICE_TYPE_ICON[t.type] ?? Cpu;
               return (
-                <div
+                <Button
                   key={t.id}
-                  className="flex items-center gap-1"
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs"
+                  onClick={() => setPreviewId(t.id)}
                 >
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5 text-xs"
-                    onClick={() => onApply(t)}
-                  >
-                    <TIcon className="h-3.5 w-3.5" />
-                    {t.name}
-                    <span className="text-muted-foreground">
-                      ({t.items.length} thiết bị)
-                    </span>
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-muted-foreground hover:text-primary"
-                    onClick={() => setPreviewId(t.id)}
-                  >
-                    <Eye className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+                  <TIcon className="h-3.5 w-3.5" />
+                  {t.name}
+                  <span className="text-muted-foreground">
+                    ({t.items.length} thiết bị)
+                  </span>
+                </Button>
               );
             })}
           </div>
@@ -324,22 +428,25 @@ function DeviceTemplatePicker({
 
       <Sheet
         open={!!previewId}
-        onOpenChange={() => setPreviewId(null)}
+        onOpenChange={() => {
+          setPreviewId(null);
+          setSelectedItemId(null);
+        }}
       >
         <SheetContent className="sm:max-w-md overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-primary" />
-              Chi tiết Template
+              Chọn thiết bị từ mẫu
             </SheetTitle>
             <SheetDescription>
-              Xem cấu hình mẫu trước khi áp dụng.
+              Chọn một thiết bị bên dưới để điền vào biểu mẫu.
             </SheetDescription>
           </SheetHeader>
 
           {detail ? (
             <div className="space-y-4 px-4 pb-6">
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <h4 className="text-sm font-medium">{detail.name}</h4>
                 {detail.description && (
                   <p className="text-xs text-muted-foreground">
@@ -359,17 +466,30 @@ function DeviceTemplatePicker({
               <Separator />
 
               <div className="space-y-2">
-                <h4 className="text-sm font-medium">
-                  Danh sách thiết bị ({detail.items.length})
-                </h4>
+                <p className="text-xs text-muted-foreground">
+                  Nhấn vào thiết bị để chọn
+                </p>
                 {detail.items.map((item, i) => {
                   const IIcon = DEVICE_TYPE_ICON[item.deviceType] ?? Cpu;
+                  const isSelected = selectedItemId === item.id;
                   return (
-                    <div
+                    <button
                       key={item.id}
-                      className="flex items-center gap-3 rounded-md border p-2.5"
+                      type="button"
+                      onClick={() =>
+                        setSelectedItemId(isSelected ? null : item.id)
+                      }
+                      className={`w-full flex items-center gap-3 rounded-md border p-2.5 text-left transition-colors ${
+                        isSelected
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50 hover:bg-muted/40"
+                      }`}
                     >
-                      <IIcon className="h-4 w-4 text-primary shrink-0" />
+                      <IIcon
+                        className={`h-4 w-4 shrink-0 ${
+                          isSelected ? "text-primary" : "text-muted-foreground"
+                        }`}
+                      />
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium truncate">
                           {item.deviceName}
@@ -379,13 +499,18 @@ function DeviceTemplatePicker({
                             item.deviceType}
                         </p>
                       </div>
-                      <Badge
-                        variant="outline"
-                        className="text-xs shrink-0"
-                      >
-                        #{i + 1}
-                      </Badge>
-                    </div>
+                      <div className="shrink-0 flex items-center gap-2">
+                        <Badge
+                          variant="outline"
+                          className="text-xs"
+                        >
+                          #{i + 1}
+                        </Badge>
+                        {isSelected && (
+                          <Check className="h-4 w-4 text-primary" />
+                        )}
+                      </div>
+                    </button>
                   );
                 })}
               </div>
@@ -395,20 +520,28 @@ function DeviceTemplatePicker({
               <div className="flex items-start gap-2 rounded-md bg-muted/50 p-2.5">
                 <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                 <p className="text-xs text-muted-foreground">
-                  Template chỉ gợi ý giá trị ban đầu. Tất cả các trường đều có
-                  thể chỉnh sửa sau khi áp dụng.
+                  Giá trị từ thiết bị được chọn sẽ điền vào biểu mẫu. Bạn vẫn có thể
+                  chỉnh sửa sau.
                 </p>
               </div>
 
               <Button
                 className="w-full"
+                disabled={!selectedItemId}
                 onClick={() => {
-                  onApply(detail);
+                  const item = detail.items.find(
+                    (it) => it.id === selectedItemId,
+                  );
+                  if (!item) return;
+                  onApply({ ...detail, items: [item] });
                   setPreviewId(null);
+                  setSelectedItemId(null);
                 }}
               >
                 <Check className="mr-2 h-4 w-4" />
-                Áp dụng Template này
+                {selectedItemId
+                  ? "Áp dụng thiết bị đã chọn"
+                  : "Chưa chọn thiết bị"}
               </Button>
             </div>
           ) : (
@@ -427,19 +560,44 @@ function DeviceTemplatePicker({
 // ── Sensor Template Picker ─────────────────────────────────────────────
 
 function SensorTemplatePicker({
+  actor,
   onApply,
 }: {
+  actor: IotActor;
   onApply: (template: SensorTemplateResType) => void;
 }) {
   const [previewId, setPreviewId] = useState<string | null>(null);
-  const { data: templatesRes, isLoading } = useOwnerListSensorTemplates({
-    page: 1,
-    limit: 50,
-  });
-  const { data: detailRes } = useOwnerSensorTemplateDetail(
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const { data: ownerTemplatesRes, isLoading: ownerLoading } =
+    useOwnerListSensorTemplates(
+      {
+        page: 1,
+        limit: 50,
+      },
+      actor === "owner",
+    );
+  const { data: managerTemplatesRes, isLoading: managerLoading } =
+    useManagerListSensorTemplates(
+      {
+        page: 1,
+        limit: 50,
+      },
+      actor === "manager",
+    );
+
+  const { data: ownerDetailRes } = useOwnerSensorTemplateDetail(
     previewId ?? "",
-    !!previewId,
+    actor === "owner" && !!previewId,
   );
+  const { data: managerDetailRes } = useManagerSensorTemplateDetail(
+    previewId ?? "",
+    actor === "manager" && !!previewId,
+  );
+
+  const templatesRes =
+    actor === "owner" ? ownerTemplatesRes : managerTemplatesRes;
+  const detailRes = actor === "owner" ? ownerDetailRes : managerDetailRes;
+  const isLoading = actor === "owner" ? ownerLoading : managerLoading;
 
   const templates = templatesRes?.data?.data ?? [];
   const detail = detailRes?.data;
@@ -457,11 +615,11 @@ function SensorTemplatePicker({
 
   return (
     <>
-      <div className="rounded-md border border-dashed border-primary/30 bg-primary/[0.02] p-3 space-y-2">
+      <div className="rounded-md border border-dashed border-primary/30 bg-primary/2 p-3 space-y-2">
         <div className="flex items-center gap-2">
           <FileText className="h-3.5 w-3.5 text-primary" />
           <span className="text-xs font-medium">
-            Áp dụng từ Sensor Template
+            Áp dụng từ mẫu cảm biến
           </span>
           <Badge
             variant="outline"
@@ -474,30 +632,17 @@ function SensorTemplatePicker({
           {templates.map((t) => {
             const SIcon = SENSOR_TYPE_ICON[t.type] ?? Cpu;
             return (
-              <div
+              <Button
                 key={t.id}
-                className="flex items-center gap-0.5"
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1 text-[11px] px-2"
+                onClick={() => setPreviewId(t.id)}
               >
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 gap-1 text-[11px] px-2"
-                  onClick={() => onApply(t)}
-                >
-                  <SIcon className="h-3 w-3" />
-                  {t.name}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-primary"
-                  onClick={() => setPreviewId(t.id)}
-                >
-                  <Eye className="h-3 w-3" />
-                </Button>
-              </div>
+                <SIcon className="h-3 w-3" />
+                {t.name}
+              </Button>
             );
           })}
         </div>
@@ -505,22 +650,25 @@ function SensorTemplatePicker({
 
       <Sheet
         open={!!previewId}
-        onOpenChange={() => setPreviewId(null)}
+        onOpenChange={() => {
+          setPreviewId(null);
+          setSelectedItemId(null);
+        }}
       >
         <SheetContent className="sm:max-w-md overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-primary" />
-              Chi tiết Sensor Template
+              Chọn cảm biến từ mẫu
             </SheetTitle>
             <SheetDescription>
-              Xem cấu hình cảm biến mẫu trước khi áp dụng.
+              Chọn một cảm biến bên dưới để thêm vào danh sách.
             </SheetDescription>
           </SheetHeader>
 
           {detail ? (
             <div className="space-y-4 px-4 pb-6">
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <h4 className="text-sm font-medium">{detail.name}</h4>
                 {detail.description && (
                   <p className="text-xs text-muted-foreground">
@@ -538,39 +686,59 @@ function SensorTemplatePicker({
               <Separator />
 
               <div className="space-y-2">
-                <h4 className="text-sm font-medium">
-                  Cảm biến mẫu ({detail.items.length})
-                </h4>
+                <p className="text-xs text-muted-foreground">
+                  Nhấn vào cảm biến để chọn
+                </p>
                 {detail.items.map((item) => {
                   const IIcon = SENSOR_TYPE_ICON[item.sensorType] ?? Cpu;
+                  const isSelected = selectedItemId === item.id;
                   return (
-                    <div
+                    <button
                       key={item.id}
-                      className="rounded-md border p-2.5 space-y-1.5"
+                      type="button"
+                      onClick={() =>
+                        setSelectedItemId(isSelected ? null : item.id)
+                      }
+                      className={`w-full rounded-md border p-2.5 text-left transition-colors space-y-1.5 ${
+                        isSelected
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50 hover:bg-muted/40"
+                      }`}
                     >
-                      <div className="flex items-center gap-2">
-                        <IIcon className="h-4 w-4 text-primary" />
-                        <span className="text-sm font-medium">
-                          {item.sensorModel ??
-                            SENSOR_TEMPLATE_TYPE_LABEL[item.sensorType] ??
-                            item.sensorType}
-                        </span>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <IIcon
+                            className={`h-4 w-4 ${
+                              isSelected
+                                ? "text-primary"
+                                : "text-muted-foreground"
+                            }`}
+                          />
+                          <span className="text-sm font-medium">
+                            {item.sensorModelName ??
+                              SENSOR_TEMPLATE_TYPE_LABEL[item.sensorType] ??
+                              item.sensorType}
+                          </span>
+                        </div>
+                        {isSelected && (
+                          <Check className="h-4 w-4 shrink-0 text-primary" />
+                        )}
                       </div>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
                         {item.minValue != null && (
-                          <span>Min: {item.minValue}</span>
+                          <span>Tối thiểu: {item.minValue}</span>
                         )}
                         {item.maxValue != null && (
-                          <span>Max: {item.maxValue}</span>
+                          <span>Tối đa: {item.maxValue}</span>
                         )}
                         {item.optimalMin != null && (
-                          <span>Optimal Min: {item.optimalMin}</span>
+                          <span>Tối ưu thấp: {item.optimalMin}</span>
                         )}
                         {item.optimalMax != null && (
-                          <span>Optimal Max: {item.optimalMax}</span>
+                          <span>Tối ưu cao: {item.optimalMax}</span>
                         )}
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
@@ -580,20 +748,28 @@ function SensorTemplatePicker({
               <div className="flex items-start gap-2 rounded-md bg-muted/50 p-2.5">
                 <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                 <p className="text-xs text-muted-foreground">
-                  Sensor Template sẽ điền sẵn loại cảm biến và các giá trị
-                  ngưỡng. Bạn vẫn có thể chỉnh sửa.
+                  Cảm biến được chọn sẽ điền sẵn loại và các giá trị ngưỡng. Bạn
+                  vẫn có thể chỉnh sửa sau.
                 </p>
               </div>
 
               <Button
                 className="w-full"
+                disabled={!selectedItemId}
                 onClick={() => {
-                  onApply(detail);
+                  const item = detail.items.find(
+                    (it) => it.id === selectedItemId,
+                  );
+                  if (!item) return;
+                  onApply({ ...detail, items: [item] });
                   setPreviewId(null);
+                  setSelectedItemId(null);
                 }}
               >
                 <Check className="mr-2 h-4 w-4" />
-                Áp dụng Template này
+                {selectedItemId
+                  ? "Áp dụng cảm biến đã chọn"
+                  : "Chưa chọn cảm biến"}
               </Button>
             </div>
           ) : (
@@ -615,12 +791,14 @@ interface IotDeviceFormProps {
   farmId: string;
   device?: IotDeviceResType;
   onBack: () => void;
+  actor?: IotActor;
 }
 
 export default function IotDeviceForm({
   farmId,
   device,
   onBack,
+  actor = "owner",
 }: IotDeviceFormProps) {
   const isEdit = !!device;
   const [show, setShow] = useState(false);
@@ -642,6 +820,7 @@ export default function IotDeviceForm({
       <EditDeviceForm
         farmId={farmId}
         device={device}
+        actor={actor}
         show={show}
         confirmSave={confirmSave}
         pendingData={pendingData}
@@ -655,6 +834,7 @@ export default function IotDeviceForm({
   return (
     <BatchCreateForm
       farmId={farmId}
+      actor={actor}
       show={show}
       handleBack={handleBack}
     />
@@ -664,19 +844,40 @@ export default function IotDeviceForm({
 // ── Device item card (batch create) ────────────────────────────────────
 
 function DeviceItemCard({
+  actor,
   index,
   control,
+  setValue,
   canRemove,
+  boardTakenByOther,
+  onApplyTemplate,
   onRemove,
 }: {
+  actor: IotActor;
   index: number;
   control: import("react-hook-form").Control<BatchCreateFormType>;
+  setValue: UseFormSetValue<BatchCreateFormType>;
   canRemove: boolean;
+  boardTakenByOther: boolean;
+  onApplyTemplate: (index: number, template: IotDeviceTemplateResType) => void;
   onRemove: () => void;
 }) {
   const dtVal = useWatch({ control, name: `devices.${index}.deviceType` });
+  const macValue = useWatch({ control, name: `devices.${index}.macAddress` });
   const DIcon = DEVICE_TYPE_ICON[dtVal] ?? Cpu;
   const showMac = dtVal === "wifi_module";
+  const effectiveType = (dtVal ?? "wifi_module") as z.infer<
+    typeof IotDeviceTypeSchema
+  >;
+
+  useEffect(() => {
+    if (dtVal !== "wifi_module" && macValue) {
+      setValue(`devices.${index}.macAddress`, "", {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  }, [dtVal, macValue, index, setValue]);
 
   return (
     <Card className="border-border/50 bg-muted/10">
@@ -698,6 +899,12 @@ function DeviceItemCard({
         )}
       </CardHeader>
       <CardContent className="space-y-3">
+        <DeviceTemplatePicker
+          actor={actor}
+          deviceType={effectiveType}
+          onApply={(template) => onApplyTemplate(index, template)}
+        />
+
         <FieldGroup>
           <div className="grid gap-3 md:grid-cols-2">
             <Controller
@@ -708,7 +915,7 @@ function DeviceItemCard({
                   <FieldLabel>Tên thiết bị *</FieldLabel>
                   <Input
                     {...f}
-                    placeholder="VD: Main Board - Farm A"
+                    placeholder="VD: Bo mạch chính - Nông trại A"
                   />
                   <FieldError>{fieldState.error?.message}</FieldError>
                 </Field>
@@ -728,14 +935,22 @@ function DeviceItemCard({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.entries(DEVICE_TYPE_LABEL).map(([val, label]) => (
-                        <SelectItem
-                          key={val}
-                          value={val}
-                        >
-                          {label}
-                        </SelectItem>
-                      ))}
+                      {Object.entries(DEVICE_TYPE_LABEL).map(([val, label]) => {
+                        const disableBoardOption =
+                          val === "board_module" &&
+                          boardTakenByOther &&
+                          f.value !== "board_module";
+
+                        return (
+                          <SelectItem
+                            key={val}
+                            value={val}
+                            disabled={disableBoardOption}
+                          >
+                            {label}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                   <FieldError>{fieldState.error?.message}</FieldError>
@@ -751,7 +966,7 @@ function DeviceItemCard({
                 control={control}
                 render={({ field: f, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>MAC Address *</FieldLabel>
+                    <FieldLabel>Địa chỉ MAC *</FieldLabel>
                     <Input
                       {...f}
                       placeholder="AA:BB:CC:DD:EE:FF"
@@ -801,14 +1016,25 @@ function DeviceItemCard({
 
 function BatchCreateForm({
   farmId,
+  actor,
   show,
   handleBack,
 }: {
   farmId: string;
+  actor: IotActor;
   show: boolean;
   handleBack: () => void;
 }) {
-  const { mutateAsync: createAsync, isPending } = useOwnerCreateIotDevices();
+  const ownerCreateMutation = useOwnerCreateIotDevices();
+  const managerCreateMutation = useManagerCreateIotDevices();
+  const createAsync =
+    actor === "owner"
+      ? ownerCreateMutation.mutateAsync
+      : managerCreateMutation.mutateAsync;
+  const isPending =
+    actor === "owner"
+      ? ownerCreateMutation.isPending
+      : managerCreateMutation.isPending;
 
   const form = useForm<BatchCreateFormType>({
     resolver: zodResolver(BatchCreateFormSchema),
@@ -836,56 +1062,58 @@ function BatchCreateForm({
     },
   });
 
-  const { fields, append, remove, replace } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "devices",
   });
 
-  const [confirmTemplate, setConfirmTemplate] = useState(false);
-  const [pendingTemplate, setPendingTemplate] =
-    useState<IotDeviceTemplateResType | null>(null);
+  const watchedDevices =
+    useWatch({ control: form.control, name: "devices" }) ?? [];
 
-  const applyDeviceTemplate = (template: IotDeviceTemplateResType) => {
-    const hasUserInput = form
-      .getValues("devices")
-      .some((d) => d.deviceName.trim() !== "");
-    if (hasUserInput) {
-      setPendingTemplate(template);
-      setConfirmTemplate(true);
-      return;
-    }
-    doApplyDeviceTemplate(template);
-  };
+  const boardCount = watchedDevices.filter(
+    (d) => d?.deviceType === "board_module",
+  ).length;
+  const loraCount = watchedDevices.filter(
+    (d) => d?.deviceType === "lora_module",
+  ).length;
+  const wifiCount = watchedDevices.filter(
+    (d) => d?.deviceType === "wifi_module",
+  ).length;
 
-  const doApplyDeviceTemplate = (template: IotDeviceTemplateResType) => {
-    const mapped = template.items.map((item) => ({
-      deviceName: item.deviceName,
-      deviceType: (item.deviceType ?? template.type) as z.infer<
-        typeof IotDeviceTypeSchema
-      >,
-      macAddress: "",
-      status: "active" as const,
-    }));
+  const applyDeviceTemplateAt = (
+    index: number,
+    template: IotDeviceTemplateResType,
+  ) => {
+    const currentType = (form.getValues(`devices.${index}.deviceType`) ??
+      "wifi_module") as z.infer<typeof IotDeviceTypeSchema>;
 
-    // Ensure minimum 3 devices with all 3 types
-    const types = new Set(mapped.map((d) => d.deviceType));
-    const allTypes: z.infer<typeof IotDeviceTypeSchema>[] = [
-      "board_module",
-      "lora_module",
-      "wifi_module",
-    ];
-    for (const t of allTypes) {
-      if (!types.has(t)) {
-        mapped.push({
-          deviceName: "",
-          deviceType: t,
-          macAddress: "",
-          status: "active",
-        });
-      }
-    }
+    const typeMatchedItems = template.items.filter(
+      (item) => (item.deviceType ?? template.type) === currentType,
+    );
+    const selectedItem = typeMatchedItems[0] ?? template.items[0];
 
-    replace(mapped);
+    if (!selectedItem) return;
+
+    const selectedType = (selectedItem.deviceType ?? template.type) as z.infer<
+      typeof IotDeviceTypeSchema
+    >;
+
+    form.setValue(
+      `devices.${index}.deviceName`,
+      selectedItem.deviceName ?? "",
+      {
+        shouldDirty: true,
+        shouldValidate: true,
+      },
+    );
+    form.setValue(`devices.${index}.deviceType`, selectedType, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    form.setValue(`devices.${index}.macAddress`, "", {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
   };
 
   const onSubmit = async (data: BatchCreateFormType) => {
@@ -894,9 +1122,11 @@ function BatchCreateForm({
         farmId,
         body: {
           devices: data.devices.map((d) => ({
-            deviceName: d.deviceName,
+            deviceName: d.deviceName.trim(),
             deviceType: d.deviceType,
-            ...(d.macAddress ? { macAddress: d.macAddress } : {}),
+            ...(d.deviceType === "wifi_module" && d.macAddress
+              ? { macAddress: d.macAddress.toUpperCase() }
+              : {}),
             status: d.status,
           })),
         },
@@ -936,21 +1166,39 @@ function BatchCreateForm({
           className="gap-1"
         >
           <Cpu className="h-3 w-3" />
-          Batch
+          Hàng loạt
         </Badge>
       </div>
 
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="space-y-4">
-          <DeviceTemplatePicker onApply={applyDeviceTemplate} />
-
           <Card>
             <CardHeader>
               <CardTitle>Danh sách thiết bị</CardTitle>
               <CardDescription>
-                Thêm ít nhất 3 thiết bị: đúng 1 Board Module, ít nhất 1 LoRa
-                Module, ít nhất 1 WiFi Module.
+                Thêm ít nhất 3 thiết bị: đúng 1 bo mạch, ít nhất 1 mô-đun LoRa,
+                ít nhất 1 mô-đun WiFi.
               </CardDescription>
+              <div className="flex flex-wrap gap-2 pt-2">
+                <Badge
+                  variant={boardCount === 1 ? "default" : "destructive"}
+                  className="text-xs"
+                >
+                  Bo mạch: {boardCount}/1
+                </Badge>
+                <Badge
+                  variant={loraCount >= 1 ? "default" : "destructive"}
+                  className="text-xs"
+                >
+                  LoRa: {loraCount}/1+
+                </Badge>
+                <Badge
+                  variant={wifiCount >= 1 ? "default" : "destructive"}
+                  className="text-xs"
+                >
+                  WiFi: {wifiCount}/1+
+                </Badge>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               {rootError && (
@@ -960,29 +1208,71 @@ function BatchCreateForm({
               {fields.map((field, index) => (
                 <DeviceItemCard
                   key={field.id}
+                  actor={actor}
                   index={index}
                   control={form.control}
+                  setValue={form.setValue}
+                  boardTakenByOther={
+                    boardCount -
+                      (watchedDevices[index]?.deviceType === "board_module"
+                        ? 1
+                        : 0) >
+                    0
+                  }
+                  onApplyTemplate={applyDeviceTemplateAt}
                   canRemove={fields.length > 3}
                   onRemove={() => remove(index)}
                 />
               ))}
 
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() =>
-                  append({
-                    deviceName: "",
-                    deviceType: "wifi_module",
-                    macAddress: "",
-                    status: "active",
-                  })
-                }
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Thêm thiết bị
-              </Button>
+              <div className="grid gap-2 md:grid-cols-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={boardCount >= 1}
+                  onClick={() =>
+                    append({
+                      deviceName: "",
+                      deviceType: "board_module",
+                      macAddress: "",
+                      status: "active",
+                    })
+                  }
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Thêm bo mạch
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    append({
+                      deviceName: "",
+                      deviceType: "lora_module",
+                      macAddress: "",
+                      status: "active",
+                    })
+                  }
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Thêm LoRa
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    append({
+                      deviceName: "",
+                      deviceType: "wifi_module",
+                      macAddress: "",
+                      status: "active",
+                    })
+                  }
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Thêm WiFi
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -1004,25 +1294,6 @@ function BatchCreateForm({
           </Button>
         </div>
       </form>
-
-      <ConfirmDialog
-        open={confirmTemplate}
-        title="Áp dụng Template?"
-        description="Các thiết bị hiện tại sẽ bị ghi đè bởi cấu hình từ template. Bạn có chắc muốn tiếp tục?"
-        confirmLabel="Áp dụng"
-        cancelLabel="Hủy"
-        onCancel={() => {
-          setConfirmTemplate(false);
-          setPendingTemplate(null);
-        }}
-        onConfirm={() => {
-          setConfirmTemplate(false);
-          if (pendingTemplate) {
-            doApplyDeviceTemplate(pendingTemplate);
-            setPendingTemplate(null);
-          }
-        }}
-      />
     </div>
   );
 }
@@ -1032,6 +1303,7 @@ function BatchCreateForm({
 function EditDeviceForm({
   farmId,
   device,
+  actor,
   show,
   confirmSave,
   pendingData,
@@ -1041,6 +1313,7 @@ function EditDeviceForm({
 }: {
   farmId: string;
   device: IotDeviceResType;
+  actor: IotActor;
   show: boolean;
   confirmSave: boolean;
   pendingData: EditFormType | null;
@@ -1048,12 +1321,46 @@ function EditDeviceForm({
   setPendingData: (v: EditFormType | null) => void;
   handleBack: () => void;
 }) {
-  const { mutateAsync: updateAsync, isPending } = useOwnerUpdateIotDevice();
-  const { mutateAsync: createSensorsAsync, isPending: sensorsPending } =
-    useOwnerCreateSensors();
+  const ownerUpdateMutation = useOwnerUpdateIotDevice();
+  const managerUpdateMutation = useManagerUpdateIotDevice();
+  const updateAsync =
+    actor === "owner"
+      ? ownerUpdateMutation.mutateAsync
+      : managerUpdateMutation.mutateAsync;
+  const isPending =
+    actor === "owner"
+      ? ownerUpdateMutation.isPending
+      : managerUpdateMutation.isPending;
+
+  const ownerCreateSensorsMutation = useOwnerCreateSensors();
+  const managerCreateSensorsMutation = useManagerCreateSensors();
+  const createSensorsAsync =
+    actor === "owner"
+      ? ownerCreateSensorsMutation.mutateAsync
+      : managerCreateSensorsMutation.mutateAsync;
+  const sensorsPending =
+    actor === "owner"
+      ? ownerCreateSensorsMutation.isPending
+      : managerCreateSensorsMutation.isPending;
   const [showSensorForm, setShowSensorForm] = useState(false);
 
   const isBoard = device.deviceType === "board_module";
+
+  const ownerSensorsQuery = useOwnerListSensors(
+    device.id,
+    { page: 1, limit: 100 },
+    actor === "owner" && isBoard,
+  );
+  const managerSensorsQuery = useManagerListSensors(
+    device.id,
+    { page: 1, limit: 100 },
+    actor === "manager" && isBoard,
+  );
+  const existingSensorsData =
+    actor === "owner" ? ownerSensorsQuery.data : managerSensorsQuery.data;
+  const existingSensors = existingSensorsData?.data?.data ?? [];
+  const existingSensorTypes = new Set(existingSensors.map((s) => s.sensorType));
+  const remainingSensorSlots = Math.max(0, 4 - existingSensors.length);
 
   const form = useForm<EditFormType>({
     resolver: zodResolver(EditFormSchema),
@@ -1079,6 +1386,9 @@ function EditDeviceForm({
     replace: replaceSensors,
   } = useFieldArray({ control: sensorForm.control, name: "items" });
 
+  const currentSensorItems =
+    useWatch({ control: sensorForm.control, name: "items" }) ?? [];
+
   const SENSOR_TEMPLATE_TO_SENSOR_TYPE: Record<string, string> = {
     soil_moisture_sensor: "soil_moisture",
     air_temperature_sensor: "air_temperature",
@@ -1087,6 +1397,7 @@ function EditDeviceForm({
   };
 
   const applySensorTemplate = (template: SensorTemplateResType) => {
+    const seen = new Set<string>();
     const mapped = template.items
       .map((item) => {
         const sensorType =
@@ -1097,7 +1408,19 @@ function EditDeviceForm({
           maxValue: item.maxValue ?? 100,
         };
       })
-      .slice(0, 4);
+      .filter((item) => {
+        if (existingSensorTypes.has(item.sensorType)) {
+          return false;
+        }
+
+        if (seen.has(item.sensorType)) {
+          return false;
+        }
+
+        seen.add(item.sensorType);
+        return true;
+      })
+      .slice(0, remainingSensorSlots);
 
     if (mapped.length > 0) {
       replaceSensors(mapped);
@@ -1107,10 +1430,13 @@ function EditDeviceForm({
 
   const doSave = async (data: EditFormType) => {
     try {
+      const normalizedMac = data.macAddress.trim().toUpperCase();
       const body: UpdateIotDeviceBodyType = {
-        deviceName: data.deviceName,
+        deviceName: data.deviceName.trim(),
         deviceType: data.deviceType,
-        macAddress: data.macAddress || null,
+        ...(data.deviceType === "wifi_module" && normalizedMac
+          ? { macAddress: normalizedMac }
+          : {}),
         status: data.status,
       };
       await updateAsync({ deviceId: device.id, farmId, body });
@@ -1131,13 +1457,48 @@ function EditDeviceForm({
   };
 
   const onSensorSubmit = async (data: SensorBatchFormType) => {
+    sensorForm.clearErrors("items");
+
+    if (remainingSensorSlots <= 0) {
+      sensorForm.setError("items", {
+        type: "manual",
+        message: "Bo mạch đã đủ 4 cảm biến. Không thể thêm mới.",
+      });
+      return;
+    }
+
+    if (data.items.length > remainingSensorSlots) {
+      sensorForm.setError("items", {
+        type: "manual",
+        message: `Chỉ có thể thêm tối đa ${remainingSensorSlots} cảm biến nữa.`,
+      });
+      return;
+    }
+
+    const duplicatedWithExisting = data.items.find((item) =>
+      existingSensorTypes.has(item.sensorType),
+    );
+
+    if (duplicatedWithExisting) {
+      sensorForm.setError("items", {
+        type: "manual",
+        message: `${SENSOR_TYPE_LABEL[duplicatedWithExisting.sensorType] ?? duplicatedWithExisting.sensorType} đã tồn tại trên bo mạch.`,
+      });
+      return;
+    }
+
     try {
       await createSensorsAsync({
         iotDeviceId: device.id,
         body: { items: data.items },
       });
       setShowSensorForm(false);
-      sensorForm.reset();
+      const defaultSensorType =
+        SENSOR_TYPE_VALUES.find((type) => !existingSensorTypes.has(type)) ??
+        "soil_moisture";
+      sensorForm.reset({
+        items: [{ sensorType: defaultSensorType, minValue: 0, maxValue: 100 }],
+      });
     } catch {
       // error handled by mutation
     }
@@ -1145,6 +1506,19 @@ function EditDeviceForm({
 
   const dtVal = useWatch({ control: form.control, name: "deviceType" });
   const DIcon = DEVICE_TYPE_ICON[dtVal] ?? Cpu;
+
+  useEffect(() => {
+    if (dtVal !== "wifi_module" && form.getValues("macAddress")) {
+      form.setValue("macAddress", "", {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  }, [dtVal, form]);
+
+  const sensorItemsError = sensorForm.formState.errors.items as
+    | { message?: string }
+    | undefined;
 
   return (
     <div
@@ -1219,22 +1593,28 @@ function EditDeviceForm({
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
-                <Controller
-                  name="macAddress"
-                  control={form.control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>MAC Address</FieldLabel>
-                      <Input
-                        {...field}
-                        value={field.value ?? ""}
-                        className="font-mono"
-                        placeholder="AA:BB:CC:DD:EE:FF"
-                      />
-                      <FieldError>{fieldState.error?.message}</FieldError>
-                    </Field>
-                  )}
-                />
+                {dtVal === "wifi_module" ? (
+                  <Controller
+                    name="macAddress"
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>Địa chỉ MAC *</FieldLabel>
+                        <Input
+                          {...field}
+                          value={field.value ?? ""}
+                          className="font-mono"
+                          placeholder="AA:BB:CC:DD:EE:FF"
+                        />
+                        <FieldError>{fieldState.error?.message}</FieldError>
+                      </Field>
+                    )}
+                  />
+                ) : (
+                  <div className="rounded-md border border-dashed bg-muted/20 p-3 text-xs text-muted-foreground">
+                    Địa chỉ MAC chỉ áp dụng cho mô-đun WiFi.
+                  </div>
+                )}
                 <Controller
                   name="status"
                   control={form.control}
@@ -1294,11 +1674,11 @@ function EditDeviceForm({
               <div>
                 <CardTitle>Thêm cảm biến</CardTitle>
                 <CardDescription>
-                  Thêm cảm biến cho board module này (tối đa 4 cảm biến, mỗi
-                  loại 1).
+                  Bo mạch hiện có {existingSensors.length}/4 cảm biến. Mỗi loại
+                  cảm biến chỉ được gắn 1 lần.
                 </CardDescription>
               </div>
-              {!showSensorForm && (
+              {!showSensorForm && remainingSensorSlots > 0 && (
                 <Button
                   size="sm"
                   variant="outline"
@@ -1311,12 +1691,36 @@ function EditDeviceForm({
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            <SensorTemplatePicker onApply={applySensorTemplate} />
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <span>Còn lại: {remainingSensorSlots} vị trí</span>
+              {existingSensors.length > 0 && (
+                <span>
+                  Đang có: {existingSensors
+                    .map((sensor) => SENSOR_TYPE_LABEL[sensor.sensorType] ?? sensor.sensorType)
+                    .join(", ")}
+                </span>
+              )}
+            </div>
+            <SensorTemplatePicker
+              actor={actor}
+              onApply={applySensorTemplate}
+            />
+            {remainingSensorSlots === 0 && (
+              <p className="text-sm text-muted-foreground">
+                Bo mạch đã đủ 4 cảm biến, không thể thêm mới.
+              </p>
+            )}
           </CardContent>
           {showSensorForm && (
             <CardContent>
               <form onSubmit={sensorForm.handleSubmit(onSensorSubmit)}>
                 <div className="space-y-3">
+                  {sensorItemsError?.message && (
+                    <p className="text-sm text-destructive">
+                      {sensorItemsError.message}
+                    </p>
+                  )}
+
                   {sensorFields.map((field, index) => (
                     <div
                       key={field.id}
@@ -1354,14 +1758,28 @@ function EditDeviceForm({
                                 </SelectTrigger>
                                 <SelectContent>
                                   {Object.entries(SENSOR_TYPE_LABEL).map(
-                                    ([val, label]) => (
-                                      <SelectItem
-                                        key={val}
-                                        value={val}
-                                      >
-                                        {label}
-                                      </SelectItem>
-                                    ),
+                                    ([val, label]) => {
+                                      const alreadyBound =
+                                        existingSensorTypes.has(val);
+                                      const selectedElsewhere =
+                                        currentSensorItems.some(
+                                          (item, itemIndex) =>
+                                            itemIndex !== index &&
+                                            item?.sensorType === val,
+                                        );
+
+                                      return (
+                                        <SelectItem
+                                          key={val}
+                                          value={val}
+                                          disabled={
+                                            alreadyBound || selectedElsewhere
+                                          }
+                                        >
+                                          {label}
+                                        </SelectItem>
+                                      );
+                                    },
                                   )}
                                 </SelectContent>
                               </Select>
@@ -1415,19 +1833,34 @@ function EditDeviceForm({
                     </div>
                   ))}
 
-                  {sensorFields.length < 4 && (
+                  {sensorFields.length < remainingSensorSlots && (
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       className="w-full"
-                      onClick={() =>
+                      onClick={() => {
+                        const usedInForm = new Set(
+                          currentSensorItems
+                            .map((item) => item?.sensorType)
+                            .filter(Boolean),
+                        );
+                        const nextSensorType = SENSOR_TYPE_VALUES.find(
+                          (type) =>
+                            !existingSensorTypes.has(type) &&
+                            !usedInForm.has(type),
+                        );
+
+                        if (!nextSensorType) {
+                          return;
+                        }
+
                         appendSensor({
-                          sensorType: "soil_moisture",
+                          sensorType: nextSensorType,
                           minValue: 0,
                           maxValue: 100,
-                        })
-                      }
+                        });
+                      }}
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       Thêm cảm biến
@@ -1440,8 +1873,21 @@ function EditDeviceForm({
                       variant="outline"
                       size="sm"
                       onClick={() => {
+                        const defaultSensorType =
+                          SENSOR_TYPE_VALUES.find(
+                            (type) => !existingSensorTypes.has(type),
+                          ) ?? "soil_moisture";
                         setShowSensorForm(false);
-                        sensorForm.reset();
+                        sensorForm.clearErrors("items");
+                        sensorForm.reset({
+                          items: [
+                            {
+                              sensorType: defaultSensorType,
+                              minValue: 0,
+                              maxValue: 100,
+                            },
+                          ],
+                        });
                       }}
                     >
                       Hủy

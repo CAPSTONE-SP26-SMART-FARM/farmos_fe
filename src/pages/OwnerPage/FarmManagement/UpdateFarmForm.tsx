@@ -44,7 +44,7 @@ interface Props {
   onBack: () => void;
 }
 
-const FARM_TYPES = [{ value: "cultivation", label: "Cultivation" }] as const;
+const FARM_TYPES = [{ value: "cultivation", label: "Canh tác" }] as const;
 
 const UpdateFarmForm = ({ farm, onBack }: Props) => {
   const [show, setShow] = useState(false);
@@ -111,21 +111,21 @@ const UpdateFarmForm = ({ farm, onBack }: Props) => {
               className="mb-2 -ml-2 gap-1 text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to Farm Management
+              Quay lại quản lý trang trại
             </Button>
-            <Badge className="mb-2 block w-fit">Owner Portal</Badge>
-            <h1 className="text-2xl font-bold">Edit Farm</h1>
+            <Badge className="mb-2 block w-fit">Cổng chủ trang trại</Badge>
+            <h1 className="text-2xl font-bold">Chỉnh sửa trang trại</h1>
             <p className="text-muted-foreground">
-              Update your farm details below.
+              Cập nhật thông tin trang trại bên dưới.
             </p>
           </div>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Farm Details</CardTitle>
+            <CardTitle>Thông tin trang trại</CardTitle>
             <CardDescription>
-              Modify the information for your farm.
+              Chỉnh sửa thông tin cho trang trại của bạn.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -140,11 +140,11 @@ const UpdateFarmForm = ({ farm, onBack }: Props) => {
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="farm-code">Farm Code</FieldLabel>
+                        <FieldLabel htmlFor="farm-code">Mã trang trại</FieldLabel>
                         <Input
                           {...field}
                           id="farm-code"
-                          placeholder="e.g. FARM-001"
+                          placeholder="Ví dụ: FARM-001"
                         />
                         {fieldState.invalid && (
                           <FieldError errors={[fieldState.error]} />
@@ -157,11 +157,11 @@ const UpdateFarmForm = ({ farm, onBack }: Props) => {
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="farm-name">Farm Name</FieldLabel>
+                        <FieldLabel htmlFor="farm-name">Tên trang trại</FieldLabel>
                         <Input
                           {...field}
                           id="farm-name"
-                          placeholder="e.g. Green Valley Farm"
+                          placeholder="Ví dụ: Trang trại Green Valley"
                         />
                         {fieldState.invalid && (
                           <FieldError errors={[fieldState.error]} />
@@ -176,13 +176,13 @@ const UpdateFarmForm = ({ farm, onBack }: Props) => {
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>Farm Type</FieldLabel>
+                      <FieldLabel>Loại trang trại</FieldLabel>
                       <Select
                         value={field.value}
                         onValueChange={field.onChange}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select farm type" />
+                          <SelectValue placeholder="Chọn loại trang trại" />
                         </SelectTrigger>
                         <SelectContent>
                           {FARM_TYPES.map((type) => (
@@ -207,11 +207,11 @@ const UpdateFarmForm = ({ farm, onBack }: Props) => {
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="farm-address">Address</FieldLabel>
+                      <FieldLabel htmlFor="farm-address">Địa chỉ</FieldLabel>
                       <Input
                         {...field}
                         id="farm-address"
-                        placeholder="e.g. 123 Farm Road, District 9"
+                        placeholder="Ví dụ: 123 Đường Nông trại, Quận 9"
                       />
                       {fieldState.invalid && (
                         <FieldError errors={[fieldState.error]} />
@@ -227,14 +227,14 @@ const UpdateFarmForm = ({ farm, onBack }: Props) => {
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
                         <FieldLabel htmlFor="farm-area-hectares">
-                          Area (hectares)
+                          Diện tích (hecta)
                         </FieldLabel>
                         <Input
                           {...field}
                           id="farm-area-hectares"
                           type="number"
                           step="0.01"
-                          placeholder="e.g. 10.5"
+                          placeholder="Ví dụ: 10.5"
                           value={field.value ?? ""}
                           onChange={(e) => {
                             const val = e.target.value;
@@ -255,14 +255,14 @@ const UpdateFarmForm = ({ farm, onBack }: Props) => {
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
                         <FieldLabel htmlFor="farm-area-sqm">
-                          Area (sq. meters)
+                          Diện tích (m²)
                         </FieldLabel>
                         <Input
                           {...field}
                           id="farm-area-sqm"
                           type="number"
                           step="0.01"
-                          placeholder="e.g. 105000"
+                          placeholder="Ví dụ: 105000"
                           value={field.value ?? ""}
                           onChange={(e) => {
                             const val = e.target.value;
@@ -285,12 +285,12 @@ const UpdateFarmForm = ({ farm, onBack }: Props) => {
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor="farm-description">
-                        Description
+                        Mô tả
                       </FieldLabel>
                       <Textarea
                         {...field}
                         id="farm-description"
-                        placeholder="Brief description of the farm"
+                        placeholder="Mô tả ngắn về trang trại"
                         className="min-h-20"
                       />
                       {fieldState.invalid && (
@@ -308,7 +308,7 @@ const UpdateFarmForm = ({ farm, onBack }: Props) => {
                   onClick={handleBack}
                   disabled={isPending}
                 >
-                  Cancel
+                  Hủy
                 </Button>
                 <Button
                   type="submit"
@@ -317,10 +317,10 @@ const UpdateFarmForm = ({ farm, onBack }: Props) => {
                   {isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
+                      Đang lưu...
                     </>
                   ) : (
-                    "Save Changes"
+                    "Lưu thay đổi"
                   )}
                 </Button>
               </div>

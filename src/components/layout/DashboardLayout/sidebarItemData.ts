@@ -24,6 +24,7 @@ import {
   FileText,
   User,
   Send,
+  Milestone,
 } from "lucide-react";
 import type { SidebarData } from "./types";
 
@@ -154,6 +155,11 @@ export const sidebarData: SidebarData = {
       title: "Manage Crop Seasons",
       url: "/dashboard/manager/crop-seasons",
       icon: Sprout,
+    },
+    {
+      title: "Production Milestones",
+      url: "/dashboard/manager/milestones",
+      icon: Milestone,
     },
     {
       title: "IoT Configuration",

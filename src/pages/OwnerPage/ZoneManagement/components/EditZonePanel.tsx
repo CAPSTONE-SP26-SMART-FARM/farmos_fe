@@ -46,7 +46,7 @@ interface Props {
   onBack: () => void;
 }
 
-const ZONE_TYPES = [{ value: "cultivation", label: "Cultivation" }] as const;
+const ZONE_TYPES = [{ value: "cultivation", label: "Canh tác" }] as const;
 
 const EditZonePanel = ({ zone, farmId, onBack }: Props) => {
   const [show, setShow] = useState(false);
@@ -78,13 +78,13 @@ const EditZonePanel = ({ zone, farmId, onBack }: Props) => {
   const handleSubmit = async (data: UpdateZoneBodyType) => {
     if (farmAreaSqm && data.areaSqm && data.areaSqm > farmAreaSqm) {
       form.setError("areaSqm", {
-        message: `Zone area cannot exceed farm area (${farmAreaSqm.toLocaleString()} sq.m)`,
+        message: `Diện tích khu vực không được vượt quá diện tích nông trại (${farmAreaSqm.toLocaleString()} m²)`,
       });
       return;
     }
     try {
       await mutateAsync(data);
-      toast.success("Zone updated successfully");
+      toast.success("Cập nhật khu vực thành công");
       handleBack();
     } catch (error) {
       if (isApiErrorUnprocessableEntityResponse(error)) {
@@ -94,7 +94,7 @@ const EditZonePanel = ({ zone, farmId, onBack }: Props) => {
         );
       }
       if (isApiErrorResponse(error)) {
-        toast.error(error.response?.data.message ?? "Failed to update zone");
+        toast.error(error.response?.data.message ?? "Không thể cập nhật khu vực");
       }
     }
   };
@@ -116,21 +116,21 @@ const EditZonePanel = ({ zone, farmId, onBack }: Props) => {
             className="mb-2 -ml-2 gap-1 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Zones
+            Quay lại danh sách khu vực
           </Button>
-          <Badge className="mb-2 block w-fit">Owner Portal</Badge>
-          <h1 className="text-2xl font-bold">Edit Zone</h1>
+          <Badge className="mb-2 block w-fit">Cổng chủ vườn</Badge>
+          <h1 className="text-2xl font-bold">Chỉnh sửa khu vực</h1>
           <p className="text-muted-foreground">
-            Update the details of{" "}
+            Cập nhật thông tin của{" "}
             <span className="font-medium">{zone.name}</span>.
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Zone Details</CardTitle>
+            <CardTitle>Thông tin khu vực</CardTitle>
             <CardDescription>
-              Modify the information for this zone.
+              Chỉnh sửa thông tin cho khu vực này.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -144,11 +144,11 @@ const EditZonePanel = ({ zone, farmId, onBack }: Props) => {
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="zone-name">Zone Name</FieldLabel>
+                      <FieldLabel htmlFor="zone-name">Tên khu vực</FieldLabel>
                       <Input
                         {...field}
                         id="zone-name"
-                        placeholder="e.g. North Paddy Field"
+                        placeholder="Ví dụ: Khu ruộng phía Bắc"
                       />
                       {fieldState.invalid && (
                         <FieldError errors={[fieldState.error]} />
@@ -162,13 +162,13 @@ const EditZonePanel = ({ zone, farmId, onBack }: Props) => {
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>Zone Type</FieldLabel>
+                      <FieldLabel>Loại khu vực</FieldLabel>
                       <Select
                         value={field.value}
                         onValueChange={field.onChange}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select zone type" />
+                          <SelectValue placeholder="Chọn loại khu vực" />
                         </SelectTrigger>
                         <SelectContent>
                           {ZONE_TYPES.map((type) => (
@@ -199,7 +199,7 @@ const EditZonePanel = ({ zone, farmId, onBack }: Props) => {
                     return (
                       <Field data-invalid={fieldState.invalid || exceeds}>
                         <FieldLabel htmlFor="zone-area">
-                          Area (sq. meters) — optional
+                          Diện tích (m²) — tùy chọn
                         </FieldLabel>
                         <Input
                           id="zone-area"
@@ -207,7 +207,7 @@ const EditZonePanel = ({ zone, farmId, onBack }: Props) => {
                           step="0.01"
                           min="0"
                           max={farmAreaSqm ?? undefined}
-                          placeholder="e.g. 5000"
+                          placeholder="Ví dụ: 5000"
                           value={field.value ?? ""}
                           onChange={(e) => {
                             const val = e.target.value;
@@ -221,8 +221,8 @@ const EditZonePanel = ({ zone, farmId, onBack }: Props) => {
                             className={`text-xs ${exceeds ? "text-destructive" : "text-muted-foreground"}`}
                           >
                             {exceeds
-                              ? `Exceeds farm area (${farmAreaSqm.toLocaleString()} sq.m)`
-                              : `Farm total area: ${farmAreaSqm.toLocaleString()} sq.m`}
+                              ? `Vượt quá diện tích nông trại (${farmAreaSqm.toLocaleString()} m²)`
+                              : `Tổng diện tích nông trại: ${farmAreaSqm.toLocaleString()} m²`}
                           </p>
                         )}
                         {fieldState.invalid && (
@@ -239,12 +239,12 @@ const EditZonePanel = ({ zone, farmId, onBack }: Props) => {
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor="zone-description">
-                        Description — optional
+                        Mô tả — tùy chọn
                       </FieldLabel>
                       <Textarea
                         {...field}
                         id="zone-description"
-                        placeholder="Brief description of this zone"
+                        placeholder="Mô tả ngắn về khu vực này"
                         className="min-h-20"
                       />
                       {fieldState.invalid && (
@@ -262,7 +262,7 @@ const EditZonePanel = ({ zone, farmId, onBack }: Props) => {
                   onClick={handleBack}
                   disabled={isPending}
                 >
-                  Cancel
+                  Hủy
                 </Button>
                 <Button
                   type="submit"
@@ -271,10 +271,10 @@ const EditZonePanel = ({ zone, farmId, onBack }: Props) => {
                   {isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
+                      Đang lưu...
                     </>
                   ) : (
-                    "Save Changes"
+                    "Lưu thay đổi"
                   )}
                 </Button>
               </div>

@@ -29,6 +29,12 @@ export const useOwnerGetZoneDetail = (id: string) =>
     enabled: !!id,
   });
 
+export const useManagerListAssignedZones = (query: ListZonesQueryType) =>
+  useQuery({
+    queryKey: QUERY_KEYS.manager.zones.list(query as Record<string, unknown>),
+    queryFn: () => zoneService.listAssignedForManager(query),
+  });
+
 export const useOwnerCreateZone = (farmId: string) => {
   const queryClient = useQueryClient();
   return useMutation({

@@ -30,12 +30,21 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
+  useManagerIotDeviceDetail,
+  useManagerLockSensors,
   useOwnerIotDeviceDetail,
   useOwnerLockSensors,
 } from "@/queries/useIotDevice";
-import { useOwnerListSensors, useOwnerDeleteSensor } from "@/queries/useSensor";
+import {
+  useManagerDeleteSensor,
+  useManagerListSensors,
+  useOwnerDeleteSensor,
+  useOwnerListSensors,
+} from "@/queries/useSensor";
 import type { IotDeviceResType } from "@/schemaValidatation/iotDevice";
 import type { SensorResType } from "@/schemaValidatation/sensor";
+
+type IotActor = "owner" | "manager";
 
 // ── Metadata maps ──────────────────────────────────────────────────────
 
@@ -75,9 +84,9 @@ const DEVICE_TYPE_ICON: Record<string, typeof Cpu> = {
 };
 
 const DEVICE_TYPE_LABEL: Record<string, string> = {
-  board_module: "Board Module",
-  lora_module: "LoRa Module",
-  wifi_module: "WiFi Module",
+  board_module: "Bo mạch",
+  lora_module: "Mô-đun LoRa",
+  wifi_module: "Mô-đun WiFi",
 };
 
 const SENSOR_TYPE_META: Record<
@@ -125,6 +134,7 @@ interface IotDeviceDetailProps {
   farmId: string;
   onBack: () => void;
   onEdit?: (device: IotDeviceResType) => void;
+  actor?: IotActor;
 }
 
 export default function IotDeviceDetail({
@@ -132,27 +142,60 @@ export default function IotDeviceDetail({
   farmId,
   onBack,
   onEdit,
+  actor = "owner",
 }: IotDeviceDetailProps) {
   const [show, setShow] = useState(false);
   const [confirmLock, setConfirmLock] = useState(false);
   const [deleteSensorTarget, setDeleteSensorTarget] =
     useState<SensorResType | null>(null);
 
-  const { data: deviceData, isLoading: deviceLoading } =
-    useOwnerIotDeviceDetail(deviceId, farmId);
+  const ownerDeviceQuery = useOwnerIotDeviceDetail(
+    deviceId,
+    farmId,
+    actor === "owner",
+  );
+  const managerDeviceQuery = useManagerIotDeviceDetail(
+    deviceId,
+    farmId,
+    actor === "manager",
+  );
+  const deviceData =
+    actor === "owner" ? ownerDeviceQuery.data : managerDeviceQuery.data;
+  const deviceLoading =
+    actor === "owner"
+      ? ownerDeviceQuery.isLoading
+      : managerDeviceQuery.isLoading;
   const device = deviceData?.data;
 
   const isBoard = device?.deviceType === "board_module";
 
-  const { data: sensorsData, isLoading: sensorsLoading } = useOwnerListSensors(
+  const ownerSensorsQuery = useOwnerListSensors(
     deviceId,
     { page: 1, limit: 100 },
-    isBoard,
+    actor === "owner" && isBoard,
   );
+  const managerSensorsQuery = useManagerListSensors(
+    deviceId,
+    { page: 1, limit: 100 },
+    actor === "manager" && isBoard,
+  );
+  const sensorsData =
+    actor === "owner" ? ownerSensorsQuery.data : managerSensorsQuery.data;
+  const sensorsLoading =
+    actor === "owner"
+      ? ownerSensorsQuery.isLoading
+      : managerSensorsQuery.isLoading;
   const sensors = sensorsData?.data?.data ?? [];
 
-  const lockMutation = useOwnerLockSensors();
-  const deleteSensorMutation = useOwnerDeleteSensor();
+  const ownerLockMutation = useOwnerLockSensors();
+  const managerLockMutation = useManagerLockSensors();
+  const lockMutation =
+    actor === "owner" ? ownerLockMutation : managerLockMutation;
+
+  const ownerDeleteSensorMutation = useOwnerDeleteSensor();
+  const managerDeleteSensorMutation = useManagerDeleteSensor();
+  const deleteSensorMutation =
+    actor === "owner" ? ownerDeleteSensorMutation : managerDeleteSensorMutation;
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setShow(true));
@@ -261,7 +304,7 @@ export default function IotDeviceDetail({
               }
             />
             <InfoRow
-              label="MAC Address"
+              label="Địa chỉ MAC"
               value={
                 device.macAddress ? (
                   <span className="font-mono">{device.macAddress}</span>
@@ -272,7 +315,7 @@ export default function IotDeviceDetail({
             />
             {device.iotDeviceBoardId && (
               <InfoRow
-                label="Board ID"
+                label="Mã bo mạch"
                 value={
                   <span className="font-mono">
                     {device.iotDeviceBoardId.slice(0, 8)}…
@@ -311,7 +354,7 @@ export default function IotDeviceDetail({
               <div>
                 <CardTitle>Cảm biến ({sensors.length}/4)</CardTitle>
                 <CardDescription>
-                  Board module cần đúng 4 cảm biến (mỗi loại 1) để khóa.
+                  Bo mạch cần đúng 4 cảm biến (mỗi loại 1) để khóa.
                 </CardDescription>
               </div>
               {lockReady && (
@@ -337,7 +380,7 @@ export default function IotDeviceDetail({
               </div>
             ) : sensors.length === 0 ? (
               <p className="py-6 text-center text-muted-foreground">
-                Chưa có cảm biến nào. Thêm cảm biến từ form chỉnh sửa.
+                Chưa có cảm biến nào. Thêm cảm biến từ biểu mẫu chỉnh sửa.
               </p>
             ) : (
               <div className="grid gap-3 md:grid-cols-2">
@@ -382,10 +425,10 @@ export default function IotDeviceDetail({
                       </div>
                       <div className="flex gap-4 text-xs text-muted-foreground">
                         <span>
-                          Min: {sensor.minValue} {meta.unit}
+                          Tối thiểu: {sensor.minValue} {meta.unit}
                         </span>
                         <span>
-                          Max: {sensor.maxValue} {meta.unit}
+                          Tối đa: {sensor.maxValue} {meta.unit}
                         </span>
                       </div>
                     </div>
@@ -401,7 +444,7 @@ export default function IotDeviceDetail({
       <ConfirmDialog
         open={confirmLock}
         title="Khóa cảm biến?"
-        description="Sau khi khóa, bạn không thể thêm/xóa cảm biến trên board này. Bạn có chắc chắn?"
+        description="Sau khi khóa, bạn không thể thêm/xóa cảm biến trên bo mạch này. Bạn có chắc chắn?"
         confirmLabel="Khóa"
         cancelLabel="Hủy"
         onCancel={() => setConfirmLock(false)}
@@ -415,7 +458,7 @@ export default function IotDeviceDetail({
       <ConfirmDialog
         open={!!deleteSensorTarget}
         title="Xóa cảm biến?"
-        description={`Xóa cảm biến "${SENSOR_TYPE_META[deleteSensorTarget?.sensorType ?? ""]?.label ?? ""}" khỏi board?`}
+        description={`Xóa cảm biến "${SENSOR_TYPE_META[deleteSensorTarget?.sensorType ?? ""]?.label ?? ""}" khỏi bo mạch?`}
         confirmLabel="Xóa"
         cancelLabel="Hủy"
         variant="destructive"

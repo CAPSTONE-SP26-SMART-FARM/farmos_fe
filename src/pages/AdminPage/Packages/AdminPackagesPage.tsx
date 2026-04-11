@@ -49,34 +49,39 @@ const createPackage = (
 
 const initialPackages: SubscriptionPackage[] = [
   createPackage({
-    name: "Starter",
+    name: "Khởi động",
     durationMonths: 12,
     iotKits: 10,
     doctorTickets: 20,
     priceVnd: 9_900_000,
     description:
-      "Goi khoi dong cho nho le voi 1 farm va toi da 10 bo IoT kits.",
+      "Gói khởi động cho quy mô nhỏ với 1 nông trại và tối đa 10 bộ IoT.",
     status: "Active",
   }),
   createPackage({
-    name: "Growth",
+    name: "Tăng trưởng",
     durationMonths: 12,
     iotKits: 25,
     doctorTickets: 50,
     priceVnd: 19_900_000,
-    description: "Goi tang truong cho 2-3 farm, kem nhieu ticket tu van.",
+    description: "Gói tăng trưởng cho 2-3 nông trại, kèm nhiều vé tư vấn.",
     status: "Active",
   }),
   createPackage({
-    name: "Scale",
+    name: "Mở rộng",
     durationMonths: 12,
     iotKits: 50,
     doctorTickets: 120,
     priceVnd: 39_900_000,
-    description: "Goi quy mo lon, phu hop chu dau tu co nhieu khu trang trai.",
+    description: "Gói quy mô lớn, phù hợp chủ đầu tư có nhiều khu trang trại.",
     status: "Draft",
   }),
 ];
+
+const PACKAGE_STATUS_LABEL: Record<PackageStatus, string> = {
+  Active: "Đang hoạt động",
+  Draft: "Bản nháp",
+};
 
 const formatVnd = (value: number) =>
   new Intl.NumberFormat("vi-VN", {
@@ -152,12 +157,12 @@ function AdminPackagesPage() {
   };
 
   const validateForm = () => {
-    if (!formData.name.trim()) return "Vui long nhap ten goi dich vu.";
+    if (!formData.name.trim()) return "Vui lòng nhập tên gói dịch vụ.";
     if (!formData.durationMonths || formData.durationMonths <= 0)
-      return "Thoi han (thang) phai lon hon 0.";
-    if (formData.iotKits < 0) return "So IoT kits khong hop le.";
-    if (formData.doctorTickets < 0) return "So doctor tickets khong hop le.";
-    if (formData.priceVnd <= 0) return "Gia tien VND phai lon hon 0.";
+      return "Thời hạn (tháng) phải lớn hơn 0.";
+    if (formData.iotKits < 0) return "Số bộ IoT không hợp lệ.";
+    if (formData.doctorTickets < 0) return "Số vé bác sĩ không hợp lệ.";
+    if (formData.priceVnd <= 0) return "Giá tiền VND phải lớn hơn 0.";
     return "";
   };
 
@@ -195,11 +200,11 @@ function AdminPackagesPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <Badge className="mb-2">Admin Portal</Badge>
-          <h1 className="text-2xl font-bold">Subscription Packages</h1>
+          <Badge className="mb-2">Cổng quản trị</Badge>
+          <h1 className="text-2xl font-bold">Gói đăng ký</h1>
           <p className="text-muted-foreground">
-            Quan ly goi dang ky theo thoi luong, so IoT kits, doctor tickets va
-            gia VND.
+            Quản lý gói đăng ký theo thời lượng, số bộ IoT, vé bác sĩ và giá
+            VND.
           </p>
         </div>
         <div className="flex gap-2">
@@ -208,11 +213,11 @@ function AdminPackagesPage() {
               variant="outline"
               onClick={() => setConfirmState({ type: "reset" })}
             >
-              Reset Form
+              Đặt lại biểu mẫu
             </Button>
           )}
           {showCreateButton && (
-            <Button onClick={startCreate}>Create Package</Button>
+            <Button onClick={startCreate}>Tạo gói</Button>
           )}
           {showForm && (
             <Button
@@ -224,7 +229,7 @@ function AdminPackagesPage() {
                 }
               }}
             >
-              {isEditing ? "Update Package" : "Save Package"}
+              {isEditing ? "Cập nhật gói" : "Lưu gói"}
             </Button>
           )}
         </div>
@@ -233,9 +238,9 @@ function AdminPackagesPage() {
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className={showForm ? "lg:col-span-2" : "lg:col-span-3"}>
           <CardHeader>
-            <CardTitle>Package List</CardTitle>
+            <CardTitle>Danh sách gói</CardTitle>
             <CardDescription>
-              {packages.length} goi | Tong gia niem yet:{" "}
+              {packages.length} gói | Tổng giá niêm yết:{" "}
               {formatVnd(totalRevenueVnd)}
             </CardDescription>
           </CardHeader>
@@ -244,12 +249,12 @@ function AdminPackagesPage() {
               <table className="w-full text-sm">
                 <thead className="bg-muted/60">
                   <tr className="text-left">
-                    <th className="p-3">Package</th>
-                    <th className="p-3">Duration (months)</th>
-                    <th className="p-3">IoT Kits</th>
-                    <th className="p-3">Doctor Tickets</th>
-                    <th className="p-3">Gia (VND)</th>
-                    <th className="p-3">Status</th>
+                    <th className="p-3">Gói</th>
+                    <th className="p-3">Thời hạn (tháng)</th>
+                    <th className="p-3">Bộ IoT</th>
+                    <th className="p-3">Vé bác sĩ</th>
+                    <th className="p-3">Giá (VND)</th>
+                    <th className="p-3">Trạng thái</th>
                     <th className="p-3 w-12.5"></th>
                   </tr>
                 </thead>
@@ -262,7 +267,7 @@ function AdminPackagesPage() {
                       <td className="p-3">
                         <div className="font-medium">{pkg.name}</div>
                         <div className="text-xs text-muted-foreground">
-                          Updated {new Date(pkg.updatedAt).toLocaleDateString()}
+                          Cập nhật {new Date(pkg.updatedAt).toLocaleDateString()}
                         </div>
                       </td>
                       <td className="p-3">{pkg.durationMonths}</td>
@@ -275,7 +280,7 @@ function AdminPackagesPage() {
                             pkg.status === "Active" ? "default" : "secondary"
                           }
                         >
-                          {pkg.status}
+                          {PACKAGE_STATUS_LABEL[pkg.status]}
                         </Badge>
                       </td>
                       <td className="p-3">
@@ -292,7 +297,7 @@ function AdminPackagesPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => startEdit(pkg)}>
                               <Pencil className="h-4 w-4 mr-2" />
-                              Edit
+                              Chỉnh sửa
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
@@ -301,7 +306,7 @@ function AdminPackagesPage() {
                               }
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
+                              Xóa
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -318,20 +323,19 @@ function AdminPackagesPage() {
           <Card className="lg:col-span-1">
             <CardHeader>
               <CardTitle>
-                {isEditing ? "Cap nhat goi dich vu" : "Tao goi dich vu moi"}
+                {isEditing ? "Cập nhật gói dịch vụ" : "Tạo gói dịch vụ mới"}
               </CardTitle>
               <CardDescription>
-                Gia se duoc tinh bang VND, phu hop mo hinh subscription trong
-                tai lieu.
+                Giá được tính bằng VND, phù hợp mô hình đăng ký theo gói.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1">
                 <p className="text-xs font-medium text-muted-foreground">
-                  Ten goi
+                  Tên gói
                 </p>
                 <Input
-                  placeholder="Ten goi (vi du: Starter, Growth...)"
+                  placeholder="Tên gói (ví dụ: Khởi động, Tăng trưởng...)"
                   value={formData.name}
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, name: e.target.value }))
@@ -341,12 +345,12 @@ function AdminPackagesPage() {
 
               <div className="space-y-1">
                 <p className="text-xs font-medium text-muted-foreground">
-                  Thoi han (thang)
+                  Thời hạn (tháng)
                 </p>
                 <Input
                   type="number"
                   min={1}
-                  placeholder="Thoi han (thang)"
+                  placeholder="Thời hạn (tháng)"
                   value={formData.durationMonths}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -360,12 +364,12 @@ function AdminPackagesPage() {
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="space-y-1">
                   <p className="text-xs font-medium text-muted-foreground">
-                    So IoT kits
+                    Số bộ IoT
                   </p>
                   <Input
                     type="number"
                     min={0}
-                    placeholder="So IoT kits"
+                    placeholder="Số bộ IoT"
                     value={formData.iotKits}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -377,12 +381,12 @@ function AdminPackagesPage() {
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs font-medium text-muted-foreground">
-                    So doctor tickets
+                    Số vé bác sĩ
                   </p>
                   <Input
                     type="number"
                     min={0}
-                    placeholder="So doctor tickets"
+                    placeholder="Số vé bác sĩ"
                     value={formData.doctorTickets}
                     onChange={(e) =>
                       setFormData((prev) => ({
@@ -396,10 +400,10 @@ function AdminPackagesPage() {
 
               <div className="space-y-1">
                 <p className="text-xs font-medium text-muted-foreground">
-                  Gia (VND)
+                  Giá (VND)
                 </p>
                 <Input
-                  placeholder="Gia VND (chi nhap so, vd: 19900000)"
+                  placeholder="Giá VND (chỉ nhập số, ví dụ: 19900000)"
                   value={priceInput}
                   onChange={(e) => {
                     const raw = e.target.value;
@@ -411,13 +415,13 @@ function AdminPackagesPage() {
                   }}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Hien thi: {formatVnd(formData.priceVnd || 0)}
+                  Hiển thị: {formatVnd(formData.priceVnd || 0)}
                 </p>
               </div>
 
               <div className="space-y-1">
                 <p className="text-xs font-medium text-muted-foreground">
-                  Trang thai
+                  Trạng thái
                 </p>
                 <div className="flex gap-2 text-xs">
                   <Button
@@ -430,7 +434,7 @@ function AdminPackagesPage() {
                       setFormData((prev) => ({ ...prev, status: "Active" }))
                     }
                   >
-                    Active
+                    Đang hoạt động
                   </Button>
                   <Button
                     type="button"
@@ -442,17 +446,17 @@ function AdminPackagesPage() {
                       setFormData((prev) => ({ ...prev, status: "Draft" }))
                     }
                   >
-                    Draft
+                    Bản nháp
                   </Button>
                 </div>
               </div>
 
               <div className="space-y-1">
                 <p className="text-xs font-medium text-muted-foreground">
-                  Mo ta
+                  Mô tả
                 </p>
                 <Textarea
-                  placeholder="Mo ta ngan ve goi dich vu"
+                  placeholder="Mô tả ngắn về gói dịch vụ"
                   value={formData.description}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -473,10 +477,10 @@ function AdminPackagesPage() {
 
       <ConfirmDialog
         open={confirmState?.type === "delete"}
-        title="Xoa goi subscription?"
-        description="Hanh dong nay khong the hoan tac. Owner hien tai se khong con thay duoc goi nay."
-        confirmLabel="Delete"
-        cancelLabel="Cancel"
+        title="Xóa gói đăng ký?"
+        description="Hành động này không thể hoàn tác. Chủ vườn hiện tại sẽ không còn thấy gói này."
+        confirmLabel="Xóa"
+        cancelLabel="Hủy"
         variant="destructive"
         onCancel={() => setConfirmState(null)}
         onConfirm={() => {
@@ -489,10 +493,10 @@ function AdminPackagesPage() {
 
       <ConfirmDialog
         open={confirmState?.type === "reset"}
-        title="Reset form goi dich vu?"
-        description="Tat ca thay doi chua luu tren form se bi xoa."
-        confirmLabel="Reset"
-        cancelLabel="Cancel"
+        title="Đặt lại biểu mẫu gói dịch vụ?"
+        description="Tất cả thay đổi chưa lưu trên biểu mẫu sẽ bị xóa."
+        confirmLabel="Đặt lại"
+        cancelLabel="Hủy"
         variant="destructive"
         onCancel={() => setConfirmState(null)}
         onConfirm={() => {
@@ -503,10 +507,10 @@ function AdminPackagesPage() {
 
       <ConfirmDialog
         open={confirmState?.type === "update"}
-        title="Cap nhat thong tin goi?"
-        description="Gia VND va quota IoT/Doctor tickets se duoc ap dung cho cac dang ky moi."
-        confirmLabel="Update"
-        cancelLabel="Cancel"
+        title="Cập nhật thông tin gói?"
+        description="Giá VND và hạn mức IoT/vé bác sĩ sẽ được áp dụng cho các đăng ký mới."
+        confirmLabel="Cập nhật"
+        cancelLabel="Hủy"
         onCancel={() => setConfirmState(null)}
         onConfirm={() => {
           savePackage();

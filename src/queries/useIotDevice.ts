@@ -1,5 +1,8 @@
 import { QUERY_KEYS } from "@/constants";
-import { ownerIotDeviceService } from "@/services/iotDeviceService";
+import {
+  managerIotDeviceService,
+  ownerIotDeviceService,
+} from "@/services/iotDeviceService";
 import type {
   CreateIotDeviceBatchBodyType,
   ListIotDevicesQueryType,
@@ -130,6 +133,124 @@ export const useOwnerLockSensors = () => {
       toast.success("Khóa cảm biến thành công!");
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.owner.iotDevices.detail(deviceId, farmId),
+      });
+    },
+    onError: (error: AxiosError<ApiResponseType>) => {
+      toast.error(error?.response?.data?.message ?? "Khóa cảm biến thất bại");
+    },
+  });
+};
+
+// ── Manager hooks ─────────────────────────────────────────────────────
+
+export const useManagerListIotDevices = (
+  farmId: string,
+  query: ListIotDevicesQueryType,
+  enabled = true,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.manager.iotDevices.list(farmId, query),
+    queryFn: () => managerIotDeviceService.list(farmId, query),
+    enabled: !!farmId && enabled,
+  });
+};
+
+export const useManagerIotDeviceDetail = (
+  deviceId: string,
+  farmId: string,
+  enabled = true,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.manager.iotDevices.detail(deviceId, farmId),
+    queryFn: () => managerIotDeviceService.detail(deviceId, farmId),
+    enabled: !!deviceId && !!farmId && enabled,
+  });
+};
+
+export const useManagerCreateIotDevices = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      farmId,
+      body,
+    }: {
+      farmId: string;
+      body: CreateIotDeviceBatchBodyType;
+    }) => managerIotDeviceService.create(farmId, body),
+    onSuccess: (_res, { farmId }) => {
+      toast.success("Tạo thiết bị IoT thành công!");
+      qc.invalidateQueries({
+        queryKey: QUERY_KEYS.manager.iotDevices.list(farmId),
+      });
+    },
+    onError: (error: AxiosError<ApiResponseType>) => {
+      toast.error(
+        error?.response?.data?.message ?? "Tạo thiết bị IoT thất bại",
+      );
+    },
+  });
+};
+
+export const useManagerUpdateIotDevice = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      deviceId,
+      farmId,
+      body,
+    }: {
+      deviceId: string;
+      farmId: string;
+      body: UpdateIotDeviceBodyType;
+    }) => managerIotDeviceService.update(deviceId, farmId, body),
+    onSuccess: (_res, { deviceId, farmId }) => {
+      toast.success("Cập nhật thiết bị IoT thành công!");
+      qc.invalidateQueries({
+        queryKey: QUERY_KEYS.manager.iotDevices.list(farmId),
+      });
+      qc.invalidateQueries({
+        queryKey: QUERY_KEYS.manager.iotDevices.detail(deviceId, farmId),
+      });
+    },
+    onError: (error: AxiosError<ApiResponseType>) => {
+      toast.error(
+        error?.response?.data?.message ?? "Cập nhật thiết bị IoT thất bại",
+      );
+    },
+  });
+};
+
+export const useManagerDeleteIotDevice = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ deviceId, farmId }: { deviceId: string; farmId: string }) =>
+      managerIotDeviceService.delete(deviceId, farmId),
+    onSuccess: (_res, { deviceId, farmId }) => {
+      toast.success("Xóa thiết bị IoT thành công!");
+      qc.invalidateQueries({
+        queryKey: QUERY_KEYS.manager.iotDevices.list(farmId),
+      });
+      qc.removeQueries({
+        queryKey: QUERY_KEYS.manager.iotDevices.detail(deviceId, farmId),
+      });
+    },
+    onError: (error: AxiosError<ApiResponseType>) => {
+      toast.error(
+        error?.response?.data?.message ?? "Xóa thiết bị IoT thất bại",
+      );
+    },
+  });
+};
+
+export const useManagerLockSensors = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ deviceId, farmId }: { deviceId: string; farmId: string }) =>
+      managerIotDeviceService.lockSensors(deviceId, farmId),
+    onSuccess: (_res, { deviceId, farmId }) => {
+      toast.success("Khóa cảm biến thành công!");
+      qc.invalidateQueries({
+        queryKey: QUERY_KEYS.manager.iotDevices.detail(deviceId, farmId),
       });
     },
     onError: (error: AxiosError<ApiResponseType>) => {

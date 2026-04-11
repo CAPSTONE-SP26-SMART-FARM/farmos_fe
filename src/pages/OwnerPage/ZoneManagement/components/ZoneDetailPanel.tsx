@@ -7,9 +7,11 @@ import { useOwnerGetZoneDetail } from "@/queries/useZone";
 import type { ZoneType } from "@/schemaValidatation/zone";
 import { format } from "date-fns";
 import {
+  ArrowRight,
   ArrowLeft,
   Calendar,
   FileText,
+  Milestone,
   Pencil,
   Ruler,
   Sprout,
@@ -23,6 +25,7 @@ interface Props {
   onEdit: (zone: ZoneType) => void;
   onAssignManager: (zone: ZoneType) => void;
   onAssignBulk: (zone: ZoneType) => void;
+  onExploreCropSeasons: (zone: ZoneType) => void;
 }
 
 function formatDate(d: string | null | undefined) {
@@ -78,6 +81,7 @@ export default function ZoneDetailPanel({
   onEdit,
   onAssignManager,
   onAssignBulk,
+  onExploreCropSeasons,
 }: Props) {
   const [show, setShow] = useState(false);
 
@@ -100,6 +104,8 @@ export default function ZoneDetailPanel({
   };
 
   const ZoneIcon = <Sprout className="h-5 w-5 text-green-600" />;
+  const zoneTypeLabel =
+    detail.zoneType === "cultivation" ? "Canh tác" : detail.zoneType;
 
   return (
     <div
@@ -119,16 +125,27 @@ export default function ZoneDetailPanel({
           </Button>
           <div className="flex items-center justify-center gap-3">
             <h1 className="text-2xl font-bold">{detail.name}</h1>
-            <Badge className="mb-1 flex items-center m-0">Zone Detail</Badge>
+            <Badge className="mb-1 flex items-center m-0">Chi tiết khu vực</Badge>
           </div>
         </div>
-        <Button
-          onClick={handleEdit}
-          className="gap-1.5 self-start md:self-auto"
-        >
-          <Pencil className="h-4 w-4" />
-          Edit Zone
-        </Button>
+        <div className="flex flex-wrap gap-2 self-start md:self-auto">
+          <Button
+            variant="outline"
+            className="gap-1.5"
+            onClick={() => onExploreCropSeasons(detail)}
+          >
+            <Milestone className="h-4 w-4" />
+            Xem mùa vụ
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+          <Button
+            onClick={handleEdit}
+            className="gap-1.5"
+          >
+            <Pencil className="h-4 w-4" />
+            Sửa khu vực
+          </Button>
+        </div>
       </div>
 
       <Separator />
@@ -146,7 +163,7 @@ export default function ZoneDetailPanel({
                   variant="secondary"
                   className="capitalize mt-1"
                 >
-                  {detail.zoneType}
+                  {zoneTypeLabel}
                 </Badge>
               </div>
             </div>
@@ -155,27 +172,27 @@ export default function ZoneDetailPanel({
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <InfoCell
                 icon={<Ruler className="h-3 w-3" />}
-                label="Area"
+                label="Diện tích"
                 value={
                   detail.areaSqm != null
-                    ? `${detail.areaSqm.toLocaleString()} sq. meters`
+                    ? `${detail.areaSqm.toLocaleString()} m²`
                     : "—"
                 }
               />
               <InfoCell
                 icon={<Calendar className="h-3 w-3" />}
-                label="Created"
+                label="Ngày tạo"
                 value={formatDate(detail.createdAt)}
               />
               <InfoCell
                 icon={<Calendar className="h-3 w-3" />}
-                label="Last Updated"
+                label="Cập nhật cuối"
                 value={formatDate(detail.updatedAt)}
               />
               <InfoCell
                 icon={<Sprout className="h-3 w-3" />}
-                label="Zone Type"
-                value={<span className="capitalize">{detail.zoneType}</span>}
+                label="Loại khu vực"
+                value={<span className="capitalize">{zoneTypeLabel}</span>}
               />
             </div>
 
@@ -185,7 +202,7 @@ export default function ZoneDetailPanel({
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <FileText className="h-3 w-3" />
-                    Description
+                    Mô tả
                   </p>
                   <p className="text-sm leading-relaxed">
                     {detail.description}

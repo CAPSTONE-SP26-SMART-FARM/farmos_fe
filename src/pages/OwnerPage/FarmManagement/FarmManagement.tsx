@@ -43,7 +43,7 @@ const FarmDetailCard = ({ farm }: { farm: FarmResType }) => (
             <Building2 className="h-5 w-5" />
             {farm.name}
           </CardTitle>
-          <CardDescription>Code: {farm.code}</CardDescription>
+          <CardDescription>Mã: {farm.code}</CardDescription>
         </div>
         <Badge className="capitalize">{farm.farmType}</Badge>
       </div>
@@ -51,33 +51,33 @@ const FarmDetailCard = ({ farm }: { farm: FarmResType }) => (
     <CardContent className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <FarmInfoRow
-          label="Farm Code"
+          label="Mã nông trại"
           value={farm.code}
         />
         <FarmInfoRow
-          label="Farm Type"
+          label="Loại nông trại"
           value={farm.farmType}
         />
         <FarmInfoRow
-          label="Address"
+          label="Địa chỉ"
           value={farm.address}
         />
         <FarmInfoRow
-          label="Area (hectares)"
+          label="Diện tích (ha)"
           value={farm.areaHectares}
         />
         <FarmInfoRow
-          label="Area (sq. meters)"
+          label="Diện tích (m²)"
           value={farm.areaSqm}
         />
         <FarmInfoRow
-          label="Created"
+          label="Ngày tạo"
           value={new Date(farm.createdAt).toLocaleDateString()}
         />
       </div>
       {farm.description && (
         <div className="space-y-1">
-          <div className="text-sm text-muted-foreground">Description</div>
+          <div className="text-sm text-muted-foreground">Mô tả</div>
           <p className="text-sm whitespace-pre-wrap">{farm.description}</p>
         </div>
       )}
@@ -113,13 +113,13 @@ const EmptyFarmState = ({ onCreate }: { onCreate: () => void }) => (
       <div className="rounded-full bg-muted p-4 mb-4">
         <Building2 className="h-8 w-8 text-muted-foreground" />
       </div>
-      <h3 className="text-lg font-semibold mb-1">No farm registered yet</h3>
+      <h3 className="text-lg font-semibold mb-1">Chưa có nông trại nào</h3>
       <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-        Create your farm to start managing zones, members, and crop seasons.
+        Hãy tạo nông trại để bắt đầu quản lý khu vực, nhân sự và mùa vụ.
       </p>
       <Button onClick={onCreate}>
         <Plus className="mr-2 h-4 w-4" />
-        Create Farm
+        Tạo nông trại
       </Button>
     </CardContent>
   </Card>
@@ -175,16 +175,16 @@ function FarmManagement() {
     <div className="space-y-6 animate-in fade-in duration-300">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <Badge className="mb-2">Owner Portal</Badge>
-          <h1 className="text-2xl font-bold">Farm Management</h1>
+          <Badge className="mb-2">Cổng chủ vườn</Badge>
+          <h1 className="text-2xl font-bold">Quản lý nông trại</h1>
           <p className="text-muted-foreground">
-            View and manage your farm information.
+            Xem và quản lý thông tin nông trại của bạn.
           </p>
         </div>
         {farm && (
           <Button onClick={() => setShowEdit(true)}>
             <Pencil className="mr-2 h-4 w-4" />
-            Edit Farm
+            Chỉnh sửa nông trại
           </Button>
         )}
       </div>
@@ -200,7 +200,7 @@ function FarmManagement() {
               <CardHeader className="pb-2">
                 <CardDescription className="flex items-center gap-1">
                   <Building2 className="h-4 w-4" />
-                  Farm Type
+                  Loại nông trại
                 </CardDescription>
                 <CardTitle className="text-2xl capitalize">
                   {farm.farmType}
@@ -211,7 +211,7 @@ function FarmManagement() {
               <CardHeader className="pb-2">
                 <CardDescription className="flex items-center gap-1">
                   <Ruler className="h-4 w-4" />
-                  Area
+                  Diện tích
                 </CardDescription>
                 <CardTitle className="text-2xl">
                   {farm.areaHectares ? `${farm.areaHectares} ha` : "—"}
@@ -222,10 +222,10 @@ function FarmManagement() {
               <CardHeader className="pb-2">
                 <CardDescription className="flex items-center gap-1">
                   <MapPin className="h-4 w-4" />
-                  Location
+                  Vị trí
                 </CardDescription>
                 <CardTitle className="text-lg truncate">
-                  {farm.address ?? "Not set"}
+                  {farm.address ?? "Chưa cập nhật"}
                 </CardTitle>
               </CardHeader>
             </Card>

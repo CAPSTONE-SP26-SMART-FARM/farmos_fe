@@ -1,6 +1,7 @@
 import { API_ENDPOINTS } from "@/constants";
 import { api } from "@/lib/axios";
 import type {
+  CreateProductionMilestoneBatchBodyType,
   CreateProductionMilestoneItemBodyType,
   ListProductionMilestonesQueryType,
   ListProductionMilestonesResType,
@@ -11,12 +12,10 @@ import type { MessageResType } from "@/types/api";
 import queryString from "query-string";
 
 const MANAGER = API_ENDPOINTS.MANAGER;
+const OWNER = API_ENDPOINTS.OWNER;
 
 export const productionMilestoneService = {
-  list: (
-    cropSeasonId: string,
-    query: ListProductionMilestonesQueryType,
-  ) =>
+  list: (cropSeasonId: string, query: ListProductionMilestonesQueryType) =>
     api.get<ListProductionMilestonesResType>(
       MANAGER.PRODUCTION_MILESTONE.LIST(cropSeasonId) +
         "?" +
@@ -40,6 +39,15 @@ export const productionMilestoneService = {
       body,
     ),
 
+  createBatch: (
+    cropSeasonId: string,
+    body: CreateProductionMilestoneBatchBodyType,
+  ) =>
+    api.post<
+      ProductionMilestoneResType[],
+      CreateProductionMilestoneBatchBodyType
+    >(MANAGER.PRODUCTION_MILESTONE.CREATE_BATCH(cropSeasonId), body),
+
   update: (
     milestoneId: string,
     cropSeasonId: string,
@@ -53,5 +61,23 @@ export const productionMilestoneService = {
   delete: (milestoneId: string, cropSeasonId: string) =>
     api.delete<MessageResType>(
       MANAGER.PRODUCTION_MILESTONE.DELETE(milestoneId, cropSeasonId),
+    ),
+
+  ownerListByCropSeason: (
+    cropSeasonId: string,
+    query: ListProductionMilestonesQueryType,
+  ) =>
+    api.get<ListProductionMilestonesResType>(
+      OWNER.PRODUCTION_MILESTONE.LIST(cropSeasonId) +
+        "?" +
+        queryString.stringify(
+          { ...query },
+          { skipEmptyString: true, skipNull: true },
+        ),
+    ),
+
+  ownerDetail: (milestoneId: string, cropSeasonId: string) =>
+    api.get<ProductionMilestoneResType>(
+      OWNER.PRODUCTION_MILESTONE.DETAIL(milestoneId, cropSeasonId),
     ),
 };

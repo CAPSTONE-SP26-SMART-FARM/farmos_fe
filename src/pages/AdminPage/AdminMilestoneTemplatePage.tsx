@@ -66,7 +66,7 @@ type ConfirmState =
 // ============================================================
 
 const FARM_TYPE_LABELS: Record<FarmTypeType, string> = {
-  cultivation: "Cultivation",
+  cultivation: "Canh tác",
 };
 
 const emptyItem = (): FormItem => ({
@@ -122,7 +122,7 @@ const ItemRow = ({
   <div className="rounded-md border p-3 space-y-3">
     <div className="flex items-center justify-between">
       <span className="text-sm font-medium text-muted-foreground">
-        Stage #{index + 1}
+        Giai đoạn #{index + 1}
       </span>
       <Button
         size="sm"
@@ -137,7 +137,7 @@ const ItemRow = ({
     <div className="grid gap-3 md:grid-cols-3">
       <div className="md:col-span-1">
         <Input
-          placeholder="Stage name *"
+          placeholder="Tên giai đoạn *"
           value={item.stageName}
           onChange={(e) => onChange(item._key, "stageName", e.target.value)}
         />
@@ -146,7 +146,7 @@ const ItemRow = ({
         <Input
           type="number"
           min={1}
-          placeholder="Order *"
+          placeholder="Thứ tự *"
           value={item.milestoneOrder}
           onChange={(e) =>
             onChange(item._key, "milestoneOrder", Number(e.target.value))
@@ -154,14 +154,14 @@ const ItemRow = ({
           className={orderError ? "border-destructive" : ""}
         />
         {orderError && (
-          <p className="mt-1 text-xs text-destructive">Duplicate order</p>
+          <p className="mt-1 text-xs text-destructive">Thứ tự bị trùng</p>
         )}
       </div>
       <div>
         <Input
           type="number"
           min={0}
-          placeholder="Days between (optional)"
+          placeholder="Số ngày cách nhau (tùy chọn)"
           value={item.daysBetween ?? ""}
           onChange={(e) =>
             onChange(
@@ -271,12 +271,12 @@ const AdminMilestoneTemplatePage = () => {
   })();
 
   const validate = (): string | null => {
-    if (!form.name.trim()) return "Template name is required.";
-    if (!form.items.length) return "At least 1 milestone stage is required.";
+    if (!form.name.trim()) return "Tên mẫu là bắt buộc.";
+    if (!form.items.length) return "Cần ít nhất 1 giai đoạn mốc.";
     if (form.items.some((i) => !i.stageName.trim()))
-      return "All stages must have a name.";
+      return "Tất cả giai đoạn phải có tên.";
     if (duplicateOrders.size > 0)
-      return "Milestone order must be unique across all stages.";
+      return "Thứ tự mốc phải là duy nhất giữa các giai đoạn.";
     return null;
   };
 
@@ -303,24 +303,24 @@ const AdminMilestoneTemplatePage = () => {
         { id: editingId, data: payload },
         {
           onSuccess: () => {
-            toast.success("Template updated.");
+            toast.success("Đã cập nhật mẫu.");
             cancelForm();
           },
           onError: (e: unknown) => {
             const err = e as { response?: { data?: { message?: string } } };
-            toast.error(err?.response?.data?.message ?? "Update failed.");
+            toast.error(err?.response?.data?.message ?? "Cập nhật thất bại.");
           },
         },
       );
     } else {
       createMutation.mutate(payload, {
         onSuccess: () => {
-          toast.success("Template created.");
+          toast.success("Đã tạo mẫu.");
           cancelForm();
         },
         onError: (e: unknown) => {
           const err = e as { response?: { data?: { message?: string } } };
-          toast.error(err?.response?.data?.message ?? "Create failed.");
+          toast.error(err?.response?.data?.message ?? "Tạo mới thất bại.");
         },
       });
     }
@@ -329,12 +329,12 @@ const AdminMilestoneTemplatePage = () => {
   const doDelete = (id: string) => {
     deleteMutation.mutate(id, {
       onSuccess: () => {
-        toast.success("Template deleted.");
+        toast.success("Đã xóa mẫu.");
         if (editingId === id) cancelForm();
       },
       onError: (e: unknown) => {
         const err = e as { response?: { data?: { message?: string } } };
-        toast.error(err?.response?.data?.message ?? "Delete failed.");
+        toast.error(err?.response?.data?.message ?? "Xóa thất bại.");
       },
     });
   };
@@ -346,27 +346,27 @@ const AdminMilestoneTemplatePage = () => {
       {/* Header */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Milestone Templates</h1>
+          <h1 className="text-2xl font-bold">Mẫu mốc sản xuất</h1>
           <p className="text-muted-foreground text-sm">
-            Define crop season milestone presets. Managers use these when
-            planning crop seasons.
+            Định nghĩa bộ mốc mẫu cho mùa vụ. Quản lý sử dụng các mẫu này khi
+            lập kế hoạch mùa vụ.
           </p>
         </div>
         <div className="flex gap-2">
           {showForm && (
             <Button variant="outline" onClick={() => setConfirmState({ type: "reset" })}>
-              Cancel
+              Hủy
             </Button>
           )}
           {!showForm && (
             <Button onClick={startCreate}>
               <Plus className="h-4 w-4 mr-1" />
-              New Template
+              Mẫu mới
             </Button>
           )}
           {showForm && (
             <Button onClick={() => isEditing ? setConfirmState({ type: "update" }) : doSave()} disabled={isSaving}>
-              {isSaving ? "Saving..." : isEditing ? "Update" : "Save"}
+              {isSaving ? "Đang lưu..." : isEditing ? "Cập nhật" : "Lưu"}
             </Button>
           )}
         </div>
@@ -376,12 +376,12 @@ const AdminMilestoneTemplatePage = () => {
         {/* List */}
         <Card className={showForm ? "lg:col-span-2" : ""}>
           <CardHeader>
-            <CardTitle>Templates</CardTitle>
-            <CardDescription>{totalItems} template(s)</CardDescription>
+            <CardTitle>Danh sách mẫu</CardTitle>
+            <CardDescription>{totalItems} mẫu</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <Input
-              placeholder="Search templates..."
+              placeholder="Tìm mẫu..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             />
@@ -394,7 +394,7 @@ const AdminMilestoneTemplatePage = () => {
               </div>
             ) : templates.length === 0 ? (
               <p className="py-8 text-center text-sm text-muted-foreground">
-                No templates found.
+                Không tìm thấy mẫu.
               </p>
             ) : (
               <div className="space-y-2">
@@ -417,10 +417,10 @@ const AdminMilestoneTemplatePage = () => {
                             variant={t.isActive ? "default" : "secondary"}
                             className="text-xs"
                           >
-                            {t.isActive ? "Active" : "Inactive"}
+                            {t.isActive ? "Đang hoạt động" : "Tắt hoạt động"}
                           </Badge>
                           <span className="text-xs text-muted-foreground">
-                            {t.items.length} stage(s)
+                            {t.items.length} giai đoạn
                           </span>
                         </div>
                       </div>
@@ -438,7 +438,7 @@ const AdminMilestoneTemplatePage = () => {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={(e) => { e.stopPropagation(); startEdit(t); }}>
                             <Pencil className="h-4 w-4 mr-2" />
-                            Edit
+                            Chỉnh sửa
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-destructive focus:text-destructive"
@@ -448,7 +448,7 @@ const AdminMilestoneTemplatePage = () => {
                             }}
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
+                            Xóa
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -460,13 +460,13 @@ const AdminMilestoneTemplatePage = () => {
 
             {totalPages > 1 && (
               <div className="flex items-center justify-between pt-2 text-xs text-muted-foreground">
-                <span>Page {page} of {totalPages}</span>
+                <span>Trang {page} / {totalPages}</span>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                    Prev
+                    Trước
                   </Button>
                   <Button size="sm" variant="outline" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
-                    Next
+                    Sau
                   </Button>
                 </div>
               </div>
@@ -478,9 +478,9 @@ const AdminMilestoneTemplatePage = () => {
         {showForm && (
           <Card className="lg:col-span-3">
             <CardHeader>
-              <CardTitle>{isEditing ? "Edit Template" : "New Template"}</CardTitle>
+              <CardTitle>{isEditing ? "Chỉnh sửa mẫu" : "Mẫu mới"}</CardTitle>
               <CardDescription>
-                Define the milestone stages for this crop season template.
+                Thiết lập các giai đoạn mốc cho mẫu mùa vụ này.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -488,7 +488,7 @@ const AdminMilestoneTemplatePage = () => {
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="md:col-span-2">
                   <Input
-                    placeholder="Template name *"
+                    placeholder="Tên mẫu *"
                     value={form.name}
                     onChange={(e) => updateField("name", e.target.value)}
                   />
@@ -498,10 +498,10 @@ const AdminMilestoneTemplatePage = () => {
                   onValueChange={(v) => updateField("farmType", v as FarmTypeType)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Farm type" />
+                    <SelectValue placeholder="Loại nông trại" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="cultivation">Cultivation</SelectItem>
+                    <SelectItem value="cultivation">Canh tác</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select
@@ -512,13 +512,13 @@ const AdminMilestoneTemplatePage = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="true">Active</SelectItem>
-                    <SelectItem value="false">Inactive</SelectItem>
+                    <SelectItem value="true">Đang hoạt động</SelectItem>
+                    <SelectItem value="false">Tắt hoạt động</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <Textarea
-                placeholder="Description (optional)"
+                placeholder="Mô tả (tùy chọn)"
                 value={form.description}
                 onChange={(e) => updateField("description", e.target.value)}
                 rows={2}
@@ -530,15 +530,16 @@ const AdminMilestoneTemplatePage = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium">
-                    Milestone Stages ({form.items.length})
+                    Các giai đoạn mốc ({form.items.length})
                   </p>
                   <Button size="sm" variant="outline" onClick={addItem}>
                     <Plus className="h-3 w-3 mr-1" />
-                    Add Stage
+                    Thêm giai đoạn
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Order must be unique. Days between = days after previous stage starts.
+                  Thứ tự phải là duy nhất. Số ngày cách nhau = số ngày sau khi
+                  giai đoạn trước bắt đầu.
                 </p>
                 <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
                   {form.items.map((item, index) => (
@@ -562,9 +563,9 @@ const AdminMilestoneTemplatePage = () => {
       {/* Confirm dialogs */}
       <ConfirmDialog
         open={confirmState?.type === "delete"}
-        title="Delete template?"
-        description="This action cannot be undone. The template will be soft-deleted."
-        confirmLabel="Delete"
+        title="Xóa mẫu?"
+        description="Hành động này không thể hoàn tác. Mẫu sẽ bị xóa mềm."
+        confirmLabel="Xóa"
         variant="destructive"
         onCancel={() => setConfirmState(null)}
         onConfirm={() => {
@@ -574,18 +575,18 @@ const AdminMilestoneTemplatePage = () => {
       />
       <ConfirmDialog
         open={confirmState?.type === "reset"}
-        title="Discard changes?"
-        description="All unsaved changes will be lost."
-        confirmLabel="Discard"
+        title="Hủy thay đổi?"
+        description="Tất cả thay đổi chưa lưu sẽ bị mất."
+        confirmLabel="Hủy thay đổi"
         variant="destructive"
         onCancel={() => setConfirmState(null)}
         onConfirm={() => { cancelForm(); setConfirmState(null); }}
       />
       <ConfirmDialog
         open={confirmState?.type === "update"}
-        title="Update template?"
-        description="This will overwrite all existing milestone stages."
-        confirmLabel="Update"
+        title="Cập nhật mẫu?"
+        description="Thao tác này sẽ ghi đè toàn bộ các giai đoạn mốc hiện có."
+        confirmLabel="Cập nhật"
         onCancel={() => setConfirmState(null)}
         onConfirm={() => { doSave(); setConfirmState(null); }}
       />

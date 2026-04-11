@@ -13,9 +13,9 @@ const ListRequestAdmin = () => {
       <div className="space-y-2">
         <Card x-chunk="dashboard-06-chunk-0">
           <CardHeader>
-            <CardTitle>My request</CardTitle>
+            <CardTitle>Yêu cầu đăng ký bác sĩ</CardTitle>
             <CardDescription>
-              Request to admin to become a doctor of platform
+              Danh sách yêu cầu gửi quản trị viên để trở thành bác sĩ trên nền tảng
             </CardDescription>
           </CardHeader>
           <CardContent>

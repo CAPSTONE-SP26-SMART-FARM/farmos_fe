@@ -87,11 +87,11 @@ const AssignDoctorDialog = () => {
 				notes: values.notes?.trim() ?? "",
 			};
 			await mutateAsync(body);
-			toast.success("Assigned doctor successfully");
+			toast.success("Phân công bác sĩ thành công");
 			setOpen(false);
 			reset();
 		} catch {
-			toast.error("Failed to assign doctor");
+			toast.error("Phân công bác sĩ thất bại");
 		}
 	});
 
@@ -104,14 +104,14 @@ const AssignDoctorDialog = () => {
 			}}
 		>
 			<DialogTrigger asChild>
-				<Button>Assign Doctor</Button>
+				<Button>Phân công bác sĩ</Button>
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-lg">
 				<DialogHeader>
-					<DialogTitle>Assign doctor to owner</DialogTitle>
+					<DialogTitle>Phân công bác sĩ cho chủ vườn</DialogTitle>
 					<DialogDescription>
-						Hiện tại nhập trực tiếp UUID. Sau này bạn sẽ thay bằng dropdown list
-						doctor/owner.
+						Hiện tại nhập trực tiếp UUID. Sau này bạn sẽ thay bằng danh sách chọn
+						bác sĩ/chủ vườn.
 					</DialogDescription>
 				</DialogHeader>
 
@@ -122,10 +122,10 @@ const AssignDoctorDialog = () => {
 							control={form.control}
 							render={({ field, fieldState }) => (
 								<Field data-invalid={fieldState.invalid}>
-									<FieldLabel>Doctor</FieldLabel>
+									<FieldLabel>Bác sĩ</FieldLabel>
 									<Select value={field.value} onValueChange={field.onChange}>
 										<SelectTrigger className="w-full">
-											<SelectValue placeholder="Select doctor" />
+											<SelectValue placeholder="Chọn bác sĩ" />
 										</SelectTrigger>
 										<SelectContent>
 											{doctorOptions.length ? (
@@ -136,7 +136,7 @@ const AssignDoctorDialog = () => {
 												))
 											) : (
 												<SelectItem value="__empty__" disabled>
-													No doctors (connect API later)
+													Chưa có bác sĩ (kết nối API sau)
 												</SelectItem>
 											)}
 										</SelectContent>
@@ -153,10 +153,10 @@ const AssignDoctorDialog = () => {
 							control={form.control}
 							render={({ field, fieldState }) => (
 								<Field data-invalid={fieldState.invalid}>
-									<FieldLabel>Owner</FieldLabel>
+									<FieldLabel>Chủ vườn</FieldLabel>
 									<Select value={field.value} onValueChange={field.onChange}>
 										<SelectTrigger className="w-full">
-											<SelectValue placeholder="Select owner" />
+											<SelectValue placeholder="Chọn chủ vườn" />
 										</SelectTrigger>
 										<SelectContent>
 											{ownerOptions.length ? (
@@ -167,7 +167,7 @@ const AssignDoctorDialog = () => {
 												))
 											) : (
 												<SelectItem value="__empty_owner__" disabled>
-													No owners (connect API later)
+													Chưa có chủ vườn (kết nối API sau)
 												</SelectItem>
 											)}
 										</SelectContent>
@@ -187,14 +187,14 @@ const AssignDoctorDialog = () => {
 									data-invalid={fieldState.invalid}
 									orientation="horizontal"
 								>
-									<FieldLabel htmlFor="assign-primary">Primary</FieldLabel>
+									<FieldLabel htmlFor="assign-primary">Phân công chính</FieldLabel>
 									<input
 										id="assign-primary"
 										type="checkbox"
 										checked={Boolean(field.value)}
 										onChange={(e) => field.onChange(e.target.checked)}
 										className="h-4 w-4"
-										aria-label="Primary assignment"
+										aria-label="Phân công chính"
 									/>
 									{fieldState.invalid && (
 										<FieldError errors={[fieldState.error]} />
@@ -208,12 +208,12 @@ const AssignDoctorDialog = () => {
 							control={form.control}
 							render={({ field, fieldState }) => (
 								<Field data-invalid={fieldState.invalid}>
-									<FieldLabel>Notes</FieldLabel>
+									<FieldLabel>Ghi chú</FieldLabel>
 									<Textarea
 										{...field}
 										value={field.value ?? ""}
 										rows={4}
-										placeholder="Optional"
+										placeholder="Không bắt buộc"
 									/>
 									{fieldState.invalid && (
 										<FieldError errors={[fieldState.error]} />
@@ -226,17 +226,17 @@ const AssignDoctorDialog = () => {
 					<DialogFooter className="mt-6">
 						<DialogClose asChild>
 							<Button type="button" variant="outline" disabled={isPending}>
-								Cancel
+								Hủy
 							</Button>
 						</DialogClose>
 						<Button type="submit" disabled={isPending}>
 							{isPending ? (
 								<>
 									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Assigning...
+									Đang phân công...
 								</>
 							) : (
-								"Assign"
+								"Phân công"
 							)}
 						</Button>
 					</DialogFooter>

@@ -11,6 +11,7 @@ import type { MessageResType } from "@/types/api";
 import queryString from "query-string";
 
 const EP = API_ENDPOINTS.OWNER.IOT_DEVICE;
+const MANAGER_EP = API_ENDPOINTS.MANAGER.IOT_DEVICE;
 
 export const ownerIotDeviceService = {
   list: (farmId: string, query: ListIotDevicesQueryType) =>
@@ -37,4 +38,31 @@ export const ownerIotDeviceService = {
 
   lockSensors: (deviceId: string, farmId: string) =>
     api.post<IotDeviceResType>(EP.LOCK_SENSORS(deviceId, farmId)),
+};
+
+export const managerIotDeviceService = {
+  list: (farmId: string, query: ListIotDevicesQueryType) =>
+    api.get<ListIotDevicesResType>(
+      MANAGER_EP.LIST(farmId) +
+        "?" +
+        queryString.stringify(
+          { ...query },
+          { skipEmptyString: true, skipNull: true },
+        ),
+    ),
+
+  detail: (deviceId: string, farmId: string) =>
+    api.get<IotDeviceResType>(MANAGER_EP.DETAIL(deviceId, farmId)),
+
+  create: (farmId: string, body: CreateIotDeviceBatchBodyType) =>
+    api.post<IotDeviceResType[]>(MANAGER_EP.CREATE(farmId), body),
+
+  update: (deviceId: string, farmId: string, body: UpdateIotDeviceBodyType) =>
+    api.put<IotDeviceResType>(MANAGER_EP.UPDATE(deviceId, farmId), body),
+
+  delete: (deviceId: string, farmId: string) =>
+    api.delete<MessageResType>(MANAGER_EP.DELETE(deviceId, farmId)),
+
+  lockSensors: (deviceId: string, farmId: string) =>
+    api.post<IotDeviceResType>(MANAGER_EP.LOCK_SENSORS(deviceId, farmId)),
 };

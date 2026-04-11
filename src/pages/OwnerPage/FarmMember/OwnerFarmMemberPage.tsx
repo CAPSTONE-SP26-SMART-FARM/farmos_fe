@@ -16,10 +16,10 @@ import MemberDetailPanel from "./components/MemberDetailPanel";
 import MemberListSection from "./components/MemberListSection";
 
 const MEMBER_SUMMARY_CARDS = [
-  { title: "Total Employees", value: "--", icon: Users },
-  { title: "Managers", value: "--", icon: UserCog },
-  { title: "Farmers", value: "--", icon: Tractor },
-  { title: "New This Month", value: "--", icon: UserPlus },
+  { title: "Tổng nhân sự", value: "--", icon: Users },
+  { title: "Quản lý viên", value: "--", icon: UserCog },
+  { title: "Nông dân", value: "--", icon: Tractor },
+  { title: "Mới trong tháng", value: "--", icon: UserPlus },
 ] as const;
 
 function OwnerFarmMemberPage() {
@@ -53,10 +53,10 @@ function OwnerFarmMemberPage() {
     <div className="space-y-6 animate-in fade-in duration-300">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <Badge className="mb-2">Owner Portal</Badge>
-          <h1 className="text-2xl font-bold">Employee Management</h1>
+          <Badge className="mb-2">Cổng chủ trang trại</Badge>
+          <h1 className="text-2xl font-bold">Quản lý nhân sự</h1>
           <p className="text-muted-foreground">
-            Manage employees assigned to your farm.
+            Quản lý nhân sự được phân công cho trang trại của bạn.
           </p>
         </div>
       </div>
@@ -73,7 +73,7 @@ function OwnerFarmMemberPage() {
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">
-                UI placeholder for employee metrics.
+                Khối hiển thị tạm cho chỉ số nhân sự.
               </p>
             </CardContent>
           </Card>
@@ -91,7 +91,7 @@ function OwnerFarmMemberPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <p className="text-sm text-muted-foreground">
-              Failed to load farm data. Please create a farm first.
+              Không thể tải dữ liệu trang trại. Vui lòng tạo trang trại trước.
             </p>
           </CardContent>
         </Card>

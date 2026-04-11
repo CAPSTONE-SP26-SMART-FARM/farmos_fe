@@ -16,6 +16,7 @@ import type { MessageResType } from "@/types/api";
 import queryString from "query-string";
 
 const ADMIN = API_ENDPOINTS.ADMIN;
+const MANAGER = API_ENDPOINTS.MANAGER;
 const OWNER = API_ENDPOINTS.OWNER;
 
 export const iotDeviceTemplateService = {
@@ -98,4 +99,34 @@ export const ownerSensorTemplateService = {
     ),
   detail: (id: string) =>
     api.get<SensorTemplateResType>(OWNER.SENSOR_TEMPLATE.DETAIL(id)),
+};
+
+// ── Manager (read-only) ───────────────────────────────────────────────
+
+export const managerIotDeviceTemplateService = {
+  list: (query: ListIotDeviceTemplateQueryType) =>
+    api.get<ListIotDeviceTemplateResType>(
+      MANAGER.IOT_DEVICE_TEMPLATE.LIST +
+        "?" +
+        queryString.stringify(
+          { ...query },
+          { skipEmptyString: true, skipNull: true },
+        ),
+    ),
+  detail: (id: string) =>
+    api.get<IotDeviceTemplateResType>(MANAGER.IOT_DEVICE_TEMPLATE.DETAIL(id)),
+};
+
+export const managerSensorTemplateService = {
+  list: (query: ListSensorTemplatesQueryType) =>
+    api.get<ListSensorTemplatesResType>(
+      MANAGER.SENSOR_TEMPLATE.LIST +
+        "?" +
+        queryString.stringify(
+          { ...query },
+          { skipEmptyString: true, skipNull: true },
+        ),
+    ),
+  detail: (id: string) =>
+    api.get<SensorTemplateResType>(MANAGER.SENSOR_TEMPLATE.DETAIL(id)),
 };

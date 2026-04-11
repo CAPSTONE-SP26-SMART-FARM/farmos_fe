@@ -13,7 +13,7 @@ import { useState } from "react";
 const roles = [
   {
     icon: Building2,
-    title: "Owner",
+    title: "Chủ sở hữu",
     subtitle: "Chủ đầu tư",
     description:
       "Theo dõi tổng quan KPIs, báo cáo tài chính, phê duyệt ngân sách và giám sát từ xa qua camera.",
@@ -29,7 +29,7 @@ const roles = [
   },
   {
     icon: ClipboardList,
-    title: "Manager",
+    title: "Quản lý",
     subtitle: "Quản lý",
     description:
       "Lập kế hoạch sản xuất, quản lý nhân sự, điều phối hoạt động và tạo báo cáo định kỳ.",
@@ -45,15 +45,15 @@ const roles = [
   },
   {
     icon: ShieldCheck,
-    title: "Admin",
+    title: "Quản trị viên",
     subtitle: "Quản trị nền tảng",
     description:
       "Quản lý gói subscription, duyệt Doctor, cấu hình template IoT và theo dõi hiệu suất xử lý ticket.",
     features: [
-      "Package Management",
-      "Doctor Approval",
-      "IoT Templates",
-      "Ticket Analytics",
+      "Quản lý gói dịch vụ",
+      "Duyệt bác sĩ",
+      "Mẫu IoT",
+      "Phân tích phiếu hỗ trợ",
     ],
     gradient: "from-slate-500 to-gray-700",
     image:
@@ -61,12 +61,12 @@ const roles = [
   },
   {
     icon: Leaf,
-    title: "Farmer",
+    title: "Nông dân",
     subtitle: "Nông dân trồng trọt",
     description:
       "Giám sát cảm biến vườn trồng, ghi nhật ký chăm sóc, báo cáo bệnh cây và theo dõi giai đoạn sinh trưởng.",
     features: [
-      "Sensor Dashboard",
+      "Bảng điều khiển cảm biến",
       "Nhật ký hoạt động",
       "Báo cáo bệnh",
       "Ghi nhận thu hoạch",
@@ -77,7 +77,7 @@ const roles = [
   },
   {
     icon: Stethoscope,
-    title: "Doctor",
+    title: "Bác sĩ",
     subtitle: "Chuyên gia / Bác sĩ",
     description:
       "Tiếp nhận báo cáo bệnh, chẩn đoán từ xa, kê đơn điều trị và quản lý cẩm nang kiến thức.",
@@ -85,7 +85,7 @@ const roles = [
       "Chẩn đoán bệnh",
       "Kê đơn thuốc",
       "Lên lịch khám",
-      "Quản lý Knowledge Base",
+      "Quản lý cơ sở tri thức",
     ],
     gradient: "from-violet-500 to-purple-600",
     image:

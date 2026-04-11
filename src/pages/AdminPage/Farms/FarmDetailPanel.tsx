@@ -72,11 +72,11 @@ const FarmDetailPanel = ({ id, onBack }: FarmDetailPanelProps) => {
             className="mb-3 -ml-2 gap-1 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Farm List
+            Quay lại danh sách nông trại
           </Button>
-          <h2 className="text-2xl font-bold">Farm Detail</h2>
+          <h2 className="text-2xl font-bold">Chi tiết nông trại</h2>
           <p className="text-muted-foreground">
-            View farm information and owner details.
+            Xem thông tin nông trại và chủ vườn.
           </p>
         </div>
 
@@ -85,15 +85,15 @@ const FarmDetailPanel = ({ id, onBack }: FarmDetailPanelProps) => {
         ) : !farm ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <h3 className="text-lg font-semibold mb-1">No data found</h3>
+              <h3 className="text-lg font-semibold mb-1">Không tìm thấy dữ liệu</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                The requested farm could not be loaded.
+                Không thể tải nông trại được yêu cầu.
               </p>
               <Button
                 variant="outline"
                 onClick={handleBack}
               >
-                Go Back
+                Quay lại
               </Button>
             </CardContent>
           </Card>
@@ -101,36 +101,36 @@ const FarmDetailPanel = ({ id, onBack }: FarmDetailPanelProps) => {
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Farm Information</CardTitle>
+                <CardTitle>Thông tin nông trại</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <div className="grid grid-cols-2 gap-3">
                   <InfoRow
-                    label="Code"
+                    label="Mã"
                     value={farm.code}
                   />
                   <InfoRow
-                    label="Name"
+                    label="Tên"
                     value={farm.name}
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <div className="text-muted-foreground">Type</div>
+                    <div className="text-muted-foreground">Loại</div>
                     <div className="font-medium capitalize">
                       {farm.farmType}
                     </div>
                   </div>
                   <InfoRow
-                    label="Address"
+                    label="Địa chỉ"
                     value={farm.address}
                   />
                 </div>
 
                 {farm.description && (
                   <div className="space-y-1">
-                    <div className="text-muted-foreground">Description</div>
+                    <div className="text-muted-foreground">Mô tả</div>
                     <div className="whitespace-pre-wrap">
                       {farm.description}
                     </div>
@@ -141,22 +141,22 @@ const FarmDetailPanel = ({ id, onBack }: FarmDetailPanelProps) => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <InfoRow
-                    label="Latitude"
+                    label="Vĩ độ"
                     value={farm.latitude}
                   />
                   <InfoRow
-                    label="Longitude"
+                    label="Kinh độ"
                     value={farm.longitude}
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <InfoRow
-                    label="Area (hectares)"
+                    label="Diện tích (ha)"
                     value={farm.areaHectares}
                   />
                   <InfoRow
-                    label="Area (sqm)"
+                    label="Diện tích (m²)"
                     value={farm.areaSqm}
                   />
                 </div>
@@ -165,11 +165,11 @@ const FarmDetailPanel = ({ id, onBack }: FarmDetailPanelProps) => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <InfoRow
-                    label="Created"
+                    label="Ngày tạo"
                     value={new Date(farm.createdAt).toLocaleString()}
                   />
                   <InfoRow
-                    label="Updated"
+                    label="Cập nhật"
                     value={new Date(farm.updatedAt).toLocaleString()}
                   />
                 </div>
@@ -179,11 +179,11 @@ const FarmDetailPanel = ({ id, onBack }: FarmDetailPanelProps) => {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Owner Information</CardTitle>
+                  <CardTitle>Thông tin chủ vườn</CardTitle>
                   <Badge
                     variant={farm.owner.isActive ? "default" : "secondary"}
                   >
-                    {farm.owner.isActive ? "Active" : "Inactive"}
+                    {farm.owner.isActive ? "Hoạt động" : "Ngưng hoạt động"}
                   </Badge>
                 </div>
               </CardHeader>
@@ -193,15 +193,15 @@ const FarmDetailPanel = ({ id, onBack }: FarmDetailPanelProps) => {
                   value={farm.owner.email}
                 />
                 <InfoRow
-                  label="Full Name"
+                  label="Họ và tên"
                   value={farm.owner.fullName}
                 />
                 <InfoRow
-                  label="Phone"
+                  label="Số điện thoại"
                   value={farm.owner.phone}
                 />
                 <div className="space-y-1">
-                  <div className="text-muted-foreground">Role</div>
+                  <div className="text-muted-foreground">Vai trò</div>
                   <div className="font-medium capitalize">
                     {farm.owner.role}
                   </div>

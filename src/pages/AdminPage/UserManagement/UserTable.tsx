@@ -39,20 +39,34 @@ interface UserTableProps {
 }
 
 const ROLE_OPTIONS = [
-  { label: "All Roles", value: "all" },
-  { label: "Admin", value: RoleName.Admin },
-  { label: "Owner", value: RoleName.Owner },
-  { label: "Manager", value: RoleName.Manager },
-  { label: "Doctor", value: RoleName.Doctor },
-  { label: "Farmer", value: RoleName.Farmer },
+  { label: "Tất cả vai trò", value: "all" },
+  { label: "Quản trị viên", value: RoleName.Admin },
+  { label: "Chủ vườn", value: RoleName.Owner },
+  { label: "Quản lý", value: RoleName.Manager },
+  { label: "Bác sĩ", value: RoleName.Doctor },
+  { label: "Nông dân", value: RoleName.Farmer },
 ];
 
 const STATUS_OPTIONS = [
-  { label: "All Status", value: "all" },
-  { label: "Active", value: "ACTIVE" },
-  { label: "Inactive", value: "INACTIVE" },
-  { label: "Blocked", value: "BLOCKED" },
+  { label: "Tất cả trạng thái", value: "all" },
+  { label: "Hoạt động", value: "ACTIVE" },
+  { label: "Không hoạt động", value: "INACTIVE" },
+  { label: "Bị khóa", value: "BLOCKED" },
 ];
+
+const ROLE_LABELS: Record<string, string> = {
+  admin: "Quản trị viên",
+  owner: "Chủ vườn",
+  manager: "Quản lý",
+  doctor: "Bác sĩ",
+  farmer: "Nông dân",
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  ACTIVE: "Hoạt động",
+  INACTIVE: "Không hoạt động",
+  BLOCKED: "Bị khóa",
+};
 
 const roleVariant: Record<string, "default" | "secondary" | "outline"> = {
   admin: "default",
@@ -104,7 +118,7 @@ const UserTable = ({ onViewDetail }: UserTableProps) => {
   const columns: ColumnDef<UserResType>[] = [
     {
       accessorKey: "fullName",
-      header: "Name",
+      header: "Họ tên",
       cell: ({ row }) => (
         <div className="font-medium">{row.getValue("fullName")}</div>
       ),
@@ -118,7 +132,7 @@ const UserTable = ({ onViewDetail }: UserTableProps) => {
     },
     {
       accessorKey: "role",
-      header: "Role",
+      header: "Vai trò",
       cell: ({ row }) => {
         const role = row.getValue("role") as string;
         return (
@@ -126,33 +140,33 @@ const UserTable = ({ onViewDetail }: UserTableProps) => {
             variant={roleVariant[role] ?? "outline"}
             className="capitalize"
           >
-            {role}
+            {ROLE_LABELS[role.toLowerCase()] ?? role}
           </Badge>
         );
       },
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: "Trạng thái",
       cell: ({ row }) => {
         const status = row.getValue("status") as string;
         return (
           <Badge variant={statusVariant[status] ?? "outline"}>
-            {status.charAt(0) + status.slice(1).toLowerCase()}
+            {STATUS_LABELS[status] ?? status}
           </Badge>
         );
       },
     },
     {
       accessorKey: "phone",
-      header: "Phone",
+      header: "Số điện thoại",
       cell: ({ row }) => (
         <div>{(row.getValue("phone") as string | null) ?? "—"}</div>
       ),
     },
     {
       accessorKey: "createdAt",
-      header: "Joined",
+      header: "Ngày tham gia",
       cell: ({ row }) => (
         <div>
           {new Date(row.getValue("createdAt") as string).toLocaleDateString()}
@@ -161,7 +175,7 @@ const UserTable = ({ onViewDetail }: UserTableProps) => {
     },
     {
       id: "actions",
-      header: "Actions",
+      header: "Thao tác",
       cell: ({ row }) => (
         <Button
           variant="ghost"
@@ -208,7 +222,7 @@ const UserTable = ({ onViewDetail }: UserTableProps) => {
     <div className="w-full">
       <div className="flex flex-col gap-3 py-4 md:flex-row md:items-center">
         <Input
-          placeholder="Search by name or email..."
+          placeholder="Tìm theo tên hoặc email..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-sm"
@@ -218,7 +232,7 @@ const UserTable = ({ onViewDetail }: UserTableProps) => {
           onValueChange={setRoleFilter}
         >
           <SelectTrigger className="w-40">
-            <SelectValue placeholder="Role" />
+            <SelectValue placeholder="Vai trò" />
           </SelectTrigger>
           <SelectContent>
             {ROLE_OPTIONS.map((opt) => (
@@ -236,7 +250,7 @@ const UserTable = ({ onViewDetail }: UserTableProps) => {
           onValueChange={setStatusFilter}
         >
           <SelectTrigger className="w-40">
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder="Trạng thái" />
           </SelectTrigger>
           <SelectContent>
             {STATUS_OPTIONS.map((opt) => (
@@ -290,7 +304,7 @@ const UserTable = ({ onViewDetail }: UserTableProps) => {
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  Không có kết quả.
                 </TableCell>
               </TableRow>
             ) : null}
@@ -300,8 +314,8 @@ const UserTable = ({ onViewDetail }: UserTableProps) => {
 
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-xs text-muted-foreground">
-          Showing <strong>{table.getPaginationRowModel().rows.length}</strong>{" "}
-          of <strong>{totalRecords}</strong> results
+          Hiển thị <strong>{table.getPaginationRowModel().rows.length}</strong>{" "}
+          trên <strong>{totalRecords}</strong> kết quả
         </div>
         {totalPages > 1 && (
           <ProPagination

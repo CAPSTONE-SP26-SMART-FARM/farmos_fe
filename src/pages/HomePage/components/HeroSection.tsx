@@ -101,10 +101,10 @@ function HeroSection() {
 			<div className="absolute inset-0">
 				<img
 					src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2832&auto=format&fit=crop"
-					alt="Sunrise over farm field"
+					alt="Bình minh trên cánh đồng"
 					className="w-full h-full object-cover"
 				/>
-				<div className="absolute inset-0 bg-gradient-to-br from-green-950/95 via-green-900/90 to-emerald-950/95" />
+				<div className="absolute inset-0 bg-linear-to-br from-green-950/95 via-green-900/90 to-emerald-950/95" />
 			</div>
 
 			{/* Animated particles/shapes */}
@@ -175,7 +175,7 @@ function HeroSection() {
 								className="mb-6 px-4 py-2 bg-green-500/20 text-green-300 hover:bg-green-500/30 cursor-default backdrop-blur-sm border border-green-500/30"
 							>
 								<Leaf className="w-4 h-4 mr-2" />
-								Smart Farming Revolution
+								Cuộc cách mạng nông nghiệp thông minh
 							</Badge>
 						</motion.div>
 
@@ -185,7 +185,7 @@ function HeroSection() {
 						>
 							<span className="text-white">Nông trại </span>
 							<span className="relative">
-								<span className="bg-gradient-to-r from-green-400 via-emerald-400 to-green-300 bg-clip-text text-transparent">
+								<span className="bg-linear-to-r from-green-400 via-emerald-400 to-green-300 bg-clip-text text-transparent">
 									Thông minh
 								</span>
 								<svg
@@ -230,7 +230,7 @@ function HeroSection() {
 							<Button
 								asChild
 								size="lg"
-								className="group bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-8 py-6 text-lg rounded-full cursor-pointer transition-all duration-300 shadow-lg shadow-green-500/25 hover:shadow-green-500/40"
+								className="group bg-linear-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-8 py-6 text-lg rounded-full cursor-pointer transition-all duration-300 shadow-lg shadow-green-500/25 hover:shadow-green-500/40"
 							>
 								<Link to="/register">
 									Bắt đầu miễn phí
@@ -246,7 +246,7 @@ function HeroSection() {
 								<div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mr-3">
 									<Play className="h-4 w-4 fill-current" />
 								</div>
-								Xem Demo
+								Xem bản demo
 							</Button>
 						</motion.div>
 
@@ -289,10 +289,10 @@ function HeroSection() {
 							>
 								<img
 									src="https://images.unsplash.com/photo-1574943320219-553eb213f72d?q=80&w=1991&auto=format&fit=crop"
-									alt="Smart greenhouse with technology"
+									alt="Nhà kính thông minh tích hợp công nghệ"
 									className="w-full h-48 object-cover"
 								/>
-								<div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+								<div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent" />
 								<div className="absolute bottom-4 left-4 right-4">
 									<div className="flex items-center gap-2 mb-2">
 										<span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
@@ -318,7 +318,7 @@ function HeroSection() {
 									className={`${card.bgColor} backdrop-blur-xl rounded-2xl p-4 border border-white/10 cursor-pointer transition-all duration-300`}
 								>
 									<div
-										className={`w-10 h-10 rounded-xl bg-gradient-to-br ${card.color} flex items-center justify-center mb-3`}
+										className={`w-10 h-10 rounded-xl bg-linear-to-br ${card.color} flex items-center justify-center mb-3`}
 									>
 										<card.icon className="w-5 h-5 text-white" />
 									</div>
@@ -333,11 +333,11 @@ function HeroSection() {
 								initial={{ opacity: 0, y: 20 }}
 								animate={{ opacity: 1, y: 0 }}
 								transition={{ duration: 0.4, delay: 0.9 }}
-								className="col-span-2 bg-gradient-to-r from-green-500/20 to-emerald-500/20 backdrop-blur-xl rounded-2xl p-4 border border-green-500/30"
+								className="col-span-2 bg-linear-to-r from-green-500/20 to-emerald-500/20 backdrop-blur-xl rounded-2xl p-4 border border-green-500/30"
 							>
 								<div className="flex items-center justify-between">
 									<div className="flex items-center gap-3">
-										<div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+										<div className="w-12 h-12 rounded-xl bg-linear-to-br from-green-500 to-emerald-600 flex items-center justify-center">
 											<Activity className="w-6 h-6 text-white" />
 										</div>
 										<div>
@@ -363,10 +363,10 @@ function HeroSection() {
 						<motion.div
 							variants={floatVariants}
 							animate="animate"
-							className="absolute -left-12 top-1/3 bg-white rounded-2xl p-3 shadow-xl border border-green-100 max-w-[180px]"
+							className="absolute -left-12 top-1/3 bg-white rounded-2xl p-3 shadow-xl border border-green-100 max-w-45"
 						>
 							<div className="flex items-start gap-2">
-								<div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+								<div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
 									<Leaf className="w-4 h-4 text-amber-600" />
 								</div>
 								<div>
@@ -382,7 +382,7 @@ function HeroSection() {
 			</div>
 
 			{/* Bottom gradient fade */}
-			<div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-green-50 to-transparent" />
+			<div className="absolute bottom-0 left-0 right-0 h-32 bg-linear-to-t from-green-50 to-transparent" />
 		</section>
 	);
 }

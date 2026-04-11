@@ -46,9 +46,9 @@ interface Props {
 }
 
 const ROLE_OPTIONS = [
-  { value: "all", label: "All Roles" },
-  { value: "manager", label: "Manager" },
-  { value: "farmer", label: "Farmer" },
+  { value: "all", label: "Tất cả vai trò" },
+  { value: "manager", label: "Quản lý" },
+  { value: "farmer", label: "Nông dân" },
 ] as const;
 
 const RoleIcon = ({ role }: { role: string }) =>
@@ -88,16 +88,16 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Employees</h2>
+          <h2 className="text-lg font-semibold">Nhân sự</h2>
           <p className="text-sm text-muted-foreground">
-            View and manage farm employees.
+            Xem và quản lý nhân sự của nông trại.
           </p>
         </div>
         <div className="flex gap-2 shrink-0">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search email or phone..."
+              placeholder="Tìm theo email hoặc số điện thoại..."
               className="pl-8 w-56"
               value={search}
               onChange={(e) => {
@@ -129,7 +129,7 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
             className="gap-1.5"
           >
             <UserPlus className="h-4 w-4" />
-            Add Employee
+            Thêm nhân sự
           </Button>
         </div>
       </div>
@@ -139,11 +139,11 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Employee</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Farm</TableHead>
-                <TableHead>Assigned</TableHead>
+                <TableHead>Nhân sự</TableHead>
+                <TableHead>Vai trò</TableHead>
+                <TableHead>Số điện thoại</TableHead>
+                <TableHead>Nông trại</TableHead>
+                <TableHead>Ngày gán</TableHead>
                 <TableHead className="w-12.5"></TableHead>
               </TableRow>
             </TableHeader>
@@ -177,7 +177,7 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <p className="text-sm text-muted-foreground">
-              Failed to load employees. Please try again.
+              Không tải được danh sách nhân sự. Vui lòng thử lại.
             </p>
           </CardContent>
         </Card>
@@ -187,16 +187,16 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
             <div className="rounded-full bg-muted p-4 mb-4">
               <Users className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold mb-1">No employees yet</h3>
+            <h3 className="text-lg font-semibold mb-1">Chưa có nhân sự</h3>
             <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-              Add employees to your farm to help manage daily operations.
+              Hãy thêm nhân sự để hỗ trợ vận hành nông trại hàng ngày.
             </p>
             <Button
               onClick={onAddMember}
               className="gap-1.5"
             >
               <UserPlus className="h-4 w-4" />
-              Add First Employee
+              Thêm nhân sự đầu tiên
             </Button>
           </CardContent>
         </Card>
@@ -206,11 +206,11 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Employee</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Farm</TableHead>
-                  <TableHead>Assigned</TableHead>
+                  <TableHead>Nhân sự</TableHead>
+                  <TableHead>Vai trò</TableHead>
+                  <TableHead>Số điện thoại</TableHead>
+                  <TableHead>Nông trại</TableHead>
+                  <TableHead>Ngày gán</TableHead>
                   <TableHead className="w-12.5"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -261,7 +261,7 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
                             onClick={() => onViewMember(member)}
                           >
                             <Eye className="h-4 w-4 mr-2" />
-                            View
+                            Xem
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -275,9 +275,7 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
           {meta && meta.totalPages > 1 && (
             <div className="flex items-center justify-between pt-2">
               <p className="text-sm text-muted-foreground">
-                Page {meta.page} of {meta.totalPages} &bull; {meta.totalItems}{" "}
-                employee
-                {meta.totalItems !== 1 ? "s" : ""}
+                Trang {meta.page}/{meta.totalPages} &bull; {meta.totalItems} nhân sự
               </p>
               <div className="flex gap-2">
                 <Button
@@ -286,7 +284,7 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
                   disabled={!meta.hasPreviousPage}
                   onClick={() => setPage((p) => p - 1)}
                 >
-                  Previous
+                  Trước
                 </Button>
                 <Button
                   variant="outline"
@@ -294,7 +292,7 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
                   disabled={!meta.hasNextPage}
                   onClick={() => setPage((p) => p + 1)}
                 >
-                  Next
+                  Sau
                 </Button>
               </div>
             </div>

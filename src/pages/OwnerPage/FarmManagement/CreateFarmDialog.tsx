@@ -43,7 +43,7 @@ interface Props {
   onClose: () => void;
 }
 
-const FARM_TYPES = [{ value: "cultivation", label: "Cultivation" }] as const;
+const FARM_TYPES = [{ value: "cultivation", label: "Canh tác" }] as const;
 
 const CreateFarmDialog = ({ open, onClose }: Props) => {
   const form = useForm<CreateFarmBodyType>({
@@ -95,9 +95,9 @@ const CreateFarmDialog = ({ open, onClose }: Props) => {
           className="space-y-4"
         >
           <DialogHeader>
-            <DialogTitle>Create Farm</DialogTitle>
+            <DialogTitle>Tạo nông trại</DialogTitle>
             <DialogDescription>
-              Fill in the details below to register a new farm.
+              Điền thông tin bên dưới để đăng ký nông trại mới.
             </DialogDescription>
           </DialogHeader>
 
@@ -108,11 +108,11 @@ const CreateFarmDialog = ({ open, onClose }: Props) => {
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="farm-code">Farm Code</FieldLabel>
+                    <FieldLabel htmlFor="farm-code">Mã nông trại</FieldLabel>
                     <Input
                       {...field}
                       id="farm-code"
-                      placeholder="e.g. FARM-001"
+                      placeholder="Ví dụ: FARM-001"
                     />
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />
@@ -125,11 +125,11 @@ const CreateFarmDialog = ({ open, onClose }: Props) => {
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="farm-name">Farm Name</FieldLabel>
+                    <FieldLabel htmlFor="farm-name">Tên nông trại</FieldLabel>
                     <Input
                       {...field}
                       id="farm-name"
-                      placeholder="e.g. Green Valley Farm"
+                      placeholder="Ví dụ: Nông trại Thung Lũng Xanh"
                     />
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />
@@ -144,13 +144,13 @@ const CreateFarmDialog = ({ open, onClose }: Props) => {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Farm Type</FieldLabel>
+                  <FieldLabel>Loại nông trại</FieldLabel>
                   <Select
                     value={field.value}
                     onValueChange={field.onChange}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select farm type" />
+                      <SelectValue placeholder="Chọn loại nông trại" />
                     </SelectTrigger>
                     <SelectContent>
                       {FARM_TYPES.map((type) => (
@@ -175,11 +175,11 @@ const CreateFarmDialog = ({ open, onClose }: Props) => {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="farm-address">Address</FieldLabel>
+                  <FieldLabel htmlFor="farm-address">Địa chỉ</FieldLabel>
                   <Input
                     {...field}
                     id="farm-address"
-                    placeholder="e.g. 123 Farm Road, District 9"
+                    placeholder="Ví dụ: 123 Đường Nông Trại, Quận 9"
                   />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
@@ -195,14 +195,14 @@ const CreateFarmDialog = ({ open, onClose }: Props) => {
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="farm-area-hectares">
-                      Area (hectares)
+                      Diện tích (ha)
                     </FieldLabel>
                     <Input
                       {...field}
                       id="farm-area-hectares"
                       type="number"
                       step="0.01"
-                      placeholder="e.g. 10.5"
+                      placeholder="Ví dụ: 10.5"
                       value={field.value ?? ""}
                       onChange={(e) => {
                         const val = e.target.value;
@@ -221,14 +221,14 @@ const CreateFarmDialog = ({ open, onClose }: Props) => {
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="farm-area-sqm">
-                      Area (sq. meters)
+                      Diện tích (m²)
                     </FieldLabel>
                     <Input
                       {...field}
                       id="farm-area-sqm"
                       type="number"
                       step="0.01"
-                      placeholder="e.g. 105000"
+                      placeholder="Ví dụ: 105000"
                       value={field.value ?? ""}
                       onChange={(e) => {
                         const val = e.target.value;
@@ -249,12 +249,12 @@ const CreateFarmDialog = ({ open, onClose }: Props) => {
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="farm-description">
-                    Description
+                    Mô tả
                   </FieldLabel>
                   <Textarea
                     {...field}
                     id="farm-description"
-                    placeholder="Brief description of the farm"
+                    placeholder="Mô tả ngắn về nông trại"
                     className="min-h-20"
                   />
                   {fieldState.invalid && (
@@ -272,7 +272,7 @@ const CreateFarmDialog = ({ open, onClose }: Props) => {
                 variant="outline"
                 disabled={isPending}
               >
-                Cancel
+                Hủy
               </Button>
             </DialogClose>
             <Button
@@ -282,10 +282,10 @@ const CreateFarmDialog = ({ open, onClose }: Props) => {
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
+                  Đang tạo...
                 </>
               ) : (
-                "Create Farm"
+                "Tạo nông trại"
               )}
             </Button>
           </DialogFooter>

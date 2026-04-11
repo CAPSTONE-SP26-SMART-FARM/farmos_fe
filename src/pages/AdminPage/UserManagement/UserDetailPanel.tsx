@@ -54,6 +54,12 @@ const statusVariant: Record<
   BLOCKED: "destructive",
 };
 
+const statusLabel: Record<string, string> = {
+  ACTIVE: "Hoạt động",
+  INACTIVE: "Không hoạt động",
+  BLOCKED: "Bị khóa",
+};
+
 const roleVariant: Record<string, "default" | "secondary" | "outline"> = {
   admin: "default",
   owner: "secondary",
@@ -61,6 +67,15 @@ const roleVariant: Record<string, "default" | "secondary" | "outline"> = {
   doctor: "outline",
   farmer: "outline",
   rancher: "outline",
+};
+
+const roleLabel: Record<string, string> = {
+  admin: "Quản trị viên",
+  owner: "Chủ vườn",
+  manager: "Quản lý",
+  doctor: "Bác sĩ",
+  farmer: "Nông dân",
+  rancher: "Chủ trang trại",
 };
 
 const UserDetailPanel = ({ id, onBack }: UserDetailPanelProps) => {
@@ -93,11 +108,11 @@ const UserDetailPanel = ({ id, onBack }: UserDetailPanelProps) => {
             className="mb-3 -ml-2 gap-1 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to User List
+            Quay về danh sách người dùng
           </Button>
-          <h2 className="text-2xl font-bold">User Detail</h2>
+          <h2 className="text-2xl font-bold">Chi tiết người dùng</h2>
           <p className="text-muted-foreground">
-            View detailed information of this user account.
+            Xem thông tin chi tiết của tài khoản người dùng này.
           </p>
         </div>
 
@@ -106,12 +121,12 @@ const UserDetailPanel = ({ id, onBack }: UserDetailPanelProps) => {
         ) : !user ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <h3 className="text-lg font-semibold mb-1">No data found</h3>
+              <h3 className="text-lg font-semibold mb-1">Không tìm thấy dữ liệu</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                The requested user could not be loaded.
+                Không thể tải dữ liệu người dùng được yêu cầu.
               </p>
               <Button variant="outline" onClick={handleBack}>
-                Go Back
+                Quay lại
               </Button>
             </CardContent>
           </Card>
@@ -120,28 +135,28 @@ const UserDetailPanel = ({ id, onBack }: UserDetailPanelProps) => {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Account Information</CardTitle>
+                  <CardTitle>Thông tin tài khoản</CardTitle>
                   <div className="flex gap-2">
                     <Badge variant={roleVariant[user.role] ?? "outline"} className="capitalize">
-                      {user.role}
+                      {roleLabel[user.role] ?? user.role}
                     </Badge>
                     <Badge variant={statusVariant[user.status] ?? "outline"}>
-                      {user.status.charAt(0) + user.status.slice(1).toLowerCase()}
+                      {statusLabel[user.status] ?? user.status}
                     </Badge>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <div className="grid grid-cols-2 gap-3">
-                  <InfoRow label="Full Name" value={user.fullName} />
+                  <InfoRow label="Họ và tên" value={user.fullName} />
                   <InfoRow label="Email" value={user.email} />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <InfoRow label="Phone" value={user.phone} />
+                  <InfoRow label="Số điện thoại" value={user.phone} />
                   <div className="space-y-1">
-                    <div className="text-muted-foreground text-xs">Active</div>
+                    <div className="text-muted-foreground text-xs">Kích hoạt</div>
                     <Badge variant={user.isActive ? "default" : "secondary"}>
-                      {user.isActive ? "Yes" : "No"}
+                      {user.isActive ? "Có" : "Không"}
                     </Badge>
                   </div>
                 </div>
@@ -150,7 +165,7 @@ const UserDetailPanel = ({ id, onBack }: UserDetailPanelProps) => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <InfoRow
-                    label="Email Verified"
+                    label="Email đã xác minh"
                     value={
                       user.emailVerifiedAt
                         ? new Date(user.emailVerifiedAt).toLocaleString()
@@ -159,7 +174,7 @@ const UserDetailPanel = ({ id, onBack }: UserDetailPanelProps) => {
                   />
                   <InfoRow
                     label="2FA"
-                    value={user.emailVerifiedAt ? "Enabled" : "Disabled"}
+                    value={user.emailVerifiedAt ? "Bật" : "Tắt"}
                   />
                 </div>
               </CardContent>
@@ -167,19 +182,19 @@ const UserDetailPanel = ({ id, onBack }: UserDetailPanelProps) => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Timestamps</CardTitle>
+                <CardTitle>Mốc thời gian</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <InfoRow
-                  label="Joined"
+                  label="Ngày tham gia"
                   value={new Date(user.createdAt).toLocaleString()}
                 />
                 <InfoRow
-                  label="Last Updated"
+                  label="Cập nhật lần cuối"
                   value={new Date(user.updatedAt).toLocaleString()}
                 />
                 <InfoRow
-                  label="Deleted At"
+                  label="Ngày xóa"
                   value={
                     user.deletedAt
                       ? new Date(user.deletedAt).toLocaleString()

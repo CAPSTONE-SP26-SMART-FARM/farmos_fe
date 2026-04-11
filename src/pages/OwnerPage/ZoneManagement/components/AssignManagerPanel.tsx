@@ -75,23 +75,23 @@ export default function AssignManagerPanel({
 
   const handleAssign = () => {
     if (!selectedManagerId) {
-      toast.error("Please select a manager.");
+      toast.error("Vui lòng chọn một quản lý.");
       return;
     }
     assignMutation.mutate(
       { managerId: selectedManagerId, isPrimary },
       {
         onSuccess: () => {
-          toast.success("Manager assigned to zone successfully.");
+          toast.success("Đã phân công quản lý cho khu vực.");
           handleBack();
         },
         onError: (error) => {
           if (isApiErrorResponse(error)) {
             toast.error(
-              error.response?.data.message ?? "Failed to assign manager.",
+              error.response?.data.message ?? "Không thể phân công quản lý.",
             );
           } else {
-            toast.error("An unexpected error occurred.");
+            toast.error("Đã xảy ra lỗi không mong muốn.");
           }
         },
       },
@@ -116,8 +116,8 @@ export default function AssignManagerPanel({
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <Badge className="mb-1">Assign Manager</Badge>
-          <h1 className="text-2xl font-bold">Assign Manager to {zoneName}</h1>
+          <Badge className="mb-1">Phân công quản lý</Badge>
+          <h1 className="text-2xl font-bold">Phân công quản lý cho {zoneName}</h1>
         </div>
       </div>
 
@@ -128,12 +128,12 @@ export default function AssignManagerPanel({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="text-lg flex items-center gap-2">
               <UserPlus className="h-5 w-5" />
-              Select a Manager
+              Chọn quản lý
             </CardTitle>
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search name or email..."
+                placeholder="Tìm theo tên hoặc email..."
                 className="pl-8 w-56"
                 value={search}
                 onChange={(e) => {
@@ -160,12 +160,12 @@ export default function AssignManagerPanel({
                 <UserCog className="h-8 w-8 text-muted-foreground" />
               </div>
               <h3 className="text-lg font-semibold mb-1">
-                No managers available
+                Không có quản lý khả dụng
               </h3>
               <p className="text-sm text-muted-foreground max-w-sm">
                 {debouncedSearch
-                  ? "No managers match your search. Try a different keyword."
-                  : "Add managers to your farm in the Employee Management section first."}
+                  ? "Không có quản lý phù hợp. Hãy thử từ khóa khác."
+                  : "Hãy thêm quản lý vào nông trại tại mục Quản lý nhân sự trước."}
               </p>
             </div>
           ) : (
@@ -173,9 +173,9 @@ export default function AssignManagerPanel({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
+                    <TableHead>Họ tên</TableHead>
                     <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
+                    <TableHead>Số điện thoại</TableHead>
                     <TableHead className="w-20"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -199,7 +199,7 @@ export default function AssignManagerPanel({
                         </TableCell>
                         <TableCell>
                           {isSelected ? (
-                            <Badge>Selected</Badge>
+                            <Badge>Đã chọn</Badge>
                           ) : (
                             <Button
                               variant="outline"
@@ -209,7 +209,7 @@ export default function AssignManagerPanel({
                                 setSelectedManagerId(m.user.id);
                               }}
                             >
-                              Select
+                              Chọn
                             </Button>
                           )}
                         </TableCell>
@@ -222,9 +222,7 @@ export default function AssignManagerPanel({
               {meta && meta.totalPages > 1 && (
                 <div className="flex items-center justify-between pt-2">
                   <p className="text-sm text-muted-foreground">
-                    Page {meta.page} of {meta.totalPages} &bull;{" "}
-                    {meta.totalItems} manager
-                    {meta.totalItems !== 1 ? "s" : ""}
+                    Trang {meta.page}/{meta.totalPages} &bull; {meta.totalItems} quản lý
                   </p>
                   <div className="flex gap-2">
                     <Button
@@ -233,7 +231,7 @@ export default function AssignManagerPanel({
                       disabled={page <= 1}
                       onClick={() => setPage((p) => p - 1)}
                     >
-                      Previous
+                      Trước
                     </Button>
                     <Button
                       variant="outline"
@@ -241,7 +239,7 @@ export default function AssignManagerPanel({
                       disabled={page >= meta.totalPages}
                       onClick={() => setPage((p) => p + 1)}
                     >
-                      Next
+                      Sau
                     </Button>
                   </div>
                 </div>
@@ -254,7 +252,7 @@ export default function AssignManagerPanel({
             <>
               <Separator />
               <div className="space-y-2">
-                <Label htmlFor="primary-select">Primary Manager</Label>
+                <Label htmlFor="primary-select">Quản lý chính</Label>
                 <Select
                   value={isPrimary ? "yes" : "no"}
                   onValueChange={(v) => setIsPrimary(v === "yes")}
@@ -263,13 +261,13 @@ export default function AssignManagerPanel({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="no">No</SelectItem>
-                    <SelectItem value="yes">Yes — set as primary</SelectItem>
+                    <SelectItem value="no">Không</SelectItem>
+                    <SelectItem value="yes">Có - đặt làm quản lý chính</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  A zone can only have one primary manager. Setting this will
-                  replace the current primary.
+                  Mỗi khu vực chỉ có một quản lý chính. Khi bật tùy chọn này,
+                  quản lý chính hiện tại sẽ bị thay thế.
                 </p>
               </div>
             </>
@@ -281,7 +279,7 @@ export default function AssignManagerPanel({
               variant="outline"
               onClick={handleBack}
             >
-              Cancel
+              Hủy
             </Button>
             <Button
               onClick={handleAssign}
@@ -291,12 +289,12 @@ export default function AssignManagerPanel({
               {assignMutation.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Assigning...
+                  Đang phân công...
                 </>
               ) : (
                 <>
                   <UserPlus className="h-4 w-4" />
-                  Assign Manager
+                  Phân công quản lý
                 </>
               )}
             </Button>

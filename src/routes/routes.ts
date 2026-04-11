@@ -18,7 +18,10 @@ import LoginPage from "@/pages/LoginPage/LoginPage";
 import ManagerPage from "@/pages/ManagerPage/ManagerPage";
 import ManagerCropSeasonsPage from "@/pages/ManagerPage/CropSeasons/ManagerCropSeasonsPage";
 import ManagerMilestonesPage from "@/pages/ManagerPage/CropSeasons/ManagerMilestonesPage";
+import ManagerProductionMilestonesPage from "@/pages/ManagerPage/CropSeasons/ManagerProductionMilestonesPage";
 import ManagerEmployeeTaskTemplatesPage from "@/pages/ManagerPage/EmployeeTaskTemplates/ManagerEmployeeTaskTemplatesPage";
+import ManagerIotDevicesPage from "@/pages/ManagerPage/IotDevices/ManagerIotDevicesPage";
+import OwnerCropSeasonsPage from "@/pages/OwnerPage/CropSeasons/OwnerCropSeasonsPage";
 import OwnerEmployeeTaskTemplatesPage from "@/pages/OwnerPage/EmployeeTaskTemplates/OwnerEmployeeTaskTemplatesPage";
 import OwnerIotDevicesPage from "@/pages/OwnerPage/IotDevices/OwnerIotDevicesPage";
 import OwnerPage from "@/pages/OwnerPage/OwnerPage";
@@ -138,6 +141,11 @@ const routes: AppRoutes = [
         allowedRoles: [RoleName.Owner],
       },
       {
+        path: "/dashboard/owner/crop-seasons",
+        component: OwnerCropSeasonsPage,
+        allowedRoles: [RoleName.Owner],
+      },
+      {
         path: "/dashboard/owner/iot-devices",
         component: OwnerIotDevicesPage,
         allowedRoles: [RoleName.Owner],
@@ -169,6 +177,11 @@ const routes: AppRoutes = [
         allowedRoles: [RoleName.Manager],
       },
       {
+        path: "/dashboard/manager/milestones",
+        component: ManagerProductionMilestonesPage,
+        allowedRoles: [RoleName.Manager],
+      },
+      {
         path: "/dashboard/manager/crop-seasons/:cropSeasonId/milestones",
         component: ManagerMilestonesPage,
         allowedRoles: [RoleName.Manager],
@@ -176,6 +189,11 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/manager/employee-task-templates",
         component: ManagerEmployeeTaskTemplatesPage,
+        allowedRoles: [RoleName.Manager],
+      },
+      {
+        path: "/dashboard/manager/iot-config",
+        component: ManagerIotDevicesPage,
         allowedRoles: [RoleName.Manager],
       },
       {

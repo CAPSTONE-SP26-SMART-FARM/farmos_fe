@@ -104,15 +104,11 @@ export const ListIotDeviceTemplateResSchema = PagingResponseSchema(
 /** Item config for sensor template */
 export const SensorTemplateItemConfigSchema = z
   .object({
-    sensorType: SensorTemplateTypeSchema,
-    sensorModel: z.string().max(100).nullable().optional(),
-    gpioPin: z.string().max(10).nullable().optional(),
-    calibrationOffset: z.number().nullable().optional(),
-    stageName: z.string().max(100).nullable().optional(),
-    minValue: z.number().nullable().optional(),
-    maxValue: z.number().nullable().optional(),
-    optimalMin: z.number().nullable().optional(),
-    optimalMax: z.number().nullable().optional(),
+    sensorModelName: z.string().min(1).max(255),
+    minValue: z.number(),
+    maxValue: z.number(),
+    optimalMin: z.number(),
+    optimalMax: z.number(),
   })
   .strict();
 
@@ -121,11 +117,8 @@ export const SensorTemplateItemResSchema = z
   .object({
     id: z.string().uuid(),
     itemType: TemplateItemTypeSchema.nullable(),
+    sensorModelName: z.string(),
     sensorType: SensorTemplateTypeSchema,
-    sensorModel: z.string().nullable(),
-    gpioPin: z.string().nullable(),
-    calibrationOffset: z.number().nullable(),
-    stageName: z.string().nullable(),
     minValue: z.number().nullable(),
     maxValue: z.number().nullable(),
     optimalMin: z.number().nullable(),

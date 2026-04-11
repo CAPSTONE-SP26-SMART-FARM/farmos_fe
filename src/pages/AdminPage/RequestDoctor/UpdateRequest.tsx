@@ -50,6 +50,13 @@ interface Props {
   setId: (id: string | undefined) => void;
 }
 
+const REGISTRATION_STATUS_LABEL: Record<string, string> = {
+  pending: "Chờ duyệt",
+  approved: "Đã duyệt",
+  rejected: "Từ chối",
+  suspended: "Tạm ngưng",
+};
+
 const UpdateRequest = ({ id, setId }: Props) => {
   const form = useForm<UpdateDoctorRequestStatusBodyType>({
     resolver: zodResolver(UpdateDoctorRequestStatusBodySchema),
@@ -113,9 +120,9 @@ const UpdateRequest = ({ id, setId }: Props) => {
       <DialogContent className="sm:max-w-3xl">
         <form className="space-y-4">
           <DialogHeader>
-            <DialogTitle>Doctor request detail</DialogTitle>
+            <DialogTitle>Chi tiết yêu cầu bác sĩ</DialogTitle>
             <DialogDescription>
-              View the doctor&apos;s registration request and update its status.
+              Xem yêu cầu đăng ký bác sĩ và cập nhật trạng thái.
             </DialogDescription>
           </DialogHeader>
 
@@ -148,18 +155,18 @@ const UpdateRequest = ({ id, setId }: Props) => {
             <Card>
               <CardHeader>
                 <CardTitle className="text-destructive">
-                  Failed to load request
+                  Không thể tải yêu cầu
                 </CardTitle>
                 <CardDescription>
-                  Please close and reopen this dialog to try again.
+                  Vui lòng đóng và mở lại hộp thoại để thử lại.
                 </CardDescription>
               </CardHeader>
             </Card>
           ) : !request ? (
             <Card>
               <CardHeader>
-                <CardTitle>No data</CardTitle>
-                <CardDescription>Request was not found.</CardDescription>
+                <CardTitle>Không có dữ liệu</CardTitle>
+                <CardDescription>Không tìm thấy yêu cầu.</CardDescription>
               </CardHeader>
             </Card>
           ) : (
@@ -167,24 +174,26 @@ const UpdateRequest = ({ id, setId }: Props) => {
               <div className="space-y-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Request</CardTitle>
+                    <CardTitle>Yêu cầu</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3 text-sm">
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div className="space-y-1">
-                        <div className="text-muted-foreground">Title</div>
+                        <div className="text-muted-foreground">Tiêu đề</div>
                         <div className="font-medium">{request.title}</div>
                       </div>
                       <div className="space-y-1">
-                        <div className="text-muted-foreground">Status</div>
+                        <div className="text-muted-foreground">Trạng thái</div>
                         <div className="font-medium capitalize">
-                          {request.registrationStatus}
+                          {REGISTRATION_STATUS_LABEL[
+                            request.registrationStatus.toLowerCase()
+                          ] ?? request.registrationStatus}
                         </div>
                       </div>
                     </div>
 
                     <div className="space-y-1">
-                      <div className="text-muted-foreground">Description</div>
+                      <div className="text-muted-foreground">Mô tả</div>
                       <div className="whitespace-pre-wrap">
                         {request.description}
                       </div>
@@ -193,7 +202,7 @@ const UpdateRequest = ({ id, setId }: Props) => {
                     {request.reason ? (
                       <div className="space-y-1">
                         <div className="text-muted-foreground">
-                          Previous reason
+                          Lý do trước đó
                         </div>
                         <div className="whitespace-pre-wrap">
                           {request.reason}
@@ -206,10 +215,10 @@ const UpdateRequest = ({ id, setId }: Props) => {
                 </Card>
                 <Card>
                   <CardHeader>
-                    <CardTitle>Update status</CardTitle>
+                    <CardTitle>Cập nhật trạng thái</CardTitle>
                     <CardDescription>
-                      Approve, reject, or suspend this request. Reason is
-                      required for reject / suspend.
+                      Duyệt, từ chối hoặc tạm ngưng yêu cầu này. Lý do là bắt
+                      buộc khi từ chối/tạm ngưng.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3 text-sm">
@@ -219,7 +228,7 @@ const UpdateRequest = ({ id, setId }: Props) => {
                         control={form.control}
                         render={({ field, fieldState }) => (
                           <Field data-invalid={fieldState.invalid}>
-                            <FieldLabel>New status</FieldLabel>
+                            <FieldLabel>Trạng thái mới</FieldLabel>
                             <Select
                               value={field.value}
                               onValueChange={field.onChange}
@@ -232,19 +241,19 @@ const UpdateRequest = ({ id, setId }: Props) => {
                                   value={RegistrationStatusName.Approved}
                                   className="capitalize"
                                 >
-                                  {RegistrationStatusName.Approved}
+                                  Đã duyệt
                                 </SelectItem>
                                 <SelectItem
                                   value={RegistrationStatusName.Rejected}
                                   className="capitalize"
                                 >
-                                  {RegistrationStatusName.Rejected}
+                                  Từ chối
                                 </SelectItem>
                                 <SelectItem
                                   value={RegistrationStatusName.Suspended}
                                   className="capitalize"
                                 >
-                                  {RegistrationStatusName.Suspended}
+                                  Tạm ngưng
                                 </SelectItem>
                               </SelectContent>
                             </Select>
@@ -260,10 +269,10 @@ const UpdateRequest = ({ id, setId }: Props) => {
                         control={form.control}
                         render={({ field, fieldState }) => (
                           <Field data-invalid={fieldState.invalid}>
-                            <FieldLabel>Reason</FieldLabel>
+                            <FieldLabel>Lý do</FieldLabel>
                             <Textarea
                               {...field}
-                              placeholder="Optional for approve, required for reject / suspend"
+                              placeholder="Không bắt buộc khi duyệt, bắt buộc khi từ chối/tạm ngưng"
                               rows={3}
                             />
                             {fieldState.invalid && (
@@ -280,19 +289,19 @@ const UpdateRequest = ({ id, setId }: Props) => {
               <div className="space-y-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Doctor profile</CardTitle>
+                    <CardTitle>Hồ sơ bác sĩ</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3 text-sm">
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div className="space-y-1">
-                        <div className="text-muted-foreground">Doctor type</div>
+                        <div className="text-muted-foreground">Loại bác sĩ</div>
                         <div className="font-medium capitalize">
                           {request.doctorProfile.doctorType}
                         </div>
                       </div>
                       <div className="space-y-1">
                         <div className="text-muted-foreground">
-                          Specialization
+                          Chuyên môn
                         </div>
                         <div className="font-medium">
                           {request.doctorProfile.specialization}
@@ -303,7 +312,7 @@ const UpdateRequest = ({ id, setId }: Props) => {
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div className="space-y-1">
                         <div className="text-muted-foreground">
-                          License number
+                          Số giấy phép
                         </div>
                         <div className="font-medium">
                           {request.doctorProfile.licenseNumber}
@@ -311,7 +320,7 @@ const UpdateRequest = ({ id, setId }: Props) => {
                       </div>
                       <div className="space-y-1">
                         <div className="text-muted-foreground">
-                          License expiry
+                          Hạn giấy phép
                         </div>
                         <div className="font-medium">
                           {request.doctorProfile.licenseExpiryDate}
@@ -321,7 +330,7 @@ const UpdateRequest = ({ id, setId }: Props) => {
 
                     {request.doctorProfile.bio ? (
                       <div className="space-y-1">
-                        <div className="text-muted-foreground">Bio</div>
+                        <div className="text-muted-foreground">Giới thiệu</div>
                         <div className="whitespace-pre-wrap">
                           {request.doctorProfile.bio}
                         </div>
@@ -331,7 +340,7 @@ const UpdateRequest = ({ id, setId }: Props) => {
                 </Card>
                 <Card>
                   <CardHeader>
-                    <CardTitle>User</CardTitle>
+                    <CardTitle>Người dùng</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3 text-sm">
                     <div className="space-y-1">
@@ -339,7 +348,7 @@ const UpdateRequest = ({ id, setId }: Props) => {
                       <div className="font-medium">{request.user.email}</div>
                     </div>
                     <div className="space-y-1">
-                      <div className="text-muted-foreground">Full name</div>
+                      <div className="text-muted-foreground">Họ tên</div>
                       <div className="font-medium">
                         {request.user.fullName ?? "—"}
                       </div>
@@ -357,7 +366,7 @@ const UpdateRequest = ({ id, setId }: Props) => {
                 variant="outline"
                 disabled={mutation.isPending}
               >
-                Close
+                Đóng
               </Button>
             </DialogClose>
             <Button
@@ -365,7 +374,7 @@ const UpdateRequest = ({ id, setId }: Props) => {
               type="button"
               disabled={mutation.isPending}
             >
-              {mutation.isPending ? "Updating..." : "Update status"}
+              {mutation.isPending ? "Đang cập nhật..." : "Cập nhật trạng thái"}
             </Button>
           </DialogFooter>
         </form>

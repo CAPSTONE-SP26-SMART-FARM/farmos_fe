@@ -9,6 +9,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
   Table,
   TableBody,
   TableCell,
@@ -23,6 +30,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -34,7 +47,8 @@ import {
   useSendProductionRequest,
   useManagerListRequests,
 } from "@/queries/useCropSeason";
-import { useForm } from "react-hook-form";
+import { useManagerListAssignedZones } from "@/queries/useZone";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CreateCropSeasonBodySchema,
@@ -46,10 +60,20 @@ import {
   type SendProductionRequestBodyType,
   type CropSeasonType,
 } from "@/types/cropSeason";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router";
-import { Plus, Eye, Send, Pencil, Loader2, Clock, Milestone } from "lucide-react";
-import { format } from "date-fns";
+import {
+  Plus,
+  Eye,
+  Send,
+  Pencil,
+  Loader2,
+  Clock,
+  Milestone,
+  ArrowLeft,
+  CalendarDays,
+} from "lucide-react";
+import { addMonths, format, isBefore, isValid, parse, startOfDay } from "date-fns";
 import ProPagination from "@/components/common/pro-pagination";
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -89,11 +113,86 @@ function StatusBadge({ status }: { status: string }) {
 
 function formatDate(d: string | null | undefined) {
   if (!d) return "—";
-  try {
-    return format(new Date(d), "dd/MM/yyyy");
-  } catch {
-    return d;
+  const parsed = parseBackendDate(d);
+  return parsed ? format(parsed, "dd/MM/yyyy") : d;
+}
+
+function parseBackendDate(value: string | null | undefined) {
+  if (!value) return undefined;
+  const parsed = parse(value, "yyyy-MM-dd", new Date());
+  if (isValid(parsed)) {
+    return parsed;
   }
+  const fallback = new Date(value);
+  return isValid(fallback) ? fallback : undefined;
+}
+
+function formatPickerDate(value: string | null | undefined) {
+  const parsed = parseBackendDate(value);
+  return parsed ? format(parsed, "dd/MM/yyyy") : "";
+}
+
+function getMinPlantDate() {
+  return addMonths(startOfDay(new Date()), 1);
+}
+
+function validateCropSeasonFormDates({
+  plantDate,
+  expectedHarvestDate,
+  requirePlantDate,
+  requireExpectedHarvestDate,
+}: {
+  plantDate?: string;
+  expectedHarvestDate?: string;
+  requirePlantDate: boolean;
+  requireExpectedHarvestDate: boolean;
+}) {
+  const errors: {
+    plantDate?: string;
+    expectedHarvestDate?: string;
+  } = {};
+
+  const minPlantDate = getMinPlantDate();
+
+  if (requirePlantDate && !plantDate) {
+    errors.plantDate = "Vui lòng chọn ngày trồng.";
+  }
+
+  if (requireExpectedHarvestDate && !expectedHarvestDate) {
+    errors.expectedHarvestDate = "Vui lòng chọn ngày thu hoạch dự kiến.";
+  }
+
+  const parsedPlantDate = parseBackendDate(plantDate);
+  const parsedExpectedHarvestDate = parseBackendDate(expectedHarvestDate);
+
+  if (plantDate && !parsedPlantDate) {
+    errors.plantDate = "Ngày trồng không hợp lệ.";
+  }
+
+  if (expectedHarvestDate && !parsedExpectedHarvestDate) {
+    errors.expectedHarvestDate = "Ngày thu hoạch dự kiến không hợp lệ.";
+  }
+
+  if (
+    parsedPlantDate &&
+    isBefore(startOfDay(parsedPlantDate), startOfDay(minPlantDate))
+  ) {
+    errors.plantDate = `Ngày trồng phải từ ${format(minPlantDate, "dd/MM/yyyy")} trở đi.`;
+  }
+
+  if (parsedPlantDate && parsedExpectedHarvestDate) {
+    const minExpectedHarvestDate = addMonths(startOfDay(parsedPlantDate), 1);
+    if (
+      isBefore(
+        startOfDay(parsedExpectedHarvestDate),
+        startOfDay(minExpectedHarvestDate),
+      )
+    ) {
+      errors.expectedHarvestDate = `Ngày thu hoạch dự kiến phải từ ${format(minExpectedHarvestDate, "dd/MM/yyyy")} trở đi.`;
+    }
+  }
+
+  return errors;
 }
 
 const canEdit = (status: string) => status === ProductionStatusName.Planning;
@@ -123,10 +222,81 @@ function Field({
   );
 }
 
-// ── Create Dialog — #46 ───────────────────────────────────────────────────
+function DatePickerField({
+  label,
+  value,
+  error,
+  placeholder,
+  onChange,
+  minDate,
+  helperText,
+}: {
+  label: string;
+  value: string;
+  error?: string;
+  placeholder?: string;
+  onChange: (value: string) => void;
+  minDate?: Date;
+  helperText?: string;
+}) {
+  const normalizedMinDate = minDate ? startOfDay(minDate) : undefined;
 
-function CreateCropSeasonDialog({ zoneId }: { zoneId: string }) {
-  const [open, setOpen] = useState(false);
+  return (
+    <Field
+      label={label}
+      error={error}
+    >
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full justify-between text-left font-normal"
+          >
+            {value ? (
+              formatPickerDate(value)
+            ) : (
+              <span className="text-muted-foreground">
+                {placeholder ?? "Chọn ngày"}
+              </span>
+            )}
+            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-auto p-0"
+          align="start"
+        >
+          <Calendar
+            mode="single"
+            selected={parseBackendDate(value)}
+            onSelect={(date) => onChange(date ? format(date, "yyyy-MM-dd") : "")}
+            disabled={(date) =>
+              normalizedMinDate
+                ? isBefore(startOfDay(date), normalizedMinDate)
+                : false
+            }
+            initialFocus
+          />
+        </PopoverContent>
+      </Popover>
+      {helperText && <p className="text-xs text-muted-foreground">{helperText}</p>}
+    </Field>
+  );
+}
+
+// ── Create Screen — #46 ───────────────────────────────────────────────────
+
+function CreateCropSeasonScreen({
+  zoneId,
+  zoneName,
+  onBack,
+}: {
+  zoneId: string;
+  zoneName?: string;
+  onBack: () => void;
+}) {
+  const [show, setShow] = useState(false);
   const { mutateAsync, isPending } = useCreateCropSeason();
   const form = useForm<CreateCropSeasonBodyType>({
     resolver: zodResolver(CreateCropSeasonBodySchema),
@@ -137,123 +307,200 @@ function CreateCropSeasonDialog({ zoneId }: { zoneId: string }) {
       expectedHarvestDate: "",
     },
   });
+  const plantDateValue = form.watch("plantDate");
+  const minPlantDate = getMinPlantDate();
+  const parsedPlantDate = parseBackendDate(plantDateValue);
+  const minExpectedHarvestDate = parsedPlantDate
+    ? addMonths(startOfDay(parsedPlantDate), 1)
+    : undefined;
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setShow(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  const handleBack = () => {
+    setShow(false);
+    setTimeout(onBack, 300);
+  };
 
   const onSubmit = async (data: CreateCropSeasonBodyType) => {
+    form.clearErrors(["plantDate", "expectedHarvestDate"]);
+    const dateErrors = validateCropSeasonFormDates({
+      plantDate: data.plantDate,
+      expectedHarvestDate: data.expectedHarvestDate,
+      requirePlantDate: true,
+      requireExpectedHarvestDate: true,
+    });
+
+    if (dateErrors.plantDate) {
+      form.setError("plantDate", {
+        type: "manual",
+        message: dateErrors.plantDate,
+      });
+    }
+
+    if (dateErrors.expectedHarvestDate) {
+      form.setError("expectedHarvestDate", {
+        type: "manual",
+        message: dateErrors.expectedHarvestDate,
+      });
+    }
+
+    if (dateErrors.plantDate || dateErrors.expectedHarvestDate) {
+      return;
+    }
+
     await mutateAsync(data);
-    setOpen(false);
-    form.reset({ zoneId });
+    handleBack();
   };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={setOpen}
+    <div
+      className={`space-y-6 transition-all duration-300 ease-out ${
+        show ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+      }`}
     >
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <Plus className="h-4 w-4 mr-1" />
-          Tạo mùa vụ
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Tạo mùa vụ mới</DialogTitle>
-        </DialogHeader>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-4 pt-2"
+      <div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleBack}
+          disabled={isPending}
+          className="mb-3 -ml-2 gap-1 text-muted-foreground hover:text-foreground transition-colors"
         >
-          <Field
-            label="Tên cây trồng *"
-            error={form.formState.errors.cropName?.message}
+          <ArrowLeft className="h-4 w-4" />
+          Danh sách mùa vụ
+        </Button>
+        <Badge className="mb-2">Cổng quản lý</Badge>
+        <h1 className="text-2xl font-bold">Tạo mùa vụ mới</h1>
+        <p className="text-muted-foreground">
+          Tạo kế hoạch mùa vụ mới cho khu vực hiện tại
+          {zoneName ? (
+            <>
+              : <span className="font-medium text-foreground">{zoneName}</span>
+            </>
+          ) : null}
+          .
+        </p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Thông tin mùa vụ</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-5"
           >
-            <Input
-              {...form.register("cropName")}
-              placeholder="Ớt đỏ, cà chua..."
-              autoComplete="off"
-            />
-          </Field>
-
-          <Field label="Giống / Loại">
-            <Input
-              {...form.register("variety")}
-              placeholder="(tuỳ chọn)"
-              autoComplete="off"
-            />
-          </Field>
-
-          <div className="grid grid-cols-2 gap-3">
             <Field
-              label="Ngày trồng * (YYYY-MM-DD)"
-              error={form.formState.errors.plantDate?.message}
+              label="Tên cây trồng *"
+              error={form.formState.errors.cropName?.message}
             >
               <Input
-                {...form.register("plantDate")}
-                placeholder="2026-07-01"
+                {...form.register("cropName")}
+                placeholder="Ớt đỏ, cà chua..."
                 autoComplete="off"
               />
             </Field>
-            <Field
-              label="Ngày thu hoạch dự kiến *"
-              error={form.formState.errors.expectedHarvestDate?.message}
-            >
+
+            <Field label="Giống / Loại">
               <Input
-                {...form.register("expectedHarvestDate")}
-                placeholder="2026-10-01"
+                {...form.register("variety")}
+                placeholder="(tuỳ chọn)"
                 autoComplete="off"
               />
             </Field>
-          </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Diện tích (m²)">
-              <Input
-                type="number"
-                {...form.register("totalAreaSqm", { valueAsNumber: true })}
-                autoComplete="off"
+            <div className="grid grid-cols-2 gap-3">
+              <Controller
+                name="plantDate"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <DatePickerField
+                    label="Ngày trồng *"
+                    value={field.value ?? ""}
+                    error={fieldState.error?.message}
+                    placeholder="Chọn ngày trồng"
+                    onChange={field.onChange}
+                    minDate={minPlantDate}
+                    helperText={`Từ ngày ${format(minPlantDate, "dd/MM/yyyy")}`}
+                  />
+                )}
+              />
+              <Controller
+                name="expectedHarvestDate"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <DatePickerField
+                    label="Ngày thu hoạch dự kiến *"
+                    value={field.value ?? ""}
+                    error={fieldState.error?.message}
+                    placeholder="Chọn ngày thu hoạch"
+                    onChange={field.onChange}
+                    minDate={minExpectedHarvestDate}
+                    helperText={
+                      minExpectedHarvestDate
+                        ? `Từ ngày ${format(minExpectedHarvestDate, "dd/MM/yyyy")}`
+                        : "Chọn ngày trồng trước"
+                    }
+                  />
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Diện tích (m²)">
+                <Input
+                  type="number"
+                  {...form.register("totalAreaSqm", { valueAsNumber: true })}
+                  autoComplete="off"
+                />
+              </Field>
+              <Field label="Số lượng cây">
+                <Input
+                  type="number"
+                  {...form.register("plantCount", { valueAsNumber: true })}
+                  autoComplete="off"
+                />
+              </Field>
+            </div>
+
+            <Field label="Ghi chú">
+              <Textarea
+                {...form.register("notes")}
+                rows={2}
+                className="resize-none"
               />
             </Field>
-            <Field label="Số lượng cây">
-              <Input
-                type="number"
-                {...form.register("plantCount", { valueAsNumber: true })}
-                autoComplete="off"
-              />
-            </Field>
-          </div>
 
-          <Field label="Ghi chú">
-            <Textarea
-              {...form.register("notes")}
-              rows={2}
-              className="resize-none"
-            />
-          </Field>
+            <p className="text-xs text-muted-foreground">
+              * Ngày trồng phải sau hôm nay ít nhất 1 tháng. Ngày thu hoạch phải
+              sau ngày trồng ít nhất 1 tháng.
+            </p>
 
-          <p className="text-xs text-muted-foreground">
-            * Ngày trồng phải sau hôm nay ít nhất 1 tháng. Ngày thu hoạch phải
-            sau ngày trồng ít nhất 1 tháng.
-          </p>
-
-          <div className="flex justify-end gap-2 pt-1">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-            >
-              Huỷ
-            </Button>
-            <Button
-              type="submit"
-              disabled={isPending}
-            >
-              {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Tạo mùa vụ
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+            <div className="flex justify-end gap-2 pt-1">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleBack}
+                disabled={isPending}
+              >
+                Huỷ
+              </Button>
+              <Button
+                type="submit"
+                disabled={isPending}
+              >
+                {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Tạo mùa vụ
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
@@ -274,10 +521,42 @@ function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
       notes: season.notes ?? "",
     },
   });
+  const plantDateValue = form.watch("plantDate");
+  const minPlantDate = getMinPlantDate();
+  const parsedPlantDate = parseBackendDate(plantDateValue);
+  const minExpectedHarvestDate = parsedPlantDate
+    ? addMonths(startOfDay(parsedPlantDate), 1)
+    : undefined;
 
   if (!canEdit(season.status)) return null;
 
   const onSubmit = async (data: UpdateCropSeasonBodyType) => {
+    form.clearErrors(["plantDate", "expectedHarvestDate"]);
+    const dateErrors = validateCropSeasonFormDates({
+      plantDate: data.plantDate,
+      expectedHarvestDate: data.expectedHarvestDate,
+      requirePlantDate: false,
+      requireExpectedHarvestDate: false,
+    });
+
+    if (dateErrors.plantDate) {
+      form.setError("plantDate", {
+        type: "manual",
+        message: dateErrors.plantDate,
+      });
+    }
+
+    if (dateErrors.expectedHarvestDate) {
+      form.setError("expectedHarvestDate", {
+        type: "manual",
+        message: dateErrors.expectedHarvestDate,
+      });
+    }
+
+    if (dateErrors.plantDate || dateErrors.expectedHarvestDate) {
+      return;
+    }
+
     await mutateAsync(data);
     setOpen(false);
   };
@@ -320,18 +599,40 @@ function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
             />
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Ngày trồng (YYYY-MM-DD)">
-              <Input
-                {...form.register("plantDate")}
-                autoComplete="off"
-              />
-            </Field>
-            <Field label="Ngày thu hoạch dự kiến">
-              <Input
-                {...form.register("expectedHarvestDate")}
-                autoComplete="off"
-              />
-            </Field>
+            <Controller
+              name="plantDate"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <DatePickerField
+                  label="Ngày trồng"
+                  value={field.value ?? ""}
+                  error={fieldState.error?.message}
+                  placeholder="Chọn ngày trồng"
+                  onChange={field.onChange}
+                  minDate={minPlantDate}
+                  helperText={`Từ ngày ${format(minPlantDate, "dd/MM/yyyy")}`}
+                />
+              )}
+            />
+            <Controller
+              name="expectedHarvestDate"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <DatePickerField
+                  label="Ngày thu hoạch dự kiến"
+                  value={field.value ?? ""}
+                  error={fieldState.error?.message}
+                  placeholder="Chọn ngày thu hoạch"
+                  onChange={field.onChange}
+                  minDate={minExpectedHarvestDate}
+                  helperText={
+                    minExpectedHarvestDate
+                      ? `Từ ngày ${format(minExpectedHarvestDate, "dd/MM/yyyy")}`
+                      : "Chọn ngày trồng trước"
+                  }
+                />
+              )}
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Diện tích (m²)">
@@ -443,7 +744,7 @@ function SendRequestDialog({ season }: { season: CropSeasonType }) {
             </div>
           )}
           <p className="text-sm text-muted-foreground">
-            Gửi mùa vụ <strong>{season.cropName}</strong> lên Owner để phê
+            Gửi mùa vụ <strong>{season.cropName}</strong> lên chủ vườn để phê
             duyệt. Sau khi gửi, mùa vụ <strong>không thể chỉnh sửa thêm</strong>
             .
           </p>
@@ -451,7 +752,7 @@ function SendRequestDialog({ season }: { season: CropSeasonType }) {
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-4"
           >
-            <Field label="Ghi chú cho Owner (tuỳ chọn)">
+            <Field label="Ghi chú cho chủ vườn (tuỳ chọn)">
               <Textarea
                 {...form.register("description")}
                 rows={3}
@@ -560,7 +861,7 @@ function CropSeasonDetailContent({ season }: { season: CropSeasonType }) {
                   <TableHead>Ngày gửi</TableHead>
                   <TableHead>Trạng thái</TableHead>
                   <TableHead>Ngày phản hồi</TableHead>
-                  <TableHead>Ghi chú Owner</TableHead>
+                  <TableHead>Ghi chú chủ vườn</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -580,7 +881,7 @@ function CropSeasonDetailContent({ season }: { season: CropSeasonType }) {
                       <TableCell className="text-sm">
                         {formatDate(r.repliedAt)}
                       </TableCell>
-                      <TableCell className="text-sm max-w-[200px] truncate">
+                      <TableCell className="text-sm max-w-50 truncate">
                         {r.description ?? "—"}
                       </TableCell>
                     </TableRow>
@@ -595,14 +896,14 @@ function CropSeasonDetailContent({ season }: { season: CropSeasonType }) {
   );
 }
 
-function CropSeasonDetailDialog({ season }: { season: CropSeasonType }) {
+function CropSeasonDetailSheet({ season }: { season: CropSeasonType }) {
   const [open, setOpen] = useState(false);
   return (
-    <Dialog
+    <Sheet
       open={open}
       onOpenChange={setOpen}
     >
-      <DialogTrigger asChild>
+      <SheetTrigger asChild>
         <Button
           size="sm"
           variant="ghost"
@@ -610,17 +911,19 @@ function CropSeasonDetailDialog({ season }: { season: CropSeasonType }) {
           <Eye className="h-3 w-3 mr-1" />
           Chi tiết
         </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
+      </SheetTrigger>
+      <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>
             {season.cropName}
             {season.variety ? ` — ${season.variety}` : ""}
-          </DialogTitle>
-        </DialogHeader>
-        {open && <CropSeasonDetailContent season={season} />}
-      </DialogContent>
-    </Dialog>
+          </SheetTitle>
+        </SheetHeader>
+        <div className="px-4 pb-4">
+          {open && <CropSeasonDetailContent season={season} />}
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -629,10 +932,42 @@ function CropSeasonDetailDialog({ season }: { season: CropSeasonType }) {
 export default function ManagerCropSeasonsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [showCreate, setShowCreate] = useState(false);
   const page = Number(searchParams.get("page") ?? "1");
   const statusFilter = (searchParams.get("status") ?? "") as any;
-  const [zoneId, setZoneId] = useState("");
-  const [zoneInput, setZoneInput] = useState("");
+  const zoneId = searchParams.get("zoneId")?.trim() ?? "";
+
+  const assignedZonesQuery = useManagerListAssignedZones({
+    page: 1,
+    limit: 100,
+  });
+  const assignedZones = assignedZonesQuery.data?.data.data ?? [];
+  const hasAssignedZones = assignedZones.length > 0;
+  const selectedZoneName = assignedZones.find((z) => z.id === zoneId)?.name;
+
+  useEffect(() => {
+    if (zoneId || !hasAssignedZones) return;
+    const next = new URLSearchParams(searchParams);
+    next.set("zoneId", assignedZones[0].id);
+    next.delete("page");
+    setSearchParams(next, { replace: true });
+  }, [assignedZones, hasAssignedZones, searchParams, setSearchParams, zoneId]);
+
+  useEffect(() => {
+    if (!zoneId || assignedZonesQuery.isLoading) return;
+    if (assignedZones.some((zone) => zone.id === zoneId)) return;
+
+    const next = new URLSearchParams(searchParams);
+    next.delete("zoneId");
+    next.delete("page");
+    setSearchParams(next, { replace: true });
+  }, [
+    assignedZones,
+    assignedZonesQuery.isLoading,
+    searchParams,
+    setSearchParams,
+    zoneId,
+  ]);
 
   const { data, isLoading } = useManagerListCropSeasons(zoneId, {
     page,
@@ -644,44 +979,108 @@ export default function ManagerCropSeasonsPage() {
   const totalPages = data?.data.meta.totalPages ?? 0;
   const totalItems = data?.data.meta.totalItems ?? 0;
 
+  useEffect(() => {
+    if (!zoneId && showCreate) {
+      setShowCreate(false);
+    }
+  }, [showCreate, zoneId]);
+
+  if (showCreate && zoneId) {
+    return (
+      <CreateCropSeasonScreen
+        zoneId={zoneId}
+        zoneName={selectedZoneName}
+        onBack={() => setShowCreate(false)}
+      />
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-300">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <Badge className="mb-2">Manager Portal</Badge>
+          <Badge className="mb-2">Cổng quản lý</Badge>
           <h1 className="text-2xl font-bold">Quản lý mùa vụ</h1>
           <p className="text-muted-foreground">
-            Lên kế hoạch, theo dõi và gửi phê duyệt mùa vụ cho Owner.
+            Lên kế hoạch, theo dõi và gửi phê duyệt mùa vụ cho chủ vườn.
           </p>
+          {selectedZoneName && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Khu vực hiện tại:{" "}
+              <span className="font-medium">{selectedZoneName}</span>
+            </p>
+          )}
         </div>
-        {zoneId && <CreateCropSeasonDialog zoneId={zoneId} />}
+        {zoneId && (
+          <Button
+            size="sm"
+            onClick={() => setShowCreate(true)}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Tạo mùa vụ
+          </Button>
+        )}
       </div>
 
       <Card>
         <CardContent className="pt-4">
           <div className="flex gap-2 items-end">
             <Field
-              label="Zone ID (lấy từ npm run prisma:seed output)"
+              label="Khu vực được phân công"
               className="flex-1"
             >
-              <Input
-                value={zoneInput}
-                onChange={(e) => setZoneInput(e.target.value)}
-                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                className="font-mono text-sm"
-                autoComplete="off"
-              />
+              {assignedZonesQuery.isLoading ? (
+                <Skeleton className="h-10 w-full" />
+              ) : !hasAssignedZones ? (
+                <div className="h-10 rounded-md border px-3 text-sm text-muted-foreground flex items-center">
+                  Bạn chưa được phân công khu vực nào.
+                </div>
+              ) : (
+                <Select
+                  value={zoneId || "all"}
+                  onValueChange={(value) => {
+                    const next = new URLSearchParams(searchParams);
+                    if (value === "all") {
+                      next.delete("zoneId");
+                    } else {
+                      next.set("zoneId", value);
+                    }
+                    next.delete("page");
+                    setSearchParams(next);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn khu vực" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Chọn khu vực</SelectItem>
+                    {assignedZones.map((zone) => (
+                      <SelectItem
+                        key={zone.id}
+                        value={zone.id}
+                      >
+                        {zone.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </Field>
-            <Button
-              variant="outline"
-              className="mb-0.5"
-              onClick={() => {
-                setZoneId(zoneInput.trim());
-                setSearchParams(new URLSearchParams());
-              }}
-            >
-              Tải danh sách
-            </Button>
+            {zoneId && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mb-0.5"
+                onClick={() => {
+                  const next = new URLSearchParams(searchParams);
+                  next.delete("zoneId");
+                  next.delete("page");
+                  setSearchParams(next);
+                }}
+              >
+                Xoá
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -701,7 +1100,7 @@ export default function ManagerCropSeasonsPage() {
               setSearchParams(p);
             }}
           >
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-50">
               <SelectValue placeholder="Lọc trạng thái" />
             </SelectTrigger>
             <SelectContent>
@@ -775,7 +1174,9 @@ export default function ManagerCropSeasonsPage() {
                       className="text-center text-muted-foreground py-12"
                     >
                       {!zoneId
-                        ? "Nhập Zone ID ở trên để xem danh sách mùa vụ"
+                        ? hasAssignedZones
+                          ? "Chọn khu vực bên trên để xem danh sách mùa vụ"
+                          : "Bạn chưa được phân công khu vực nào."
                         : 'Chưa có mùa vụ nào. Bấm "Tạo mùa vụ" để bắt đầu!'}
                     </TableCell>
                   </TableRow>
@@ -796,18 +1197,24 @@ export default function ManagerCropSeasonsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1 justify-end flex-wrap">
-                        <CropSeasonDetailDialog season={s} />
+                        <CropSeasonDetailSheet season={s} />
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() =>
-                            navigate(
-                              `/dashboard/manager/crop-seasons/${s.id}/milestones`,
-                            )
-                          }
+                          onClick={() => {
+                            const params = new URLSearchParams();
+                            if (zoneId) {
+                              params.set("zoneId", zoneId);
+                            }
+                            const search = params.toString();
+                            navigate({
+                              pathname: `/dashboard/manager/crop-seasons/${s.id}/milestones`,
+                              search: search ? `?${search}` : "",
+                            });
+                          }}
                         >
                           <Milestone className="h-3 w-3 mr-1" />
-                          Milestones
+                          Mốc công việc
                         </Button>
                         <UpdateCropSeasonDialog season={s} />
                         <SendRequestDialog season={s} />

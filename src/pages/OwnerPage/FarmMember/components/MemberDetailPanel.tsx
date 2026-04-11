@@ -109,7 +109,7 @@ export default function MemberDetailPanel({ member, onBack }: Props) {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <Badge className="mb-1">Employee Detail</Badge>
+            <Badge className="mb-1">Chi tiết nhân sự</Badge>
             <h1 className="text-2xl font-bold">{detail.user.fullName}</h1>
           </div>
         </div>
@@ -125,7 +125,7 @@ export default function MemberDetailPanel({ member, onBack }: Props) {
             variant={detail.user.isActive ? "default" : "destructive"}
             className="px-3 py-1"
           >
-            {detail.user.isActive ? "Active" : "Inactive"}
+            {detail.user.isActive ? "Hoạt động" : "Ngưng hoạt động"}
           </Badge>
         </div>
       </div>
@@ -138,7 +138,7 @@ export default function MemberDetailPanel({ member, onBack }: Props) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               {RoleIcon}
-              Employee Information
+              Thông tin nhân sự
             </CardTitle>
           </CardHeader>
           <Separator />
@@ -151,12 +151,12 @@ export default function MemberDetailPanel({ member, onBack }: Props) {
               />
               <InfoCell
                 icon={<Phone className="h-3 w-3" />}
-                label="Phone"
+                label="Số điện thoại"
                 value={detail.user.phone ?? "—"}
               />
               <InfoCell
                 icon={<Shield className="h-3 w-3" />}
-                label="Role"
+                label="Vai trò"
                 value={
                   <Badge
                     variant="secondary"
@@ -168,7 +168,7 @@ export default function MemberDetailPanel({ member, onBack }: Props) {
               />
               <InfoCell
                 icon={<Building2 className="h-3 w-3" />}
-                label="Farm"
+                label="Nông trại"
                 value={
                   <span>
                     {detail.farm.name}{" "}
@@ -180,12 +180,12 @@ export default function MemberDetailPanel({ member, onBack }: Props) {
               />
               <InfoCell
                 icon={<Calendar className="h-3 w-3" />}
-                label="Assigned At"
+                label="Ngày gán"
                 value={formatDate(detail.assignedAt)}
               />
               <InfoCell
                 icon={<Calendar className="h-3 w-3" />}
-                label="Account Created"
+                label="Ngày tạo tài khoản"
                 value={formatDate(detail.user.createdAt)}
               />
             </div>

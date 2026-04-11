@@ -21,86 +21,86 @@ type OwnerView = {
 
 const ownerViews: Record<string, OwnerView> = {
   dashboard: {
-    title: "Owner Dashboard",
+    title: "Bảng điều khiển chủ trang trại",
     description: "Tổng quan nông trại, sản lượng và trạng thái ticket tư vấn.",
     highlights: [
-      "Farm Health",
-      "Zone Coverage",
-      "Open Tickets",
-      "Season Yield",
+      "Sức khỏe trang trại",
+      "Độ phủ khu vực",
+      "Phiếu đang mở",
+      "Sản lượng mùa vụ",
     ],
   },
   subscription: {
-    title: "Subscription & Billing",
+    title: "Gói dịch vụ và thanh toán",
     description: "Quản lý gói dịch vụ, gia hạn và mua thêm doctor tickets.",
     highlights: [
-      "Current Plan",
-      "Remaining Tickets",
-      "Renewal Date",
-      "Payment Status",
+      "Gói hiện tại",
+      "Phiếu còn lại",
+      "Ngày gia hạn",
+      "Trạng thái thanh toán",
     ],
   },
   farms: {
-    title: "Farm Management",
+    title: "Quản lý trang trại",
     description:
       "Quản lý thông tin nông trại: diện tích, vị trí, thông số vận hành.",
     highlights: [
-      "Total Farms",
-      "Active Farms",
-      "Sensor Coverage",
-      "Last Update",
+      "Tổng số trang trại",
+      "Trang trại hoạt động",
+      "Độ phủ cảm biến",
+      "Cập nhật gần nhất",
     ],
   },
   zones: {
-    title: "Zone Management",
-    description: "Tạo và quản lý zone trong từng farm.",
+    title: "Quản lý khu vực",
+    description: "Tạo và quản lý khu vực trong từng trang trại.",
     highlights: [
-      "Total Zones",
-      "Unassigned Zones",
-      "Active Seasons",
-      "Sensor Alerts",
+      "Tổng số khu vực",
+      "Khu vực chưa phân công",
+      "Mùa vụ đang hoạt động",
+      "Cảnh báo cảm biến",
     ],
   },
   managers: {
-    title: "Manager Management",
-    description: "Quản lý tài khoản Manager và phân quyền theo vùng.",
+    title: "Quản lý quản lý viên",
+    description: "Quản lý tài khoản quản lý viên và phân quyền theo vùng.",
     highlights: [
-      "Total Managers",
-      "Assigned Managers",
-      "Pending Invitations",
-      "Workload Balance",
+      "Tổng số quản lý viên",
+      "Quản lý viên đã phân công",
+      "Lời mời chờ xử lý",
+      "Cân bằng khối lượng việc",
     ],
   },
   doctor: {
-    title: "Assigned Doctor",
-    description: "Theo dõi Doctor phụ trách và trạng thái hỗ trợ hiện tại.",
+    title: "Bác sĩ phụ trách",
+    description: "Theo dõi bác sĩ phụ trách và trạng thái hỗ trợ hiện tại.",
     highlights: [
-      "Assigned Doctors",
-      "Open Consultations",
-      "Avg Response",
-      "Closed Tickets",
+      "Bác sĩ được phân công",
+      "Ca tư vấn đang mở",
+      "Phản hồi trung bình",
+      "Phiếu đã đóng",
     ],
   },
   analytics: {
-    title: "Production Analytics",
+    title: "Phân tích sản xuất",
     description: "Phân tích sản lượng theo farm, zone và season.",
-    highlights: ["Yield by Season", "Best Zone", "Trend", "Forecast"],
+    highlights: ["Sản lượng theo mùa vụ", "Khu vực tốt nhất", "Xu hướng", "Dự báo"],
   },
   "ai-insights": {
-    title: "AI Insights",
+    title: "Gợi ý AI",
     description:
       "Insight AI để giải thích chênh lệch năng suất và đề xuất tối ưu.",
     highlights: [
-      "Top Insight",
-      "Risk Signals",
-      "Optimization Tips",
-      "Anomaly Notes",
+      "Gợi ý nổi bật",
+      "Tín hiệu rủi ro",
+      "Mẹo tối ưu",
+      "Ghi chú bất thường",
     ],
   },
   tickets: {
-    title: "Ticket Monitoring",
+    title: "Theo dõi phiếu hỗ trợ",
     description: "Theo dõi vòng đời ticket bệnh từ lúc tạo tới khi đóng.",
-    highlights: ["New Tickets", "In Progress", "Resolved", "Escalated"],
+    highlights: ["Phiếu mới", "Đang xử lý", "Đã giải quyết", "Đã leo thang"],
   },
 };
 
@@ -136,13 +136,13 @@ function OwnerPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <Badge className="mb-2">Owner Portal</Badge>
+          <Badge className="mb-2">Cổng chủ trang trại</Badge>
           <h1 className="text-2xl font-bold">{view.title}</h1>
           <p className="text-muted-foreground">{view.description}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">Export Report</Button>
-          <Button>Create</Button>
+          <Button variant="outline">Xuất báo cáo</Button>
+          <Button>Tạo mới</Button>
         </div>
       </div>
 
@@ -155,7 +155,7 @@ function OwnerPage() {
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">
-                UI placeholder for owner metrics.
+                Khối hiển thị tạm cho chỉ số của chủ trang trại.
               </p>
             </CardContent>
           </Card>
@@ -164,7 +164,7 @@ function OwnerPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Work Area</CardTitle>
+          <CardTitle>Khu vực làm việc</CardTitle>
           <CardDescription>
             Màn hình `{section}` đã sẵn route và khung bố cục để nối dữ liệu
             thật.

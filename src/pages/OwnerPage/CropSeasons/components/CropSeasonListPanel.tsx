@@ -1,4 +1,11 @@
 import { Badge } from "@/components/ui/badge";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -127,6 +134,23 @@ export default function CropSeasonListPanel({
       }`}
     >
       <div>
+        <Breadcrumb className="mb-2">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <span className="text-muted-foreground">Khu vực</span>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <span className="text-muted-foreground font-medium">
+                {zoneName}
+              </span>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Mùa vụ</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
         <Button
           variant="ghost"
           size="sm"
@@ -134,14 +158,14 @@ export default function CropSeasonListPanel({
           className="mb-3 -ml-2 gap-1 text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Danh sách zone
+          Danh sách khu vực
         </Button>
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <Badge className="mb-2">Owner Portal</Badge>
+            <Badge className="mb-2">Cổng chủ vườn</Badge>
             <h1 className="text-2xl font-bold">Mùa vụ — {zoneName}</h1>
             <p className="text-muted-foreground">
-              Tất cả mùa vụ được tạo trong zone này.
+              Tất cả mùa vụ được tạo trong khu vực này.
             </p>
           </div>
         </div>

@@ -26,7 +26,7 @@ const TAB_META: Record<
 > = {
   device: {
     title: "Thiết bị IoT",
-    description: "Board, WiFi, LoRa modules",
+    description: "Mô-đun bo mạch, WiFi, LoRa",
     icon: Cpu,
   },
   sensor: {
@@ -84,9 +84,9 @@ function AdminIotTemplatesPage() {
         <div className="pointer-events-none absolute inset-0 bg-muted/20" />
         <div className="relative flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <Badge className="mb-2">Admin Portal</Badge>
+            <Badge className="mb-2">Cổng quản trị</Badge>
             <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-              IoT Template Studio
+              Trung tâm mẫu IoT
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
               Quản lý vòng đời template thiết bị và cảm biến, chuẩn hóa cấu hình

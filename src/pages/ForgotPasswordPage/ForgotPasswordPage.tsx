@@ -43,10 +43,10 @@ function ForgotPasswordPage() {
 			<Card className="w-full max-w-md">
 				<CardHeader className="space-y-1">
 					<CardTitle className="text-2xl font-bold text-center">
-						FarmOS forgot passsword
+						Quên mật khẩu FarmOS
 					</CardTitle>
 					<CardDescription className="text-center">
-						Enter your email to get a new password
+						Nhập email để nhận liên kết đặt lại mật khẩu
 					</CardDescription>
 				</CardHeader>
 				<form onSubmit={form.handleSubmit(handleSubmit)}>
@@ -78,28 +78,28 @@ function ForgotPasswordPage() {
 							{isPending ? (
 								<>
 									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Sending...
+									Đang gửi...
 								</>
 							) : (
-								"Send Reset Link"
+								"Gửi liên kết đặt lại"
 							)}
 						</Button>
 						<div className="text-sm text-center text-muted-foreground">
-							Don't have an account?{" "}
+							Chưa có tài khoản?{" "}
 							<Link
 								to="/register"
 								className="text-primary underline-offset-4 hover:underline"
 							>
-								Register here
+								Đăng ký tại đây
 							</Link>
 						</div>
 						<div className="text-sm text-center text-muted-foreground">
-							Already have an account?{" "}
+							Đã có tài khoản?{" "}
 							<Link
 								to="/login"
 								className="text-sm text-center text-primary hover:underline"
 							>
-								Login here
+								Đăng nhập tại đây
 							</Link>
 						</div>
 					</CardFooter>

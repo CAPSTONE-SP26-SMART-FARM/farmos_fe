@@ -42,6 +42,11 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
+const ROLE_OPTIONS = [
+	{ value: "doctor", label: "Bác sĩ" },
+	{ value: "owner", label: "Chủ vườn" },
+];
+
 function RegisterPage() {
 	const form = useForm<RegisterBodyType>({
 		resolver: zodResolver(RegisterBodySchema),
@@ -71,7 +76,7 @@ function RegisterPage() {
 			}
 			// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 			isApiErrorResponse(error) &&
-				toast.error(error.response?.data.message || "An error occurred");
+				toast.error(error.response?.data.message || "Có lỗi xảy ra");
 		}
 	};
 
@@ -92,10 +97,10 @@ function RegisterPage() {
 			<Card className="w-full max-w-xl">
 				<CardHeader className="space-y-1">
 					<CardTitle className="text-2xl font-bold text-center">
-						FarmOS register
+						Đăng ký FarmOS
 					</CardTitle>
 					<CardDescription className="text-center">
-						Create an account to get started.
+						Tạo tài khoản để bắt đầu.
 					</CardDescription>
 				</CardHeader>
 				<form onSubmit={form.handleSubmit(handleSubmit)}>
@@ -115,7 +120,7 @@ function RegisterPage() {
 													{...field}
 													id="form-rhf-demo-title"
 													aria-invalid={fieldState.invalid}
-													placeholder="example@gmail.com"
+													placeholder="vd@gmail.com"
 													autoComplete="off"
 												/>
 												{fieldState.invalid && (
@@ -130,7 +135,7 @@ function RegisterPage() {
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
 												<FieldLabel htmlFor="form-rhf-demo-title">
-													Fullname
+													Họ và tên
 												</FieldLabel>
 												<Input
 													{...field}
@@ -153,7 +158,7 @@ function RegisterPage() {
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
 												<FieldLabel htmlFor="form-rhf-demo-title">
-													Phone
+													Số điện thoại
 												</FieldLabel>
 												<Input
 													{...field}
@@ -176,7 +181,7 @@ function RegisterPage() {
 											render={({ field, fieldState }) => (
 												<Field data-invalid={fieldState.invalid}>
 													<FieldLabel htmlFor="form-rhf-demo-description">
-														Code
+														Mã OTP
 													</FieldLabel>
 													<Input {...field} id="form-rhf-demo-description" />
 
@@ -193,7 +198,7 @@ function RegisterPage() {
 											onClick={handleSendCode}
 											disabled={isCodePending}
 										>
-											Send
+											Gửi mã
 										</Button>
 									</div>
 								</div>
@@ -204,7 +209,7 @@ function RegisterPage() {
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
 												<FieldLabel htmlFor="form-rhf-demo-description">
-													Password
+													Mật khẩu
 												</FieldLabel>
 												<Input
 													{...field}
@@ -224,7 +229,7 @@ function RegisterPage() {
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
 												<FieldLabel htmlFor="form-rhf-demo-description">
-													Confirm Password
+													Xác nhận mật khẩu
 												</FieldLabel>
 												<Input
 													{...field}
@@ -248,7 +253,7 @@ function RegisterPage() {
 												className="capitalize"
 											>
 												<FieldLabel htmlFor="form-rhf-select-language">
-													Role
+													Vai trò
 												</FieldLabel>
 												<Select
 													name={field.name}
@@ -261,7 +266,7 @@ function RegisterPage() {
 														className="capitalize"
 													>
 														<SelectValue
-															placeholder="Select"
+															placeholder="Chọn vai trò"
 															className="capitalize"
 														/>
 													</SelectTrigger>
@@ -269,13 +274,13 @@ function RegisterPage() {
 														position="item-aligned"
 														className="capitalize"
 													>
-														{["doctor", "owner"].map((role) => (
+														{ROLE_OPTIONS.map((role) => (
 															<SelectItem
-																key={role}
-																value={role}
+																key={role.value}
+																value={role.value}
 																className="capitalize"
 															>
-																{role}
+																{role.label}
 															</SelectItem>
 														))}
 													</SelectContent>
@@ -294,26 +299,26 @@ function RegisterPage() {
 								{isPending ? (
 									<>
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-										Register...
+										Đang đăng ký...
 									</>
 								) : (
-									"Register"
+									"Đăng ký"
 								)}
 							</Button>
 							<div className="text-sm text-center text-muted-foreground">
-								Already have an account?{" "}
+								Đã có tài khoản?{" "}
 								<Link
 									to="/login"
 									className="text-primary underline-offset-4 hover:underline"
 								>
-									Login
+									Đăng nhập
 								</Link>
 							</div>
 							<Link
 								to="/forgot-password"
 								className="text-sm text-center text-muted-foreground hover:underline"
 							>
-								Forgot your password?
+								Quên mật khẩu?
 							</Link>
 						</CardFooter>
 					</CardContent>

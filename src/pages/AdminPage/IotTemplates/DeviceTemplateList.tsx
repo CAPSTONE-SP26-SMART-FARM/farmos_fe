@@ -48,15 +48,15 @@ import type {
 
 const DEVICE_TYPE_META = {
   board_module: {
-    label: "Board Module",
+    label: "Mô-đun bo mạch",
     icon: Cpu,
   },
   wifi_module: {
-    label: "WiFi Module",
+    label: "Mô-đun WiFi",
     icon: Wifi,
   },
   lora_module: {
-    label: "LoRa Module",
+    label: "Mô-đun LoRa",
     icon: Radio,
   },
 } as const;
@@ -108,7 +108,7 @@ export default function DeviceTemplateList({
             <div>
               <CardTitle>Template thiết bị IoT</CardTitle>
               <CardDescription className="mt-1">
-                Quản lý template cho Board, WiFi, LoRa module
+                Quản lý template cho mô-đun bo mạch, WiFi, LoRa
               </CardDescription>
             </div>
             <Button onClick={onCreate}>
@@ -146,9 +146,9 @@ export default function DeviceTemplateList({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả loại</SelectItem>
-                <SelectItem value="board_module">Board Module</SelectItem>
-                <SelectItem value="wifi_module">WiFi Module</SelectItem>
-                <SelectItem value="lora_module">LoRa Module</SelectItem>
+                <SelectItem value="board_module">Mô-đun bo mạch</SelectItem>
+                <SelectItem value="wifi_module">Mô-đun WiFi</SelectItem>
+                <SelectItem value="lora_module">Mô-đun LoRa</SelectItem>
               </SelectContent>
             </Select>
 
@@ -311,7 +311,7 @@ export default function DeviceTemplateList({
                           <Badge
                             key={item.id}
                             variant="secondary"
-                            className="max-w-[180px] truncate"
+                            className="max-w-45 truncate"
                           >
                             {item.deviceName}
                           </Badge>

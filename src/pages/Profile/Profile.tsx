@@ -128,10 +128,10 @@ const Profile = () => {
 			<Card className="w-full max-w-lg">
 				<CardHeader className="space-y-1">
 					<CardTitle className="text-2xl font-bold text-center">
-						Farm OS Update profile
+						Cập nhật hồ sơ FarmOS
 					</CardTitle>
 					<CardDescription className="text-center">
-						Update profile to become a doctor of platform
+						Cập nhật thông tin cá nhân của bạn
 					</CardDescription>
 				</CardHeader>
 				<form onSubmit={form.handleSubmit(handleSubmit)}>
@@ -142,18 +142,18 @@ const Profile = () => {
 								control={form.control}
 								render={({ fieldState }) => (
 									<Field data-invalid={fieldState.invalid}>
-										<FieldLabel>Avatar</FieldLabel>
+										<FieldLabel>Ảnh đại diện</FieldLabel>
 										<div className="flex items-center gap-4">
 											<div className="h-16 w-16 overflow-hidden rounded-full border bg-muted">
 												{previewAvatarFromFile ? (
 													<img
 														src={previewAvatarFromFile}
-														alt="Avatar preview"
+														alt="Xem trước ảnh đại diện"
 														className="h-full w-full object-cover"
 													/>
 												) : (
 													<div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-														No image
+														Chưa có ảnh
 													</div>
 												)}
 											</div>
@@ -168,10 +168,10 @@ const Profile = () => {
 													{uploading ? (
 														<>
 															<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-															Uploading...
+															Đang tải ảnh...
 														</>
 													) : (
-														"Upload avatar"
+														"Tải ảnh lên"
 													)}
 												</Button>
 												<Input
@@ -195,7 +195,7 @@ const Profile = () => {
 								render={({ field, fieldState }) => (
 									<Field data-invalid={fieldState.invalid}>
 										<FieldLabel htmlFor="form-rhf-demo-description">
-											Fullname
+											Họ và tên
 										</FieldLabel>
 										<Input {...field} id="form-rhf-demo-description" />
 										{fieldState.invalid && (
@@ -210,7 +210,7 @@ const Profile = () => {
 								render={({ field, fieldState }) => (
 									<Field data-invalid={fieldState.invalid}>
 										<FieldLabel htmlFor="form-rhf-demo-description">
-											phone
+											Số điện thoại
 										</FieldLabel>
 										<Input
 											{...field}
@@ -230,10 +230,10 @@ const Profile = () => {
 							{isPending ? (
 								<>
 									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									Updating...
+									Đang cập nhật...
 								</>
 							) : (
-								"Update"
+								"Cập nhật"
 							)}
 						</Button>
 					</CardFooter>

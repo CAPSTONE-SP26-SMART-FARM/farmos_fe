@@ -43,8 +43,8 @@ interface Props {
 }
 
 const ROLE_OPTIONS = [
-  { value: "manager", label: "Manager" },
-  { value: "farmer", label: "Farmer" },
+  { value: "manager", label: "Quản lý" },
+  { value: "farmer", label: "Nông dân" },
 ] as const;
 
 const AddMemberPanel = ({ farmCode, onBack }: Props) => {
@@ -79,7 +79,7 @@ const AddMemberPanel = ({ farmCode, onBack }: Props) => {
     try {
       const res = await mutateAsync(data);
       setGeneratedPassword(res.data.generatedPassword);
-      toast.success("Employee added successfully");
+      toast.success("Đã thêm nhân sự thành công");
     } catch (error) {
       if (isApiErrorUnprocessableEntityResponse(error)) {
         handleApiErrorUnprocessentity(
@@ -88,7 +88,7 @@ const AddMemberPanel = ({ farmCode, onBack }: Props) => {
         );
       }
       if (isApiErrorResponse(error)) {
-        toast.error(error.response?.data.message ?? "Failed to add employee");
+        toast.error(error.response?.data.message ?? "Không thể thêm nhân sự");
       }
     }
   };
@@ -109,12 +109,12 @@ const AddMemberPanel = ({ farmCode, onBack }: Props) => {
             className="mb-2 -ml-2 gap-1 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Employees
+            Quay lại danh sách nhân sự
           </Button>
-          <Badge className="mb-2 block w-fit">Owner Portal</Badge>
-          <h1 className="text-2xl font-bold">Add Employee</h1>
+          <Badge className="mb-2 block w-fit">Cổng chủ vườn</Badge>
+          <h1 className="text-2xl font-bold">Thêm nhân sự</h1>
           <p className="text-muted-foreground">
-            Create an employee account and assign them to your farm.
+            Tạo tài khoản nhân sự và gán vào nông trại của bạn.
           </p>
         </div>
 
@@ -122,10 +122,10 @@ const AddMemberPanel = ({ farmCode, onBack }: Props) => {
           <Card>
             <CardHeader>
               <CardTitle className="text-green-600">
-                Employee Created Successfully
+                Tạo nhân sự thành công
               </CardTitle>
               <CardDescription>
-                Share these credentials with the employee so they can log in.
+                Hãy gửi thông tin đăng nhập này cho nhân sự.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -138,14 +138,14 @@ const AddMemberPanel = ({ farmCode, onBack }: Props) => {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">
-                    Generated Password
+                    Mật khẩu được tạo
                   </p>
                   <p className="font-mono text-sm font-medium">
                     {generatedPassword}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Role</p>
+                  <p className="text-xs text-muted-foreground mb-1">Vai trò</p>
                   <Badge
                     variant="secondary"
                     className="capitalize"
@@ -155,23 +155,22 @@ const AddMemberPanel = ({ farmCode, onBack }: Props) => {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                Please save this password. It will not be shown again.
+                Vui lòng lưu lại mật khẩu này. Mật khẩu sẽ không hiển thị lại.
               </p>
               <Button
                 onClick={handleBack}
                 className="w-full"
               >
-                Back to Employee List
+                Quay lại danh sách nhân sự
               </Button>
             </CardContent>
           </Card>
         ) : (
           <Card>
             <CardHeader>
-              <CardTitle>Employee Details</CardTitle>
+              <CardTitle>Thông tin nhân sự</CardTitle>
               <CardDescription>
-                Enter the information for the new employee. A password will be
-                auto-generated.
+                Nhập thông tin cho nhân sự mới. Mật khẩu sẽ được tạo tự động.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -190,7 +189,7 @@ const AddMemberPanel = ({ farmCode, onBack }: Props) => {
                           {...field}
                           id="member-email"
                           type="email"
-                          placeholder="employee@example.com"
+                          placeholder="nhansu@example.com"
                         />
                         {fieldState.invalid && (
                           <FieldError errors={[fieldState.error]} />
@@ -204,7 +203,7 @@ const AddMemberPanel = ({ farmCode, onBack }: Props) => {
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="member-phone">Phone</FieldLabel>
+                        <FieldLabel htmlFor="member-phone">Số điện thoại</FieldLabel>
                         <Input
                           {...field}
                           id="member-phone"
@@ -222,13 +221,13 @@ const AddMemberPanel = ({ farmCode, onBack }: Props) => {
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>Role</FieldLabel>
+                        <FieldLabel>Vai trò</FieldLabel>
                         <Select
                           value={field.value}
                           onValueChange={field.onChange}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Select role" />
+                              <SelectValue placeholder="Chọn vai trò" />
                           </SelectTrigger>
                           <SelectContent>
                             {ROLE_OPTIONS.map((opt) => (
@@ -256,7 +255,7 @@ const AddMemberPanel = ({ farmCode, onBack }: Props) => {
                     onClick={handleBack}
                     disabled={isPending}
                   >
-                    Cancel
+                    Hủy
                   </Button>
                   <Button
                     type="submit"
@@ -265,10 +264,10 @@ const AddMemberPanel = ({ farmCode, onBack }: Props) => {
                     {isPending ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Creating...
+                        Đang tạo...
                       </>
                     ) : (
-                      "Add Employee"
+                      "Thêm nhân sự"
                     )}
                   </Button>
                 </div>

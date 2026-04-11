@@ -45,7 +45,7 @@ interface Props {
   onBack: () => void;
 }
 
-const ZONE_TYPES = [{ value: "cultivation", label: "Cultivation" }] as const;
+const ZONE_TYPES = [{ value: "cultivation", label: "Canh tác" }] as const;
 
 const CreateZonePanel = ({ farmCode, farmId, onBack }: Props) => {
   const [show, setShow] = useState(false);
@@ -77,13 +77,13 @@ const CreateZonePanel = ({ farmCode, farmId, onBack }: Props) => {
   const handleSubmit = async (data: CreateZoneBodyType) => {
     if (farmAreaSqm && data.areaSqm && data.areaSqm > farmAreaSqm) {
       form.setError("areaSqm", {
-        message: `Zone area cannot exceed farm area (${farmAreaSqm.toLocaleString()} sq.m)`,
+        message: `Diện tích khu vực không được vượt quá diện tích nông trại (${farmAreaSqm.toLocaleString()} m²)`,
       });
       return;
     }
     try {
       await mutateAsync(data);
-      toast.success("Zone created successfully");
+      toast.success("Tạo khu vực thành công");
       handleBack();
     } catch (error) {
       if (isApiErrorUnprocessableEntityResponse(error)) {
@@ -93,7 +93,7 @@ const CreateZonePanel = ({ farmCode, farmId, onBack }: Props) => {
         );
       }
       if (isApiErrorResponse(error)) {
-        toast.error(error.response?.data.message ?? "Failed to create zone");
+        toast.error(error.response?.data.message ?? "Không thể tạo khu vực");
       }
     }
   };
@@ -115,20 +115,20 @@ const CreateZonePanel = ({ farmCode, farmId, onBack }: Props) => {
             className="mb-2 -ml-2 gap-1 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Zones
+            Quay lại danh sách khu vực
           </Button>
-          <Badge className="mb-2 block w-fit">Owner Portal</Badge>
-          <h1 className="text-2xl font-bold">Create Zone</h1>
+          <Badge className="mb-2 block w-fit">Cổng chủ vườn</Badge>
+          <h1 className="text-2xl font-bold">Tạo khu vực</h1>
           <p className="text-muted-foreground">
-            Add a new zone to your farm to organize your crop seasons.
+            Thêm khu vực mới vào nông trại để quản lý mùa vụ tốt hơn.
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Zone Details</CardTitle>
+            <CardTitle>Thông tin khu vực</CardTitle>
             <CardDescription>
-              Fill in the information for your new zone.
+              Điền thông tin cho khu vực mới.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -142,11 +142,11 @@ const CreateZonePanel = ({ farmCode, farmId, onBack }: Props) => {
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="zone-name">Zone Name</FieldLabel>
+                      <FieldLabel htmlFor="zone-name">Tên khu vực</FieldLabel>
                       <Input
                         {...field}
                         id="zone-name"
-                        placeholder="e.g. North Paddy Field"
+                        placeholder="Ví dụ: Khu ruộng phía Bắc"
                       />
                       {fieldState.invalid && (
                         <FieldError errors={[fieldState.error]} />
@@ -160,13 +160,13 @@ const CreateZonePanel = ({ farmCode, farmId, onBack }: Props) => {
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>Zone Type</FieldLabel>
+                      <FieldLabel>Loại khu vực</FieldLabel>
                       <Select
                         value={field.value}
                         onValueChange={field.onChange}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select zone type" />
+                          <SelectValue placeholder="Chọn loại khu vực" />
                         </SelectTrigger>
                         <SelectContent>
                           {ZONE_TYPES.map((type) => (
@@ -197,7 +197,7 @@ const CreateZonePanel = ({ farmCode, farmId, onBack }: Props) => {
                     return (
                       <Field data-invalid={fieldState.invalid || exceeds}>
                         <FieldLabel htmlFor="zone-area">
-                          Area (sq. meters) — optional
+                          Diện tích (m²) — tùy chọn
                         </FieldLabel>
                         <Input
                           id="zone-area"
@@ -205,7 +205,7 @@ const CreateZonePanel = ({ farmCode, farmId, onBack }: Props) => {
                           step="0.01"
                           min="0"
                           max={farmAreaSqm ?? undefined}
-                          placeholder="e.g. 5000"
+                          placeholder="Ví dụ: 5000"
                           value={field.value ?? ""}
                           onChange={(e) => {
                             const val = e.target.value;
@@ -219,8 +219,8 @@ const CreateZonePanel = ({ farmCode, farmId, onBack }: Props) => {
                             className={`text-xs ${exceeds ? "text-destructive" : "text-muted-foreground"}`}
                           >
                             {exceeds
-                              ? `Exceeds farm area (${farmAreaSqm.toLocaleString()} sq.m)`
-                              : `Farm total area: ${farmAreaSqm.toLocaleString()} sq.m`}
+                              ? `Vượt quá diện tích nông trại (${farmAreaSqm.toLocaleString()} m²)`
+                              : `Tổng diện tích nông trại: ${farmAreaSqm.toLocaleString()} m²`}
                           </p>
                         )}
                         {fieldState.invalid && (
@@ -237,12 +237,12 @@ const CreateZonePanel = ({ farmCode, farmId, onBack }: Props) => {
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor="zone-description">
-                        Description — optional
+                        Mô tả — tùy chọn
                       </FieldLabel>
                       <Textarea
                         {...field}
                         id="zone-description"
-                        placeholder="Brief description of this zone"
+                        placeholder="Mô tả ngắn về khu vực này"
                         className="min-h-20"
                       />
                       {fieldState.invalid && (
@@ -260,7 +260,7 @@ const CreateZonePanel = ({ farmCode, farmId, onBack }: Props) => {
                   onClick={handleBack}
                   disabled={isPending}
                 >
-                  Cancel
+                  Hủy
                 </Button>
                 <Button
                   type="submit"
@@ -269,10 +269,10 @@ const CreateZonePanel = ({ farmCode, farmId, onBack }: Props) => {
                   {isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating...
+                      Đang tạo...
                     </>
                   ) : (
-                    "Create Zone"
+                    "Tạo khu vực"
                   )}
                 </Button>
               </div>

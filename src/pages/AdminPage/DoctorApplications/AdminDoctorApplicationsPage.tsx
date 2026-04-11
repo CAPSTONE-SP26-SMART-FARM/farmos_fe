@@ -11,21 +11,21 @@ import {
 const doctorApplicationRows = [
 	{
 		name: "Dr. Tran Van A",
-		specialty: "Plant Disease",
+		specialty: "Bệnh cây",
 		submittedAt: "2026-02-18",
-		status: "Pending",
+		status: "Chờ duyệt",
 	},
 	{
 		name: "Dr. Hoang Thi B",
-		specialty: "Crop Nutrition",
+		specialty: "Dinh dưỡng cây trồng",
 		submittedAt: "2026-02-20",
-		status: "Pending",
+		status: "Chờ duyệt",
 	},
 	{
 		name: "Dr. Nguyen Van C",
-		specialty: "Soil Science",
+		specialty: "Khoa học đất",
 		submittedAt: "2026-02-22",
-		status: "Under Review",
+		status: "Đang xem xét",
 	},
 ];
 
@@ -33,37 +33,37 @@ function AdminDoctorApplicationsPage() {
 	return (
 		<div className="space-y-6">
 			<div>
-				<Badge className="mb-2">Admin Portal</Badge>
-				<h1 className="text-2xl font-bold">Doctor Applications</h1>
+				<Badge className="mb-2">Cổng quản trị</Badge>
+				<h1 className="text-2xl font-bold">Hồ sơ đăng ký bác sĩ</h1>
 				<p className="text-muted-foreground">
-					Xét duyệt hồ sơ đăng ký Doctor và xử lý trạng thái hồ sơ.
+					Xét duyệt hồ sơ đăng ký bác sĩ và xử lý trạng thái hồ sơ.
 				</p>
 			</div>
 
 			<Card>
 				<CardHeader>
-					<CardTitle>Pending Applications</CardTitle>
-					<CardDescription>Hồ sơ đăng ký Doctor cần xét duyệt.</CardDescription>
+					<CardTitle>Hồ sơ chờ duyệt</CardTitle>
+					<CardDescription>Hồ sơ đăng ký bác sĩ cần xét duyệt.</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-3">
 					{doctorApplicationRows.map((row) => (
 						<div key={row.name} className="rounded-md border p-4">
 							<div className="mb-2 flex flex-wrap items-center justify-between gap-2">
 								<p className="font-medium">{row.name}</p>
-								<Badge variant={row.status === "Pending" ? "secondary" : "outline"}>
+								<Badge variant={row.status === "Chờ duyệt" ? "secondary" : "outline"}>
 									{row.status}
 								</Badge>
 							</div>
 							<p className="text-sm text-muted-foreground">
-								Specialty: {row.specialty} | Submitted: {row.submittedAt}
+								Chuyên môn: {row.specialty} | Ngày nộp: {row.submittedAt}
 							</p>
 							<div className="mt-3 flex gap-2">
-								<Button size="sm">Approve</Button>
+								<Button size="sm">Duyệt</Button>
 								<Button size="sm" variant="outline">
-									Review Detail
+									Xem chi tiết
 								</Button>
 								<Button size="sm" variant="ghost">
-									Reject
+									Từ chối
 								</Button>
 							</div>
 						</div>

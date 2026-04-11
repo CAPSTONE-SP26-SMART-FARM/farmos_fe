@@ -9,10 +9,10 @@ import {
 } from "@/components/ui/card";
 
 const kpis = [
-	{ label: "Total Owners", value: "42", delta: "+6 this month" },
-	{ label: "Pending Doctor Approvals", value: "9", delta: "3 urgent" },
-	{ label: "Active Tickets", value: "124", delta: "18 high priority" },
-	{ label: "IoT Alerts", value: "31", delta: "12 unresolved" },
+	{ label: "Tổng chủ vườn", value: "42", delta: "+6 trong tháng" },
+	{ label: "Yêu cầu bác sĩ chờ duyệt", value: "9", delta: "3 yêu cầu khẩn" },
+	{ label: "Vé hỗ trợ đang hoạt động", value: "124", delta: "18 vé ưu tiên cao" },
+	{ label: "Cảnh báo IoT", value: "31", delta: "12 cảnh báo chưa xử lý" },
 ];
 
 function AdminDashboardPage() {
@@ -20,15 +20,15 @@ function AdminDashboardPage() {
 		<div className="space-y-6">
 			<div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
 				<div>
-					<Badge className="mb-2">Admin Portal</Badge>
-					<h1 className="text-2xl font-bold">Admin Dashboard</h1>
+					<Badge className="mb-2">Cổng quản trị</Badge>
+					<h1 className="text-2xl font-bold">Bảng điều khiển quản trị</h1>
 					<p className="text-muted-foreground">
 						Tổng quan hệ thống, gói dịch vụ, ticket và trạng thái vận hành.
 					</p>
 				</div>
 				<div className="flex gap-2">
-					<Button variant="outline">Export</Button>
-					<Button>New Action</Button>
+					<Button variant="outline">Xuất báo cáo</Button>
+					<Button>Tạo tác vụ</Button>
 				</div>
 			</div>
 
@@ -49,35 +49,35 @@ function AdminDashboardPage() {
 			<div className="grid gap-4 lg:grid-cols-2">
 				<Card>
 					<CardHeader>
-						<CardTitle>Platform Health</CardTitle>
+						<CardTitle>Sức khỏe nền tảng</CardTitle>
 						<CardDescription>Trạng thái tổng quan của hệ thống FarmOS.</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-3 text-sm">
 						<div className="flex items-center justify-between rounded-md border p-3">
-							<span>API Availability</span>
+							<span>Độ sẵn sàng API</span>
 							<Badge>99.4%</Badge>
 						</div>
 						<div className="flex items-center justify-between rounded-md border p-3">
-							<span>MQTT Broker Uptime</span>
+							<span>Thời gian hoạt động MQTT Broker</span>
 							<Badge>99.1%</Badge>
 						</div>
 						<div className="flex items-center justify-between rounded-md border p-3">
-							<span>Active Alert Streams</span>
-							<Badge variant="secondary">12 streams</Badge>
+							<span>Luồng cảnh báo đang hoạt động</span>
+							<Badge variant="secondary">12 luồng</Badge>
 						</div>
 					</CardContent>
 				</Card>
 
 				<Card>
 					<CardHeader>
-						<CardTitle>Admin Priorities</CardTitle>
+						<CardTitle>Ưu tiên quản trị</CardTitle>
 						<CardDescription>Công việc ưu tiên trong 24h tới.</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-2 text-sm text-muted-foreground">
-						<p className="rounded-md border p-3">Approve 3 pending Doctor applications.</p>
-						<p className="rounded-md border p-3">Review 2 escalated disease tickets.</p>
+						<p className="rounded-md border p-3">Phê duyệt 3 hồ sơ bác sĩ đang chờ.</p>
+						<p className="rounded-md border p-3">Rà soát 2 vé bệnh hại đã bị chuyển cấp.</p>
 						<p className="rounded-md border p-3">
-							Publish 1 new IoT template for lettuce growth stage.
+							Phát hành 1 mẫu IoT mới cho giai đoạn sinh trưởng của xà lách.
 						</p>
 					</CardContent>
 				</Card>

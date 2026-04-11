@@ -40,10 +40,15 @@ import useDebounce from "@/hooks/useDebounce";
 import { Info, X } from "lucide-react";
 import DoctorAssignmentDetailDialog from "./DoctorAssignmentDetailDialog";
 
+const STATUS_LABELS: Record<string, string> = {
+	active: "Hoạt động",
+	inactive: "Ngưng hoạt động",
+};
+
 const columns: ColumnDef<AssignmentWithOwnerResType>[] = [
 	{
 		id: "owner",
-		header: "Owner",
+		header: "Chủ vườn",
 		accessorFn: (row) => row.owner?.email ?? "",
 		cell: ({ row }) => {
 			const original = row.original;
@@ -59,21 +64,24 @@ const columns: ColumnDef<AssignmentWithOwnerResType>[] = [
 	},
 	{
 		accessorKey: "status",
-		header: "Status",
+		header: "Trạng thái",
 		cell: ({ row }) => (
-			<div className="capitalize">{String(row.getValue("status") ?? "—")}</div>
+			<div className="capitalize">
+				{STATUS_LABELS[String(row.getValue("status") ?? "").toLowerCase()] ??
+					String(row.getValue("status") ?? "—")}
+			</div>
 		),
 	},
 	{
 		accessorKey: "isPrimary",
-		header: "Primary",
+		header: "Chính",
 		cell: ({ row }) => (
-			<div>{row.getValue("isPrimary") === true ? "Yes" : "No"}</div>
+			<div>{row.getValue("isPrimary") === true ? "Có" : "Không"}</div>
 		),
 	},
 	{
 		accessorKey: "assignedAt",
-		header: "Assigned at",
+		header: "Ngày phân công",
 		cell: ({ row }) => {
 			const value = row.getValue("assignedAt") as string | undefined;
 			if (!value) return "—";
@@ -83,12 +91,12 @@ const columns: ColumnDef<AssignmentWithOwnerResType>[] = [
 	},
 	{
 		id: "action",
-		header: "Action",
+		header: "Thao tác",
 		cell: ({ row }) => (
 			<Button
 				variant="ghost"
 				onClick={() => row.toggleSelected(true)}
-				title="View detail"
+				title="Xem chi tiết"
 			>
 				<Info />
 			</Button>
@@ -183,7 +191,7 @@ const TableDoctorAssignments = () => {
 		<div className="w-full">
 			<div className="flex items-center py-4 gap-2">
 				<Input
-					placeholder="Search owner..."
+					placeholder="Tìm chủ vườn..."
 					value={filters.search ?? ""}
 					onChange={(e) =>
 						setFilters((prev) => ({ ...prev, search: e.target.value }))
@@ -201,17 +209,17 @@ const TableDoctorAssignments = () => {
 					defaultValue="all"
 				>
 					<SelectTrigger className="w-[180px] capitalize">
-						<SelectValue placeholder="Filter by status" className="capitalize" />
+						<SelectValue placeholder="Lọc theo trạng thái" className="capitalize" />
 					</SelectTrigger>
 					<SelectContent>
 						<SelectItem value="all" className="capitalize">
-							all
+							Tất cả
 						</SelectItem>
 						<SelectItem value="active" className="capitalize">
-							active
+							Hoạt động
 						</SelectItem>
 						<SelectItem value="inactive" className="capitalize">
-							inactive
+							Ngưng hoạt động
 						</SelectItem>
 					</SelectContent>
 				</Select>
@@ -228,7 +236,7 @@ const TableDoctorAssignments = () => {
 								: "opacity-50"
 						}`}
 					>
-						Clear filters
+						Xóa bộ lọc
 						<X className="ml-2 h-4 w-4" />
 					</Button>
 				</div>
@@ -278,7 +286,7 @@ const TableDoctorAssignments = () => {
 						) : (
 							<TableRow>
 								<TableCell colSpan={columns.length} className="h-24 text-center">
-									No results.
+									Không có kết quả.
 								</TableCell>
 							</TableRow>
 						)}
@@ -288,8 +296,8 @@ const TableDoctorAssignments = () => {
 
 			<div className="flex items-center justify-end space-x-2 py-4">
 				<div className="text-xs text-muted-foreground py-4 flex-1 ">
-					Show <strong>{table.getPaginationRowModel().rows.length}</strong> in{" "}
-					<strong>{totalRecords}</strong> result
+					Hiển thị <strong>{table.getPaginationRowModel().rows.length}</strong> /{" "}
+					<strong>{totalRecords}</strong> kết quả
 				</div>
 				<div>
 					<ProPagination

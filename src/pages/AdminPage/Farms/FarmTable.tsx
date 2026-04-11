@@ -49,43 +49,43 @@ const FarmTable = ({ onViewDetail }: FarmTableProps) => {
   const columns: ColumnDef<FarmWithOwnerResType>[] = [
     {
       accessorKey: "code",
-      header: "Code",
+      header: "Mã",
       cell: ({ row }) => (
         <div className="font-medium">{row.getValue("code")}</div>
       ),
     },
     {
       accessorKey: "name",
-      header: "Name",
+      header: "Tên",
       cell: ({ row }) => <div>{row.getValue("name")}</div>,
     },
     {
       accessorKey: "farmType",
-      header: "Type",
+      header: "Loại",
       cell: ({ row }) => (
         <div className="capitalize">{row.getValue("farmType")}</div>
       ),
     },
     {
       accessorKey: "address",
-      header: "Address",
+      header: "Địa chỉ",
       cell: ({ row }) => <div>{row.getValue("address") ?? "—"}</div>,
     },
     {
       accessorKey: "areaHectares",
-      header: "Area (ha)",
+      header: "Diện tích (ha)",
       cell: ({ row }) => <div>{row.getValue("areaHectares") ?? "—"}</div>,
     },
     {
       accessorKey: "owner",
-      header: "Owner",
+      header: "Chủ vườn",
       cell: ({ row }) => (
         <div>{row.original.owner.fullName ?? row.original.owner.email}</div>
       ),
     },
     {
       accessorKey: "createdAt",
-      header: "Created",
+      header: "Ngày tạo",
       cell: ({ row }) => (
         <div>
           {new Date(row.getValue("createdAt") as string).toLocaleDateString()}
@@ -94,7 +94,7 @@ const FarmTable = ({ onViewDetail }: FarmTableProps) => {
     },
     {
       id: "actions",
-      header: "Actions",
+      header: "Thao tác",
       cell: ({ row }) => (
         <Button
           variant="ghost"
@@ -147,7 +147,7 @@ const FarmTable = ({ onViewDetail }: FarmTableProps) => {
     <div className="w-full">
       <div className="flex items-center py-4 gap-2">
         <Input
-          placeholder="Search farms..."
+          placeholder="Tìm kiếm nông trại..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-sm"
@@ -192,7 +192,7 @@ const FarmTable = ({ onViewDetail }: FarmTableProps) => {
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  Không có kết quả.
                 </TableCell>
               </TableRow>
             ) : null}
@@ -201,8 +201,8 @@ const FarmTable = ({ onViewDetail }: FarmTableProps) => {
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="text-xs text-muted-foreground py-4 flex-1">
-          Showing <strong>{table.getPaginationRowModel().rows.length}</strong>{" "}
-          of <strong>{totalRecords}</strong> results
+          Hiển thị <strong>{table.getPaginationRowModel().rows.length}</strong>{" "}
+          trên <strong>{totalRecords}</strong> kết quả
         </div>
         {totalPages > 1 && (
           <div>

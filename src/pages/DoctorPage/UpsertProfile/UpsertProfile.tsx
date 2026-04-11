@@ -76,10 +76,10 @@ const UpsertProfile = () => {
       <Card className="w-full max-w-lg">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">
-            Farm OS Update profile
+            Cập nhật hồ sơ FarmOS
           </CardTitle>
           <CardDescription className="text-center">
-            Update profile to become a doctor of platform
+            Cập nhật thông tin hồ sơ bác sĩ
           </CardDescription>
         </CardHeader>
         <form onSubmit={form.handleSubmit(handleSubmit)}>
@@ -92,7 +92,7 @@ const UpsertProfile = () => {
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor="form-rhf-demo-description">
-                        Specialization
+                        Chuyên khoa
                       </FieldLabel>
                       <Input
                         {...field}
@@ -110,7 +110,7 @@ const UpsertProfile = () => {
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor="form-rhf-demo-description">
-                        Years of Experience
+                        Số năm kinh nghiệm
                       </FieldLabel>
                       <Input
                         {...field}
@@ -133,7 +133,7 @@ const UpsertProfile = () => {
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor="form-rhf-demo-description">
-                        License Number
+                        Số giấy phép
                       </FieldLabel>
                       <Input
                         {...field}
@@ -151,7 +151,7 @@ const UpsertProfile = () => {
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor="form-rhf-demo-description">
-                        License Expiry Date
+                        Ngày hết hạn giấy phép
                       </FieldLabel>
                       <Popover>
                         <PopoverTrigger asChild>
@@ -163,7 +163,7 @@ const UpsertProfile = () => {
                             {field.value ? (
                               format(field.value, "PPP")
                             ) : (
-                              <span>Pick a date</span>
+                              <span>Chọn ngày</span>
                             )}
                             <ChevronDownIcon />
                           </Button>
@@ -196,13 +196,13 @@ const UpsertProfile = () => {
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="form-rhf-demo-description">
-                      Bio
+                      Giới thiệu
                     </FieldLabel>
                     <Textarea
                       {...field}
                       id="form-rhf-textarea-about"
                       aria-invalid={fieldState.invalid}
-                      placeholder="I'm a doctor with <3"
+                      placeholder="Giới thiệu ngắn về chuyên môn của bạn"
                       className="min-h-[120px]"
                     />
                     {fieldState.invalid && (
@@ -222,10 +222,10 @@ const UpsertProfile = () => {
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Updating...
+                  Đang cập nhật...
                 </>
               ) : (
-                "Update"
+                "Cập nhật"
               )}
             </Button>
           </CardFooter>

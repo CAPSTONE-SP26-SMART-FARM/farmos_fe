@@ -45,6 +45,11 @@ interface Props {
   onAssignBulk: () => void;
 }
 
+const USER_STATUS_LABELS: Record<string, string> = {
+  active: "Hoạt động",
+  inactive: "Ngưng hoạt động",
+};
+
 export default function ZoneManagersSection({
   zoneId,
   onAssignSingle,
@@ -78,14 +83,14 @@ export default function ZoneManagersSection({
   const handleRemove = (manager: ZoneManagerWithUserResType) => {
     if (manager.isPrimary) {
       toast.error(
-        "Cannot remove the primary manager. Transfer primary role first.",
+        "Không thể xóa quản lý chính. Hãy chuyển vai trò quản lý chính trước.",
       );
       return;
     }
     removeMutation.mutate(manager.managerId, {
-      onSuccess: () => toast.success("Manager removed from zone."),
+      onSuccess: () => toast.success("Đã gỡ quản lý khỏi khu vực."),
       onError: (error) =>
-        toast.error(getErrorMessage(error, "Failed to remove manager.")),
+        toast.error(getErrorMessage(error, "Không thể gỡ quản lý.")),
     });
   };
 
@@ -94,10 +99,10 @@ export default function ZoneManagersSection({
     primaryMutation.mutate(
       { managerId: manager.managerId, isPrimary: true },
       {
-        onSuccess: () => toast.success("Primary manager updated."),
+        onSuccess: () => toast.success("Đã cập nhật quản lý chính."),
         onError: (error) =>
           toast.error(
-            getErrorMessage(error, "Failed to update primary manager."),
+            getErrorMessage(error, "Không thể cập nhật quản lý chính."),
           ),
       },
     );
@@ -109,17 +114,17 @@ export default function ZoneManagersSection({
         <div>
           <h3 className="text-base font-semibold flex items-center gap-2">
             <Users className="h-4 w-4" />
-            Assigned Managers
+            Quản lý được phân công
           </h3>
           <p className="text-sm text-muted-foreground">
-            Managers responsible for this zone.
+            Danh sách quản lý phụ trách khu vực này.
           </p>
         </div>
         <div className="flex gap-2 shrink-0">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search name or email..."
+              placeholder="Tìm theo tên hoặc email..."
               className="pl-8 w-52"
               value={search}
               onChange={(e) => {
@@ -134,14 +139,14 @@ export default function ZoneManagersSection({
             className="gap-1.5"
           >
             <Users className="h-4 w-4" />
-            Bulk Assign
+            Phân công hàng loạt
           </Button>
           <Button
             onClick={onAssignSingle}
             className="gap-1.5"
           >
             <UserPlus className="h-4 w-4" />
-            Assign
+            Phân công
           </Button>
         </div>
       </CardHeader>
@@ -151,10 +156,10 @@ export default function ZoneManagersSection({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Manager</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Assigned</TableHead>
+                <TableHead>Quản lý</TableHead>
+                <TableHead>Trạng thái</TableHead>
+                <TableHead>Vai trò</TableHead>
+                <TableHead>Ngày phân công</TableHead>
                 <TableHead className="w-12.5"></TableHead>
               </TableRow>
             </TableHeader>
@@ -173,7 +178,7 @@ export default function ZoneManagersSection({
         ) : isError ? (
           <CardContent className="flex items-center justify-center py-12 text-center">
             <p className="text-sm text-muted-foreground">
-              Failed to load managers. Please try again.
+              Không tải được danh sách quản lý. Vui lòng thử lại.
             </p>
           </CardContent>
         ) : managers.length === 0 ? (
@@ -181,16 +186,16 @@ export default function ZoneManagersSection({
             <div className="rounded-full bg-muted p-4 mb-4">
               <Shield className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold mb-1">No managers assigned</h3>
+            <h3 className="text-lg font-semibold mb-1">Chưa có quản lý được phân công</h3>
             <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-              Assign managers to this zone so they can oversee operations.
+              Hãy phân công quản lý cho khu vực này để theo dõi vận hành.
             </p>
             <Button
               onClick={onAssignSingle}
               className="gap-1.5"
             >
               <UserPlus className="h-4 w-4" />
-              Assign First Manager
+              Phân công quản lý đầu tiên
             </Button>
           </CardContent>
         ) : (
@@ -198,10 +203,10 @@ export default function ZoneManagersSection({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Manager</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Assigned</TableHead>
+                    <TableHead>Quản lý</TableHead>
+                    <TableHead>Trạng thái</TableHead>
+                    <TableHead>Vai trò</TableHead>
+                    <TableHead>Ngày phân công</TableHead>
                   <TableHead className="w-12.5"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -228,7 +233,8 @@ export default function ZoneManagersSection({
                         }
                         className="capitalize"
                       >
-                        {m.user.status.toLowerCase()}
+                        {USER_STATUS_LABELS[m.user.status.toLowerCase()] ??
+                          m.user.status.toLowerCase()}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -236,10 +242,10 @@ export default function ZoneManagersSection({
                         {m.isPrimary ? (
                           <Badge className="gap-1">
                             <Crown className="h-3 w-3" />
-                            Primary
+                            Chính
                           </Badge>
                         ) : (
-                          <Badge variant="secondary">Member</Badge>
+                          <Badge variant="secondary">Thành viên</Badge>
                         )}
                       </div>
                     </TableCell>
@@ -268,7 +274,7 @@ export default function ZoneManagersSection({
                               ) : (
                                 <Crown className="h-4 w-4 mr-2" />
                               )}
-                              Set Primary
+                              Đặt làm quản lý chính
                             </DropdownMenuItem>
                           )}
                           {!m.isPrimary && (
@@ -282,13 +288,13 @@ export default function ZoneManagersSection({
                               ) : (
                                 <Trash2 className="h-4 w-4 mr-2" />
                               )}
-                              Remove
+                              Gỡ
                             </DropdownMenuItem>
                           )}
                           {m.isPrimary && (
                             <DropdownMenuItem disabled>
                               <Crown className="h-4 w-4 mr-2 text-yellow-500" />
-                              Primary — cannot remove
+                              Quản lý chính - không thể gỡ
                             </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
@@ -302,8 +308,7 @@ export default function ZoneManagersSection({
             {meta && meta.totalPages > 1 && (
               <div className="flex items-center justify-between pt-2">
                 <p className="text-sm text-muted-foreground">
-                  Page {meta.page} of {meta.totalPages} &bull; {meta.totalItems}{" "}
-                  manager{meta.totalItems !== 1 ? "s" : ""}
+                  Trang {meta.page}/{meta.totalPages} &bull; {meta.totalItems} quản lý
                 </p>
                 <div className="flex gap-2">
                   <Button
@@ -312,7 +317,7 @@ export default function ZoneManagersSection({
                     disabled={page <= 1}
                     onClick={() => setPage((p) => p - 1)}
                   >
-                    Previous
+                    Trước
                   </Button>
                   <Button
                     variant="outline"
@@ -320,7 +325,7 @@ export default function ZoneManagersSection({
                     disabled={page >= meta.totalPages}
                     onClick={() => setPage((p) => p + 1)}
                   >
-                    Next
+                    Sau
                   </Button>
                 </div>
               </div>

@@ -36,12 +36,19 @@ interface Props {
 }
 
 const ZONE_TYPE_OPTIONS = [
-  { value: "all", label: "All Types" },
-  { value: "cultivation", label: "Cultivation" },
+  { value: "all", label: "Tất cả loại" },
+  { value: "cultivation", label: "Canh tác" },
 ] as const;
 
 const ZoneTypeIcon = ({ type }: { type: ZoneType["zoneType"] }) =>
   type === "cultivation" ? <Sprout className="h-4 w-4 text-green-600" /> : null;
+
+const getZoneTypeLabel = (type: ZoneType["zoneType"]) => {
+  if (type === "cultivation") {
+    return "Canh tác";
+  }
+  return type;
+};
 
 const ZoneListSection = ({
   farmId,
@@ -72,10 +79,10 @@ const ZoneListSection = ({
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Zones</h2>
+          <h2 className="text-lg font-semibold">Khu vực</h2>
           <p className="text-sm text-muted-foreground">
-            Manage the zones of your farm. Zones are used to organize crop
-            seasons.
+            Quản lý các khu vực trong trang trại của bạn. Khu vực được dùng để
+            tổ chức mùa vụ.
           </p>
         </div>
         <div className="flex gap-2 shrink-0">
@@ -102,7 +109,7 @@ const ZoneListSection = ({
             className="gap-1.5"
           >
             <Plus className="h-4 w-4" />
-            Add Zone
+            Thêm khu vực
           </Button>
         </div>
       </div>
@@ -112,10 +119,10 @@ const ZoneListSection = ({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Zone Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Area (sq.m)</TableHead>
-                <TableHead>Created</TableHead>
+                <TableHead>Tên khu vực</TableHead>
+                <TableHead>Loại</TableHead>
+                <TableHead>Diện tích (m²)</TableHead>
+                <TableHead>Ngày tạo</TableHead>
                 <TableHead className="w-12.5"></TableHead>
               </TableRow>
             </TableHeader>
@@ -146,7 +153,7 @@ const ZoneListSection = ({
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <p className="text-sm text-muted-foreground">
-              Failed to load zones. Please try again.
+              Không thể tải danh sách khu vực. Vui lòng thử lại.
             </p>
           </CardContent>
         </Card>
@@ -156,17 +163,17 @@ const ZoneListSection = ({
             <div className="rounded-full bg-muted p-4 mb-4">
               <Sprout className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold mb-1">No zones yet</h3>
+            <h3 className="text-lg font-semibold mb-1">Chưa có khu vực</h3>
             <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-              Create a zone to organize your farm into sections for better crop
-              season management.
+              Tạo khu vực để chia trang trại thành các phần, giúp quản lý mùa
+              vụ hiệu quả hơn.
             </p>
             <Button
               onClick={onCreateZone}
               className="gap-1.5"
             >
               <Plus className="h-4 w-4" />
-              Add First Zone
+              Thêm khu vực đầu tiên
             </Button>
           </CardContent>
         </Card>
@@ -176,10 +183,10 @@ const ZoneListSection = ({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Zone Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Area (sq.m)</TableHead>
-                  <TableHead>Created</TableHead>
+                  <TableHead>Tên khu vực</TableHead>
+                  <TableHead>Loại</TableHead>
+                  <TableHead>Diện tích (m²)</TableHead>
+                  <TableHead>Ngày tạo</TableHead>
                   <TableHead className="w-12.5"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -197,7 +204,7 @@ const ZoneListSection = ({
                         variant="secondary"
                         className="capitalize"
                       >
-                        {zone.zoneType}
+                        {getZoneTypeLabel(zone.zoneType)}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -223,12 +230,12 @@ const ZoneListSection = ({
                           {onViewZone && (
                             <DropdownMenuItem onClick={() => onViewZone(zone)}>
                               <Eye className="h-4 w-4 mr-2" />
-                              View
+                              Xem
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem onClick={() => onEditZone(zone)}>
                             <Pencil className="h-4 w-4 mr-2" />
-                            Edit
+                            Chỉnh sửa
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -242,8 +249,7 @@ const ZoneListSection = ({
           {meta && meta.totalPages > 1 && (
             <div className="flex items-center justify-between pt-2">
               <p className="text-sm text-muted-foreground">
-                Page {meta.page} of {meta.totalPages} &bull; {meta.totalItems}{" "}
-                zone{meta.totalItems !== 1 ? "s" : ""}
+                Trang {meta.page} / {meta.totalPages} &bull; {meta.totalItems} khu vực
               </p>
               <div className="flex gap-2">
                 <Button
@@ -252,7 +258,7 @@ const ZoneListSection = ({
                   disabled={page <= 1}
                   onClick={() => setPage((p) => p - 1)}
                 >
-                  Previous
+                  Trước
                 </Button>
                 <Button
                   variant="outline"
@@ -260,7 +266,7 @@ const ZoneListSection = ({
                   disabled={page >= meta.totalPages}
                   onClick={() => setPage((p) => p + 1)}
                 >
-                  Next
+                  Sau
                 </Button>
               </div>
             </div>

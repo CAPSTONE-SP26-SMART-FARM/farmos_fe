@@ -1,6 +1,8 @@
 import { QUERY_KEYS } from "@/constants";
 import {
   iotDeviceTemplateService,
+  managerIotDeviceTemplateService,
+  managerSensorTemplateService,
   sensorTemplateService,
   ownerIotDeviceTemplateService,
   ownerSensorTemplateService,
@@ -203,10 +205,12 @@ export const useAdminDeleteSensorTemplate = () => {
 
 export const useOwnerListIotDeviceTemplates = (
   query: ListIotDeviceTemplateQueryType,
+  enabled = true,
 ) => {
   return useQuery({
     queryKey: QUERY_KEYS.owner.iotDeviceTemplates.list(query),
     queryFn: () => ownerIotDeviceTemplateService.list(query),
+    enabled,
   });
 };
 
@@ -227,10 +231,12 @@ export const useOwnerIotDeviceTemplateDetail = (
 
 export const useOwnerListSensorTemplates = (
   query: ListSensorTemplatesQueryType,
+  enabled = true,
 ) => {
   return useQuery({
     queryKey: QUERY_KEYS.owner.sensorTemplates.list(query),
     queryFn: () => ownerSensorTemplateService.list(query),
+    enabled,
   });
 };
 
@@ -238,6 +244,58 @@ export const useOwnerSensorTemplateDetail = (id: string, enabled: boolean) => {
   return useQuery({
     queryKey: QUERY_KEYS.owner.sensorTemplates.detail(id),
     queryFn: () => ownerSensorTemplateService.detail(id),
+    enabled,
+  });
+};
+
+// ============================================================
+// Manager — IoT Device Template (read-only)
+// ============================================================
+
+export const useManagerListIotDeviceTemplates = (
+  query: ListIotDeviceTemplateQueryType,
+  enabled = true,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.manager.iotDeviceTemplates.list(query),
+    queryFn: () => managerIotDeviceTemplateService.list(query),
+    enabled,
+  });
+};
+
+export const useManagerIotDeviceTemplateDetail = (
+  id: string,
+  enabled: boolean,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.manager.iotDeviceTemplates.detail(id),
+    queryFn: () => managerIotDeviceTemplateService.detail(id),
+    enabled,
+  });
+};
+
+// ============================================================
+// Manager — Sensor Template (read-only)
+// ============================================================
+
+export const useManagerListSensorTemplates = (
+  query: ListSensorTemplatesQueryType,
+  enabled = true,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.manager.sensorTemplates.list(query),
+    queryFn: () => managerSensorTemplateService.list(query),
+    enabled,
+  });
+};
+
+export const useManagerSensorTemplateDetail = (
+  id: string,
+  enabled: boolean,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.manager.sensorTemplates.detail(id),
+    queryFn: () => managerSensorTemplateService.detail(id),
     enabled,
   });
 };

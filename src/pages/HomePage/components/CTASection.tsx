@@ -18,10 +18,10 @@ function CTASection() {
       <div className="absolute inset-0">
         <img
           src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2232&auto=format&fit=crop"
-          alt="Farm landscape"
+          alt="Cảnh quan nông trại"
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-green-900/95 via-green-800/90 to-emerald-900/95" />
+        <div className="absolute inset-0 bg-linear-to-br from-green-900/95 via-green-800/90 to-emerald-900/95" />
       </div>
 
       {/* Animated particles */}
@@ -51,7 +51,7 @@ function CTASection() {
       <motion.div
         animate={{ rotate: 360 }}
         transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-        className="absolute -top-1/2 -right-1/4 w-[800px] h-[800px] opacity-10"
+        className="absolute -top-1/2 -right-1/4 w-200 h-200 opacity-10"
       >
         <div className="w-full h-full rounded-full border border-white/20" />
         <div className="absolute inset-8 rounded-full border border-white/15" />
@@ -83,7 +83,7 @@ function CTASection() {
           >
             Sẵn sàng
             <span className="relative inline-block mx-4">
-              <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-amber-400 bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-amber-400 via-orange-400 to-amber-400 bg-clip-text text-transparent">
                 chuyển đổi số
               </span>
               <motion.div
@@ -91,7 +91,7 @@ function CTASection() {
                 whileInView={{ scaleX: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.5, duration: 0.5 }}
-                className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 to-orange-400 rounded-full origin-left"
+                className="absolute -bottom-2 left-0 right-0 h-1 bg-linear-to-r from-amber-400 to-orange-400 rounded-full origin-left"
               />
             </span>
             <br />
@@ -123,7 +123,7 @@ function CTASection() {
             <Button
               asChild
               size="lg"
-              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-full px-10 py-7 text-lg font-semibold shadow-2xl shadow-amber-500/30 hover:shadow-amber-500/50 transition-all hover:scale-105 group"
+              className="bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-full px-10 py-7 text-lg font-semibold shadow-2xl shadow-amber-500/30 hover:shadow-amber-500/50 transition-all hover:scale-105 group"
             >
               <Link
                 to="/register"
@@ -145,7 +145,7 @@ function CTASection() {
                 className="flex items-center gap-2"
               >
                 <Play className="w-5 h-5" />
-                Xem Demo
+                Xem bản demo
               </Link>
             </Button>
           </motion.div>

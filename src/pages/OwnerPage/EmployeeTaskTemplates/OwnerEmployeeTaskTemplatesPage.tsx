@@ -89,12 +89,12 @@ function OwnerEmployeeTaskTemplatesPage() {
         <div className="pointer-events-none absolute inset-0 bg-muted/20" />
         <div className="relative flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <Badge className="mb-2">Owner</Badge>
+            <Badge className="mb-2">Cổng chủ vườn</Badge>
             <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-              Template Nhiệm Vụ
+              Mẫu nhiệm vụ
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
-              Xem danh sách template nhiệm vụ tiêu chuẩn dành cho nhân viên nông
+              Xem danh sách mẫu nhiệm vụ tiêu chuẩn dành cho nhân viên nông
               trại của bạn.
             </p>
           </div>
@@ -108,7 +108,7 @@ function OwnerEmployeeTaskTemplatesPage() {
             </div>
             <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
               <ChevronRight className="h-3 w-3" />
-              Chỉ xem — quản lý bởi Admin
+              Chỉ xem - quản lý bởi quản trị viên
             </div>
           </div>
         </div>
@@ -117,9 +117,9 @@ function OwnerEmployeeTaskTemplatesPage() {
       <Card className="overflow-hidden border-border/70">
         <CardHeader className="bg-muted/30">
           <div>
-            <CardTitle>Template nhiệm vụ nhân viên</CardTitle>
+            <CardTitle>Mẫu nhiệm vụ nhân viên</CardTitle>
             <CardDescription className="mt-1">
-              Danh sách template công việc đang hoạt động
+              Danh sách mẫu công việc đang hoạt động
             </CardDescription>
           </div>
 
@@ -129,7 +129,7 @@ function OwnerEmployeeTaskTemplatesPage() {
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Tìm theo tên template hoặc mô tả..."
+                placeholder="Tìm theo tên mẫu hoặc mô tả..."
                 className="pl-9"
               />
             </div>
@@ -162,7 +162,7 @@ function OwnerEmployeeTaskTemplatesPage() {
             </div>
           ) : templates.length === 0 ? (
             <p className="py-8 text-center text-muted-foreground">
-              Không tìm thấy template phù hợp.
+              Không tìm thấy mẫu phù hợp.
             </p>
           ) : (
             <div className="grid gap-3 md:grid-cols-2">
@@ -200,7 +200,7 @@ function OwnerEmployeeTaskTemplatesPage() {
                         return (
                           <span
                             key={item.id}
-                            className={`inline-flex max-w-[200px] items-center gap-1 truncate rounded-md px-2 py-0.5 text-xs font-medium ${pMeta.className}`}
+                            className={`inline-flex max-w-50 items-center gap-1 truncate rounded-md px-2 py-0.5 text-xs font-medium ${pMeta.className}`}
                           >
                             {item.title}
                           </span>

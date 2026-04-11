@@ -1070,7 +1070,7 @@ These enums come from `prisma/schema.prisma`. Use `as const` objects or Zod enum
 | `FarmType` | `cultivation`                                   |
 | `ZoneType` | `cultivation`                                   |
 
-> **Note (April 2026):** The backend Prisma schema still defines `rancher` role and `livestock`/`mixed` farm types, but the **frontend does not use them**. All FE enums, schemas, UI, and constants reference only the values listed above.
+> **Note (April 2026):** The backend Prisma schema still defines `rancher` role and `livestock`/`mixed` farm types, but the **frontend does not use them**. All FE enums, schemas, UI, and constants must stay cultivation-only. Do not re-introduce `livestock` or `mixed` in FE code.
 
 | `CropStage` | `germination`, `seedling`, `growth`, `harvest` | | `SensorType` | `soil_moisture`, `soil_ph`, `air_temperature`, `air_humidity`, `light_intensity`, `nh3_level`, `co2_level` | | `ProductionStatus` | `planning`, `sent`, `approved`, `rejected`, `active`, `completed`, `cancelled` | | `ProductionMilestoneStatus`| `pending`, `in_progress`, `completed` | | `TemplateType` | `crop_season`, `milestone`, `board_module`, `wifi_module`, `lora_module`, `soil_moisture_sensor`, `light_intensity_sensor`, `air_humidity_sensor`, `air_temperature_sensor`, `task` | | `TemplateItemType` | `activity`, `metric`, `condition` | | `ProductionRequestStatus` | `pending`, `approved`, `rejected` | | `DeviceStatus` | `active`, `inactive`, `maintenance`, `decommissioned` | | `SensorStatus` | `active`, `inactive`, `calibrating` | | `DoctorType` | `internal`, `partner`, `coordinator` | | `RegistrationStatus` | `pending`, `approved`, `rejected`, `suspended` |
 

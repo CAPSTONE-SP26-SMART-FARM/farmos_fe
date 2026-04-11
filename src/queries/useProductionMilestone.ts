@@ -7,6 +7,7 @@ import {
 import { productionMilestoneService } from "@/services/productionMilestoneService";
 import { sensorThresholdService } from "@/services/sensorThresholdService";
 import type {
+  CreateProductionMilestoneBatchBodyType,
   CreateProductionMilestoneItemBodyType,
   ListProductionMilestonesQueryType,
   UpdateProductionMilestoneBodyType,
@@ -38,6 +39,17 @@ export const useManagerListProductionMilestones = (
     enabled: !!cropSeasonId,
   });
 
+export const useOwnerListProductionMilestones = (
+  cropSeasonId: string,
+  query: ListProductionMilestonesQueryType,
+) =>
+  useQuery({
+    queryKey: QUERY_KEYS.owner.productionMilestones.list(cropSeasonId, query),
+    queryFn: () =>
+      productionMilestoneService.ownerListByCropSeason(cropSeasonId, query),
+    enabled: !!cropSeasonId,
+  });
+
 export const useManagerCreateProductionMilestone = (cropSeasonId: string) => {
   const qc = useQueryClient();
   return useMutation({
@@ -50,15 +62,43 @@ export const useManagerCreateProductionMilestone = (cropSeasonId: string) => {
       });
     },
     onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Tạo milestone thất bại",
-      );
+      toast.error(error?.response?.data?.message ?? "Tạo milestone thất bại");
     },
   });
 };
 
-export const useManagerUpdateProductionMilestone = (cropSeasonId: string) => {
+export const useManagerCreateProductionMilestoneBatch = (
+  cropSeasonId: string,
+) => {
   const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: CreateProductionMilestoneBatchBodyType) =>
+      productionMilestoneService.createBatch(cropSeasonId, body),
+    onSuccess: () => {
+      toast.success("Tạo milestones thành công!");
+      qc.invalidateQueries({
+        queryKey: QUERY_KEYS.manager.productionMilestones.list(cropSeasonId),
+      });
+    },
+    onError: (error: AxiosError<ApiResponseType>) => {
+      toast.error(error?.response?.data?.message ?? "Tạo milestones thất bại");
+    },
+  });
+};
+
+type UpdateMilestoneMutationOptions = {
+  silent?: boolean;
+  invalidateOnSuccess?: boolean;
+};
+
+export const useManagerUpdateProductionMilestone = (
+  cropSeasonId: string,
+  options?: UpdateMilestoneMutationOptions,
+) => {
+  const qc = useQueryClient();
+  const silent = options?.silent ?? false;
+  const invalidateOnSuccess = options?.invalidateOnSuccess ?? true;
+
   return useMutation({
     mutationFn: ({
       milestoneId,
@@ -68,18 +108,25 @@ export const useManagerUpdateProductionMilestone = (cropSeasonId: string) => {
       body: UpdateProductionMilestoneBodyType;
     }) => productionMilestoneService.update(milestoneId, cropSeasonId, body),
     onSuccess: (_res, { milestoneId }) => {
-      toast.success("Cập nhật milestone thành công!");
-      qc.invalidateQueries({
-        queryKey: QUERY_KEYS.manager.productionMilestones.list(cropSeasonId),
-      });
-      qc.invalidateQueries({
-        queryKey: QUERY_KEYS.manager.productionMilestones.detail(milestoneId),
-      });
+      if (!silent) {
+        toast.success("Cập nhật milestone thành công!");
+      }
+
+      if (invalidateOnSuccess) {
+        qc.invalidateQueries({
+          queryKey: QUERY_KEYS.manager.productionMilestones.list(cropSeasonId),
+        });
+        qc.invalidateQueries({
+          queryKey: QUERY_KEYS.manager.productionMilestones.detail(milestoneId),
+        });
+      }
     },
     onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Cập nhật milestone thất bại",
-      );
+      if (!silent) {
+        toast.error(
+          error?.response?.data?.message ?? "Cập nhật milestone thất bại",
+        );
+      }
     },
   });
 };
@@ -99,9 +146,7 @@ export const useManagerDeleteProductionMilestone = (cropSeasonId: string) => {
       });
     },
     onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Xóa milestone thất bại",
-      );
+      toast.error(error?.response?.data?.message ?? "Xóa milestone thất bại");
     },
   });
 };
@@ -147,9 +192,7 @@ export const useManagerAssignIotDevice = (milestoneId: string) => {
       });
     },
     onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Gán thiết bị thất bại",
-      );
+      toast.error(error?.response?.data?.message ?? "Gán thiết bị thất bại");
     },
   });
 };
@@ -168,9 +211,7 @@ export const useManagerUnassignIotDevice = (milestoneId: string) => {
       // Also invalidate bound sensors and thresholds since assignment is gone
     },
     onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Gỡ thiết bị thất bại",
-      );
+      toast.error(error?.response?.data?.message ?? "Gỡ thiết bị thất bại");
     },
   });
 };
@@ -257,8 +298,7 @@ export const useManagerSensorThresholds = (
   enabled = true,
 ) =>
   useQuery({
-    queryKey:
-      QUERY_KEYS.manager.productionMilestones.thresholds(assignmentId),
+    queryKey: QUERY_KEYS.manager.productionMilestones.thresholds(assignmentId),
     queryFn: () => sensorThresholdService.get(assignmentId),
     enabled: !!assignmentId && enabled,
   });
@@ -276,9 +316,7 @@ export const useManagerUpsertSensorThreshold = (assignmentId: string) => {
       });
     },
     onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Lưu threshold thất bại",
-      );
+      toast.error(error?.response?.data?.message ?? "Lưu threshold thất bại");
     },
   });
 };

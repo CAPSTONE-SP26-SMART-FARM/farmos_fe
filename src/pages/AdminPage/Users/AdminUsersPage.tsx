@@ -28,9 +28,9 @@ const AdminUsersPage = () => {
       <div className="space-y-2">
         <Card>
           <CardHeader>
-            <CardTitle>User Management</CardTitle>
+            <CardTitle>Quản lý người dùng</CardTitle>
             <CardDescription>
-              View and manage all user accounts on the platform.
+              Xem và quản lý toàn bộ tài khoản người dùng trên nền tảng.
             </CardDescription>
           </CardHeader>
           <CardContent>

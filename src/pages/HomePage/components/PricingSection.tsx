@@ -7,7 +7,7 @@ import { useState } from "react";
 
 const plans = [
   {
-    name: "Starter",
+    name: "Cơ bản",
     description: "Cho nông trại nhỏ",
     price: "Miễn phí",
     period: "",
@@ -17,7 +17,7 @@ const plans = [
       "5 cảm biến",
       "Dashboard cơ bản",
       "Báo cáo hàng tuần",
-      "Email support",
+      "Hỗ trợ qua email",
     ],
     cta: "Bắt đầu miễn phí",
     popular: false,
@@ -25,7 +25,7 @@ const plans = [
     iconGradient: "from-amber-400 to-amber-600",
   },
   {
-    name: "Professional",
+    name: "Chuyên nghiệp",
     description: "Cho nông trại vừa",
     price: "2.990.000",
     period: "/tháng",
@@ -37,7 +37,7 @@ const plans = [
       "Tư vấn chuyên gia",
       "Cảnh báo SMS/Push",
       "Báo cáo tài chính",
-      "Priority support",
+      "Hỗ trợ ưu tiên",
     ],
     cta: "Dùng thử 14 ngày",
     popular: true,
@@ -45,7 +45,7 @@ const plans = [
     iconGradient: "from-green-400 to-emerald-500",
   },
   {
-    name: "Enterprise",
+    name: "Doanh nghiệp",
     description: "Cho tập đoàn lớn",
     price: "Liên hệ",
     period: "",
@@ -53,11 +53,11 @@ const plans = [
     features: [
       "Không giới hạn nông trại",
       "Không giới hạn cảm biến",
-      "API tích hợp",
+      "Tích hợp API",
       "Đội ngũ chuyên gia riêng",
-      "Custom development",
+      "Phát triển tùy chỉnh",
       "SLA 99.9%",
-      "On-premise option",
+      "Tùy chọn triển khai tại chỗ",
     ],
     cta: "Liên hệ tư vấn",
     popular: false,
@@ -99,7 +99,7 @@ function PricingSection() {
 
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-green-900 mb-6">
             Gói dịch vụ phù hợp
-            <span className="block bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+            <span className="block bg-linear-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
               mọi quy mô
             </span>
           </h2>
@@ -130,14 +130,14 @@ function PricingSection() {
               >
                 {/* Glow Effect for Popular */}
                 {plan.popular && (
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-green-500 to-emerald-500 rounded-3xl blur opacity-30 group-hover:opacity-50 transition-opacity" />
+                  <div className="absolute -inset-0.5 bg-linear-to-r from-green-500 to-emerald-500 rounded-3xl blur opacity-30 group-hover:opacity-50 transition-opacity" />
                 )}
 
                 {/* Card */}
                 <div
                   className={`relative h-full rounded-3xl p-8 transition-all duration-300 ${
                     plan.popular
-                      ? "bg-gradient-to-br from-green-900 to-green-800 border-0"
+                      ? "bg-linear-to-br from-green-900 to-green-800 border-0"
                       : "bg-white border-2 border-green-200 hover:border-green-300"
                   } ${isHovered ? "transform -translate-y-2" : ""}`}
                 >
@@ -148,7 +148,7 @@ function PricingSection() {
                       animate={{ scale: 1 }}
                       className="absolute -top-4 left-1/2 -translate-x-1/2"
                     >
-                      <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 px-4 py-1 text-sm shadow-lg">
+                      <Badge className="bg-linear-to-r from-amber-500 to-orange-500 text-white border-0 px-4 py-1 text-sm shadow-lg">
                         🔥 Phổ biến nhất
                       </Badge>
                     </motion.div>
@@ -157,7 +157,7 @@ function PricingSection() {
                   {/* Icon */}
                   <div className="mb-6">
                     <div
-                      className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${plan.iconGradient} flex items-center justify-center shadow-lg`}
+                      className={`w-14 h-14 rounded-2xl bg-linear-to-br ${plan.iconGradient} flex items-center justify-center shadow-lg`}
                     >
                       <Icon className="w-7 h-7 text-white" />
                     </div>
@@ -215,7 +215,7 @@ function PricingSection() {
                         className="flex items-center gap-3"
                       >
                         <div
-                          className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
                             plan.popular ? "bg-green-500/20" : "bg-green-100"
                           }`}
                         >
@@ -241,7 +241,7 @@ function PricingSection() {
                     asChild
                     className={`w-full py-6 rounded-2xl font-semibold text-base transition-all duration-300 group/btn ${
                       plan.popular
-                        ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:shadow-lg hover:shadow-green-500/30 hover:scale-[1.02]"
+                        ? "bg-linear-to-r from-green-500 to-emerald-500 text-white hover:shadow-lg hover:shadow-green-500/30 hover:scale-[1.02]"
                         : "bg-green-800 text-white hover:bg-green-700"
                     }`}
                   >

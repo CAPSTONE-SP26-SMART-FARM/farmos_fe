@@ -37,6 +37,7 @@ export default function OwnerIotDevicesPage() {
       <IotDeviceForm
         farmId={farmId}
         device={nav.device}
+        actor="owner"
         onBack={() => setNav({ level: 1 })}
       />
     );
@@ -47,6 +48,7 @@ export default function OwnerIotDevicesPage() {
     return (
       <IotDeviceForm
         farmId={farmId}
+        actor="owner"
         onBack={() => setNav({ level: 1 })}
       />
     );
@@ -58,6 +60,7 @@ export default function OwnerIotDevicesPage() {
       <IotDeviceDetail
         deviceId={nav.device.id}
         farmId={farmId}
+        actor="owner"
         onBack={() => setNav({ level: 1 })}
         onEdit={(device) => setNav({ level: 4, device })}
       />
@@ -69,6 +72,7 @@ export default function OwnerIotDevicesPage() {
     <IotDeviceList
       farmId={farmId}
       farmName={farm.name}
+      actor="owner"
       onCreate={() => setNav({ level: 3 })}
       onDetail={(device) => setNav({ level: 2, device })}
       onEdit={(device) => setNav({ level: 4, device })}

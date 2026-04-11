@@ -14,10 +14,10 @@ function AdminDoctorAssignmentPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <Badge className="mb-2">Admin Portal</Badge>
-          <h1 className="text-2xl font-bold">Doctor Assignment</h1>
+          <Badge className="mb-2">Cổng quản trị</Badge>
+          <h1 className="text-2xl font-bold">Phân công bác sĩ</h1>
           <p className="text-muted-foreground">
-            Gán Doctor cho Owner/Farm và theo dõi phân bổ nguồn lực.
+            Gán bác sĩ cho chủ vườn/nông trại và theo dõi phân bổ nguồn lực.
           </p>
         </div>
         <AssignDoctorDialog />
@@ -25,8 +25,8 @@ function AdminDoctorAssignmentPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Assignment Matrix</CardTitle>
-          <CardDescription>Danh sách gán Doctor cho Owner.</CardDescription>
+          <CardTitle>Ma trận phân công</CardTitle>
+          <CardDescription>Danh sách gán bác sĩ cho chủ vườn.</CardDescription>
         </CardHeader>
         <CardContent>
           <ListAssignmentDoctor />

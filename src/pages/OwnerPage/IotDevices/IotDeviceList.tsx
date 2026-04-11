@@ -43,6 +43,8 @@ import {
 import { useState, useMemo } from "react";
 import useDebounce from "@/hooks/useDebounce";
 import {
+  useManagerDeleteIotDevice,
+  useManagerListIotDevices,
   useOwnerListIotDevices,
   useOwnerDeleteIotDevice,
 } from "@/queries/useIotDevice";
@@ -51,6 +53,8 @@ import type {
   IotDeviceResType,
   DeviceStatusType,
 } from "@/schemaValidatation/iotDevice";
+
+type IotActor = "owner" | "manager";
 
 // ── Metadata maps ──────────────────────────────────────────────────────
 
@@ -90,9 +94,9 @@ const DEVICE_TYPE_ICON: Record<string, typeof Cpu> = {
 };
 
 const DEVICE_TYPE_LABEL: Record<string, string> = {
-  board_module: "Board Module",
-  lora_module: "LoRa Module",
-  wifi_module: "WiFi Module",
+  board_module: "Bo mạch",
+  lora_module: "Mô-đun LoRa",
+  wifi_module: "Mô-đun WiFi",
 };
 
 // ── Props ──────────────────────────────────────────────────────────────
@@ -104,6 +108,7 @@ interface IotDeviceListProps {
   onDetail: (device: IotDeviceResType) => void;
   onEdit: (device: IotDeviceResType) => void;
   onBack: () => void;
+  actor?: IotActor;
 }
 
 export default function IotDeviceList({
@@ -112,6 +117,7 @@ export default function IotDeviceList({
   onCreate,
   onDetail,
   onEdit,
+  actor = "owner",
 }: IotDeviceListProps) {
   const [query, setQuery] = useState<ListIotDevicesQueryType>({
     page: 1,
@@ -135,8 +141,24 @@ export default function IotDeviceList({
     [query, debouncedSearch, statusFilter],
   );
 
-  const { data, isLoading } = useOwnerListIotDevices(farmId, effectiveQuery);
-  const deleteMutation = useOwnerDeleteIotDevice();
+  const ownerListQuery = useOwnerListIotDevices(
+    farmId,
+    effectiveQuery,
+    actor === "owner",
+  );
+  const managerListQuery = useManagerListIotDevices(
+    farmId,
+    effectiveQuery,
+    actor === "manager",
+  );
+  const data = actor === "owner" ? ownerListQuery.data : managerListQuery.data;
+  const isLoading =
+    actor === "owner" ? ownerListQuery.isLoading : managerListQuery.isLoading;
+
+  const ownerDeleteMutation = useOwnerDeleteIotDevice();
+  const managerDeleteMutation = useManagerDeleteIotDevice();
+  const deleteMutation =
+    actor === "owner" ? ownerDeleteMutation : managerDeleteMutation;
 
   const devices = data?.data?.data ?? [];
   const meta = data?.data?.meta;
@@ -150,7 +172,9 @@ export default function IotDeviceList({
         <CardHeader className="bg-muted/30">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
-              <Badge className="mb-2">Owner Portal</Badge>
+              <Badge className="mb-2">
+                {actor === "owner" ? "Cổng chủ vườn" : "Cổng quản lý"}
+              </Badge>
               <CardTitle className="flex items-center gap-2">
                 <Cpu className="h-5 w-5 text-primary" />
                 Thiết bị IoT — {farmName}
@@ -171,7 +195,7 @@ export default function IotDeviceList({
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Tìm theo tên thiết bị, MAC address..."
+                placeholder="Tìm theo tên thiết bị, địa chỉ MAC..."
                 className="pl-9"
               />
             </div>
@@ -406,7 +430,7 @@ function DeviceCard({
         {device.macAddress && <p className="font-mono">{device.macAddress}</p>}
         {device.iotDeviceBoardId && (
           <p>
-            Board:{" "}
+            Bo mạch:{" "}
             <span className="font-mono">
               {device.iotDeviceBoardId.slice(0, 8)}…
             </span>

@@ -90,25 +90,23 @@ export default function AssignBulkManagerPanel({
 
   const handleAssignBulk = () => {
     if (selectedIds.size === 0) {
-      toast.error("Please select at least one manager.");
+      toast.error("Vui lòng chọn ít nhất một quản lý.");
       return;
     }
     bulkMutation.mutate(
       { managerIds: Array.from(selectedIds) },
       {
         onSuccess: () => {
-          toast.success(
-            `${selectedIds.size} manager${selectedIds.size > 1 ? "s" : ""} assigned successfully.`,
-          );
+          toast.success(`Đã phân công thành công ${selectedIds.size} quản lý.`);
           handleBack();
         },
         onError: (error) => {
           if (isApiErrorResponse(error)) {
             toast.error(
-              error.response?.data.message ?? "Failed to assign managers.",
+              error.response?.data.message ?? "Không thể phân công các quản lý.",
             );
           } else {
-            toast.error("An unexpected error occurred.");
+            toast.error("Đã xảy ra lỗi không mong muốn.");
           }
         },
       },
@@ -134,8 +132,8 @@ export default function AssignBulkManagerPanel({
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <Badge className="mb-1">Bulk Assign</Badge>
-          <h1 className="text-2xl font-bold">Assign Managers to {zoneName}</h1>
+          <Badge className="mb-1">Phân công hàng loạt</Badge>
+          <h1 className="text-2xl font-bold">Phân công quản lý cho {zoneName}</h1>
         </div>
       </div>
 
@@ -146,12 +144,12 @@ export default function AssignBulkManagerPanel({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="text-lg flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Select Managers
+              Chọn quản lý
             </CardTitle>
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search managers..."
+                placeholder="Tìm quản lý..."
                 className="pl-8 w-56"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -175,11 +173,10 @@ export default function AssignBulkManagerPanel({
                 <UserCog className="h-8 w-8 text-muted-foreground" />
               </div>
               <h3 className="text-lg font-semibold mb-1">
-                No managers available
+                Không có quản lý khả dụng
               </h3>
               <p className="text-sm text-muted-foreground max-w-sm">
-                Add managers to your farm in the Employee Management section
-                first.
+                Hãy thêm quản lý vào nông trại tại mục Quản lý nhân sự trước.
               </p>
             </div>
           ) : (
@@ -197,9 +194,9 @@ export default function AssignBulkManagerPanel({
                         {allSelected && <Check className="h-3 w-3" />}
                       </Button>
                     </TableHead>
-                    <TableHead>Name</TableHead>
+                    <TableHead>Họ tên</TableHead>
                     <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
+                    <TableHead>Số điện thoại</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -243,16 +240,16 @@ export default function AssignBulkManagerPanel({
 
               {selectedIds.size > 0 && (
                 <p className="text-sm text-muted-foreground">
-                  {selectedIds.size} manager
-                  {selectedIds.size > 1 ? "s" : ""} selected
+                  Đã chọn {selectedIds.size} quản lý
                 </p>
               )}
             </>
           )}
 
           <p className="text-xs text-muted-foreground">
-            Bulk-assigned managers are added as regular members (not primary).
-            Already assigned managers are automatically skipped.
+            Quản lý được phân công hàng loạt sẽ ở vai trò thành viên thường
+            (không phải quản lý chính). Các quản lý đã được gán trước đó sẽ tự
+            động được bỏ qua.
           </p>
 
           {/* Actions */}
@@ -261,7 +258,7 @@ export default function AssignBulkManagerPanel({
               variant="outline"
               onClick={handleBack}
             >
-              Cancel
+              Hủy
             </Button>
             <Button
               onClick={handleAssignBulk}
@@ -271,13 +268,12 @@ export default function AssignBulkManagerPanel({
               {bulkMutation.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Assigning...
+                  Đang phân công...
                 </>
               ) : (
                 <>
                   <Users className="h-4 w-4" />
-                  Assign {selectedIds.size > 0 ? selectedIds.size : ""} Manager
-                  {selectedIds.size !== 1 ? "s" : ""}
+                  Phân công {selectedIds.size > 0 ? selectedIds.size : ""} quản lý
                 </>
               )}
             </Button>

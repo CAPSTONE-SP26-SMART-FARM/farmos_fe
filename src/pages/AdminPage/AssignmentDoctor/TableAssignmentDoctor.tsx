@@ -40,15 +40,20 @@ import useDebounce from "@/hooks/useDebounce";
 import { Info, X } from "lucide-react";
 import DetailAssignmentDoctor from "./DetailAssignmentDoctor";
 
+const STATUS_LABELS: Record<string, string> = {
+	active: "Hoạt động",
+	inactive: "Không hoạt động",
+};
+
 const columns: ColumnDef<AssignmentWithDoctorAndOwnerResType>[] = [
 	{
 		id: "doctor",
-		header: "Doctor",
+		header: "Bác sĩ",
 		accessorFn: (row) => row.doctor?.email ?? "",
 		cell: ({ row }) => {
 			const original = row.original;
 			return (
-				<div className="min-w-[180px]">
+				<div className="min-w-45">
 					<div className="font-medium">{original.doctor?.fullName ?? "—"}</div>
 					<div className="text-xs text-muted-foreground">
 						{original.doctor?.email ?? "—"}
@@ -59,12 +64,12 @@ const columns: ColumnDef<AssignmentWithDoctorAndOwnerResType>[] = [
 	},
 	{
 		id: "owner",
-		header: "Owner",
+		header: "Chủ vườn",
 		accessorFn: (row) => row.owner?.email ?? "",
 		cell: ({ row }) => {
 			const original = row.original;
 			return (
-				<div className="min-w-[180px]">
+				<div className="min-w-45">
 					<div className="font-medium">{original.owner?.fullName ?? "—"}</div>
 					<div className="text-xs text-muted-foreground">
 						{original.owner?.email ?? "—"}
@@ -75,21 +80,24 @@ const columns: ColumnDef<AssignmentWithDoctorAndOwnerResType>[] = [
 	},
 	{
 		accessorKey: "status",
-		header: "Status",
+		header: "Trạng thái",
 		cell: ({ row }) => (
-			<div className="capitalize">{String(row.getValue("status") ?? "—")}</div>
+			<div className="capitalize">
+				{STATUS_LABELS[String(row.getValue("status") ?? "").toLowerCase()] ??
+					String(row.getValue("status") ?? "—")}
+			</div>
 		),
 	},
 	{
 		accessorKey: "isPrimary",
-		header: "Primary",
+		header: "Chính",
 		cell: ({ row }) => (
-			<div>{row.getValue("isPrimary") === true ? "Yes" : "No"}</div>
+			<div>{row.getValue("isPrimary") === true ? "Có" : "Không"}</div>
 		),
 	},
 	{
 		accessorKey: "assignedAt",
-		header: "Assigned at",
+		header: "Ngày phân công",
 		cell: ({ row }) => {
 			const value = row.getValue("assignedAt") as string | undefined;
 			if (!value) return "—";
@@ -99,13 +107,13 @@ const columns: ColumnDef<AssignmentWithDoctorAndOwnerResType>[] = [
 	},
 	{
 		id: "action",
-		header: "Action",
+		header: "Thao tác",
 		cell: ({ row }) => {
 			return (
 				<Button
 					variant="ghost"
 					onClick={() => row.toggleSelected(true)}
-					title="View detail"
+					title="Xem chi tiết"
 				>
 					<Info />
 				</Button>
@@ -205,7 +213,7 @@ const TableAssignmentDoctor = () => {
 		<div className="w-full">
 			<div className="flex items-center py-4 gap-2">
 				<Input
-					placeholder="Search doctor/owner..."
+					placeholder="Tìm bác sĩ/chủ vườn..."
 					value={filters.search ?? ""}
 					onChange={(e) =>
 						setFilters((prev) => ({ ...prev, search: e.target.value }))
@@ -222,21 +230,21 @@ const TableAssignmentDoctor = () => {
 					}
 					defaultValue="all"
 				>
-					<SelectTrigger className="w-[180px] capitalize">
+					<SelectTrigger className="w-45 capitalize">
 						<SelectValue
-							placeholder="Filter by status"
+							placeholder="Lọc theo trạng thái"
 							className="capitalize"
 						/>
 					</SelectTrigger>
 					<SelectContent>
 						<SelectItem value="all" className="capitalize">
-							all
+							tất cả
 						</SelectItem>
 						<SelectItem value="active" className="capitalize">
-							active
+							hoạt động
 						</SelectItem>
 						<SelectItem value="inactive" className="capitalize">
-							inactive
+							không hoạt động
 						</SelectItem>
 					</SelectContent>
 				</Select>
@@ -253,7 +261,7 @@ const TableAssignmentDoctor = () => {
 								: "opacity-50"
 						}`}
 					>
-						Clear filters
+						Xóa bộ lọc
 						<X className="ml-2 h-4 w-4" />
 					</Button>
 				</div>
@@ -306,7 +314,7 @@ const TableAssignmentDoctor = () => {
 									colSpan={columns.length}
 									className="h-24 text-center"
 								>
-									No results.
+									Không có kết quả.
 								</TableCell>
 							</TableRow>
 						)}
@@ -316,8 +324,8 @@ const TableAssignmentDoctor = () => {
 
 			<div className="flex items-center justify-end space-x-2 py-4">
 				<div className="text-xs text-muted-foreground py-4 flex-1 ">
-					Show <strong>{table.getPaginationRowModel().rows.length}</strong> in{" "}
-					<strong>{totalRecords}</strong> result
+					Hiển thị <strong>{table.getPaginationRowModel().rows.length}</strong> trên{" "}
+					<strong>{totalRecords}</strong> kết quả
 				</div>
 				<div>
 					<ProPagination

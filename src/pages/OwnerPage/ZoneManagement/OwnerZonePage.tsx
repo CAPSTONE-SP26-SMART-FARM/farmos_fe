@@ -12,6 +12,7 @@ import type { ZoneType } from "@/schemaValidatation/zone";
 import { useFarmStore } from "@/stores/farmStore";
 import { Building2, Layers, Sprout, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import AssignBulkManagerPanel from "./components/AssignBulkManagerPanel";
 import AssignManagerPanel from "./components/AssignManagerPanel";
 import CreateZonePanel from "./components/CreateZonePanel";
@@ -20,12 +21,13 @@ import ZoneDetailPanel from "./components/ZoneDetailPanel";
 import ZoneListSection from "./components/ZoneListSection";
 
 const ZONE_SUMMARY_CARDS = [
-  { title: "Total Zones", value: "--", icon: Layers },
-  { title: "Cultivation", value: "--", icon: Sprout },
-  { title: "Total Area", value: "--", icon: MapPin },
+  { title: "Tổng khu vực", value: "--", icon: Layers },
+  { title: "Canh tác", value: "--", icon: Sprout },
+  { title: "Tổng diện tích", value: "--", icon: MapPin },
 ] as const;
 
 function OwnerZonePage() {
+  const navigate = useNavigate();
   const [showCreate, setShowCreate] = useState(false);
   const [viewingZone, setViewingZone] = useState<ZoneType | null>(null);
   const [editingZone, setEditingZone] = useState<ZoneType | null>(null);
@@ -99,6 +101,13 @@ function OwnerZonePage() {
           setViewingZone(null);
           setBulkAssigningZone(zone);
         }}
+        onExploreCropSeasons={(zone) => {
+          const params = new URLSearchParams({
+            zoneId: zone.id,
+            zoneName: zone.name,
+          });
+          navigate(`/dashboard/owner/crop-seasons?${params.toString()}`);
+        }}
       />
     );
   }
@@ -117,10 +126,10 @@ function OwnerZonePage() {
     <div className="space-y-6 animate-in fade-in duration-300">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <Badge className="mb-2">Owner Portal</Badge>
-          <h1 className="text-2xl font-bold">Zone Management</h1>
+          <Badge className="mb-2">Cổng chủ vườn</Badge>
+          <h1 className="text-2xl font-bold">Quản lý khu vực</h1>
           <p className="text-muted-foreground">
-            Create and manage zones within your farm.
+            Tạo và quản lý các khu vực trong nông trại của bạn.
           </p>
         </div>
       </div>
@@ -137,7 +146,7 @@ function OwnerZonePage() {
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">
-                UI placeholder for zone metrics.
+                Giao diện mẫu cho chỉ số khu vực.
               </p>
             </CardContent>
           </Card>
@@ -163,10 +172,10 @@ function OwnerZonePage() {
             <div className="rounded-full bg-muted p-4 mb-4">
               <Building2 className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold mb-1">No farm found</h3>
+            <h3 className="text-lg font-semibold mb-1">Không tìm thấy nông trại</h3>
             <p className="text-sm text-muted-foreground max-w-sm">
-              You need to create a farm first before managing zones. Go to Farm
-              Management to get started.
+              Bạn cần tạo nông trại trước khi quản lý khu vực. Hãy vào mục quản
+              lý nông trại để bắt đầu.
             </p>
           </CardContent>
         </Card>

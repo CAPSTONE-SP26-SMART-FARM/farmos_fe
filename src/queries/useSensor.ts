@@ -1,5 +1,8 @@
 import { QUERY_KEYS } from "@/constants";
-import { ownerSensorService } from "@/services/sensorService";
+import {
+  managerSensorService,
+  ownerSensorService,
+} from "@/services/sensorService";
 import type {
   CreateSensorBatchBodyType,
   ListSensorsQueryType,
@@ -92,6 +95,90 @@ export const useOwnerDeleteSensor = () => {
       toast.success("Xóa cảm biến thành công!");
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.owner.sensors.list(iotDeviceId),
+      });
+    },
+    onError: (error: AxiosError<ApiResponseType>) => {
+      toast.error(error?.response?.data?.message ?? "Xóa cảm biến thất bại");
+    },
+  });
+};
+
+// ── Manager hooks ─────────────────────────────────────────────────────
+
+export const useManagerListSensors = (
+  iotDeviceId: string,
+  query: ListSensorsQueryType,
+  enabled = true,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.manager.sensors.list(iotDeviceId, query),
+    queryFn: () => managerSensorService.list(iotDeviceId, query),
+    enabled: !!iotDeviceId && enabled,
+  });
+};
+
+export const useManagerCreateSensors = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      iotDeviceId,
+      body,
+    }: {
+      iotDeviceId: string;
+      body: CreateSensorBatchBodyType;
+    }) => managerSensorService.create(iotDeviceId, body),
+    onSuccess: (_res, { iotDeviceId }) => {
+      toast.success("Tạo cảm biến thành công!");
+      qc.invalidateQueries({
+        queryKey: QUERY_KEYS.manager.sensors.list(iotDeviceId),
+      });
+    },
+    onError: (error: AxiosError<ApiResponseType>) => {
+      toast.error(error?.response?.data?.message ?? "Tạo cảm biến thất bại");
+    },
+  });
+};
+
+export const useManagerUpdateSensor = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      sensorId,
+      iotDeviceId,
+      body,
+    }: {
+      sensorId: string;
+      iotDeviceId: string;
+      body: UpdateSensorBodyType;
+    }) => managerSensorService.update(sensorId, iotDeviceId, body),
+    onSuccess: (_res, { iotDeviceId }) => {
+      toast.success("Cập nhật cảm biến thành công!");
+      qc.invalidateQueries({
+        queryKey: QUERY_KEYS.manager.sensors.list(iotDeviceId),
+      });
+    },
+    onError: (error: AxiosError<ApiResponseType>) => {
+      toast.error(
+        error?.response?.data?.message ?? "Cập nhật cảm biến thất bại",
+      );
+    },
+  });
+};
+
+export const useManagerDeleteSensor = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      sensorId,
+      iotDeviceId,
+    }: {
+      sensorId: string;
+      iotDeviceId: string;
+    }) => managerSensorService.delete(sensorId, iotDeviceId),
+    onSuccess: (_res, { iotDeviceId }) => {
+      toast.success("Xóa cảm biến thành công!");
+      qc.invalidateQueries({
+        queryKey: QUERY_KEYS.manager.sensors.list(iotDeviceId),
       });
     },
     onError: (error: AxiosError<ApiResponseType>) => {

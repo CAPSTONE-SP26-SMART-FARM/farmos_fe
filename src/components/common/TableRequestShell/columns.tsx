@@ -22,22 +22,22 @@ export const statusIcon: Record<RegistrationStatusNameType, LucideIcon> = {
 export const baseColumnRequest: ColumnDef<DoctorRequestResType>[] = [
   {
     accessorKey: "id",
-    header: "ID",
+    header: "Mã",
     cell: ({ row }) => <div>{row.getValue("id")}</div>,
   },
   {
     accessorKey: "title",
-    header: "Title",
+    header: "Tiêu đề",
     cell: ({ row }) => <div>{row.getValue("title")}</div>,
   },
   {
     accessorKey: "reason",
-    header: "Reason",
+    header: "Lý do",
     cell: ({ row }) => <div>{row.getValue("reason")}</div>,
   },
   {
     accessorKey: "status",
-    header: "Status",
+    header: "Trạng thái",
     cell: ({ row }) => {
       const Icon = statusIcon[row.original.registrationStatus];
       return <Icon />;

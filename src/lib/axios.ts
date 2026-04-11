@@ -9,6 +9,7 @@ import type {
 	ApiResponseType,
 } from "@/types/api";
 import type { Path, UseFormSetError } from "react-hook-form";
+import { translateBackendMessage } from "@/lib/error-message";
 
 // Token refresh state to prevent multiple simultaneous refresh requests
 let isRefreshing = false;
@@ -26,6 +27,15 @@ const processQueue = (error: Error | null, token: string | null = null) => {
 		}
 	});
 	failedQueue = [];
+};
+
+const localizeApiError = (error: AxiosError<ApiErrorResponse>) => {
+	if (error.response?.data?.message) {
+		error.response.data.message = translateBackendMessage(
+			error.response.data.message,
+		);
+	}
+	return error;
 };
 
 const axiosInstance = axios.create({
@@ -67,7 +77,7 @@ axiosInstance.interceptors.response.use(
 				originalRequest.url?.includes("/auth/login") ||
 				originalRequest.url?.includes("/auth/refresh")
 			) {
-				return Promise.reject(error);
+				return Promise.reject(localizeApiError(error));
 			}
 
 			if (isRefreshing) {
@@ -93,7 +103,7 @@ axiosInstance.interceptors.response.use(
 				const refreshToken = localStorage.getItem("refreshToken");
 
 				if (!refreshToken) {
-					throw new Error("No refresh token available");
+					throw new Error("Không tìm thấy thông tin phiên đăng nhập.");
 				}
 
 				// Call refresh token endpoint
@@ -119,16 +129,21 @@ axiosInstance.interceptors.response.use(
 				}
 				return axiosInstance(originalRequest);
 			} catch (refreshError) {
-				processQueue(refreshError as Error, null);
+				const normalizedRefreshError =
+					refreshError instanceof Error
+						? new Error(translateBackendMessage(refreshError.message))
+						: new Error("Đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+
+				processQueue(normalizedRefreshError, null);
 				// Do not force logout/redirect; allow manual logout from UI.
-				return Promise.reject(refreshError);
+				return Promise.reject(normalizedRefreshError);
 			} finally {
 				isRefreshing = false;
 			}
 		}
 
 		// Handle other errors
-		return Promise.reject(error);
+		return Promise.reject(localizeApiError(error));
 	},
 );
 

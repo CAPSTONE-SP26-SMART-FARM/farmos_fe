@@ -58,17 +58,17 @@ function AdminTicketAnalyticsPage() {
 	return (
 		<div className="space-y-6">
 			<div>
-				<Badge className="mb-2">Admin Portal</Badge>
-				<h1 className="text-2xl font-bold">Ticket Analytics</h1>
+				<Badge className="mb-2">Cổng quản trị</Badge>
+				<h1 className="text-2xl font-bold">Phân tích vé hỗ trợ</h1>
 				<p className="text-muted-foreground">
 					Phân tích ticket theo bộ lọc thời gian: số lượng đang xử lý và đã xử lý
-					của từng Doctor.
+					của từng bác sĩ.
 				</p>
 			</div>
 
 			<Card>
 				<CardHeader>
-					<CardTitle>Ticket Analytics by Doctor</CardTitle>
+					<CardTitle>Phân tích vé theo bác sĩ</CardTitle>
 					<CardDescription>
 						Theo dõi số ticket đã xử lý và đang xử lý theo bộ lọc thời gian.
 					</CardDescription>
@@ -82,7 +82,7 @@ function AdminTicketAnalyticsPage() {
 								variant={timeRange === range ? "default" : "outline"}
 								onClick={() => setTimeRange(range)}
 							>
-								{range === "custom" ? "Custom" : range.toUpperCase()}
+								{range === "custom" ? "Tuỳ chọn" : range.toUpperCase()}
 							</Button>
 						))}
 					</div>
@@ -91,21 +91,21 @@ function AdminTicketAnalyticsPage() {
 						<div className="grid gap-3 md:grid-cols-3">
 							<Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
 							<Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
-							<Button variant="outline">Apply Filter</Button>
+							<Button variant="outline">Áp dụng bộ lọc</Button>
 						</div>
 					)}
 
 					<div className="grid gap-3 md:grid-cols-3">
 						<div className="rounded-md border p-3">
-							<p className="text-xs text-muted-foreground">Processing Tickets</p>
+							<p className="text-xs text-muted-foreground">Vé đang xử lý</p>
 							<p className="text-2xl font-semibold">{ticketSummary.processing}</p>
 						</div>
 						<div className="rounded-md border p-3">
-							<p className="text-xs text-muted-foreground">Resolved Tickets</p>
+							<p className="text-xs text-muted-foreground">Vé đã xử lý</p>
 							<p className="text-2xl font-semibold">{ticketSummary.resolved}</p>
 						</div>
 						<div className="rounded-md border p-3">
-							<p className="text-xs text-muted-foreground">Escalated Tickets</p>
+							<p className="text-xs text-muted-foreground">Vé đã chuyển cấp</p>
 							<p className="text-2xl font-semibold">{ticketSummary.escalated}</p>
 						</div>
 					</div>
@@ -114,11 +114,11 @@ function AdminTicketAnalyticsPage() {
 						<table className="w-full text-sm">
 							<thead className="bg-muted/60">
 								<tr className="text-left">
-									<th className="p-3">Doctor</th>
-									<th className="p-3">Processing</th>
-									<th className="p-3">Resolved</th>
-									<th className="p-3">Escalated</th>
-									<th className="p-3">Avg Resolution</th>
+									<th className="p-3">Bác sĩ</th>
+									<th className="p-3">Đang xử lý</th>
+									<th className="p-3">Đã xử lý</th>
+									<th className="p-3">Đã chuyển cấp</th>
+									<th className="p-3">TG xử lý TB</th>
 								</tr>
 							</thead>
 							<tbody>
