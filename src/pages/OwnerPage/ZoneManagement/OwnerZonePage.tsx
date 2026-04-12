@@ -58,7 +58,6 @@ function OwnerZonePage() {
     return (
       <AssignManagerPanel
         zoneId={assigningZone.id}
-        farmId={farm.id}
         zoneName={assigningZone.name}
         onBack={() => {
           const zone = assigningZone;
@@ -73,7 +72,6 @@ function OwnerZonePage() {
     return (
       <AssignBulkManagerPanel
         zoneId={bulkAssigningZone.id}
-        farmId={farm.id}
         zoneName={bulkAssigningZone.name}
         onBack={() => {
           const zone = bulkAssigningZone;
@@ -172,7 +170,9 @@ function OwnerZonePage() {
             <div className="rounded-full bg-muted p-4 mb-4">
               <Building2 className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold mb-1">Không tìm thấy nông trại</h3>
+            <h3 className="text-lg font-semibold mb-1">
+              Không tìm thấy nông trại
+            </h3>
             <p className="text-sm text-muted-foreground max-w-sm">
               Bạn cần tạo nông trại trước khi quản lý khu vực. Hãy vào mục quản
               lý nông trại để bắt đầu.

@@ -31,55 +31,60 @@ import type { SidebarData } from "./types";
 export const sidebarData: SidebarData = {
   // Admin Navigation
   navAdmin: [
+    // {
+    //   title: "Danh Sách Yêu Cầu",
+    //   url: "/dashboard/admin/doctor-requests",
+    //   icon: Send,
+    // },
     {
-      title: "List Request",
-      url: "/dashboard/admin/doctor-requests",
-      icon: Send,
-    },
-    {
-      title: "Dashboard",
+      title: "Tổng Quan",
       url: "/dashboard/admin",
       icon: Shield,
       isActive: true,
     },
     {
-      title: "Subscription Packages",
+      title: "Gói Đăng Ký",
       url: "/dashboard/admin/packages",
       icon: Package,
     },
+    // {
+    //   title: "Đơn Xin Làm Bác Sĩ",
+    //   url: "/dashboard/admin/doctor-applications",
+    //   icon: UserCheck,
+    // },
+    // {
+    //   title: "Phân Công Bác Sĩ",
+    //   url: "/dashboard/admin/doctor-assignment",
+    //   icon: Users,
+    // },
+    // {
+    //   title: "Hiệu Suất Bác Sĩ",
+    //   url: "/dashboard/admin/doctor-performance",
+    //   icon: ChartColumnIncreasing,
+    // },
     {
-      title: "Doctor Applications",
-      url: "/dashboard/admin/doctor-applications",
-      icon: UserCheck,
-    },
-    {
-      title: "Doctor Assignment",
-      url: "/dashboard/admin/doctor-assignment",
-      icon: Users,
-    },
-    {
-      title: "Doctor Performance",
-      url: "/dashboard/admin/doctor-performance",
-      icon: ChartColumnIncreasing,
-    },
-    {
-      title: "Ticket Analytics",
+      title: "Phân Tích Ticket",
       url: "/dashboard/admin/ticket-analytics",
       icon: Ticket,
     },
     {
-      title: "IoT Templates",
+      title: "Mẫu IoT",
       url: "/dashboard/admin/iot-templates",
       icon: SlidersHorizontal,
     },
-    { title: "User Management", url: "/dashboard/admin/users", icon: Users },
+    { title: "Quản Lý Người Dùng", url: "/dashboard/admin/users", icon: Users },
     {
-      title: "Farm Management",
+      title: "Quản Lý Trang Trại",
       url: "/dashboard/admin/farms",
       icon: Building2,
     },
     {
-      title: "Employee Task Templates",
+      title: "Mẫu Cột Mốc",
+      url: "/dashboard/admin/milestone-templates",
+      icon: Milestone,
+    },
+    {
+      title: "Mẫu Nhiệm Vụ Nhân Viên",
       url: "/dashboard/admin/employee-task-templates",
       icon: ClipboardList,
     },
@@ -88,107 +93,115 @@ export const sidebarData: SidebarData = {
   // Owner Navigation
   navOwner: [
     {
-      title: "Dashboard",
+      title: "Tổng Quan",
       url: "/dashboard/owner",
       icon: LayoutDashboard,
       isActive: true,
     },
+    // {
+    //   title: "Đăng Ký Dịch Vụ",
+    //   url: "/dashboard/owner/subscription",
+    //   icon: Package,
+    // },
     {
-      title: "Subscription",
-      url: "/dashboard/owner/subscription",
-      icon: Package,
-    },
-    {
-      title: "Farm Management",
+      title: "Quản Lý Trang Trại",
       url: "/dashboard/owner/farms",
       icon: Building2,
     },
-    { title: "Zone Management", url: "/dashboard/owner/zones", icon: Map },
+    { title: "Quản Lý Khu Vực", url: "/dashboard/owner/zones", icon: Map },
     {
-      title: "Crop Seasons",
+      title: "Vụ Mùa",
       url: "/dashboard/owner/crop-seasons",
       icon: Sprout,
     },
     {
-      title: "Manager Management",
+      title: "Quản Lý Quản Lý Viên",
       url: "/dashboard/owner/managers",
       icon: Users,
     },
+    // {
+    //   title: "Bác Sĩ Được Phân Công",
+    //   url: "/dashboard/owner/doctor",
+    //   icon: Stethoscope,
+    // },
+    // {
+    //   title: "Phân Tích Sản Xuất",
+    //   url: "/dashboard/owner/analytics",
+    //   icon: ChartColumnIncreasing,
+    // },
+    { title: "Gợi Ý AI", url: "/dashboard/owner/ai-insights", icon: Bot },
     {
-      title: "Assigned Doctor",
-      url: "/dashboard/owner/doctor",
-      icon: Stethoscope,
-    },
-    {
-      title: "Production Analytics",
-      url: "/dashboard/owner/analytics",
-      icon: ChartColumnIncreasing,
-    },
-    { title: "AI Insights", url: "/dashboard/owner/ai-insights", icon: Bot },
-    {
-      title: "Task Templates",
+      title: "Mẫu Nhiệm Vụ",
       url: "/dashboard/owner/employee-task-templates",
       icon: ClipboardList,
     },
     {
-      title: "IoT Devices",
+      title: "Thiết Bị IoT",
       url: "/dashboard/owner/iot-devices",
       icon: Cpu,
     },
-    {
-      title: "Ticket Monitoring",
-      url: "/dashboard/owner/tickets",
-      icon: Ticket,
-    },
+    // {
+    //   title: "Giám Sát Ticket",
+    //   url: "/dashboard/owner/tickets",
+    //   icon: Ticket,
+    // },
   ],
 
   // Manager Navigation
   navManager: [
     {
-      title: "Dashboard",
+      title: "Tổng Quan",
       url: "/dashboard/manager",
       icon: LayoutDashboard,
       isActive: true,
     },
-    { title: "Assigned Zones", url: "/dashboard/manager/zones", icon: Map },
     {
-      title: "Manage Crop Seasons",
+      title: "Khu Vực Được Phân Công",
+      url: "/dashboard/manager/zones",
+      icon: Map,
+    },
+    {
+      title: "Quản Lý Vụ Mùa",
       url: "/dashboard/manager/crop-seasons",
       icon: Sprout,
     },
     {
-      title: "Production Milestones",
+      title: "Cột Mốc Sản Xuất",
       url: "/dashboard/manager/milestones",
       icon: Milestone,
     },
     {
-      title: "IoT Configuration",
+      title: "Cấu Hình IoT",
       url: "/dashboard/manager/iot-config",
       icon: Settings,
     },
     {
-      title: "Task Templates",
+      title: "Mẫu Nhiệm Vụ",
       url: "/dashboard/manager/employee-task-templates",
       icon: ClipboardList,
     },
     {
-      title: "Task Progress",
+      title: "Tiến Độ Nhiệm Vụ",
       url: "/dashboard/manager/progress",
       icon: FolderKanban,
     },
-    { title: "Sensor Data", url: "/dashboard/manager/sensors", icon: Activity },
     {
-      title: "Incident Coordination",
-      url: "/dashboard/manager/incidents",
-      icon: Bug,
+      title: "Dữ Liệu Cảm Biến",
+      url: "/dashboard/manager/sensors",
+      icon: Activity,
     },
+    // {
+    //   title: "Điều Phối Sự Cố",
+    //   url: "/dashboard/manager/incidents",
+    //   icon: Bug,
+    // },
+    // {
+    //   title: "Báo Cáo Chủ Trang Trại",
+    //   url: "/dashboard/manager/reports",
+    //   icon: FileText,
+    // },
     {
-      title: "Owner Reports",
-      url: "/dashboard/manager/reports",
-      icon: FileText,
-    },
-    {
-      title: "Notifications",
+      title: "Thông Báo",
       url: "/dashboard/manager/notifications",
       icon: Bell,
     },
@@ -197,50 +210,54 @@ export const sidebarData: SidebarData = {
   // Doctor Navigation
   navDoctor: [
     {
-      title: "Update profile",
+      title: "Cập Nhật Hồ Sơ",
       url: "/dashboard/doctor/update-profile",
       icon: User,
     },
-    { title: "List request", url: "/dashboard/doctor/my-request", icon: Send },
     {
-      title: "Dashboard",
+      title: "Danh Sách Yêu Cầu",
+      url: "/dashboard/doctor/my-request",
+      icon: Send,
+    },
+    {
+      title: "Tổng Quan",
       url: "/dashboard/doctor",
       icon: LayoutDashboard,
       isActive: true,
     },
     {
-      title: "Assigned Farms",
+      title: "Trang Trại Được Phân Công",
       url: "/dashboard/doctor/assigned-farms",
       icon: Building2,
     },
-    { title: "Incident Inbox", url: "/dashboard/doctor/incidents", icon: Bug },
+    { title: "Hộp Thư Sự Cố", url: "/dashboard/doctor/incidents", icon: Bug },
     {
-      title: "Diagnosis & Plans",
+      title: "Chẩn Đoán & Kế Hoạch",
       url: "/dashboard/doctor/treatment-plans",
       icon: Pill,
     },
     {
-      title: "Treatment Tracking",
+      title: "Theo Dõi Điều Trị",
       url: "/dashboard/doctor/treatment-tracking",
       icon: Activity,
     },
     {
-      title: "Ticket History",
+      title: "Lịch Sử Ticket",
       url: "/dashboard/doctor/ticket-history",
       icon: Ticket,
     },
     {
-      title: "Knowledge Base",
+      title: "Kho Kiến Thức",
       url: "/dashboard/doctor/knowledge-base",
       icon: BookOpen,
     },
     {
-      title: "Notifications",
+      title: "Thông Báo",
       url: "/dashboard/doctor/notifications",
       icon: Bell,
     },
     {
-      title: "Reports & Statistics",
+      title: "Báo Cáo & Thống Kê",
       url: "/dashboard/doctor/reports",
       icon: ChartColumnIncreasing,
     },
@@ -248,7 +265,7 @@ export const sidebarData: SidebarData = {
 
   navFarmer: [
     {
-      title: "Notifications",
+      title: "Thông Báo",
       url: "/dashboard/farmer/notifications",
       icon: Bell,
     },

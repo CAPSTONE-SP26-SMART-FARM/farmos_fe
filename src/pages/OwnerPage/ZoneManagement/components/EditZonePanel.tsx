@@ -94,7 +94,9 @@ const EditZonePanel = ({ zone, farmId, onBack }: Props) => {
         );
       }
       if (isApiErrorResponse(error)) {
-        toast.error(error.response?.data.message ?? "Không thể cập nhật khu vực");
+        toast.error(
+          error.response?.data.message ?? "Không thể cập nhật khu vực",
+        );
       }
     }
   };

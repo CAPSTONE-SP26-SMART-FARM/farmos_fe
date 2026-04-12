@@ -9,6 +9,7 @@ import type {
 import type {
   AssignBulkManagerBodyType,
   AssignManagerBodyType,
+  ListAvailableManagersQueryType,
   ListZoneManagersQueryType,
 } from "@/schemaValidatation/zoneMember";
 
@@ -80,6 +81,19 @@ export const useOwnerListZoneManagers = (
     enabled: !!zoneId,
   });
 
+export const useOwnerListAvailableManagers = (
+  zoneId: string,
+  query: ListAvailableManagersQueryType,
+) =>
+  useQuery({
+    queryKey: QUERY_KEYS.zones.managers.availableList(
+      zoneId,
+      query as Record<string, unknown>,
+    ),
+    queryFn: () => zoneService.listAvailableManagers(zoneId, query),
+    enabled: !!zoneId,
+  });
+
 export const useOwnerAssignManager = (zoneId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -88,6 +102,9 @@ export const useOwnerAssignManager = (zoneId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.zones.managers.byZone(zoneId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.zones.managers.availableByZone(zoneId),
       });
     },
   });
@@ -102,6 +119,9 @@ export const useOwnerAssignBulkManagers = (zoneId: string) => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.zones.managers.byZone(zoneId),
       });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.zones.managers.availableByZone(zoneId),
+      });
     },
   });
 };
@@ -114,6 +134,9 @@ export const useOwnerRemoveZoneManager = (zoneId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.zones.managers.byZone(zoneId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.zones.managers.availableByZone(zoneId),
       });
     },
   });

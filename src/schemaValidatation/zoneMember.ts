@@ -1,4 +1,5 @@
 import { PagingRequestSchema, PagingResponseSchema } from "@/types/api";
+import { UserResSchema } from "@/types/user";
 import { z } from "zod";
 
 // ============================================================
@@ -66,6 +67,10 @@ export const ListZoneManagersQuerySchema = PagingRequestSchema.extend({
   status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
 }).strict();
 
+export const ListAvailableManagersQuerySchema = PagingRequestSchema.extend({
+  search: z.string().optional(),
+}).strict();
+
 // ============================================================
 // Response Schemas
 // ============================================================
@@ -82,6 +87,9 @@ export const ZoneManagerWithUserResSchema = ZoneManagerSchema.extend({
 export const ListZoneManagersResSchema = PagingResponseSchema(
   ZoneManagerWithUserResSchema,
 );
+
+export const ListAvailableManagersResSchema =
+  PagingResponseSchema(UserResSchema);
 
 // ============================================================
 // Type Exports
@@ -101,8 +109,14 @@ export type RemoveBulkManagerBodyType = z.infer<
 export type ListZoneManagersQueryType = z.infer<
   typeof ListZoneManagersQuerySchema
 >;
+export type ListAvailableManagersQueryType = z.infer<
+  typeof ListAvailableManagersQuerySchema
+>;
 export type ZoneManagerResType = z.infer<typeof ZoneManagerResSchema>;
 export type ZoneManagerWithUserResType = z.infer<
   typeof ZoneManagerWithUserResSchema
 >;
 export type ListZoneManagersResType = z.infer<typeof ListZoneManagersResSchema>;
+export type ListAvailableManagersResType = z.infer<
+  typeof ListAvailableManagersResSchema
+>;

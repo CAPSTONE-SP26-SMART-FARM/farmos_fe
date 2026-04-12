@@ -148,6 +148,9 @@ export const useReplyProductionRequest = (requestId: string) => {
     mutationFn: (body: ReplyProductionRequestBodyType) =>
       cropSeasonService.replyRequest(requestId, body),
     onSuccess: async () => {
+      await qc.invalidateQueries({
+        queryKey: QUERY_KEYS.cropSeasons.requestDetail(requestId),
+      });
       await qc.invalidateQueries({ queryKey: ["crop-seasons"] });
       await qc.refetchQueries({ queryKey: ["crop-seasons"] });
       toast.success("Đã phản hồi yêu cầu thành công!");

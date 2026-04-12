@@ -15,7 +15,8 @@ const ListRequestAdmin = () => {
           <CardHeader>
             <CardTitle>Yêu cầu đăng ký bác sĩ</CardTitle>
             <CardDescription>
-              Danh sách yêu cầu gửi quản trị viên để trở thành bác sĩ trên nền tảng
+              Danh sách yêu cầu gửi quản trị viên để trở thành bác sĩ trên nền
+              tảng
             </CardDescription>
           </CardHeader>
           <CardContent>

@@ -121,11 +121,16 @@ const UserDetailPanel = ({ id, onBack }: UserDetailPanelProps) => {
         ) : !user ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <h3 className="text-lg font-semibold mb-1">Không tìm thấy dữ liệu</h3>
+              <h3 className="text-lg font-semibold mb-1">
+                Không tìm thấy dữ liệu
+              </h3>
               <p className="text-sm text-muted-foreground mb-4">
                 Không thể tải dữ liệu người dùng được yêu cầu.
               </p>
-              <Button variant="outline" onClick={handleBack}>
+              <Button
+                variant="outline"
+                onClick={handleBack}
+              >
                 Quay lại
               </Button>
             </CardContent>
@@ -137,7 +142,10 @@ const UserDetailPanel = ({ id, onBack }: UserDetailPanelProps) => {
                 <div className="flex items-center justify-between">
                   <CardTitle>Thông tin tài khoản</CardTitle>
                   <div className="flex gap-2">
-                    <Badge variant={roleVariant[user.role] ?? "outline"} className="capitalize">
+                    <Badge
+                      variant={roleVariant[user.role] ?? "outline"}
+                      className="capitalize"
+                    >
                       {roleLabel[user.role] ?? user.role}
                     </Badge>
                     <Badge variant={statusVariant[user.status] ?? "outline"}>
@@ -148,13 +156,24 @@ const UserDetailPanel = ({ id, onBack }: UserDetailPanelProps) => {
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <div className="grid grid-cols-2 gap-3">
-                  <InfoRow label="Họ và tên" value={user.fullName} />
-                  <InfoRow label="Email" value={user.email} />
+                  <InfoRow
+                    label="Họ và tên"
+                    value={user.fullName}
+                  />
+                  <InfoRow
+                    label="Email"
+                    value={user.email}
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <InfoRow label="Số điện thoại" value={user.phone} />
+                  <InfoRow
+                    label="Số điện thoại"
+                    value={user.phone}
+                  />
                   <div className="space-y-1">
-                    <div className="text-muted-foreground text-xs">Kích hoạt</div>
+                    <div className="text-muted-foreground text-xs">
+                      Kích hoạt
+                    </div>
                     <Badge variant={user.isActive ? "default" : "secondary"}>
                       {user.isActive ? "Có" : "Không"}
                     </Badge>

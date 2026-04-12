@@ -125,7 +125,9 @@ export default function ZoneDetailPanel({
           </Button>
           <div className="flex items-center justify-center gap-3">
             <h1 className="text-2xl font-bold">{detail.name}</h1>
-            <Badge className="mb-1 flex items-center m-0">Chi tiết khu vực</Badge>
+            <Badge className="mb-1 flex items-center m-0">
+              Chi tiết khu vực
+            </Badge>
           </div>
         </div>
         <div className="flex flex-wrap gap-2 self-start md:self-auto">

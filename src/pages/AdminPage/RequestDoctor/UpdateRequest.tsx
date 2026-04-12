@@ -300,9 +300,7 @@ const UpdateRequest = ({ id, setId }: Props) => {
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <div className="text-muted-foreground">
-                          Chuyên môn
-                        </div>
+                        <div className="text-muted-foreground">Chuyên môn</div>
                         <div className="font-medium">
                           {request.doctorProfile.specialization}
                         </div>

@@ -248,9 +248,7 @@ const CreateFarmDialog = ({ open, onClose }: Props) => {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="farm-description">
-                    Mô tả
-                  </FieldLabel>
+                  <FieldLabel htmlFor="farm-description">Mô tả</FieldLabel>
                   <Textarea
                     {...field}
                     id="farm-description"

@@ -13,8 +13,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import useDebounce from "@/hooks/useDebounce";
-import { useOwnerListFarmMembers } from "@/queries/useOwner";
-import { useOwnerAssignBulkManagers } from "@/queries/useZone";
+import {
+  useOwnerAssignBulkManagers,
+  useOwnerListAvailableManagers,
+} from "@/queries/useZone";
 import { isApiErrorResponse } from "@/lib/utils";
 import {
   ArrowLeft,
@@ -29,14 +31,12 @@ import { toast } from "sonner";
 
 interface Props {
   zoneId: string;
-  farmId: string;
   zoneName: string;
   onBack: () => void;
 }
 
 export default function AssignBulkManagerPanel({
   zoneId,
-  farmId,
   zoneName,
   onBack,
 }: Props) {
@@ -55,16 +55,14 @@ export default function AssignBulkManagerPanel({
     setTimeout(onBack, 300);
   };
 
-  const { data: membersData, isLoading: membersLoading } =
-    useOwnerListFarmMembers({
+  const { data: managersData, isLoading: managersLoading } =
+    useOwnerListAvailableManagers(zoneId, {
       page: 1,
       limit: 100,
-      role: "manager",
-      farmId,
       ...(debouncedSearch ? { search: debouncedSearch } : {}),
     });
 
-  const managers = membersData?.data.data ?? [];
+  const managers = managersData?.data.data ?? [];
 
   const bulkMutation = useOwnerAssignBulkManagers(zoneId);
 
@@ -84,7 +82,7 @@ export default function AssignBulkManagerPanel({
     if (selectedIds.size === managers.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(managers.map((m) => m.user.id)));
+      setSelectedIds(new Set(managers.map((m) => m.id)));
     }
   };
 
@@ -103,7 +101,8 @@ export default function AssignBulkManagerPanel({
         onError: (error) => {
           if (isApiErrorResponse(error)) {
             toast.error(
-              error.response?.data.message ?? "Không thể phân công các quản lý.",
+              error.response?.data.message ??
+                "Không thể phân công các quản lý.",
             );
           } else {
             toast.error("Đã xảy ra lỗi không mong muốn.");
@@ -133,7 +132,9 @@ export default function AssignBulkManagerPanel({
         </Button>
         <div>
           <Badge className="mb-1">Phân công hàng loạt</Badge>
-          <h1 className="text-2xl font-bold">Phân công quản lý cho {zoneName}</h1>
+          <h1 className="text-2xl font-bold">
+            Phân công quản lý cho {zoneName}
+          </h1>
         </div>
       </div>
 
@@ -158,7 +159,7 @@ export default function AssignBulkManagerPanel({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {membersLoading ? (
+          {managersLoading ? (
             <div className="space-y-2">
               {Array.from({ length: 4 }).map((_, i) => (
                 <Skeleton
@@ -201,14 +202,14 @@ export default function AssignBulkManagerPanel({
                 </TableHeader>
                 <TableBody>
                   {managers.map((m) => {
-                    const isSelected = selectedIds.has(m.user.id);
+                    const isSelected = selectedIds.has(m.id);
                     return (
                       <TableRow
-                        key={m.user.id}
+                        key={m.id}
                         className={`cursor-pointer ${
                           isSelected ? "bg-primary/5" : ""
                         }`}
-                        onClick={() => toggleSelect(m.user.id)}
+                        onClick={() => toggleSelect(m.id)}
                       >
                         <TableCell>
                           <Button
@@ -217,20 +218,20 @@ export default function AssignBulkManagerPanel({
                             className="h-7 w-7 p-0"
                             onClick={(e) => {
                               e.stopPropagation();
-                              toggleSelect(m.user.id);
+                              toggleSelect(m.id);
                             }}
                           >
                             {isSelected && <Check className="h-3 w-3" />}
                           </Button>
                         </TableCell>
                         <TableCell className="font-medium">
-                          {m.user.fullName}
+                          {m.fullName}
                         </TableCell>
                         <TableCell className="text-muted-foreground">
-                          {m.user.email}
+                          {m.email}
                         </TableCell>
                         <TableCell className="text-muted-foreground">
-                          {m.user.phone ?? "—"}
+                          {m.phone ?? "—"}
                         </TableCell>
                       </TableRow>
                     );
@@ -273,7 +274,8 @@ export default function AssignBulkManagerPanel({
               ) : (
                 <>
                   <Users className="h-4 w-4" />
-                  Phân công {selectedIds.size > 0 ? selectedIds.size : ""} quản lý
+                  Phân công {selectedIds.size > 0 ? selectedIds.size : ""} quản
+                  lý
                 </>
               )}
             </Button>

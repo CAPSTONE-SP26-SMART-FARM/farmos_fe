@@ -36,7 +36,7 @@ import {
   UserPlus,
   Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface Props {
@@ -69,6 +69,19 @@ export default function ZoneManagersSection({
   const { data, isLoading, isError } = useOwnerListZoneManagers(zoneId, query);
   const managers = data?.data.data ?? [];
   const meta = data?.data.meta;
+
+  useEffect(() => {
+    if (isLoading || !meta) return;
+
+    if (meta.totalPages > 0 && page > meta.totalPages) {
+      setPage(meta.totalPages);
+      return;
+    }
+
+    if (page > 1 && managers.length === 0) {
+      setPage((prev) => Math.max(1, prev - 1));
+    }
+  }, [isLoading, managers.length, meta, page]);
 
   const removeMutation = useOwnerRemoveZoneManager(zoneId);
   const primaryMutation = useOwnerUpdatePrimaryManager(zoneId);
@@ -186,7 +199,9 @@ export default function ZoneManagersSection({
             <div className="rounded-full bg-muted p-4 mb-4">
               <Shield className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold mb-1">Chưa có quản lý được phân công</h3>
+            <h3 className="text-lg font-semibold mb-1">
+              Chưa có quản lý được phân công
+            </h3>
             <p className="text-sm text-muted-foreground mb-4 max-w-sm">
               Hãy phân công quản lý cho khu vực này để theo dõi vận hành.
             </p>
@@ -203,10 +218,10 @@ export default function ZoneManagersSection({
             <Table>
               <TableHeader>
                 <TableRow>
-                    <TableHead>Quản lý</TableHead>
-                    <TableHead>Trạng thái</TableHead>
-                    <TableHead>Vai trò</TableHead>
-                    <TableHead>Ngày phân công</TableHead>
+                  <TableHead>Quản lý</TableHead>
+                  <TableHead>Trạng thái</TableHead>
+                  <TableHead>Vai trò</TableHead>
+                  <TableHead>Ngày phân công</TableHead>
                   <TableHead className="w-12.5"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -308,7 +323,8 @@ export default function ZoneManagersSection({
             {meta && meta.totalPages > 1 && (
               <div className="flex items-center justify-between pt-2">
                 <p className="text-sm text-muted-foreground">
-                  Trang {meta.page}/{meta.totalPages} &bull; {meta.totalItems} quản lý
+                  Trang {meta.page}/{meta.totalPages} &bull; {meta.totalItems}{" "}
+                  quản lý
                 </p>
                 <div className="flex gap-2">
                   <Button

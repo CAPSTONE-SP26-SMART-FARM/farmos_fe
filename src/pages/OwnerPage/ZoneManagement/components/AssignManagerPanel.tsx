@@ -22,22 +22,22 @@ import {
 } from "@/components/ui/table";
 import useDebounce from "@/hooks/useDebounce";
 import { isApiErrorResponse } from "@/lib/utils";
-import { useOwnerListFarmMembers } from "@/queries/useOwner";
-import { useOwnerAssignManager } from "@/queries/useZone";
+import {
+  useOwnerAssignManager,
+  useOwnerListAvailableManagers,
+} from "@/queries/useZone";
 import { ArrowLeft, Loader2, Search, UserCog, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface Props {
   zoneId: string;
-  farmId: string;
   zoneName: string;
   onBack: () => void;
 }
 
 export default function AssignManagerPanel({
   zoneId,
-  farmId,
   zoneName,
   onBack,
 }: Props) {
@@ -59,17 +59,15 @@ export default function AssignManagerPanel({
     setTimeout(onBack, 300);
   };
 
-  const { data: membersData, isLoading: membersLoading } =
-    useOwnerListFarmMembers({
+  const { data: managersData, isLoading: managersLoading } =
+    useOwnerListAvailableManagers(zoneId, {
       page,
       limit,
-      role: "manager",
-      farmId,
       ...(debouncedSearch ? { search: debouncedSearch } : {}),
     });
 
-  const managers = membersData?.data.data ?? [];
-  const meta = membersData?.data.meta;
+  const managers = managersData?.data.data ?? [];
+  const meta = managersData?.data.meta;
 
   const assignMutation = useOwnerAssignManager(zoneId);
 
@@ -98,7 +96,7 @@ export default function AssignManagerPanel({
     );
   };
 
-  const selectedManager = managers.find((m) => m.user.id === selectedManagerId);
+  const selectedManager = managers.find((m) => m.id === selectedManagerId);
 
   return (
     <div
@@ -117,7 +115,9 @@ export default function AssignManagerPanel({
         </Button>
         <div>
           <Badge className="mb-1">Phân công quản lý</Badge>
-          <h1 className="text-2xl font-bold">Phân công quản lý cho {zoneName}</h1>
+          <h1 className="text-2xl font-bold">
+            Phân công quản lý cho {zoneName}
+          </h1>
         </div>
       </div>
 
@@ -145,7 +145,7 @@ export default function AssignManagerPanel({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {membersLoading ? (
+          {managersLoading ? (
             <div className="space-y-2">
               {Array.from({ length: 4 }).map((_, i) => (
                 <Skeleton
@@ -181,21 +181,21 @@ export default function AssignManagerPanel({
                 </TableHeader>
                 <TableBody>
                   {managers.map((m) => {
-                    const isSelected = selectedManagerId === m.user.id;
+                    const isSelected = selectedManagerId === m.id;
                     return (
                       <TableRow
-                        key={m.user.id}
+                        key={m.id}
                         className={`cursor-pointer ${isSelected ? "bg-primary/10" : "hover:bg-muted/50"}`}
-                        onClick={() => setSelectedManagerId(m.user.id)}
+                        onClick={() => setSelectedManagerId(m.id)}
                       >
                         <TableCell className="font-medium">
-                          {m.user.fullName}
+                          {m.fullName}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {m.user.email}
+                          {m.email}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {m.user.phone ?? "—"}
+                          {m.phone ?? "—"}
                         </TableCell>
                         <TableCell>
                           {isSelected ? (
@@ -206,7 +206,7 @@ export default function AssignManagerPanel({
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setSelectedManagerId(m.user.id);
+                                setSelectedManagerId(m.id);
                               }}
                             >
                               Chọn
@@ -222,7 +222,8 @@ export default function AssignManagerPanel({
               {meta && meta.totalPages > 1 && (
                 <div className="flex items-center justify-between pt-2">
                   <p className="text-sm text-muted-foreground">
-                    Trang {meta.page}/{meta.totalPages} &bull; {meta.totalItems} quản lý
+                    Trang {meta.page}/{meta.totalPages} &bull; {meta.totalItems}{" "}
+                    quản lý
                   </p>
                   <div className="flex gap-2">
                     <Button
@@ -262,7 +263,9 @@ export default function AssignManagerPanel({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="no">Không</SelectItem>
-                    <SelectItem value="yes">Có - đặt làm quản lý chính</SelectItem>
+                    <SelectItem value="yes">
+                      Có - đặt làm quản lý chính
+                    </SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">

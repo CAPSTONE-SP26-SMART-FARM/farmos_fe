@@ -45,6 +45,7 @@ import {
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft,
   ArrowUp,
@@ -81,6 +82,9 @@ import {
   useManagerUpsertSensorThreshold,
 } from "@/queries/useProductionMilestone";
 import { useManagerListMilestoneTemplates } from "@/queries/useMilestoneTemplate";
+import ManagerMilestoneTasksSection, {
+  ManagerMilestoneTaskAssignmentScreen,
+} from "@/pages/ManagerPage/EmployeeTasks/ManagerMilestoneTasksSection";
 import { useManagerCropSeasonDetail } from "@/queries/useCropSeason";
 import type {
   ProductionMilestoneResType,
@@ -89,7 +93,15 @@ import type {
 import type { MilestoneTemplateResType } from "@/schemaValidatation/milestoneTemplate";
 import type { ThresholdEligibleSensorType } from "@/schemaValidatation/sensorThreshold";
 import { ProductionStatusName } from "@/types/cropSeason";
-import { addDays, format, isAfter, isBefore, isValid, parse, startOfDay } from "date-fns";
+import {
+  addDays,
+  format,
+  isAfter,
+  isBefore,
+  isValid,
+  parse,
+  startOfDay,
+} from "date-fns";
 import { toast } from "sonner";
 
 // ============================================================
@@ -111,6 +123,35 @@ const SENSOR_TYPE_LABELS: Record<string, string> = {
   air_humidity: "Độ ẩm không khí",
   light_intensity: "Cường độ ánh sáng",
 };
+
+function formatDeviceLabel(device?: {
+  deviceName?: string;
+  deviceCode?: string;
+  deviceType?: string;
+}) {
+  const name = device?.deviceName?.trim() || "Thiết bị không xác định";
+  const code = device?.deviceCode ? ` (${device.deviceCode})` : "";
+  const type = device?.deviceType
+    ? ` · ${device.deviceType.replace(/_/g, " ")}`
+    : "";
+  return `${name}${code}${type}`;
+}
+
+function formatThresholdText(sensor: {
+  threshold?: {
+    optimalMin: number | null;
+    optimalMax: number | null;
+    source: string;
+  };
+  unit?: string | null;
+}) {
+  const t = sensor.threshold;
+  if (!t || t.optimalMin == null || t.optimalMax == null) {
+    return "Chưa cấu hình ngưỡng";
+  }
+  const unit = sensor.unit ? ` ${sensor.unit}` : "";
+  return `${t.optimalMin} - ${t.optimalMax}${unit} (${t.source})`;
+}
 
 const THRESHOLD_ELIGIBLE = new Set([
   "soil_moisture",
@@ -311,7 +352,9 @@ const MilestoneFormFields = ({
         <label className="text-sm font-medium">Trạng thái</label>
         <Select
           value={form.status}
-          onValueChange={(v) => onChange("status", v as ProductionMilestoneStatusType)}
+          onValueChange={(v) =>
+            onChange("status", v as ProductionMilestoneStatusType)
+          }
         >
           <SelectTrigger className="mt-1">
             <SelectValue />
@@ -384,6 +427,263 @@ const MilestoneFormDialog = ({
         <MilestoneFormFields
           form={form}
           errors={errors}
+          onChange={update}
+        />
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={onClose}
+          >
+            Hủy
+          </Button>
+          <Button
+            disabled={isSubmitting}
+            onClick={handleSubmit}
+          >
+            {isSubmitting ? "Đang lưu..." : "Lưu"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+type MilestoneEditMode = "planning" | "approved";
+
+type MilestoneEditFormState = {
+  stageName: string;
+  milestoneOrder: number;
+  expectedStartDate: string;
+  expectedEndDate: string;
+  actualStartDate: string;
+  actualEndDate: string;
+  status: ProductionMilestoneStatusType;
+};
+
+type MilestoneEditFormErrors = Partial<
+  Record<keyof MilestoneEditFormState, string>
+>;
+
+const validateMilestoneEditForm = (
+  values: MilestoneEditFormState,
+  mode: MilestoneEditMode,
+): MilestoneEditFormErrors => {
+  const errors: MilestoneEditFormErrors = {};
+
+  if (mode === "planning" && !values.stageName.trim()) {
+    errors.stageName = "Tên giai đoạn là bắt buộc.";
+  }
+
+  const expectedStartDate = parseBackendDate(values.expectedStartDate);
+  const expectedEndDate = parseBackendDate(values.expectedEndDate);
+  const actualStartDate = parseBackendDate(values.actualStartDate);
+  const actualEndDate = parseBackendDate(values.actualEndDate);
+
+  if (mode === "planning") {
+    if (values.expectedStartDate && !expectedStartDate) {
+      errors.expectedStartDate = "Ngày bắt đầu dự kiến không hợp lệ.";
+    }
+    if (values.expectedEndDate && !expectedEndDate) {
+      errors.expectedEndDate = "Ngày kết thúc dự kiến không hợp lệ.";
+    }
+    if (
+      expectedStartDate &&
+      expectedEndDate &&
+      !isAfter(startOfDay(expectedEndDate), startOfDay(expectedStartDate))
+    ) {
+      errors.expectedEndDate =
+        "Ngày kết thúc dự kiến phải sau ngày bắt đầu dự kiến.";
+    }
+  }
+
+  if (values.actualStartDate && !actualStartDate) {
+    errors.actualStartDate = "Ngày bắt đầu thực tế không hợp lệ.";
+  }
+  if (values.actualEndDate && !actualEndDate) {
+    errors.actualEndDate = "Ngày kết thúc thực tế không hợp lệ.";
+  }
+  if (
+    actualStartDate &&
+    actualEndDate &&
+    !isAfter(startOfDay(actualEndDate), startOfDay(actualStartDate))
+  ) {
+    errors.actualEndDate =
+      "Ngày kết thúc thực tế phải sau ngày bắt đầu thực tế.";
+  }
+
+  return errors;
+};
+
+const MilestoneEditFormFields = ({
+  form,
+  errors,
+  mode,
+  onChange,
+}: {
+  form: MilestoneEditFormState;
+  errors: MilestoneEditFormErrors;
+  mode: MilestoneEditMode;
+  onChange: <K extends keyof MilestoneEditFormState>(
+    key: K,
+    value: MilestoneEditFormState[K],
+  ) => void;
+}) => {
+  const parsedExpectedStartDate = parseBackendDate(form.expectedStartDate);
+  const minExpectedEndDate = parsedExpectedStartDate
+    ? addDays(startOfDay(parsedExpectedStartDate), 1)
+    : undefined;
+
+  const parsedActualStartDate = parseBackendDate(form.actualStartDate);
+  const minActualEndDate = parsedActualStartDate
+    ? addDays(startOfDay(parsedActualStartDate), 1)
+    : undefined;
+
+  return (
+    <div className="space-y-3 py-2">
+      {mode === "planning" ? (
+        <>
+          <div>
+            <label className="text-sm font-medium">Tên giai đoạn *</label>
+            <Input
+              className="mt-1"
+              placeholder="Ví dụ: Nảy mầm"
+              value={form.stageName}
+              onChange={(e) => onChange("stageName", e.target.value)}
+            />
+            {errors.stageName && (
+              <p className="text-xs text-destructive mt-1">
+                {errors.stageName}
+              </p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <DatePickerField
+              label="Ngày bắt đầu dự kiến"
+              placeholder="Chọn ngày bắt đầu"
+              value={form.expectedStartDate}
+              error={errors.expectedStartDate}
+              onChange={(value) => onChange("expectedStartDate", value)}
+            />
+            <DatePickerField
+              label="Ngày kết thúc dự kiến"
+              placeholder="Chọn ngày kết thúc"
+              value={form.expectedEndDate}
+              error={errors.expectedEndDate}
+              onChange={(value) => onChange("expectedEndDate", value)}
+              minDate={minExpectedEndDate}
+            />
+          </div>
+        </>
+      ) : (
+        <div className="rounded-md border bg-muted/30 px-3 py-2 text-xs text-muted-foreground space-y-1">
+          <p>
+            <span className="font-medium text-foreground">Giai đoạn:</span>{" "}
+            {form.stageName}
+          </p>
+          <p>
+            <span className="font-medium text-foreground">Dự kiến:</span>{" "}
+            {formatDate(form.expectedStartDate)}
+            {form.expectedEndDate
+              ? ` → ${formatDate(form.expectedEndDate)}`
+              : ""}
+          </p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <DatePickerField
+          label="Ngày bắt đầu thực tế"
+          placeholder="Chọn ngày bắt đầu"
+          value={form.actualStartDate}
+          error={errors.actualStartDate}
+          onChange={(value) => onChange("actualStartDate", value)}
+        />
+        <DatePickerField
+          label="Ngày kết thúc thực tế"
+          placeholder="Chọn ngày kết thúc"
+          value={form.actualEndDate}
+          error={errors.actualEndDate}
+          onChange={(value) => onChange("actualEndDate", value)}
+          minDate={minActualEndDate}
+        />
+      </div>
+
+      <div>
+        <label className="text-sm font-medium">Trạng thái</label>
+        <Select
+          value={form.status}
+          onValueChange={(v) =>
+            onChange("status", v as ProductionMilestoneStatusType)
+          }
+        >
+          <SelectTrigger className="mt-1">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="pending">Chờ xử lý</SelectItem>
+            <SelectItem value="in_progress">Đang thực hiện</SelectItem>
+            <SelectItem value="completed">Hoàn thành</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
+};
+
+const MilestoneEditDialog = ({
+  open,
+  onClose,
+  onSubmit,
+  initialValues,
+  isSubmitting,
+  mode,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (values: MilestoneEditFormState) => void;
+  initialValues: MilestoneEditFormState;
+  isSubmitting: boolean;
+  mode: MilestoneEditMode;
+}) => {
+  const [form, setForm] = useState<MilestoneEditFormState>(initialValues);
+  const [errors, setErrors] = useState<MilestoneEditFormErrors>({});
+
+  useEffect(() => {
+    if (!open) return;
+    setForm(initialValues);
+    setErrors({});
+  }, [open, initialValues]);
+
+  const update = <K extends keyof MilestoneEditFormState>(
+    key: K,
+    value: MilestoneEditFormState[K],
+  ) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  const handleSubmit = () => {
+    const nextErrors = validateMilestoneEditForm(form, mode);
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+    onSubmit(form);
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(value) => {
+        if (!value) onClose();
+      }}
+    >
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>
+            {mode === "approved" ? "Cập nhật vận hành mốc" : "Chỉnh sửa mốc"}
+          </DialogTitle>
+        </DialogHeader>
+        <MilestoneEditFormFields
+          form={form}
+          errors={errors}
+          mode={mode}
           onChange={update}
         />
         <DialogFooter>
@@ -555,9 +855,7 @@ const CreateMilestonesScreen = ({
       <Card>
         <CardHeader>
           <CardTitle>Áp dụng mẫu mốc sản xuất</CardTitle>
-          <CardDescription>
-            Tạo nhanh nhiều mốc từ mẫu có sẵn.
-          </CardDescription>
+          <CardDescription>Tạo nhanh nhiều mốc từ mẫu có sẵn.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 md:grid-cols-2">
@@ -755,7 +1053,7 @@ const IotAssignmentSection = ({ milestoneId }: { milestoneId: string }) => {
   const handleUnassign = () => {
     if (!assignment) return;
     unassignMutation.mutate(
-      { iotDeviceId: assignment.iotDeviceId },
+      { iotDeviceId: assignment.device.deviceId },
       { onSuccess: () => setConfirmUnassign(false) },
     );
   };
@@ -803,10 +1101,7 @@ const IotAssignmentSection = ({ milestoneId }: { milestoneId: string }) => {
         </p>
       ) : (
         <div className="rounded-md border p-3 bg-muted/30 text-sm space-y-1">
-          <p className="font-medium">
-            Mã thiết bị:{" "}
-            <span className="font-mono text-xs">{assignment.iotDeviceId}</span>
-          </p>
+          <p className="font-medium">{formatDeviceLabel(assignment.device)}</p>
           <p className="text-muted-foreground text-xs">
             Mã lượt gán:{" "}
             <span className="font-mono">{assignment.assignmentId}</span>
@@ -814,6 +1109,11 @@ const IotAssignmentSection = ({ milestoneId }: { milestoneId: string }) => {
           <p className="text-muted-foreground text-xs">
             Thời điểm gán: {formatDate(assignment.assignedAt)}
           </p>
+          {assignment.device.isDeleted && (
+            <p className="text-xs text-destructive">
+              Thiết bị đã bị xóa mềm; dữ liệu hiển thị từ lịch sử gán.
+            </p>
+          )}
         </div>
       )}
 
@@ -925,7 +1225,7 @@ const SensorBindingSection = ({
 
   const boundQuery = useManagerListBoundSensors(assignmentId);
   const boundSensors = boundQuery.data?.data.data ?? [];
-  const boundIds = new Set(boundSensors.map((s) => s.id));
+  const boundIds = new Set(boundSensors.map((s) => s.sensorId));
 
   const unboundSensors = allSensors.filter((s) => !boundIds.has(s.id));
 
@@ -954,7 +1254,9 @@ const SensorBindingSection = ({
 
       {/* Bound sensors */}
       {boundSensors.length === 0 ? (
-        <p className="text-xs text-muted-foreground">Chưa có cảm biến nào được liên kết.</p>
+        <p className="text-xs text-muted-foreground">
+          Chưa có cảm biến nào được liên kết.
+        </p>
       ) : (
         <div className="space-y-1">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -967,7 +1269,9 @@ const SensorBindingSection = ({
             >
               <div>
                 <span className="font-medium">
-                  {SENSOR_TYPE_LABELS[s.sensorType] ?? s.sensorType}
+                  {s.sensorName ||
+                    SENSOR_TYPE_LABELS[s.sensorType] ||
+                    s.sensorType}
                 </span>
                 <Badge
                   variant="outline"
@@ -975,12 +1279,15 @@ const SensorBindingSection = ({
                 >
                   {s.status}
                 </Badge>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {`${s.sensorName || SENSOR_TYPE_LABELS[s.sensorType] || s.sensorType} (Ngưỡng: ${formatThresholdText(s)}) trên ${boundQuery.data?.data.device.deviceName ?? "thiết bị"}`}
+                </p>
               </div>
               <Button
                 size="sm"
                 variant="ghost"
                 className="text-destructive hover:text-destructive h-7 w-7 p-0"
-                onClick={() => setConfirmUnbind(s.id)}
+                onClick={() => setConfirmUnbind(s.sensorId)}
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -1090,7 +1397,8 @@ const ThresholdSection = ({ assignmentId }: { assignmentId: string }) => {
     <div className="space-y-3">
       <p className="text-sm font-semibold">Ngưỡng cảm biến</p>
       <p className="text-xs text-muted-foreground">
-        Thiết lập giá trị min/max tối ưu. Chỉ số ngoài khoảng này sẽ tạo cảnh báo.
+        Thiết lập giá trị min/max tối ưu. Chỉ số ngoài khoảng này sẽ tạo cảnh
+        báo.
       </p>
 
       <div className="space-y-2">
@@ -1215,6 +1523,124 @@ const ThresholdSection = ({ assignmentId }: { assignmentId: string }) => {
 };
 
 // ============================================================
+// Read-only IoT Assignment View
+// ============================================================
+
+const IotAssignmentReadOnly = ({ milestoneId }: { milestoneId: string }) => {
+  const assignmentQuery = useManagerMilestoneAssignment(milestoneId);
+  const assignment = assignmentQuery.data?.data?.data ?? null;
+
+  if (assignmentQuery.isLoading) return <Skeleton className="h-20 w-full" />;
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm font-semibold flex items-center gap-2">
+        <Cpu className="h-4 w-4" />
+        Thiết bị IoT được gán
+      </p>
+      {!assignment ? (
+        <p className="text-xs text-muted-foreground py-2">
+          Chưa có thiết bị IoT nào được gán cho mốc này.
+        </p>
+      ) : (
+        <>
+          <div className="rounded-md border p-3 bg-muted/30 text-sm space-y-1">
+            <p className="font-medium">
+              {formatDeviceLabel(assignment.device)}
+            </p>
+            <p className="text-muted-foreground text-xs">
+              Mã lượt gán:{" "}
+              <span className="font-mono">{assignment.assignmentId}</span>
+            </p>
+            <p className="text-muted-foreground text-xs">
+              Thời điểm gán: {formatDate(assignment.assignedAt)}
+            </p>
+            {assignment.device.isDeleted && (
+              <p className="text-xs text-destructive">
+                Thiết bị đã bị xóa mềm; dữ liệu hiển thị từ lịch sử gán.
+              </p>
+            )}
+          </div>
+          <SensorBindingReadOnly
+            sensors={assignment.sensors}
+            deviceName={assignment.device.deviceName}
+          />
+        </>
+      )}
+    </div>
+  );
+};
+
+// ============================================================
+// Read-only Sensor Binding View
+// ============================================================
+
+const SensorBindingReadOnly = ({
+  sensors,
+  deviceName,
+}: {
+  sensors: Array<{
+    bindingId: string;
+    sensorId: string;
+    sensorName: string;
+    sensorType: string;
+    status: string;
+    unit: string | null;
+    threshold: {
+      source: "milestone" | "zone" | "none";
+      optimalMin: number | null;
+      optimalMax: number | null;
+    };
+  }>;
+  deviceName?: string;
+}) => {
+  const boundSensors = sensors ?? [];
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm font-semibold flex items-center gap-2">
+        <Radio className="h-4 w-4" />
+        Liên kết cảm biến
+      </p>
+      {boundSensors.length === 0 ? (
+        <p className="text-xs text-muted-foreground">
+          Chưa có cảm biến nào được liên kết.
+        </p>
+      ) : (
+        <div className="space-y-1">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Đã liên kết
+          </p>
+          {boundSensors.map((s) => (
+            <div
+              key={s.bindingId}
+              className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
+            >
+              <div>
+                <span className="font-medium">
+                  {s.sensorName ||
+                    SENSOR_TYPE_LABELS[s.sensorType] ||
+                    s.sensorType}
+                </span>
+                <Badge
+                  variant="outline"
+                  className="ml-2 text-xs capitalize"
+                >
+                  {s.status}
+                </Badge>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {`${s.sensorName || SENSOR_TYPE_LABELS[s.sensorType] || s.sensorType} (Ngưỡng: ${formatThresholdText(s)}) trên ${deviceName || "thiết bị"}`}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ============================================================
 // Main Page
 // ============================================================
 
@@ -1225,6 +1651,9 @@ const ManagerMilestonesPage = () => {
 
   const [selectedMilestone, setSelectedMilestone] =
     useState<ProductionMilestoneResType | null>(null);
+  const [detailTab, setDetailTab] = useState<"iot" | "tasks" | "assignment">(
+    "iot",
+  );
   const [page, setPage] = useState(1);
   const [showCreateScreen, setShowCreateScreen] = useState(false);
   const [editingMilestone, setEditingMilestone] =
@@ -1261,7 +1690,12 @@ const ManagerMilestonesPage = () => {
   const totalPages = listQuery.data?.data.meta.totalPages ?? 1;
   const totalItems = listQuery.data?.data.meta.totalItems ?? 0;
   const nextMilestoneOrder = totalItems + 1;
-  const isPlanningCropSeason = cropSeason?.status === ProductionStatusName.Planning;
+  const isPlanningCropSeason =
+    cropSeason?.status === ProductionStatusName.Planning;
+  const isApprovedCropSeason =
+    cropSeason?.status === ProductionStatusName.Approved;
+  const canEditMilestone = isPlanningCropSeason || isApprovedCropSeason;
+  const canDeleteMilestone = isPlanningCropSeason;
 
   const updateMutation = useManagerUpdateProductionMilestone(id);
   const reorderMutation = useManagerUpdateProductionMilestone(id, {
@@ -1277,18 +1711,36 @@ const ManagerMilestonesPage = () => {
     );
   }, [milestones, isReordering]);
 
-  const handleUpdate = (form: MilestoneFormState) => {
+  const handleUpdate = (form: MilestoneEditFormState) => {
     if (!editingMilestone) return;
-    updateMutation.mutate(
-      {
-        milestoneId: editingMilestone.id,
-        body: {
+
+    if (!canEditMilestone) {
+      toast.error(
+        "Chỉ có thể chỉnh sửa mốc khi mùa vụ ở planning hoặc approved.",
+      );
+      return;
+    }
+
+    const payload = isApprovedCropSeason
+      ? {
+          actualStartDate: form.actualStartDate || null,
+          actualEndDate: form.actualEndDate || null,
+          status: form.status,
+        }
+      : {
           stageName: form.stageName,
           milestoneOrder: form.milestoneOrder,
           expectedStartDate: form.expectedStartDate || null,
           expectedEndDate: form.expectedEndDate || null,
+          actualStartDate: form.actualStartDate || null,
+          actualEndDate: form.actualEndDate || null,
           status: form.status,
-        },
+        };
+
+    updateMutation.mutate(
+      {
+        milestoneId: editingMilestone.id,
+        body: payload,
       },
       { onSuccess: () => setEditingMilestone(null) },
     );
@@ -1330,9 +1782,7 @@ const ManagerMilestonesPage = () => {
     );
 
     const changedItems = nextWithOrder
-      .filter(
-        (item) => originalOrderById.get(item.id) !== item.milestoneOrder,
-      )
+      .filter((item) => originalOrderById.get(item.id) !== item.milestoneOrder)
       .map((item) => ({ id: item.id, targetOrder: item.milestoneOrder }));
 
     if (!changedItems.length) {
@@ -1348,10 +1798,8 @@ const ManagerMilestonesPage = () => {
 
     try {
       const tempBase =
-        Math.max(
-          ...original.map((item) => item.milestoneOrder),
-          totalItems,
-        ) + 1000;
+        Math.max(...original.map((item) => item.milestoneOrder), totalItems) +
+        1000;
 
       for (const [index, item] of changedItems.entries()) {
         await reorderMutation.mutateAsync({
@@ -1440,7 +1888,9 @@ const ManagerMilestonesPage = () => {
   ) => {
     if (!isPlanningCropSeason || isReordering) return;
 
-    const currentIndex = orderedMilestones.findIndex((m) => m.id === milestoneId);
+    const currentIndex = orderedMilestones.findIndex(
+      (m) => m.id === milestoneId,
+    );
     if (currentIndex < 0) return;
 
     const targetIndex = currentIndex + offset;
@@ -1577,15 +2027,20 @@ const ManagerMilestonesPage = () => {
                   <div
                     key={m.id}
                     draggable={isPlanningCropSeason && !isReordering}
-                    onDragStart={(event) => handleMilestoneDragStart(event, m.id)}
+                    onDragStart={(event) =>
+                      handleMilestoneDragStart(event, m.id)
+                    }
                     onDragOver={(event) => handleMilestoneDragOver(event, m.id)}
                     onDrop={(event) => void handleMilestoneDrop(event, m.id)}
                     onDragEnd={handleMilestoneDragEnd}
-                    onClick={() =>
-                      setSelectedMilestone(
-                        selectedMilestone?.id === m.id ? null : m,
-                      )
-                    }
+                    onClick={() => {
+                      if (selectedMilestone?.id === m.id) {
+                        setSelectedMilestone(null);
+                        return;
+                      }
+                      setSelectedMilestone(m);
+                      setDetailTab("iot");
+                    }}
                     className={`flex items-start justify-between rounded-md border p-3 transition-colors ${
                       isPlanningCropSeason && !isReordering
                         ? "cursor-grab active:cursor-grabbing"
@@ -1625,66 +2080,70 @@ const ManagerMilestonesPage = () => {
                         )}
                       </div>
                     </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 shrink-0"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {isPlanningCropSeason && (
-                          <>
+                    {canEditMilestone && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 shrink-0"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {isPlanningCropSeason && (
+                            <>
+                              <DropdownMenuItem
+                                disabled={index === 0 || isReordering}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void handleMoveMilestoneByOffset(m.id, -1);
+                                }}
+                              >
+                                <ArrowUp className="h-4 w-4 mr-2" />
+                                Di chuyển lên
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                disabled={
+                                  index === orderedMilestones.length - 1 ||
+                                  isReordering
+                                }
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void handleMoveMilestoneByOffset(m.id, 1);
+                                }}
+                              >
+                                <ArrowDown className="h-4 w-4 mr-2" />
+                                Di chuyển xuống
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingMilestone(m);
+                            }}
+                          >
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Chỉnh sửa
+                          </DropdownMenuItem>
+                          {canDeleteMilestone && (
                             <DropdownMenuItem
-                              disabled={index === 0 || isReordering}
+                              className="text-destructive focus:text-destructive"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                void handleMoveMilestoneByOffset(m.id, -1);
+                                setConfirmDelete(m.id);
                               }}
                             >
-                              <ArrowUp className="h-4 w-4 mr-2" />
-                              Di chuyển lên
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Xóa
                             </DropdownMenuItem>
-                            <DropdownMenuItem
-                              disabled={
-                                index === orderedMilestones.length - 1 ||
-                                isReordering
-                              }
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                void handleMoveMilestoneByOffset(m.id, 1);
-                              }}
-                            >
-                              <ArrowDown className="h-4 w-4 mr-2" />
-                              Di chuyển xuống
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingMilestone(m);
-                          }}
-                        >
-                          <Pencil className="h-4 w-4 mr-2" />
-                          Chỉnh sửa
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setConfirmDelete(m.id);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Xóa
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
                 );
               })
@@ -1757,43 +2216,84 @@ const ManagerMilestonesPage = () => {
                 </p>
               )}
 
-              <Separator />
+              <Tabs
+                value={detailTab}
+                onValueChange={(value) =>
+                  setDetailTab(value as "iot" | "tasks" | "assignment")
+                }
+                className="space-y-4"
+              >
+                <TabsList
+                  variant="line"
+                  className="w-full justify-start"
+                >
+                  <TabsTrigger value="iot">Thiết bị IoT</TabsTrigger>
+                  <TabsTrigger value="tasks">Nhiệm vụ</TabsTrigger>
+                  <TabsTrigger value="assignment">Gán nông dân</TabsTrigger>
+                </TabsList>
 
-              {/* IoT Device Assignment (#80) */}
-              <IotAssignmentSection milestoneId={selectedMilestone.id} />
+                <TabsContent
+                  value="iot"
+                  className="space-y-4"
+                >
+                  {/* IoT Device Assignment (#80) */}
+                  {isPlanningCropSeason ? (
+                    <IotAssignmentSection milestoneId={selectedMilestone.id} />
+                  ) : (
+                    <IotAssignmentReadOnly milestoneId={selectedMilestone.id} />
+                  )}
 
-              {/* Sensor Binding (#81) — only when device is assigned */}
-              {assignmentId && (
-                <>
-                  <Separator />
-                  <SensorBindingSection
-                    assignmentId={assignmentId}
-                    iotDeviceId={iotDeviceId ?? undefined}
+                  {/* Sensor Binding (#81) — only when device is assigned */}
+                  {isPlanningCropSeason && assignmentId && (
+                    <>
+                      <Separator />
+                      <SensorBindingSection
+                        assignmentId={assignmentId}
+                        iotDeviceId={iotDeviceId ?? undefined}
+                      />
+                    </>
+                  )}
+
+                  {/* Threshold (#82) — only when device is assigned */}
+                  {isPlanningCropSeason && assignmentId && (
+                    <>
+                      <Separator />
+                      <ThresholdSection assignmentId={assignmentId} />
+                    </>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="tasks">
+                  <ManagerMilestoneTasksSection
+                    milestoneId={selectedMilestone.id}
+                    canEdit={canEditMilestone}
                   />
-                </>
-              )}
+                </TabsContent>
 
-              {/* Threshold (#82) — only when device is assigned */}
-              {assignmentId && (
-                <>
-                  <Separator />
-                  <ThresholdSection assignmentId={assignmentId} />
-                </>
-              )}
+                <TabsContent value="assignment">
+                  <ManagerMilestoneTaskAssignmentScreen
+                    milestoneId={selectedMilestone.id}
+                    canEdit={canEditMilestone}
+                    onBack={() => setDetailTab("tasks")}
+                  />
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         )}
       </div>
 
-      {editingMilestone && (
-        <MilestoneFormDialog
+      {editingMilestone && canEditMilestone && (
+        <MilestoneEditDialog
           open={!!editingMilestone}
-          title="Chỉnh sửa mốc"
+          mode={isApprovedCropSeason ? "approved" : "planning"}
           initialValues={{
             stageName: editingMilestone.stageName,
             milestoneOrder: editingMilestone.milestoneOrder,
             expectedStartDate: editingMilestone.expectedStartDate ?? "",
             expectedEndDate: editingMilestone.expectedEndDate ?? "",
+            actualStartDate: editingMilestone.actualStartDate ?? "",
+            actualEndDate: editingMilestone.actualEndDate ?? "",
             status: editingMilestone.status,
           }}
           onClose={() => setEditingMilestone(null)}

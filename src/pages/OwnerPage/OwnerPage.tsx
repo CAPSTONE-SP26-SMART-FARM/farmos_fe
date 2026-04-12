@@ -84,7 +84,12 @@ const ownerViews: Record<string, OwnerView> = {
   analytics: {
     title: "Phân tích sản xuất",
     description: "Phân tích sản lượng theo farm, zone và season.",
-    highlights: ["Sản lượng theo mùa vụ", "Khu vực tốt nhất", "Xu hướng", "Dự báo"],
+    highlights: [
+      "Sản lượng theo mùa vụ",
+      "Khu vực tốt nhất",
+      "Xu hướng",
+      "Dự báo",
+    ],
   },
   "ai-insights": {
     title: "Gợi ý AI",

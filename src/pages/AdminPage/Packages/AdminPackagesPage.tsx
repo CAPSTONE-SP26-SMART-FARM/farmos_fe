@@ -216,9 +216,7 @@ function AdminPackagesPage() {
               Đặt lại biểu mẫu
             </Button>
           )}
-          {showCreateButton && (
-            <Button onClick={startCreate}>Tạo gói</Button>
-          )}
+          {showCreateButton && <Button onClick={startCreate}>Tạo gói</Button>}
           {showForm && (
             <Button
               onClick={() => {
@@ -267,7 +265,8 @@ function AdminPackagesPage() {
                       <td className="p-3">
                         <div className="font-medium">{pkg.name}</div>
                         <div className="text-xs text-muted-foreground">
-                          Cập nhật {new Date(pkg.updatedAt).toLocaleDateString()}
+                          Cập nhật{" "}
+                          {new Date(pkg.updatedAt).toLocaleDateString()}
                         </div>
                       </td>
                       <td className="p-3">{pkg.durationMonths}</td>

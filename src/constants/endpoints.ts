@@ -178,6 +178,24 @@ export const API_ENDPOINTS = {
       DELETE: (sensorId: string, iotDeviceId: string) =>
         `/sensor/${sensorId}/manager/iot-device/${iotDeviceId}`,
     },
+    EMPLOYEE_TASK: {
+      LIST: (milestoneId: string) =>
+        `/employee-task/manager/production-milestone/${milestoneId}`,
+      CREATE_BATCH: (milestoneId: string) =>
+        `/employee-task/manager/production-milestone/${milestoneId}`,
+      DETAIL: (taskId: string, milestoneId: string) =>
+        `/employee-task/${taskId}/manager/production-milestone/${milestoneId}`,
+      UPDATE: (taskId: string, milestoneId: string) =>
+        `/employee-task/${taskId}/manager/production-milestone/${milestoneId}`,
+      DELETE: (taskId: string, milestoneId: string) =>
+        `/employee-task/${taskId}/manager/production-milestone/${milestoneId}`,
+      ASSIGN: (taskId: string, milestoneId: string) =>
+        `/employee-task/${taskId}/manager/production-milestone/${milestoneId}/assign`,
+      UNASSIGN: (taskId: string, milestoneId: string) =>
+        `/employee-task/${taskId}/manager/production-milestone/${milestoneId}/unassign`,
+      ELIGIBLE_FARMERS: (milestoneId: string) =>
+        `/employee-task/manager/production-milestone/${milestoneId}/eligible-farmers`,
+    },
   },
   OWNER: {
     MY_DOCTOR: {
@@ -228,6 +246,50 @@ export const API_ENDPOINTS = {
       DETAIL: (milestoneId: string, cropSeasonId: string) =>
         `/production-milestone/${milestoneId}/owner/crop-season/${cropSeasonId}`,
     },
+    MILESTONE_IOT_DEVICE: {
+      ASSIGNMENT: (milestoneId: string) =>
+        `/production-milestone-iot-device/owner/milestone/${milestoneId}/assignment`,
+      AVAILABLE: (milestoneId: string) =>
+        `/production-milestone-iot-device/owner/milestone/${milestoneId}/available`,
+      ASSIGN: (milestoneId: string) =>
+        `/production-milestone-iot-device/owner/milestone/${milestoneId}/assign`,
+      UNASSIGN: (milestoneId: string) =>
+        `/production-milestone-iot-device/owner/milestone/${milestoneId}/unassign`,
+    },
+    MILESTONE_SENSOR_BINDING: {
+      LIST: (assignmentId: string) =>
+        `/production-milestone-iot-device-sensor-binding/owner/assignment/${assignmentId}`,
+      BIND: (assignmentId: string) =>
+        `/production-milestone-iot-device-sensor-binding/owner/assignment/${assignmentId}/bind`,
+      UNBIND: (assignmentId: string) =>
+        `/production-milestone-iot-device-sensor-binding/owner/assignment/${assignmentId}/unbind`,
+    },
+    SENSOR_THRESHOLD: {
+      GET: (assignmentId: string) =>
+        `/sensor-threshold/owner/assignment/${assignmentId}`,
+      CREATE: (assignmentId: string) =>
+        `/sensor-threshold/owner/assignment/${assignmentId}`,
+      UPDATE: (assignmentId: string) =>
+        `/sensor-threshold/owner/assignment/${assignmentId}`,
+    },
+    EMPLOYEE_TASK: {
+      LIST: (milestoneId: string) =>
+        `/employee-task/owner/production-milestone/${milestoneId}`,
+      CREATE_BATCH: (milestoneId: string) =>
+        `/employee-task/owner/production-milestone/${milestoneId}`,
+      DETAIL: (taskId: string, milestoneId: string) =>
+        `/employee-task/${taskId}/owner/production-milestone/${milestoneId}`,
+      UPDATE: (taskId: string, milestoneId: string) =>
+        `/employee-task/${taskId}/owner/production-milestone/${milestoneId}`,
+      DELETE: (taskId: string, milestoneId: string) =>
+        `/employee-task/${taskId}/owner/production-milestone/${milestoneId}`,
+      ASSIGN: (taskId: string, milestoneId: string) =>
+        `/employee-task/${taskId}/owner/production-milestone/${milestoneId}/assign`,
+      UNASSIGN: (taskId: string, milestoneId: string) =>
+        `/employee-task/${taskId}/owner/production-milestone/${milestoneId}/unassign`,
+      ELIGIBLE_FARMERS: (milestoneId: string) =>
+        `/employee-task/owner/production-milestone/${milestoneId}/eligible-farmers`,
+    },
   },
   FARM_MEMBERS: {
     BASE: "/farm-members",
@@ -240,6 +302,7 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/zones/${id}`,
     MANAGERS: {
       LIST: (zoneId: string) => `/zones/${zoneId}/managers`,
+      AVAILABLE: (zoneId: string) => `/zones/${zoneId}/available-managers`,
       ASSIGN: (zoneId: string) => `/zones/${zoneId}/managers/assign`,
       ASSIGN_BULK: (zoneId: string) => `/zones/${zoneId}/managers/assign-bulk`,
       REMOVE: (zoneId: string, managerId: string) =>
@@ -320,7 +383,7 @@ export const QUERY_KEYS = {
         "admin",
         "milestone-templates",
         "list",
-        query,
+        ...(query !== undefined ? [query] : []),
       ],
       detail: (id: string) => ["admin", "milestone-templates", id],
     },
@@ -469,6 +532,27 @@ export const QUERY_KEYS = {
         ...(query !== undefined ? [query] : []),
       ],
     },
+    employeeTasks: {
+      list: (milestoneId: string, query?: Record<string, unknown>) => [
+        "manager",
+        "employee-tasks",
+        milestoneId,
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ],
+      detail: (taskId: string, milestoneId: string) => [
+        "manager",
+        "employee-tasks",
+        taskId,
+        milestoneId,
+      ],
+      eligibleFarmers: (milestoneId: string) => [
+        "manager",
+        "employee-tasks",
+        milestoneId,
+        "eligible-farmers",
+      ],
+    },
   },
   owner: {
     farm: {
@@ -557,6 +641,57 @@ export const QUERY_KEYS = {
         "production-milestones",
         milestoneId,
       ],
+      assignment: (milestoneId: string) => [
+        "owner",
+        "production-milestones",
+        milestoneId,
+        "assignment",
+      ],
+      availableDevices: (
+        milestoneId: string,
+        query?: Record<string, unknown>,
+      ) => [
+        "owner",
+        "production-milestones",
+        milestoneId,
+        "available-devices",
+        ...(query !== undefined ? [query] : []),
+      ],
+      boundSensors: (assignmentId: string) => [
+        "owner",
+        "production-milestones",
+        "assignment",
+        assignmentId,
+        "sensors",
+      ],
+      thresholds: (assignmentId: string) => [
+        "owner",
+        "production-milestones",
+        "assignment",
+        assignmentId,
+        "thresholds",
+      ],
+    },
+    employeeTasks: {
+      list: (milestoneId: string, query?: Record<string, unknown>) => [
+        "owner",
+        "employee-tasks",
+        milestoneId,
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ],
+      detail: (taskId: string, milestoneId: string) => [
+        "owner",
+        "employee-tasks",
+        taskId,
+        milestoneId,
+      ],
+      eligibleFarmers: (milestoneId: string) => [
+        "owner",
+        "employee-tasks",
+        milestoneId,
+        "eligible-farmers",
+      ],
     },
   },
   farmMembers: {
@@ -584,6 +719,17 @@ export const QUERY_KEYS = {
         "zones",
         zoneId,
         "managers",
+        filters,
+      ],
+      availableByZone: (zoneId: string) => [
+        "zones",
+        zoneId,
+        "available-managers",
+      ],
+      availableList: (zoneId: string, filters?: Record<string, unknown>) => [
+        "zones",
+        zoneId,
+        "available-managers",
         filters,
       ],
     },

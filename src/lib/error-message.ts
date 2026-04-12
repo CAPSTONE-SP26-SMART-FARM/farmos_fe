@@ -19,15 +19,15 @@ const BACKEND_ERROR_MAP: Record<string, string> = {
     "Không tìm thấy thông tin phiên đăng nhập. Vui lòng đăng nhập lại.",
   "network error": "Không thể kết nối tới máy chủ. Vui lòng thử lại.",
   "request timeout": "Yêu cầu bị quá thời gian. Vui lòng thử lại.",
-  "internal server error":
-    "Máy chủ đang gặp sự cố. Vui lòng thử lại sau.",
+  "internal server error": "Máy chủ đang gặp sự cố. Vui lòng thử lại sau.",
   "too many requests": "Bạn thao tác quá nhanh. Vui lòng thử lại sau.",
 };
 
 const normalizeMessage = (message: string) =>
   message.trim().replace(/\s+/g, " ").toLowerCase();
 
-const looksVietnamese = (message: string) => VIETNAMESE_CHAR_PATTERN.test(message);
+const looksVietnamese = (message: string) =>
+  VIETNAMESE_CHAR_PATTERN.test(message);
 
 export const translateBackendMessage = (message: string) => {
   const normalized = normalizeMessage(message);
@@ -48,7 +48,9 @@ export const translateBackendMessage = (message: string) => {
     return "Không tìm thấy dữ liệu yêu cầu.";
   }
 
-  if (/already exists|duplicate|unique constraint|must be unique/i.test(message)) {
+  if (
+    /already exists|duplicate|unique constraint|must be unique/i.test(message)
+  ) {
     return "Dữ liệu đã tồn tại.";
   }
 
@@ -56,7 +58,9 @@ export const translateBackendMessage = (message: string) => {
     return "Vui lòng nhập đầy đủ các trường bắt buộc.";
   }
 
-  if (/invalid|validation|unprocessable|format|malformed|must be/i.test(message)) {
+  if (
+    /invalid|validation|unprocessable|format|malformed|must be/i.test(message)
+  ) {
     return "Dữ liệu không hợp lệ. Vui lòng kiểm tra và thử lại.";
   }
 

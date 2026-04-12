@@ -203,7 +203,9 @@ const AddMemberPanel = ({ farmCode, onBack }: Props) => {
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="member-phone">Số điện thoại</FieldLabel>
+                        <FieldLabel htmlFor="member-phone">
+                          Số điện thoại
+                        </FieldLabel>
                         <Input
                           {...field}
                           id="member-phone"
@@ -227,7 +229,7 @@ const AddMemberPanel = ({ farmCode, onBack }: Props) => {
                           onValueChange={field.onChange}
                         >
                           <SelectTrigger>
-                              <SelectValue placeholder="Chọn vai trò" />
+                            <SelectValue placeholder="Chọn vai trò" />
                           </SelectTrigger>
                           <SelectContent>
                             {ROLE_OPTIONS.map((opt) => (

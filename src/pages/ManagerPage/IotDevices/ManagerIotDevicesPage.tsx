@@ -119,9 +119,7 @@ export default function ManagerIotDevicesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button onClick={() => assignedZonesQuery.refetch()}>
-            Thử lại
-          </Button>
+          <Button onClick={() => assignedZonesQuery.refetch()}>Thử lại</Button>
         </CardContent>
       </Card>
     );
@@ -142,8 +140,8 @@ export default function ManagerIotDevicesPage() {
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Vui lòng kiểm tra lại mục khu vực được giao hoặc liên hệ chủ vườn/admin
-            để được cấp quyền nông trại.
+            Vui lòng kiểm tra lại mục khu vực được giao hoặc liên hệ chủ
+            vườn/admin để được cấp quyền nông trại.
           </p>
           <Button
             variant="outline"
@@ -230,7 +228,8 @@ export default function ManagerIotDevicesPage() {
                       key={farm.farmId}
                       value={farm.farmId}
                     >
-                      {getFarmNameFromId(farm.farmId)} • {farm.zoneCount} khu vực
+                      {getFarmNameFromId(farm.farmId)} • {farm.zoneCount} khu
+                      vực
                     </SelectItem>
                   ))}
                 </SelectContent>

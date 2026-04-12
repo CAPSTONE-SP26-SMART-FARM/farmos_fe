@@ -100,11 +100,7 @@ type IotActor = "owner" | "manager";
 
 const DeviceItemFormSchema = z
   .object({
-    deviceName: z
-      .string()
-      .trim()
-      .min(1, "Tên thiết bị là bắt buộc")
-      .max(255),
+    deviceName: z.string().trim().min(1, "Tên thiết bị là bắt buộc").max(255),
     deviceType: IotDeviceTypeSchema,
     macAddress: z
       .string()
@@ -188,11 +184,7 @@ const BatchCreateFormSchema = z
 
 const EditFormSchema = z
   .object({
-    deviceName: z
-      .string()
-      .trim()
-      .min(1, "Tên thiết bị là bắt buộc")
-      .max(255),
+    deviceName: z.string().trim().min(1, "Tên thiết bị là bắt buộc").max(255),
     deviceType: IotDeviceTypeSchema,
     macAddress: z
       .string()
@@ -228,9 +220,7 @@ const SensorItemFormSchema = z.object({
   minValue: z
     .number()
     .refine(Number.isFinite, "Giá trị tối thiểu không hợp lệ"),
-  maxValue: z
-    .number()
-    .refine(Number.isFinite, "Giá trị tối đa không hợp lệ"),
+  maxValue: z.number().refine(Number.isFinite, "Giá trị tối đa không hợp lệ"),
 });
 
 const SensorBatchFormSchema = z
@@ -396,9 +386,9 @@ function DeviceTemplatePicker({
           </div>
           <CardDescription className="text-xs">
             Chọn mẫu để tự động điền cho thiết bị hiện tại (
-            {DEVICE_TYPE_LABEL[deviceType] ?? deviceType}). Nếu mẫu có
-            nhiều thiết bị, hệ thống chỉ áp dụng một thiết bị phù hợp với loại
-            đang chọn.
+            {DEVICE_TYPE_LABEL[deviceType] ?? deviceType}). Nếu mẫu có nhiều
+            thiết bị, hệ thống chỉ áp dụng một thiết bị phù hợp với loại đang
+            chọn.
           </CardDescription>
         </CardHeader>
         <CardContent className="pb-3">
@@ -520,8 +510,8 @@ function DeviceTemplatePicker({
               <div className="flex items-start gap-2 rounded-md bg-muted/50 p-2.5">
                 <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                 <p className="text-xs text-muted-foreground">
-                  Giá trị từ thiết bị được chọn sẽ điền vào biểu mẫu. Bạn vẫn có thể
-                  chỉnh sửa sau.
+                  Giá trị từ thiết bị được chọn sẽ điền vào biểu mẫu. Bạn vẫn có
+                  thể chỉnh sửa sau.
                 </p>
               </div>
 
@@ -618,9 +608,7 @@ function SensorTemplatePicker({
       <div className="rounded-md border border-dashed border-primary/30 bg-primary/2 p-3 space-y-2">
         <div className="flex items-center gap-2">
           <FileText className="h-3.5 w-3.5 text-primary" />
-          <span className="text-xs font-medium">
-            Áp dụng từ mẫu cảm biến
-          </span>
+          <span className="text-xs font-medium">Áp dụng từ mẫu cảm biến</span>
           <Badge
             variant="outline"
             className="text-[10px] font-normal"
@@ -1134,10 +1122,23 @@ function BatchCreateForm({
       handleBack();
     } catch (error) {
       if (isApiErrorUnprocessableEntityResponse(error)) {
-        handleApiErrorUnprocessentity(
-          error.response!.data.errors,
-          form.setError,
-        );
+        const apiErrors = error.response!.data.errors;
+        const macErrors = apiErrors.filter((e) => e.field === "macAddress");
+        const otherErrors = apiErrors.filter((e) => e.field !== "macAddress");
+
+        // Map macAddress errors to the actual nested field paths
+        if (macErrors.length > 0) {
+          const macMsg = "Địa chỉ MAC này đã được đăng ký.";
+          data.devices.forEach((device, i) => {
+            if (device.deviceType === "wifi_module" && device.macAddress) {
+              form.setError(`devices.${i}.macAddress`, { message: macMsg });
+            }
+          });
+        }
+
+        if (otherErrors.length > 0) {
+          handleApiErrorUnprocessentity(otherErrors, form.setError);
+        }
       }
     }
   };
@@ -1695,8 +1696,13 @@ function EditDeviceForm({
               <span>Còn lại: {remainingSensorSlots} vị trí</span>
               {existingSensors.length > 0 && (
                 <span>
-                  Đang có: {existingSensors
-                    .map((sensor) => SENSOR_TYPE_LABEL[sensor.sensorType] ?? sensor.sensorType)
+                  Đang có:{" "}
+                  {existingSensors
+                    .map(
+                      (sensor) =>
+                        SENSOR_TYPE_LABEL[sensor.sensorType] ??
+                        sensor.sensorType,
+                    )
                     .join(", ")}
                 </span>
               )}

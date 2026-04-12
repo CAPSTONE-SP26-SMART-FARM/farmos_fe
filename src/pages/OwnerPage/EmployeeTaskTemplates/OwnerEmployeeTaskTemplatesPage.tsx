@@ -94,8 +94,8 @@ function OwnerEmployeeTaskTemplatesPage() {
               Mẫu nhiệm vụ
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
-              Xem danh sách mẫu nhiệm vụ tiêu chuẩn dành cho nhân viên nông
-              trại của bạn.
+              Xem danh sách mẫu nhiệm vụ tiêu chuẩn dành cho nhân viên nông trại
+              của bạn.
             </p>
           </div>
           <div className="rounded-xl border bg-background/80 px-4 py-3 backdrop-blur-sm">

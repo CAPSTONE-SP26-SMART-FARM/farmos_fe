@@ -165,8 +165,8 @@ const ZoneListSection = ({
             </div>
             <h3 className="text-lg font-semibold mb-1">Chưa có khu vực</h3>
             <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-              Tạo khu vực để chia trang trại thành các phần, giúp quản lý mùa
-              vụ hiệu quả hơn.
+              Tạo khu vực để chia trang trại thành các phần, giúp quản lý mùa vụ
+              hiệu quả hơn.
             </p>
             <Button
               onClick={onCreateZone}
@@ -249,7 +249,8 @@ const ZoneListSection = ({
           {meta && meta.totalPages > 1 && (
             <div className="flex items-center justify-between pt-2">
               <p className="text-sm text-muted-foreground">
-                Trang {meta.page} / {meta.totalPages} &bull; {meta.totalItems} khu vực
+                Trang {meta.page} / {meta.totalPages} &bull; {meta.totalItems}{" "}
+                khu vực
               </p>
               <div className="flex gap-2">
                 <Button

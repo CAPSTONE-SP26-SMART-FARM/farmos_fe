@@ -73,7 +73,14 @@ import {
   ArrowLeft,
   CalendarDays,
 } from "lucide-react";
-import { addMonths, format, isBefore, isValid, parse, startOfDay } from "date-fns";
+import {
+  addMonths,
+  format,
+  isBefore,
+  isValid,
+  parse,
+  startOfDay,
+} from "date-fns";
 import ProPagination from "@/components/common/pro-pagination";
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -270,7 +277,9 @@ function DatePickerField({
           <Calendar
             mode="single"
             selected={parseBackendDate(value)}
-            onSelect={(date) => onChange(date ? format(date, "yyyy-MM-dd") : "")}
+            onSelect={(date) =>
+              onChange(date ? format(date, "yyyy-MM-dd") : "")
+            }
             disabled={(date) =>
               normalizedMinDate
                 ? isBefore(startOfDay(date), normalizedMinDate)
@@ -280,7 +289,9 @@ function DatePickerField({
           />
         </PopoverContent>
       </Popover>
-      {helperText && <p className="text-xs text-muted-foreground">{helperText}</p>}
+      {helperText && (
+        <p className="text-xs text-muted-foreground">{helperText}</p>
+      )}
     </Field>
   );
 }

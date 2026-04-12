@@ -127,9 +127,7 @@ const CreateZonePanel = ({ farmCode, farmId, onBack }: Props) => {
         <Card>
           <CardHeader>
             <CardTitle>Thông tin khu vực</CardTitle>
-            <CardDescription>
-              Điền thông tin cho khu vực mới.
-            </CardDescription>
+            <CardDescription>Điền thông tin cho khu vực mới.</CardDescription>
           </CardHeader>
           <CardContent>
             <form

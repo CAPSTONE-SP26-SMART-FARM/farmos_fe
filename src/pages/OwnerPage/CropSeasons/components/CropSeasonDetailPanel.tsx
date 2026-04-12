@@ -36,26 +36,35 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useOwnerCropSeasonDetail,
   useOwnerListRequests,
 } from "@/queries/useCropSeason";
-import { useOwnerListProductionMilestones } from "@/queries/useProductionMilestone";
+import {
+  useOwnerListProductionMilestones,
+  useOwnerMilestoneAssignment,
+} from "@/queries/useProductionMilestone";
 import type { ProductionRequestType } from "@/types/cropSeason";
 import {
   ArrowLeft,
   Calendar,
+  ChevronDown,
+  ChevronRight,
   ClipboardList,
+  Cpu,
   Eye,
   Layers,
   Milestone,
   MoreVertical,
+  Radio,
   Ruler,
   Sprout,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
+import OwnerMilestoneTasksSection from "@/pages/OwnerPage/EmployeeTasks/OwnerMilestoneTasksSection";
 
 interface Props {
   cropSeasonId: string;
@@ -97,6 +106,125 @@ const MILESTONE_STATUS_MAP: Record<
   in_progress: { label: "Đang thực hiện", variant: "default" },
   completed: { label: "Hoàn thành", variant: "outline" },
 };
+
+const SENSOR_TYPE_LABELS: Record<string, string> = {
+  soil_moisture: "Độ ẩm đất",
+  air_temperature: "Nhiệt độ không khí",
+  air_humidity: "Độ ẩm không khí",
+  light_intensity: "Cường độ ánh sáng",
+};
+
+function formatThresholdText(sensor: {
+  threshold?: {
+    optimalMin: number | null;
+    optimalMax: number | null;
+    source: string;
+  };
+  unit?: string | null;
+}) {
+  const t = sensor.threshold;
+  if (!t || t.optimalMin == null || t.optimalMax == null) {
+    return "Chưa cấu hình ngưỡng";
+  }
+  const unit = sensor.unit ? ` ${sensor.unit}` : "";
+  return `${t.optimalMin} - ${t.optimalMax}${unit} (${t.source})`;
+}
+
+function MilestoneIotDetail({ milestoneId }: { milestoneId: string }) {
+  const assignmentQuery = useOwnerMilestoneAssignment(milestoneId);
+  const assignment = assignmentQuery.data?.data?.data ?? null;
+  const sensors = assignment?.sensors ?? [];
+
+  if (assignmentQuery.isLoading) {
+    return (
+      <div className="px-4 py-3">
+        <Skeleton className="h-16 w-full" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-md border bg-background p-3 space-y-2">
+        <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">
+          Lớp vật lý
+        </p>
+        <p className="text-xs font-semibold flex items-center gap-1.5">
+          <Cpu className="h-3.5 w-3.5" />
+          Thiết bị IoT
+        </p>
+        {!assignment ? (
+          <p className="text-xs text-muted-foreground">Chưa gán thiết bị.</p>
+        ) : (
+          <div className="rounded-md border p-2.5 bg-background text-sm space-y-0.5">
+            <p className="font-medium text-xs">
+              {assignment.device.deviceName} ({assignment.device.deviceCode})
+            </p>
+            <p className="text-muted-foreground text-xs capitalize">
+              Loại: {assignment.device.deviceType.replace(/_/g, " ")}
+            </p>
+            <p className="text-muted-foreground text-xs">
+              Thời điểm gán:{" "}
+              {assignment.assignedAt
+                ? format(new Date(assignment.assignedAt), "dd/MM/yyyy")
+                : "—"}
+            </p>
+            {assignment.device.isDeleted && (
+              <p className="text-xs text-destructive">
+                Thiết bị đã bị xóa mềm; dữ liệu hiển thị từ lịch sử gán.
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-md border bg-background p-3 space-y-2">
+        <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">
+          Lớp giám sát
+        </p>
+        <p className="text-xs font-semibold flex items-center gap-1.5">
+          <Radio className="h-3.5 w-3.5" />
+          Cảm biến + ngưỡng
+        </p>
+        {!assignment ? (
+          <p className="text-xs text-muted-foreground">
+            Cần gán thiết bị trước khi quản lý cảm biến.
+          </p>
+        ) : sensors.length === 0 ? (
+          <p className="text-xs text-muted-foreground">
+            Chưa liên kết cảm biến.
+          </p>
+        ) : (
+          <div className="space-y-1">
+            {sensors.map((s) => (
+              <div
+                key={s.bindingId}
+                className="flex items-center justify-between rounded-md border px-2.5 py-1.5 text-xs bg-background"
+              >
+                <div>
+                  <span className="font-medium">
+                    {s.sensorName ||
+                      SENSOR_TYPE_LABELS[s.sensorType] ||
+                      s.sensorType}
+                  </span>
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] capitalize ml-2"
+                  >
+                    {s.status}
+                  </Badge>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    {`${s.sensorName || SENSOR_TYPE_LABELS[s.sensorType] || s.sensorType} (Ngưỡng: ${formatThresholdText(s)}) trên ${assignment.device.deviceName}`}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function formatDate(d: string | null | undefined) {
   if (!d) return "—";
@@ -174,6 +302,9 @@ export default function CropSeasonDetailPanel({
   const [milestoneStatusFilter, setMilestoneStatusFilter] = useState<
     "pending" | "in_progress" | "completed" | ""
   >("");
+  const [expandedMilestoneId, setExpandedMilestoneId] = useState<string | null>(
+    null,
+  );
 
   const detailQuery = useOwnerCropSeasonDetail(cropSeasonId);
   const milestonesQuery = useOwnerListProductionMilestones(cropSeasonId, {
@@ -426,6 +557,7 @@ export default function CropSeasonDetailPanel({
                     <Table>
                       <TableHeader>
                         <TableRow>
+                          <TableHead className="w-8"></TableHead>
                           <TableHead className="w-12">#</TableHead>
                           <TableHead>Giai đoạn</TableHead>
                           <TableHead>Dự kiến</TableHead>
@@ -444,32 +576,88 @@ export default function CropSeasonDetailPanel({
                               label: milestone.status,
                               variant: "secondary" as const,
                             };
+                            const isExpanded =
+                              expandedMilestoneId === milestone.id;
                             return (
-                              <TableRow key={milestone.id}>
-                                <TableCell className="font-mono text-xs text-muted-foreground">
-                                  {milestone.milestoneOrder}
-                                </TableCell>
-                                <TableCell className="font-medium">
-                                  {milestone.stageName}
-                                </TableCell>
-                                <TableCell className="text-sm text-muted-foreground">
-                                  {formatDate(milestone.expectedStartDate)}
-                                  {milestone.expectedEndDate
-                                    ? ` → ${formatDate(milestone.expectedEndDate)}`
-                                    : ""}
-                                </TableCell>
-                                <TableCell className="text-sm text-muted-foreground">
-                                  {formatDate(milestone.actualStartDate)}
-                                  {milestone.actualEndDate
-                                    ? ` → ${formatDate(milestone.actualEndDate)}`
-                                    : ""}
-                                </TableCell>
-                                <TableCell>
-                                  <Badge variant={status.variant}>
-                                    {status.label}
-                                  </Badge>
-                                </TableCell>
-                              </TableRow>
+                              <>
+                                <TableRow
+                                  key={milestone.id}
+                                  className="cursor-pointer hover:bg-muted/50"
+                                  onClick={() =>
+                                    setExpandedMilestoneId(
+                                      isExpanded ? null : milestone.id,
+                                    )
+                                  }
+                                >
+                                  <TableCell className="px-2">
+                                    {isExpanded ? (
+                                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                    ) : (
+                                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                    )}
+                                  </TableCell>
+                                  <TableCell className="font-mono text-xs text-muted-foreground">
+                                    {milestone.milestoneOrder}
+                                  </TableCell>
+                                  <TableCell className="font-medium">
+                                    {milestone.stageName}
+                                  </TableCell>
+                                  <TableCell className="text-sm text-muted-foreground">
+                                    {formatDate(milestone.expectedStartDate)}
+                                    {milestone.expectedEndDate
+                                      ? ` → ${formatDate(milestone.expectedEndDate)}`
+                                      : ""}
+                                  </TableCell>
+                                  <TableCell className="text-sm text-muted-foreground">
+                                    {formatDate(milestone.actualStartDate)}
+                                    {milestone.actualEndDate
+                                      ? ` → ${formatDate(milestone.actualEndDate)}`
+                                      : ""}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge variant={status.variant}>
+                                      {status.label}
+                                    </Badge>
+                                  </TableCell>
+                                </TableRow>
+                                {isExpanded && (
+                                  <TableRow key={`${milestone.id}-detail`}>
+                                    <TableCell
+                                      colSpan={6}
+                                      className="p-0 border-t"
+                                    >
+                                      <div className="px-4 py-3 bg-muted/20">
+                                        <Tabs
+                                          defaultValue="iot"
+                                          className="space-y-3"
+                                        >
+                                          <TabsList
+                                            variant="line"
+                                            className="w-full justify-start"
+                                          >
+                                            <TabsTrigger value="iot">
+                                              Thiết bị IoT
+                                            </TabsTrigger>
+                                            <TabsTrigger value="staff">
+                                              Nhiệm vụ và gán nông dân
+                                            </TabsTrigger>
+                                          </TabsList>
+                                          <TabsContent value="iot">
+                                            <MilestoneIotDetail
+                                              milestoneId={milestone.id}
+                                            />
+                                          </TabsContent>
+                                          <TabsContent value="staff">
+                                            <OwnerMilestoneTasksSection
+                                              milestoneId={milestone.id}
+                                            />
+                                          </TabsContent>
+                                        </Tabs>
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                )}
+                              </>
                             );
                           })}
                       </TableBody>

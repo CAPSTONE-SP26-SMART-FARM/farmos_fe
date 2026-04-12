@@ -275,7 +275,8 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
           {meta && meta.totalPages > 1 && (
             <div className="flex items-center justify-between pt-2">
               <p className="text-sm text-muted-foreground">
-                Trang {meta.page}/{meta.totalPages} &bull; {meta.totalItems} nhân sự
+                Trang {meta.page}/{meta.totalPages} &bull; {meta.totalItems}{" "}
+                nhân sự
               </p>
               <div className="flex gap-2">
                 <Button

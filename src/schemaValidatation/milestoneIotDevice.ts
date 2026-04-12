@@ -22,19 +22,40 @@ export const ListAvailableIotDevicesResSchema = PagingResponseSchema(
 
 export const AssignmentBoundSensorResSchema = z.object({
   id: z.string().uuid(),
+  sensorId: z.string().uuid(),
+  sensorName: z.string(),
   deviceId: z.string().uuid(),
   sensorType: z.string(),
+  unit: z.string().nullable(),
   status: z.string(),
   bindingId: z.string().uuid(),
   assignedAt: z.string(),
+  threshold: z.object({
+    source: z.enum(["milestone", "zone", "none"]),
+    optimalMin: z.number().nullable(),
+    optimalMax: z.number().nullable(),
+  }),
+});
+
+export const AssignmentDeviceResSchema = z.object({
+  deviceId: z.string().uuid(),
+  deviceName: z.string(),
+  deviceCode: z.string(),
+  deviceType: z.string(),
+  isDeleted: z.boolean(),
 });
 
 export const MilestoneAssignmentDetailResSchema = z.object({
   assignmentId: z.string().uuid(),
   iotDeviceId: z.string().uuid(),
   milestoneId: z.string().uuid(),
+  zoneId: z.string().uuid(),
+  farmId: z.string().uuid(),
   assignedAt: z.string(),
-  sensors: z.array(AssignmentBoundSensorResSchema).optional(),
+  assignedBy: z.string().uuid().nullable(),
+  device: AssignmentDeviceResSchema,
+  sensors: z.array(AssignmentBoundSensorResSchema),
+  warnings: z.array(z.string()).optional(),
 });
 
 export const GetMilestoneAssignmentDetailResSchema = z.object({
@@ -55,15 +76,29 @@ export const UnassignIotDeviceBodySchema = z.object({
 
 export const BoundSensorResSchema = z.object({
   id: z.string().uuid(),
+  sensorId: z.string().uuid(),
+  sensorName: z.string(),
   deviceId: z.string().uuid(),
   sensorType: z.string(),
+  unit: z.string().nullable(),
   status: z.string(),
   bindingId: z.string().uuid(),
   assignedAt: z.string(),
+  threshold: z.object({
+    source: z.enum(["milestone", "zone", "none"]),
+    optimalMin: z.number().nullable(),
+    optimalMax: z.number().nullable(),
+  }),
 });
 
 export const ListBoundSensorsResSchema = z.object({
+  assignmentId: z.string().uuid(),
+  milestoneId: z.string().uuid(),
+  zoneId: z.string().uuid(),
+  farmId: z.string().uuid(),
+  device: AssignmentDeviceResSchema,
   data: z.array(BoundSensorResSchema),
+  warnings: z.array(z.string()).optional(),
 });
 
 export const BindSensorsBodySchema = z.object({

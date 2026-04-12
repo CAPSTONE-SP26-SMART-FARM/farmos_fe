@@ -136,7 +136,9 @@ const CreateFarmForm = ({ onBack }: Props) => {
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="farm-code">Mã nông trại</FieldLabel>
+                        <FieldLabel htmlFor="farm-code">
+                          Mã nông trại
+                        </FieldLabel>
                         <Input
                           {...field}
                           id="farm-code"
@@ -153,7 +155,9 @@ const CreateFarmForm = ({ onBack }: Props) => {
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="farm-name">Tên nông trại</FieldLabel>
+                        <FieldLabel htmlFor="farm-name">
+                          Tên nông trại
+                        </FieldLabel>
                         <Input
                           {...field}
                           id="farm-name"
@@ -280,9 +284,7 @@ const CreateFarmForm = ({ onBack }: Props) => {
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="farm-description">
-                        Mô tả
-                      </FieldLabel>
+                      <FieldLabel htmlFor="farm-description">Mô tả</FieldLabel>
                       <Textarea
                         {...field}
                         id="farm-description"

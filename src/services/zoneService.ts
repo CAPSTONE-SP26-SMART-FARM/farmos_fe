@@ -10,6 +10,8 @@ import type {
 } from "@/types/zone";
 import type {
   AssignBulkManagerBodyType,
+  ListAvailableManagersQueryType,
+  ListAvailableManagersResType,
   AssignManagerBodyType,
   ListZoneManagersQueryType,
   ListZoneManagersResType,
@@ -48,6 +50,17 @@ export const zoneService = {
   listManagers: (zoneId: string, query: ListZoneManagersQueryType) =>
     api.get<ListZoneManagersResType>(
       `${ZONES.MANAGERS.LIST(zoneId)}?${queryString.stringify(query, {
+        skipEmptyString: true,
+        skipNull: true,
+      })}`,
+    ),
+
+  listAvailableManagers: (
+    zoneId: string,
+    query: ListAvailableManagersQueryType,
+  ) =>
+    api.get<ListAvailableManagersResType>(
+      `${ZONES.MANAGERS.AVAILABLE(zoneId)}?${queryString.stringify(query, {
         skipEmptyString: true,
         skipNull: true,
       })}`,

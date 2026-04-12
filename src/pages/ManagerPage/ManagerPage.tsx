@@ -57,7 +57,8 @@ const managerViews: Record<string, ManagerView> = {
   },
   zones: {
     title: "Khu vực được giao",
-    description: "Danh sách khu vực được giao và trạng thái vận hành từng khu vực.",
+    description:
+      "Danh sách khu vực được giao và trạng thái vận hành từng khu vực.",
     modules: [
       "Danh sách khu vực",
       "Mùa vụ hiện tại",
@@ -105,18 +106,18 @@ const managerViews: Record<string, ManagerView> = {
   sensors: {
     title: "Giám sát cảm biến",
     description: "Giám sát dữ liệu cảm biến theo khu vực và ngưỡng cảnh báo.",
-    modules: ["Chỉ số trực tiếp", "Bất thường", "Biểu đồ xu hướng", "Cập nhật gần nhất"],
+    modules: [
+      "Chỉ số trực tiếp",
+      "Bất thường",
+      "Biểu đồ xu hướng",
+      "Cập nhật gần nhất",
+    ],
   },
   incidents: {
     title: "Điều phối sự cố",
     description:
       "Điều phối xử lý sự cố và phối hợp bác sĩ khi có báo cáo bệnh.",
-    modules: [
-      "Sự cố đang mở",
-      "Trạng thái bác sĩ",
-      "Ca ưu tiên",
-      "Chuyển cấp",
-    ],
+    modules: ["Sự cố đang mở", "Trạng thái bác sĩ", "Ca ưu tiên", "Chuyển cấp"],
   },
   reports: {
     title: "Báo cáo chủ vườn",
@@ -273,7 +274,9 @@ function AssignedZonesSection() {
       <div className="grid gap-3 sm:grid-cols-3">
         <Card>
           <CardContent className="py-4">
-            <p className="text-xs text-muted-foreground">Tổng khu vực được giao</p>
+            <p className="text-xs text-muted-foreground">
+              Tổng khu vực được giao
+            </p>
             <p className="mt-1 text-2xl font-semibold">
               {zonesQuery.isLoading ? "--" : totalItems}
             </p>
@@ -291,7 +294,9 @@ function AssignedZonesSection() {
         </Card>
         <Card>
           <CardContent className="py-4">
-            <p className="text-xs text-muted-foreground">Khu vực đang hiển thị</p>
+            <p className="text-xs text-muted-foreground">
+              Khu vực đang hiển thị
+            </p>
             <p className="mt-1 text-2xl font-semibold">
               {zonesQuery.isLoading ? "--" : zones.length}
             </p>
@@ -301,7 +306,9 @@ function AssignedZonesSection() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Danh sách khu vực được giao</CardTitle>
+          <CardTitle className="text-base">
+            Danh sách khu vực được giao
+          </CardTitle>
           <CardDescription>
             {zonesQuery.isLoading ? "Đang tải..." : `${totalItems} khu vực`}
           </CardDescription>
