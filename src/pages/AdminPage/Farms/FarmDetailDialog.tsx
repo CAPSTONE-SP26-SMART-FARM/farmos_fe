@@ -119,12 +119,6 @@ const FarmDetailDialog = ({ id, onClose }: FarmDetailDialogProps) => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <div className="text-muted-foreground">Area (hectares)</div>
-                    <div className="font-medium">
-                      {farm.areaHectares ?? "—"}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
                     <div className="text-muted-foreground">Area (sqm)</div>
                     <div className="font-medium">{farm.areaSqm ?? "—"}</div>
                   </div>

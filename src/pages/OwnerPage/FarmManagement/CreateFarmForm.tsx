@@ -220,35 +220,7 @@ const CreateFarmForm = ({ onBack }: Props) => {
                   )}
                 />
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <Controller
-                    name="areaHectares"
-                    control={form.control}
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="farm-area-hectares">
-                          Diện tích (ha)
-                        </FieldLabel>
-                        <Input
-                          {...field}
-                          id="farm-area-hectares"
-                          type="number"
-                          step="0.01"
-                          placeholder="Ví dụ: 10.5"
-                          value={field.value ?? ""}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            field.onChange(
-                              val === "" ? undefined : Number(val),
-                            );
-                          }}
-                        />
-                        {fieldState.invalid && (
-                          <FieldError errors={[fieldState.error]} />
-                        )}
-                      </Field>
-                    )}
-                  />
+                <div>
                   <Controller
                     name="areaSqm"
                     control={form.control}

@@ -154,10 +154,6 @@ const FarmDetailPanel = ({ id, onBack }: FarmDetailPanelProps) => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <InfoRow
-                    label="Diện tích (ha)"
-                    value={farm.areaHectares}
-                  />
-                  <InfoRow
                     label="Diện tích (m²)"
                     value={farm.areaSqm}
                   />

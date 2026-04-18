@@ -21,9 +21,13 @@ import ManagerMilestonesPage from "@/pages/ManagerPage/CropSeasons/ManagerMilest
 import ManagerProductionMilestonesPage from "@/pages/ManagerPage/CropSeasons/ManagerProductionMilestonesPage";
 import ManagerEmployeeTaskTemplatesPage from "@/pages/ManagerPage/EmployeeTaskTemplates/ManagerEmployeeTaskTemplatesPage";
 import ManagerIotDevicesPage from "@/pages/ManagerPage/IotDevices/ManagerIotDevicesPage";
+import ManagerSensorReadingPage from "@/pages/ManagerPage/SensorReadings/ManagerSensorReadingPage";
+import ManagerSensorDashboardPage from "@/pages/ManagerPage/SensorDashboard/ManagerSensorDashboardPage";
 import OwnerCropSeasonsPage from "@/pages/OwnerPage/CropSeasons/OwnerCropSeasonsPage";
 import OwnerEmployeeTaskTemplatesPage from "@/pages/OwnerPage/EmployeeTaskTemplates/OwnerEmployeeTaskTemplatesPage";
 import OwnerIotDevicesPage from "@/pages/OwnerPage/IotDevices/OwnerIotDevicesPage";
+import OwnerSensorReadingPage from "@/pages/OwnerPage/SensorReadings/OwnerSensorReadingPage";
+import OwnerSensorDashboardPage from "@/pages/OwnerPage/SensorDashboard/OwnerSensorDashboardPage";
 import OwnerPage from "@/pages/OwnerPage/OwnerPage";
 import RegisterPage from "@/pages/RegisterPage/RegisterPage";
 import type { AppRoutes } from "./types";
@@ -34,6 +38,9 @@ import ListRequestAdmin from "@/pages/AdminPage/RequestDoctor/ListRequest";
 import Profile from "@/pages/Profile/Profile";
 import DoctorAssignmentsPage from "@/pages/DoctorPage/Assignment/DoctorAssignmentsPage";
 import OwnerMyDoctorsPage from "@/pages/OwnerPage/MyDoctor/OwnerMyDoctorsPage";
+import OwnerTicketsPage from "@/pages/OwnerPage/Tickets/OwnerTicketsPage";
+import ManagerTicketsPage from "@/pages/ManagerPage/Tickets/ManagerTicketsPage";
+import DoctorTicketsPage from "@/pages/DoctorPage/Tickets/DoctorTicketsPage";
 import { RoleName } from "@/constants/role";
 
 const routes: AppRoutes = [
@@ -151,6 +158,21 @@ const routes: AppRoutes = [
         allowedRoles: [RoleName.Owner],
       },
       {
+        path: "/dashboard/owner/sensor-readings/:assignmentId",
+        component: OwnerSensorReadingPage,
+        allowedRoles: [RoleName.Owner],
+      },
+      {
+        path: "/dashboard/owner/sensor-dashboard",
+        component: OwnerSensorDashboardPage,
+        allowedRoles: [RoleName.Owner],
+      },
+      {
+        path: "/dashboard/owner/tickets",
+        component: OwnerTicketsPage,
+        allowedRoles: [RoleName.Owner],
+      },
+      {
         path: "/dashboard/owner/*",
         component: OwnerPage,
         allowedRoles: [RoleName.Owner],
@@ -197,6 +219,21 @@ const routes: AppRoutes = [
         allowedRoles: [RoleName.Manager],
       },
       {
+        path: "/dashboard/manager/sensor-readings/:assignmentId",
+        component: ManagerSensorReadingPage,
+        allowedRoles: [RoleName.Manager],
+      },
+      {
+        path: "/dashboard/manager/sensor-dashboard",
+        component: ManagerSensorDashboardPage,
+        allowedRoles: [RoleName.Manager],
+      },
+      {
+        path: "/dashboard/manager/tickets",
+        component: ManagerTicketsPage,
+        allowedRoles: [RoleName.Manager],
+      },
+      {
         path: "/dashboard/manager/*",
         component: ManagerPage,
         allowedRoles: [RoleName.Manager],
@@ -225,6 +262,11 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/doctor/my-request",
         component: ListRequest,
+        allowedRoles: [RoleName.Doctor],
+      },
+      {
+        path: "/dashboard/doctor/tickets",
+        component: DoctorTicketsPage,
         allowedRoles: [RoleName.Doctor],
       },
       {

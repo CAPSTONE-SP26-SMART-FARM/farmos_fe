@@ -1,27 +1,17 @@
 import {
+  Activity,
   Cpu,
   Shield,
   LayoutDashboard,
   Package,
   Ticket,
-  ChartColumnIncreasing,
   SlidersHorizontal,
-  UserCheck,
   Building2,
   Users,
-  Bell,
-  Activity,
-  BookOpen,
-  Bug,
-  Stethoscope,
-  Pill,
   Sprout,
   Map,
-  Bot,
   Settings,
   ClipboardList,
-  FolderKanban,
-  FileText,
   User,
   Send,
   Milestone,
@@ -129,7 +119,8 @@ export const sidebarData: SidebarData = {
     //   url: "/dashboard/owner/analytics",
     //   icon: ChartColumnIncreasing,
     // },
-    { title: "Gợi Ý AI", url: "/dashboard/owner/ai-insights", icon: Bot },
+    // TODO: Chưa có workflow/API thật, tạm ẩn tab để tránh vào màn placeholder.
+    // { title: "Gợi Ý AI", url: "/dashboard/owner/ai-insights", icon: Bot },
     {
       title: "Mẫu Nhiệm Vụ",
       url: "/dashboard/owner/employee-task-templates",
@@ -140,11 +131,21 @@ export const sidebarData: SidebarData = {
       url: "/dashboard/owner/iot-devices",
       icon: Cpu,
     },
+    {
+      title: "Tổng Quan Cảm Biến",
+      url: "/dashboard/owner/sensor-dashboard",
+      icon: Activity,
+    },
     // {
     //   title: "Giám Sát Ticket",
     //   url: "/dashboard/owner/tickets",
     //   icon: Ticket,
     // },
+    {
+      title: "Giám Sát Sự Cố",
+      url: "/dashboard/owner/tickets",
+      icon: Ticket,
+    },
   ],
 
   // Manager Navigation
@@ -176,20 +177,31 @@ export const sidebarData: SidebarData = {
       icon: Settings,
     },
     {
+      title: "Tổng Quan Cảm Biến",
+      url: "/dashboard/manager/sensor-dashboard",
+      icon: Activity,
+    },
+    {
       title: "Mẫu Nhiệm Vụ",
       url: "/dashboard/manager/employee-task-templates",
       icon: ClipboardList,
     },
     {
-      title: "Tiến Độ Nhiệm Vụ",
-      url: "/dashboard/manager/progress",
-      icon: FolderKanban,
+      title: "Điều Phối Sự Cố",
+      url: "/dashboard/manager/tickets",
+      icon: Ticket,
     },
-    {
-      title: "Dữ Liệu Cảm Biến",
-      url: "/dashboard/manager/sensors",
-      icon: Activity,
-    },
+    // TODO: Chưa có workflow/API thật, tạm ẩn tab để tránh vào màn placeholder.
+    // {
+    //   title: "Tiến Độ Nhiệm Vụ",
+    //   url: "/dashboard/manager/progress",
+    //   icon: FolderKanban,
+    // },
+    // {
+    //   title: "Dữ Liệu Cảm Biến",
+    //   url: "/dashboard/manager/sensors",
+    //   icon: Activity,
+    // },
     // {
     //   title: "Điều Phối Sự Cố",
     //   url: "/dashboard/manager/incidents",
@@ -200,11 +212,11 @@ export const sidebarData: SidebarData = {
     //   url: "/dashboard/manager/reports",
     //   icon: FileText,
     // },
-    {
-      title: "Thông Báo",
-      url: "/dashboard/manager/notifications",
-      icon: Bell,
-    },
+    // {
+    //   title: "Thông Báo",
+    //   url: "/dashboard/manager/notifications",
+    //   icon: Bell,
+    // },
   ],
 
   // Doctor Navigation
@@ -226,48 +238,59 @@ export const sidebarData: SidebarData = {
       isActive: true,
     },
     {
-      title: "Trang Trại Được Phân Công",
-      url: "/dashboard/doctor/assigned-farms",
-      icon: Building2,
-    },
-    { title: "Hộp Thư Sự Cố", url: "/dashboard/doctor/incidents", icon: Bug },
-    {
-      title: "Chẩn Đoán & Kế Hoạch",
-      url: "/dashboard/doctor/treatment-plans",
-      icon: Pill,
-    },
-    {
-      title: "Theo Dõi Điều Trị",
-      url: "/dashboard/doctor/treatment-tracking",
-      icon: Activity,
-    },
-    {
-      title: "Lịch Sử Ticket",
-      url: "/dashboard/doctor/ticket-history",
+      title: "Hộp Thư Sự Cố",
+      url: "/dashboard/doctor/tickets",
       icon: Ticket,
     },
-    {
-      title: "Kho Kiến Thức",
-      url: "/dashboard/doctor/knowledge-base",
-      icon: BookOpen,
-    },
-    {
-      title: "Thông Báo",
-      url: "/dashboard/doctor/notifications",
-      icon: Bell,
-    },
-    {
-      title: "Báo Cáo & Thống Kê",
-      url: "/dashboard/doctor/reports",
-      icon: ChartColumnIncreasing,
-    },
+    // TODO: Chưa có workflow/API thật, tạm ẩn các tab chỉ hiển thị placeholder.
+    // {
+    //   title: "Trang Trại Được Phân Công",
+    //   url: "/dashboard/doctor/assigned-farms",
+    //   icon: Building2,
+    // },
+    // {
+    //   title: "Hộp Thư Sự Cố",
+    //   url: "/dashboard/doctor/incidents",
+    //   icon: Bug,
+    // },
+    // {
+    //   title: "Chẩn Đoán & Kế Hoạch",
+    //   url: "/dashboard/doctor/treatment-plans",
+    //   icon: Pill,
+    // },
+    // {
+    //   title: "Theo Dõi Điều Trị",
+    //   url: "/dashboard/doctor/treatment-tracking",
+    //   icon: Activity,
+    // },
+    // {
+    //   title: "Lịch Sử Ticket",
+    //   url: "/dashboard/doctor/ticket-history",
+    //   icon: Ticket,
+    // },
+    // {
+    //   title: "Kho Kiến Thức",
+    //   url: "/dashboard/doctor/knowledge-base",
+    //   icon: BookOpen,
+    // },
+    // {
+    //   title: "Thông Báo",
+    //   url: "/dashboard/doctor/notifications",
+    //   icon: Bell,
+    // },
+    // {
+    //   title: "Báo Cáo & Thống Kê",
+    //   url: "/dashboard/doctor/reports",
+    //   icon: ChartColumnIncreasing,
+    // },
   ],
 
   navFarmer: [
-    {
-      title: "Thông Báo",
-      url: "/dashboard/farmer/notifications",
-      icon: Bell,
-    },
+    // TODO: Chưa có route/feature cho Farmer dashboard, tạm ẩn tab.
+    // {
+    //   title: "Thông Báo",
+    //   url: "/dashboard/farmer/notifications",
+    //   icon: Bell,
+    // },
   ],
 };

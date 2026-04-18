@@ -63,10 +63,6 @@ const FarmDetailCard = ({ farm }: { farm: FarmResType }) => (
           value={farm.address}
         />
         <FarmInfoRow
-          label="Diện tích (ha)"
-          value={farm.areaHectares}
-        />
-        <FarmInfoRow
           label="Diện tích (m²)"
           value={farm.areaSqm}
         />
@@ -214,7 +210,7 @@ function FarmManagement() {
                   Diện tích
                 </CardDescription>
                 <CardTitle className="text-2xl">
-                  {farm.areaHectares ? `${farm.areaHectares} ha` : "—"}
+                  {farm.areaSqm ? `${farm.areaSqm} m²` : "—"}
                 </CardTitle>
               </CardHeader>
             </Card>

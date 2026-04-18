@@ -48,6 +48,7 @@ import {
 } from "@/queries/useProductionMilestone";
 import type { ProductionRequestType } from "@/types/cropSeason";
 import {
+  AlertTriangle,
   ArrowLeft,
   Calendar,
   ChevronDown,
@@ -63,6 +64,7 @@ import {
   Sprout,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { format } from "date-fns";
 import OwnerMilestoneTasksSection from "@/pages/OwnerPage/EmployeeTasks/OwnerMilestoneTasksSection";
 
@@ -293,6 +295,7 @@ export default function CropSeasonDetailPanel({
   onBack,
   onViewRequest,
 }: Props) {
+  const navigate = useNavigate();
   const [show, setShow] = useState(false);
   const [requestPage, setRequestPage] = useState(1);
   const [requestStatusFilter, setRequestStatusFilter] = useState<
@@ -563,6 +566,7 @@ export default function CropSeasonDetailPanel({
                           <TableHead>Dự kiến</TableHead>
                           <TableHead>Thực tế</TableHead>
                           <TableHead>Trạng thái</TableHead>
+                          <TableHead className="w-12"></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -619,11 +623,27 @@ export default function CropSeasonDetailPanel({
                                       {status.label}
                                     </Badge>
                                   </TableCell>
+                                  <TableCell>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7"
+                                      title="Báo cáo sự cố"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate(
+                                          `/dashboard/owner/tickets?milestoneId=${milestone.id}&milestoneName=${encodeURIComponent(`#${milestone.milestoneOrder} ${milestone.stageName}`)}`,
+                                        );
+                                      }}
+                                    >
+                                      <AlertTriangle className="h-4 w-4" />
+                                    </Button>
+                                  </TableCell>
                                 </TableRow>
                                 {isExpanded && (
                                   <TableRow key={`${milestone.id}-detail`}>
                                     <TableCell
-                                      colSpan={6}
+                                      colSpan={7}
                                       className="p-0 border-t"
                                     >
                                       <div className="px-4 py-3 bg-muted/20">

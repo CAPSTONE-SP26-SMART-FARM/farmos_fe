@@ -15,6 +15,26 @@ const MANAGER = API_ENDPOINTS.MANAGER;
 const OWNER = API_ENDPOINTS.OWNER;
 
 export const productionMilestoneService = {
+  listAll: (query: ListProductionMilestonesQueryType) =>
+    api.get<ListProductionMilestonesResType>(
+      MANAGER.PRODUCTION_MILESTONE.LIST_ALL +
+        "?" +
+        queryString.stringify(
+          { ...query },
+          { skipEmptyString: true, skipNull: true },
+        ),
+    ),
+
+  ownerListAll: (query: ListProductionMilestonesQueryType) =>
+    api.get<ListProductionMilestonesResType>(
+      OWNER.PRODUCTION_MILESTONE.LIST_ALL +
+        "?" +
+        queryString.stringify(
+          { ...query },
+          { skipEmptyString: true, skipNull: true },
+        ),
+    ),
+
   list: (cropSeasonId: string, query: ListProductionMilestonesQueryType) =>
     api.get<ListProductionMilestonesResType>(
       MANAGER.PRODUCTION_MILESTONE.LIST(cropSeasonId) +

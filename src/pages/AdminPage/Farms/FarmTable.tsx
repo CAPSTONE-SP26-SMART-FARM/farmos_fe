@@ -72,9 +72,9 @@ const FarmTable = ({ onViewDetail }: FarmTableProps) => {
       cell: ({ row }) => <div>{row.getValue("address") ?? "—"}</div>,
     },
     {
-      accessorKey: "areaHectares",
-      header: "Diện tích (ha)",
-      cell: ({ row }) => <div>{row.getValue("areaHectares") ?? "—"}</div>,
+      accessorKey: "areaSqm",
+      header: "Diện tích (m²)",
+      cell: ({ row }) => <div>{row.getValue("areaSqm") ?? "—"}</div>,
     },
     {
       accessorKey: "owner",

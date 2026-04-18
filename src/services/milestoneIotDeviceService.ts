@@ -87,9 +87,7 @@ export const ownerMilestoneIotDeviceService = {
 
 export const managerSensorService = {
   list: (iotDeviceId: string) =>
-    api.get<ListSensorsResType>(
-      API_ENDPOINTS.MANAGER.SENSOR.LIST(iotDeviceId),
-    ),
+    api.get<ListSensorsResType>(API_ENDPOINTS.MANAGER.SENSOR.LIST(iotDeviceId)),
 };
 
 export const ownerSensorService = {

@@ -14,7 +14,6 @@ export const FarmSchema = z.object({
   address: z.string().nullable(),
   latitude: z.number().nullable(),
   longitude: z.number().nullable(),
-  areaHectares: z.number().nullable(),
   areaSqm: z.number().nullable(),
   ownerId: z.uuid(),
   createdAt: z.iso.datetime(),
@@ -34,7 +33,6 @@ export const CreateFarmBodySchema = z
     farmType: z.enum(["cultivation"]),
     description: z.string().optional(),
     address: z.string().optional(),
-    areaHectares: z.number().positive().optional(),
     areaSqm: z.number().positive().optional(),
   })
   .strict();
@@ -47,7 +45,6 @@ export const UpdateFarmBodySchema = z
     farmType: z.enum(["cultivation"]).optional(),
     description: z.string().optional(),
     address: z.string().optional(),
-    areaHectares: z.number().positive().optional(),
     areaSqm: z.number().positive().optional(),
   })
   .strict();
@@ -57,10 +54,7 @@ export const UpdateFarmBodySchema = z
 // ============================================================
 
 /** 5.4 — List Farms (Admin, paginated) */
-export const ListFarmsQuerySchema = PagingRequestSchema.extend({
-  areaHectaresMin: z.coerce.number().positive().optional(),
-  areaHectaresMax: z.coerce.number().positive().optional(),
-}).strict();
+export const ListFarmsQuerySchema = PagingRequestSchema.extend({}).strict();
 
 // ============================================================
 // Response Schemas

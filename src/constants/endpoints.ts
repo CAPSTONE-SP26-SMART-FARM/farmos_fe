@@ -127,6 +127,7 @@ export const API_ENDPOINTS = {
         `/manager/template-product-milestone-for-crop-season/${id}`,
     },
     PRODUCTION_MILESTONE: {
+      LIST_ALL: "/production-milestone/manager/crop-season",
       LIST: (cropSeasonId: string) =>
         `/production-milestone/manager/crop-season/${cropSeasonId}`,
       CREATE_BATCH: (cropSeasonId: string) =>
@@ -165,6 +166,10 @@ export const API_ENDPOINTS = {
         `/sensor-threshold/manager/assignment/${assignmentId}`,
       UPDATE: (assignmentId: string) =>
         `/sensor-threshold/manager/assignment/${assignmentId}`,
+    },
+    SENSOR_READING: {
+      LATEST: (assignmentId: string) =>
+        `/sensor-reading/manager/assignment/${assignmentId}/latest`,
     },
     SENSOR: {
       LIST: (iotDeviceId: string) =>
@@ -241,6 +246,7 @@ export const API_ENDPOINTS = {
         `/owner/template-product-milestone-for-crop-season/${id}`,
     },
     PRODUCTION_MILESTONE: {
+      LIST_ALL: "/production-milestone/owner/crop-season",
       LIST: (cropSeasonId: string) =>
         `/production-milestone/owner/crop-season/${cropSeasonId}`,
       DETAIL: (milestoneId: string, cropSeasonId: string) =>
@@ -272,6 +278,10 @@ export const API_ENDPOINTS = {
       UPDATE: (assignmentId: string) =>
         `/sensor-threshold/owner/assignment/${assignmentId}`,
     },
+    SENSOR_READING: {
+      LATEST: (assignmentId: string) =>
+        `/sensor-reading/owner/assignment/${assignmentId}/latest`,
+    },
     EMPLOYEE_TASK: {
       LIST: (milestoneId: string) =>
         `/employee-task/owner/production-milestone/${milestoneId}`,
@@ -290,6 +300,9 @@ export const API_ENDPOINTS = {
       ELIGIBLE_FARMERS: (milestoneId: string) =>
         `/employee-task/owner/production-milestone/${milestoneId}/eligible-farmers`,
     },
+  },
+  ALERTS: {
+    LIST: "/alerts",
   },
   FARM_MEMBERS: {
     BASE: "/farm-members",
@@ -310,6 +323,34 @@ export const API_ENDPOINTS = {
       REMOVE_BULK: (zoneId: string) => `/zones/${zoneId}/managers/bulk`,
       UPDATE_PRIMARY: (zoneId: string, managerId: string) =>
         `/zones/${zoneId}/managers/${managerId}/primary`,
+    },
+  },
+  TICKET: {
+    INCIDENT: {
+      CREATE: "/ticket/incident",
+      DOCTOR_LIST: "/ticket/incident/doctor",
+      DOCTOR_DETAIL: (ticketId: string) =>
+        `/ticket/incident/doctor/${ticketId}`,
+      DOCTOR_ACCEPT: (ticketId: string) =>
+        `/ticket/incident/doctor/${ticketId}/accept`,
+      END: (ticketId: string) => `/ticket/incident/${ticketId}/end`,
+      OWNER_LIST_BY_FARM: (farmId: string) =>
+        `/ticket/incident/owner/farm/${farmId}`,
+      OWNER_DETAIL: (ticketId: string) => `/ticket/incident/owner/${ticketId}`,
+      MANAGER_LIST_BY_ZONE: (zoneId: string) =>
+        `/ticket/incident/manager/zone/${zoneId}`,
+      MANAGER_DETAIL: (ticketId: string) =>
+        `/ticket/incident/manager/${ticketId}`,
+    },
+    MESSAGES: {
+      LIST: (ticketId: string) => `/ticket/${ticketId}/messages`,
+      CREATE: (ticketId: string) => `/ticket/${ticketId}/messages`,
+    },
+    PRESCRIPTIONS: {
+      LIST: (ticketId: string) => `/ticket/${ticketId}/prescriptions`,
+      CREATE: (ticketId: string) => `/ticket/${ticketId}/prescriptions`,
+      DETAIL: (ticketId: string, prescriptionId: string) =>
+        `/ticket/${ticketId}/prescriptions/${prescriptionId}`,
     },
   },
   CROP_SEASON: {
@@ -338,6 +379,7 @@ export const API_ENDPOINTS = {
 } as const;
 
 //query keys
+
 export const QUERY_KEYS = {
   auth: {
     all: ["auth"],
@@ -479,6 +521,12 @@ export const QUERY_KEYS = {
       detail: (id: string) => ["manager", "milestone-templates", id],
     },
     productionMilestones: {
+      listAll: (query?: Record<string, unknown>) => [
+        "manager",
+        "production-milestones",
+        "all",
+        ...(query !== undefined ? [query] : []),
+      ],
       list: (cropSeasonId: string, query?: Record<string, unknown>) => [
         "manager",
         "production-milestones",
@@ -530,6 +578,15 @@ export const QUERY_KEYS = {
         iotDeviceId,
         "list",
         ...(query !== undefined ? [query] : []),
+      ],
+    },
+    sensorReadings: {
+      latest: (assignmentId: string) => [
+        "manager",
+        "sensor-readings",
+        "assignment",
+        assignmentId,
+        "latest",
       ],
     },
     employeeTasks: {
@@ -601,6 +658,15 @@ export const QUERY_KEYS = {
         iotDeviceId,
       ],
     },
+    sensorReadings: {
+      latest: (assignmentId: string) => [
+        "owner",
+        "sensor-readings",
+        "assignment",
+        assignmentId,
+        "latest",
+      ],
+    },
     iotDeviceTemplates: {
       list: (query?: Record<string, unknown>) => [
         "owner",
@@ -629,6 +695,12 @@ export const QUERY_KEYS = {
       detail: (id: string) => ["owner", "milestone-templates", id],
     },
     productionMilestones: {
+      listAll: (query?: Record<string, unknown>) => [
+        "owner",
+        "production-milestones",
+        "all",
+        ...(query !== undefined ? [query] : []),
+      ],
       list: (cropSeasonId: string, query?: Record<string, unknown>) => [
         "owner",
         "production-milestones",
@@ -734,6 +806,13 @@ export const QUERY_KEYS = {
       ],
     },
   },
+  alerts: {
+    list: (query?: Record<string, unknown>) => [
+      "alerts",
+      "list",
+      ...(query !== undefined ? [query] : []),
+    ],
+  },
   cropSeasons: {
     all: ["crop-seasons"],
     listByZone: (zoneId: string, filters?: Record<string, unknown>) => [
@@ -750,5 +829,51 @@ export const QUERY_KEYS = {
       filters,
     ],
     requestDetail: (requestId: string) => ["production-requests", requestId],
+  },
+  tickets: {
+    all: ["tickets"],
+    ownerList: (farmId: string, query?: Record<string, unknown>) => [
+      "tickets",
+      "owner",
+      "farm",
+      farmId,
+      "list",
+      ...(query !== undefined ? [query] : []),
+    ],
+    ownerDetail: (ticketId: string) => ["tickets", "owner", ticketId],
+    managerList: (zoneId: string, query?: Record<string, unknown>) => [
+      "tickets",
+      "manager",
+      "zone",
+      zoneId,
+      "list",
+      ...(query !== undefined ? [query] : []),
+    ],
+    managerDetail: (ticketId: string) => ["tickets", "manager", ticketId],
+    doctorList: (query?: Record<string, unknown>) => [
+      "tickets",
+      "doctor",
+      "list",
+      ...(query !== undefined ? [query] : []),
+    ],
+    doctorDetail: (ticketId: string) => ["tickets", "doctor", ticketId],
+    messages: (ticketId: string, query?: Record<string, unknown>) => [
+      "tickets",
+      ticketId,
+      "messages",
+      ...(query !== undefined ? [query] : []),
+    ],
+    prescriptions: (ticketId: string, query?: Record<string, unknown>) => [
+      "tickets",
+      ticketId,
+      "prescriptions",
+      ...(query !== undefined ? [query] : []),
+    ],
+    prescriptionDetail: (ticketId: string, prescriptionId: string) => [
+      "tickets",
+      ticketId,
+      "prescriptions",
+      prescriptionId,
+    ],
   },
 } as const;

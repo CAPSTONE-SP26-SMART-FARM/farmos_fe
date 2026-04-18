@@ -47,6 +47,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  AlertTriangle,
   ArrowLeft,
   ArrowUp,
   ArrowDown,
@@ -2080,46 +2081,46 @@ const ManagerMilestonesPage = () => {
                         )}
                       </div>
                     </div>
-                    {canEditMilestone && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 shrink-0"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {isPlanningCropSeason && (
-                            <>
-                              <DropdownMenuItem
-                                disabled={index === 0 || isReordering}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  void handleMoveMilestoneByOffset(m.id, -1);
-                                }}
-                              >
-                                <ArrowUp className="h-4 w-4 mr-2" />
-                                Di chuyển lên
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                disabled={
-                                  index === orderedMilestones.length - 1 ||
-                                  isReordering
-                                }
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  void handleMoveMilestoneByOffset(m.id, 1);
-                                }}
-                              >
-                                <ArrowDown className="h-4 w-4 mr-2" />
-                                Di chuyển xuống
-                              </DropdownMenuItem>
-                            </>
-                          )}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 shrink-0"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {isPlanningCropSeason && (
+                          <>
+                            <DropdownMenuItem
+                              disabled={index === 0 || isReordering}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                void handleMoveMilestoneByOffset(m.id, -1);
+                              }}
+                            >
+                              <ArrowUp className="h-4 w-4 mr-2" />
+                              Di chuyển lên
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              disabled={
+                                index === orderedMilestones.length - 1 ||
+                                isReordering
+                              }
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                void handleMoveMilestoneByOffset(m.id, 1);
+                              }}
+                            >
+                              <ArrowDown className="h-4 w-4 mr-2" />
+                              Di chuyển xuống
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                        {canEditMilestone && (
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
@@ -2129,21 +2130,32 @@ const ManagerMilestonesPage = () => {
                             <Pencil className="h-4 w-4 mr-2" />
                             Chỉnh sửa
                           </DropdownMenuItem>
-                          {canDeleteMilestone && (
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setConfirmDelete(m.id);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Xóa
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
+                        )}
+                        {canDeleteMilestone && (
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setConfirmDelete(m.id);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Xóa
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(
+                              `/dashboard/manager/tickets?milestoneId=${m.id}&milestoneName=${encodeURIComponent(`#${m.milestoneOrder} ${m.stageName}`)}`,
+                            );
+                          }}
+                        >
+                          <AlertTriangle className="h-4 w-4 mr-2" />
+                          Báo cáo sự cố
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 );
               })
