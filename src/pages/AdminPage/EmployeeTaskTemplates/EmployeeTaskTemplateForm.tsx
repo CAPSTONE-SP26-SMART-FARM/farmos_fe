@@ -32,6 +32,7 @@ import {
   useAdminCreateEmployeeTaskTemplate,
   useAdminUpdateEmployeeTaskTemplate,
 } from "@/queries/useEmployeeTaskTemplate";
+import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import {
   EmployeeTaskTemplateTypeSchema,
   FarmTypeForTaskTemplateSchema,
@@ -106,6 +107,8 @@ export default function EmployeeTaskTemplateForm({
     },
   });
 
+  useClearServerFieldErrors(form);
+
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "items",
@@ -156,7 +159,9 @@ export default function EmployeeTaskTemplateForm({
         handleApiErrorUnprocessentity(
           error.response!.data.errors,
           form.setError,
+          { getValues: form.getValues },
         );
+        return;
       }
     }
   };

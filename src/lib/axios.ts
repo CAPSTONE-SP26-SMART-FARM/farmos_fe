@@ -2,14 +2,19 @@ import axios, {
   type AxiosError,
   type AxiosResponse,
   type InternalAxiosRequestConfig,
+  isAxiosError,
 } from "axios";
 import type {
   ApiErrorResponse,
   ApiErrorUnprocessableEntityResponse,
   ApiResponseType,
 } from "@/types/api";
-import type { Path, UseFormSetError } from "react-hook-form";
-import { translateBackendMessage } from "@/lib/error-message";
+import type { FieldValues, Path, UseFormSetError } from "react-hook-form";
+import {
+  translateBackendMessage,
+  getApiErrorMessageVi,
+} from "@/lib/error-message";
+import { toast } from "sonner";
 
 // Token refresh state to prevent multiple simultaneous refresh requests
 let isRefreshing = false;
@@ -197,22 +202,94 @@ const API_ERROR_TRANSLATIONS: Record<string, string> = {
     "Batch phải chứa đúng một board_module (thiết bị chính).",
 };
 
-export const handleApiErrorUnprocessentity =
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  <T extends Record<string, any> = Record<string, any>>(
-    errors: ApiErrorUnprocessableEntityResponse<T>["errors"],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    setError?: UseFormSetError<any>,
-  ) => {
-    if (errors && setError) {
-      errors.forEach(({ field, message }) => {
-        if (field && message) {
-          const translatedMessage =
-            API_ERROR_TRANSLATIONS[String(message)] ?? String(message);
-          setError(field as Path<T>, { message: translatedMessage });
-        }
-      });
-    }
+const normalizeErrorText = (message: string) => {
+  const direct = API_ERROR_TRANSLATIONS[message];
+  if (direct) return direct;
+  return translateBackendMessage(message);
+};
 
-    return Promise.reject(errors);
-  };
+const isFormFieldPath = (
+  field: string,
+  getValues?: () => Record<string, unknown>,
+): boolean => {
+  if (!getValues) return true;
+  const values = getValues();
+  if (!values || typeof values !== "object") return true;
+
+  const firstKey = field.split(".")[0];
+  return firstKey in values;
+};
+
+interface Handle422Options<TFieldValues extends FieldValues = FieldValues> {
+  getValues?: () => TFieldValues;
+  onGlobalMessage?: (message: string) => void;
+}
+
+export const handleApiErrorUnprocessentity = <
+  TFieldValues extends FieldValues = FieldValues,
+>(
+  errors: ApiErrorUnprocessableEntityResponse["errors"],
+  setError?: UseFormSetError<TFieldValues>,
+  options?: Handle422Options<TFieldValues>,
+) => {
+  const globalMessages: string[] = [];
+
+  if (errors) {
+    errors.forEach(({ field, message }) => {
+      const translatedMessage = normalizeErrorText(String(message));
+      const fieldPath = typeof field === "string" ? field : "";
+
+      if (
+        fieldPath &&
+        setError &&
+        isFormFieldPath(fieldPath, options?.getValues)
+      ) {
+        setError(fieldPath as Path<TFieldValues>, {
+          type: "server",
+          message: translatedMessage,
+        });
+        return;
+      }
+
+      if (translatedMessage) {
+        globalMessages.push(translatedMessage);
+      }
+    });
+  }
+
+  const onGlobalMessage = options?.onGlobalMessage ?? toast.error;
+  [...new Set(globalMessages)].forEach((message) => onGlobalMessage(message));
+
+  if (!errors || errors.length === 0) {
+    onGlobalMessage("Dữ liệu gửi lên chưa hợp lệ. Vui lòng kiểm tra lại.");
+  }
+
+  return { hasErrors: Boolean(errors?.length), globalMessages };
+};
+
+/**
+ * Standard onError handler for TanStack Query mutations.
+ *
+ * - 422 with `errors[]` → toasts each translated field-level message.
+ * - Other HTTP errors → toasts the translated top-level message.
+ * - Falls back to `fallbackMessage` when nothing is available.
+ */
+export const onMutationError = (
+  error: unknown,
+  fallbackMessage = "Đã xảy ra lỗi. Vui lòng thử lại.",
+) => {
+  if (
+    isAxiosError(error) &&
+    error.response?.status === 422 &&
+    Array.isArray(error.response?.data?.errors)
+  ) {
+    const errors = error.response.data.errors as Array<{
+      field: string;
+      message: string;
+    }>;
+    handleApiErrorUnprocessentity(errors);
+    return;
+  }
+
+  toast.error(getApiErrorMessageVi(error, fallbackMessage));
+};

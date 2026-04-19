@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
+import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import {
   isApiErrorResponse,
   isApiErrorUnprocessableEntityResponse,
@@ -68,6 +69,8 @@ const AddMemberPanel = ({ farmCode, onBack }: Props) => {
     },
   });
 
+  useClearServerFieldErrors(form);
+
   const { mutateAsync, isPending } = useOwnerCreateFarmMember();
 
   const handleBack = () => {
@@ -85,7 +88,9 @@ const AddMemberPanel = ({ farmCode, onBack }: Props) => {
         handleApiErrorUnprocessentity(
           error.response!.data.errors,
           form.setError,
+          { getValues: form.getValues },
         );
+        return;
       }
       if (isApiErrorResponse(error)) {
         toast.error(error.response?.data.message ?? "Không thể thêm nhân sự");

@@ -80,6 +80,7 @@ import {
   useOwnerListSensorTemplates,
   useOwnerSensorTemplateDetail,
 } from "@/queries/useIotTemplate";
+import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import {
   DeviceStatusSchema,
   IotDeviceTypeSchema,
@@ -1050,6 +1051,8 @@ function BatchCreateForm({
     },
   });
 
+  useClearServerFieldErrors(form);
+
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "devices",
@@ -1131,14 +1134,21 @@ function BatchCreateForm({
           const macMsg = "Địa chỉ MAC này đã được đăng ký.";
           data.devices.forEach((device, i) => {
             if (device.deviceType === "wifi_module" && device.macAddress) {
-              form.setError(`devices.${i}.macAddress`, { message: macMsg });
+              form.setError(`devices.${i}.macAddress`, {
+                type: "server",
+                message: macMsg,
+              });
             }
           });
         }
 
         if (otherErrors.length > 0) {
-          handleApiErrorUnprocessentity(otherErrors, form.setError);
+          handleApiErrorUnprocessentity(otherErrors, form.setError, {
+            getValues: form.getValues,
+          });
         }
+
+        return;
       }
     }
   };
@@ -1373,6 +1383,8 @@ function EditDeviceForm({
     },
   });
 
+  useClearServerFieldErrors(form);
+
   const sensorForm = useForm<SensorBatchFormType>({
     resolver: zodResolver(SensorBatchFormSchema),
     defaultValues: {
@@ -1447,7 +1459,9 @@ function EditDeviceForm({
         handleApiErrorUnprocessentity(
           error.response!.data.errors,
           form.setError,
+          { getValues: form.getValues },
         );
+        return;
       }
     }
   };

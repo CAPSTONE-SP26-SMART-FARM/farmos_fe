@@ -11,8 +11,7 @@ import type {
 } from "@/schemaValidatation/employeeTaskTemplate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { AxiosError } from "axios";
-import type { ApiResponseType } from "@/types/api";
+import { onMutationError } from "@/lib/axios";
 
 // ── List ───────────────────────────────────────────────────────────────
 
@@ -51,11 +50,6 @@ export const useAdminCreateEmployeeTaskTemplate = () => {
         queryKey: QUERY_KEYS.admin.employeeTaskTemplates.list(),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Tạo template nhiệm vụ thất bại",
-      );
-    },
   });
 };
 
@@ -80,11 +74,6 @@ export const useAdminUpdateEmployeeTaskTemplate = () => {
         queryKey: QUERY_KEYS.admin.employeeTaskTemplates.detail(id),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Cập nhật template nhiệm vụ thất bại",
-      );
-    },
   });
 };
 
@@ -103,11 +92,8 @@ export const useAdminDeleteEmployeeTaskTemplate = () => {
         queryKey: QUERY_KEYS.admin.employeeTaskTemplates.detail(id),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Xóa template nhiệm vụ thất bại",
-      );
-    },
+    onError: (error) =>
+      onMutationError(error, "Xóa template nhiệm vụ thất bại"),
   });
 };
 

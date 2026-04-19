@@ -32,6 +32,7 @@ import {
   useAdminCreateIotDeviceTemplate,
   useAdminUpdateIotDeviceTemplate,
 } from "@/queries/useIotTemplate";
+import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import {
   IotDeviceTemplateTypeSchema,
   FarmTypeForTemplateSchema,
@@ -99,6 +100,8 @@ export default function DeviceTemplateForm({
     },
   });
 
+  useClearServerFieldErrors(form);
+
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "items",
@@ -145,7 +148,9 @@ export default function DeviceTemplateForm({
         handleApiErrorUnprocessentity(
           error.response!.data.errors,
           form.setError,
+          { getValues: form.getValues },
         );
+        return;
       }
     }
   };

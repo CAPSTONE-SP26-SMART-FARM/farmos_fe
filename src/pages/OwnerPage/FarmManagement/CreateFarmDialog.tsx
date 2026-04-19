@@ -36,6 +36,7 @@ import {
   isApiErrorUnprocessableEntityResponse,
 } from "@/lib/utils";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
+import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import { toast } from "sonner";
 
 interface Props {
@@ -57,6 +58,8 @@ const CreateFarmDialog = ({ open, onClose }: Props) => {
     },
   });
 
+  useClearServerFieldErrors(form);
+
   const { mutateAsync, isPending } = useOwnerCreateFarm();
 
   const handleClose = () => {
@@ -74,10 +77,12 @@ const CreateFarmDialog = ({ open, onClose }: Props) => {
         handleApiErrorUnprocessentity(
           error.response!.data.errors,
           form.setError,
+          { getValues: form.getValues },
         );
+        return;
       }
       if (isApiErrorResponse(error)) {
-        toast.error(error.response?.data.message);
+        toast.error(error.response?.data.message ?? "Không thể tạo nông trại");
       }
     }
   };

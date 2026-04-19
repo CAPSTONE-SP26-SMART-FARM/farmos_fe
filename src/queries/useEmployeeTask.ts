@@ -11,8 +11,7 @@ import type {
 } from "@/schemaValidatation/employeeTask";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { AxiosError } from "axios";
-import type { ApiResponseType } from "@/types/api";
+import { onMutationError } from "@/lib/axios";
 
 // ============================================================
 // Manager
@@ -59,9 +58,7 @@ export const useManagerCreateEmployeeTaskBatch = (milestoneId: string) => {
         queryKey: QUERY_KEYS.manager.employeeTasks.list(milestoneId),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(error?.response?.data?.message ?? "Tạo nhiệm vụ thất bại");
-    },
+    onError: (error) => onMutationError(error, "Tạo nhiệm vụ thất bại"),
   });
 };
 
@@ -86,11 +83,7 @@ export const useManagerUpdateEmployeeTask = (milestoneId: string) => {
         queryKey: QUERY_KEYS.manager.employeeTasks.detail(taskId, milestoneId),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Cập nhật nhiệm vụ thất bại",
-      );
-    },
+    onError: (error) => onMutationError(error, "Cập nhật nhiệm vụ thất bại"),
   });
 };
 
@@ -110,9 +103,7 @@ export const useManagerDeleteEmployeeTask = (milestoneId: string) => {
         queryKey: QUERY_KEYS.manager.employeeTasks.detail(taskId, milestoneId),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(error?.response?.data?.message ?? "Xóa nhiệm vụ thất bại");
-    },
+    onError: (error) => onMutationError(error, "Xóa nhiệm vụ thất bại"),
   });
 };
 
@@ -137,9 +128,7 @@ export const useManagerAssignFarmerToTask = (milestoneId: string) => {
         queryKey: QUERY_KEYS.manager.employeeTasks.detail(taskId, milestoneId),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(error?.response?.data?.message ?? "Gán nông dân thất bại");
-    },
+    onError: (error) => onMutationError(error, "Gán nông dân thất bại"),
   });
 };
 
@@ -159,11 +148,7 @@ export const useManagerUnassignFarmerFromTask = (milestoneId: string) => {
         queryKey: QUERY_KEYS.manager.employeeTasks.detail(taskId, milestoneId),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Hủy gán nông dân thất bại",
-      );
-    },
+    onError: (error) => onMutationError(error, "Hủy gán nông dân thất bại"),
   });
 };
 
@@ -225,9 +210,7 @@ export const useOwnerCreateEmployeeTaskBatch = (milestoneId: string) => {
         queryKey: QUERY_KEYS.owner.employeeTasks.list(milestoneId),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(error?.response?.data?.message ?? "Tạo nhiệm vụ thất bại");
-    },
+    onError: (error) => onMutationError(error, "Tạo nhiệm vụ thất bại"),
   });
 };
 
@@ -252,11 +235,7 @@ export const useOwnerUpdateEmployeeTask = (milestoneId: string) => {
         queryKey: QUERY_KEYS.owner.employeeTasks.detail(taskId, milestoneId),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Cập nhật nhiệm vụ thất bại",
-      );
-    },
+    onError: (error) => onMutationError(error, "Cập nhật nhiệm vụ thất bại"),
   });
 };
 
@@ -276,9 +255,7 @@ export const useOwnerDeleteEmployeeTask = (milestoneId: string) => {
         queryKey: QUERY_KEYS.owner.employeeTasks.detail(taskId, milestoneId),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(error?.response?.data?.message ?? "Xóa nhiệm vụ thất bại");
-    },
+    onError: (error) => onMutationError(error, "Xóa nhiệm vụ thất bại"),
   });
 };
 
@@ -303,9 +280,7 @@ export const useOwnerAssignFarmerToTask = (milestoneId: string) => {
         queryKey: QUERY_KEYS.owner.employeeTasks.detail(taskId, milestoneId),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(error?.response?.data?.message ?? "Gán nông dân thất bại");
-    },
+    onError: (error) => onMutationError(error, "Gán nông dân thất bại"),
   });
 };
 
@@ -325,11 +300,7 @@ export const useOwnerUnassignFarmerFromTask = (milestoneId: string) => {
         queryKey: QUERY_KEYS.owner.employeeTasks.detail(taskId, milestoneId),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Hủy gán nông dân thất bại",
-      );
-    },
+    onError: (error) => onMutationError(error, "Hủy gán nông dân thất bại"),
   });
 };
 

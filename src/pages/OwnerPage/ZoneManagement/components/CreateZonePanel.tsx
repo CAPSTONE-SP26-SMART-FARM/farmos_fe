@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
+import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import {
   isApiErrorResponse,
   isApiErrorUnprocessableEntityResponse,
@@ -67,6 +68,8 @@ const CreateZonePanel = ({ farmCode, farmId, onBack }: Props) => {
     },
   });
 
+  useClearServerFieldErrors(form);
+
   const { mutateAsync, isPending } = useOwnerCreateZone(farmId);
 
   const handleBack = () => {
@@ -90,7 +93,9 @@ const CreateZonePanel = ({ farmCode, farmId, onBack }: Props) => {
         handleApiErrorUnprocessentity(
           error.response!.data.errors,
           form.setError,
+          { getValues: form.getValues },
         );
+        return;
       }
       if (isApiErrorResponse(error)) {
         toast.error(error.response?.data.message ?? "Không thể tạo khu vực");

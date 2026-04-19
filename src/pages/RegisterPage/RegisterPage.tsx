@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { TypeOfVerificationCode } from "@/constants/auth";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
+import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import {
   isApiErrorResponse,
   isApiErrorUnprocessableEntityResponse,
@@ -60,6 +61,8 @@ function RegisterPage() {
     },
   });
 
+  useClearServerFieldErrors(form);
+
   const { isPending, mutateAsync: register } = useRegister();
 
   const { isPending: isCodePending, mutate: sendCode } = useSendOtp();
@@ -72,7 +75,9 @@ function RegisterPage() {
         handleApiErrorUnprocessentity<RegisterBodyType>(
           error.response!.data.errors,
           form.setError,
+          { getValues: form.getValues },
         );
+        return;
       }
       // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       isApiErrorResponse(error) &&

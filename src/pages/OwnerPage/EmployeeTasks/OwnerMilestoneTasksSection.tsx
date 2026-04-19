@@ -273,14 +273,16 @@ function BatchCreateDialog({
   };
 
   const handleSubmit = () => {
+    const toISOOrNull = (v: string) => (v ? `${v}T00:00:00.000Z` : null);
+
     const tasks: CreateEmployeeTaskItemType[] = drafts
       .filter((d) => d.title.trim())
       .map((d) => ({
         title: d.title.trim(),
         description: d.description.trim() || null,
         priority: d.priority,
-        startDate: d.startDate || null,
-        dueDate: d.dueDate || null,
+        startDate: toISOOrNull(d.startDate),
+        dueDate: toISOOrNull(d.dueDate),
         assignedTo: d.assignedTo || null,
       }));
 
@@ -584,6 +586,8 @@ function TaskDetailSheet({
   const PriorityIcon = PRIORITY_META[task.priority].icon;
 
   const handleSave = () => {
+    const toISOOrNull = (v: string) => (v ? `${v}T00:00:00.000Z` : null);
+
     updateMutation.mutate(
       {
         taskId: task.id,
@@ -592,8 +596,8 @@ function TaskDetailSheet({
           description: editForm.description.trim() || null,
           priority: editForm.priority,
           status: editForm.status,
-          startDate: editForm.startDate || null,
-          dueDate: editForm.dueDate || null,
+          startDate: toISOOrNull(editForm.startDate),
+          dueDate: toISOOrNull(editForm.dueDate),
         },
       },
       { onSuccess: () => setIsEditing(false) },

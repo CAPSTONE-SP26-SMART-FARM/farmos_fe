@@ -10,8 +10,7 @@ import type {
 } from "@/schemaValidatation/sensor";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { AxiosError } from "axios";
-import type { ApiResponseType } from "@/types/api";
+import { onMutationError } from "@/lib/axios";
 
 // ── List ───────────────────────────────────────────────────────────────
 
@@ -45,9 +44,6 @@ export const useOwnerCreateSensors = () => {
         queryKey: QUERY_KEYS.owner.sensors.list(iotDeviceId),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(error?.response?.data?.message ?? "Tạo cảm biến thất bại");
-    },
   });
 };
 
@@ -71,11 +67,7 @@ export const useOwnerUpdateSensor = () => {
         queryKey: QUERY_KEYS.owner.sensors.list(iotDeviceId),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Cập nhật cảm biến thất bại",
-      );
-    },
+    onError: (error) => onMutationError(error, "Cập nhật cảm biến thất bại"),
   });
 };
 
@@ -97,9 +89,7 @@ export const useOwnerDeleteSensor = () => {
         queryKey: QUERY_KEYS.owner.sensors.list(iotDeviceId),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(error?.response?.data?.message ?? "Xóa cảm biến thất bại");
-    },
+    onError: (error) => onMutationError(error, "Xóa cảm biến thất bại"),
   });
 };
 
@@ -133,9 +123,6 @@ export const useManagerCreateSensors = () => {
         queryKey: QUERY_KEYS.manager.sensors.list(iotDeviceId),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(error?.response?.data?.message ?? "Tạo cảm biến thất bại");
-    },
   });
 };
 
@@ -157,11 +144,7 @@ export const useManagerUpdateSensor = () => {
         queryKey: QUERY_KEYS.manager.sensors.list(iotDeviceId),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Cập nhật cảm biến thất bại",
-      );
-    },
+    onError: (error) => onMutationError(error, "Cập nhật cảm biến thất bại"),
   });
 };
 
@@ -181,8 +164,6 @@ export const useManagerDeleteSensor = () => {
         queryKey: QUERY_KEYS.manager.sensors.list(iotDeviceId),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(error?.response?.data?.message ?? "Xóa cảm biến thất bại");
-    },
+    onError: (error) => onMutationError(error, "Xóa cảm biến thất bại"),
   });
 };

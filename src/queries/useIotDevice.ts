@@ -10,8 +10,7 @@ import type {
 } from "@/schemaValidatation/iotDevice";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { AxiosError } from "axios";
-import type { ApiResponseType } from "@/types/api";
+import { onMutationError } from "@/lib/axios";
 
 // ── List ───────────────────────────────────────────────────────────────
 
@@ -59,11 +58,6 @@ export const useOwnerCreateIotDevices = () => {
         queryKey: QUERY_KEYS.owner.iotDevices.list(farmId),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Tạo thiết bị IoT thất bại",
-      );
-    },
   });
 };
 
@@ -90,11 +84,6 @@ export const useOwnerUpdateIotDevice = () => {
         queryKey: QUERY_KEYS.owner.iotDevices.detail(deviceId, farmId),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Cập nhật thiết bị IoT thất bại",
-      );
-    },
   });
 };
 
@@ -114,11 +103,7 @@ export const useOwnerDeleteIotDevice = () => {
         queryKey: QUERY_KEYS.owner.iotDevices.detail(deviceId, farmId),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Xóa thiết bị IoT thất bại",
-      );
-    },
+    onError: (error) => onMutationError(error, "Xóa thiết bị IoT thất bại"),
   });
 };
 
@@ -135,9 +120,7 @@ export const useOwnerLockSensors = () => {
         queryKey: QUERY_KEYS.owner.iotDevices.detail(deviceId, farmId),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(error?.response?.data?.message ?? "Khóa cảm biến thất bại");
-    },
+    onError: (error) => onMutationError(error, "Khóa cảm biến thất bại"),
   });
 };
 
@@ -183,11 +166,6 @@ export const useManagerCreateIotDevices = () => {
         queryKey: QUERY_KEYS.manager.iotDevices.list(farmId),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Tạo thiết bị IoT thất bại",
-      );
-    },
   });
 };
 
@@ -212,11 +190,6 @@ export const useManagerUpdateIotDevice = () => {
         queryKey: QUERY_KEYS.manager.iotDevices.detail(deviceId, farmId),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Cập nhật thiết bị IoT thất bại",
-      );
-    },
   });
 };
 
@@ -234,11 +207,7 @@ export const useManagerDeleteIotDevice = () => {
         queryKey: QUERY_KEYS.manager.iotDevices.detail(deviceId, farmId),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Xóa thiết bị IoT thất bại",
-      );
-    },
+    onError: (error) => onMutationError(error, "Xóa thiết bị IoT thất bại"),
   });
 };
 
@@ -253,8 +222,6 @@ export const useManagerLockSensors = () => {
         queryKey: QUERY_KEYS.manager.iotDevices.detail(deviceId, farmId),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(error?.response?.data?.message ?? "Khóa cảm biến thất bại");
-    },
+    onError: (error) => onMutationError(error, "Khóa cảm biến thất bại"),
   });
 };

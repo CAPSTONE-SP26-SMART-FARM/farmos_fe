@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
+import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import {
   isApiErrorResponse,
   isApiErrorUnprocessableEntityResponse,
@@ -68,6 +69,8 @@ const EditZonePanel = ({ zone, farmId, onBack }: Props) => {
     },
   });
 
+  useClearServerFieldErrors(form);
+
   const { mutateAsync, isPending } = useOwnerUpdateZone(zone.id, farmId);
 
   const handleBack = () => {
@@ -91,7 +94,9 @@ const EditZonePanel = ({ zone, farmId, onBack }: Props) => {
         handleApiErrorUnprocessentity(
           error.response!.data.errors,
           form.setError,
+          { getValues: form.getValues },
         );
+        return;
       }
       if (isApiErrorResponse(error)) {
         toast.error(

@@ -17,8 +17,7 @@ import type {
 } from "@/schemaValidatation/iotTemplate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { AxiosError } from "axios";
-import type { ApiResponseType } from "@/types/api";
+import { onMutationError } from "@/lib/axios";
 
 // ============================================================
 // IoT Device Template
@@ -55,11 +54,6 @@ export const useAdminCreateIotDeviceTemplate = () => {
         queryKey: QUERY_KEYS.admin.iotDeviceTemplates.list(),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Tạo template thiết bị thất bại",
-      );
-    },
   });
 };
 
@@ -82,11 +76,6 @@ export const useAdminUpdateIotDeviceTemplate = () => {
         queryKey: QUERY_KEYS.admin.iotDeviceTemplates.detail(id),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Cập nhật template thiết bị thất bại",
-      );
-    },
   });
 };
 
@@ -103,11 +92,8 @@ export const useAdminDeleteIotDeviceTemplate = () => {
         queryKey: QUERY_KEYS.admin.iotDeviceTemplates.detail(id),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Xóa template thiết bị thất bại",
-      );
-    },
+    onError: (error) =>
+      onMutationError(error, "Xóa template thiết bị thất bại"),
   });
 };
 
@@ -143,11 +129,6 @@ export const useAdminCreateSensorTemplate = () => {
         queryKey: QUERY_KEYS.admin.sensorTemplates.list(),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Tạo template cảm biến thất bại",
-      );
-    },
   });
 };
 
@@ -170,11 +151,6 @@ export const useAdminUpdateSensorTemplate = () => {
         queryKey: QUERY_KEYS.admin.sensorTemplates.detail(id),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Cập nhật template cảm biến thất bại",
-      );
-    },
   });
 };
 
@@ -191,11 +167,8 @@ export const useAdminDeleteSensorTemplate = () => {
         queryKey: QUERY_KEYS.admin.sensorTemplates.detail(id),
       });
     },
-    onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(
-        error?.response?.data?.message ?? "Xóa template cảm biến thất bại",
-      );
-    },
+    onError: (error) =>
+      onMutationError(error, "Xóa template cảm biến thất bại"),
   });
 };
 

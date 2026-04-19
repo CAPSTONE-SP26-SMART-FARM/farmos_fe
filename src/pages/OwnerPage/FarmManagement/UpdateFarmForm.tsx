@@ -35,6 +35,7 @@ import {
   isApiErrorUnprocessableEntityResponse,
 } from "@/lib/utils";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
+import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import { toast } from "sonner";
 import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -67,6 +68,8 @@ const UpdateFarmForm = ({ farm, onBack }: Props) => {
     },
   });
 
+  useClearServerFieldErrors(form);
+
   const { mutateAsync, isPending } = useOwnerUpdateFarm();
 
   const handleBack = () => {
@@ -84,10 +87,14 @@ const UpdateFarmForm = ({ farm, onBack }: Props) => {
         handleApiErrorUnprocessentity(
           error.response!.data.errors,
           form.setError,
+          { getValues: form.getValues },
         );
+        return;
       }
       if (isApiErrorResponse(error)) {
-        toast.error(error.response?.data.message);
+        toast.error(
+          error.response?.data.message ?? "Không thể cập nhật nông trại",
+        );
       }
     }
   };

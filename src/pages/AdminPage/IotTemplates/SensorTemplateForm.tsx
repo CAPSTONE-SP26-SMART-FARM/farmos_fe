@@ -32,6 +32,7 @@ import {
   useAdminCreateSensorTemplate,
   useAdminUpdateSensorTemplate,
 } from "@/queries/useIotTemplate";
+import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import {
   SensorTemplateItemConfigSchema,
   SensorTemplateTypeSchema,
@@ -170,6 +171,8 @@ export default function SensorTemplateForm({
     },
   });
 
+  useClearServerFieldErrors(form);
+
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "items",
@@ -225,7 +228,9 @@ export default function SensorTemplateForm({
         handleApiErrorUnprocessentity(
           error.response!.data.errors,
           form.setError,
+          { getValues: form.getValues },
         );
+        return;
       }
     }
   };

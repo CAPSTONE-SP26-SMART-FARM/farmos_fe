@@ -22,8 +22,14 @@ import {
 import { LoginBodySchema, type LoginBodyType } from "@/schemaValidatation/auth";
 import { toast } from "sonner";
 import type { UserResType } from "@/types/user";
-import { RoleName } from "@/constants/role";
-import { decodeAccessToken, isApiErrorResponse } from "@/lib/utils";
+import { RoleName, type RoleNameType } from "@/constants/role";
+import {
+  decodeAccessToken,
+  isApiErrorResponse,
+  isApiErrorUnprocessableEntityResponse,
+} from "@/lib/utils";
+import { handleApiErrorUnprocessentity } from "@/lib/axios";
+import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 type DummyAccount = Pick<UserResType, "role" | "fullName" | "email"> & {
   username: string;
   password: string;
@@ -67,8 +73,8 @@ const DUMMY_ACCOUNTS: DummyAccount[] = [
   },
 ];
 
-const getRoleLabel = (role: RoleName) => {
-  const roleLabels: Partial<Record<RoleName, string>> = {
+const getRoleLabel = (role: RoleNameType) => {
+  const roleLabels: Partial<Record<RoleNameType, string>> = {
     [RoleName.Admin]: "Quản trị viên",
     [RoleName.Owner]: "Chủ vườn",
     [RoleName.Manager]: "Quản lý",
@@ -88,6 +94,7 @@ function LoginPage() {
       password: "",
     },
   });
+  useClearServerFieldErrors(form);
   const { mutateAsync: login, isPending } = useLogin();
 
   const handleSubmit = async (data: LoginBodyType) => {
@@ -96,9 +103,18 @@ function LoginPage() {
       const role = decodeAccessToken(result.data.accessToken)?.role;
       navigate(`/dashboard/${role}`, { replace: true });
     } catch (error) {
-      if (isApiErrorResponse(error) && error.response?.status === 422) {
+      if (isApiErrorUnprocessableEntityResponse<LoginBodyType>(error)) {
+        handleApiErrorUnprocessentity<LoginBodyType>(
+          error.response!.data.errors,
+          form.setError,
+          { getValues: form.getValues },
+        );
+        return;
+      }
+
+      if (isApiErrorResponse(error)) {
         toast.error(
-          error.response.data.message || "Thông tin đăng nhập không hợp lệ",
+          error.response?.data.message || "Đăng nhập không thành công",
         );
       }
     }

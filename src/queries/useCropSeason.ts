@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { onMutationError } from "@/lib/axios";
 import { QUERY_KEYS } from "@/constants/endpoints";
 import { cropSeasonService } from "@/services/cropSeasonService";
 import type {
@@ -59,9 +60,6 @@ export const useCreateCropSeason = () => {
       });
       toast.success("Tạo mùa vụ thành công!");
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? "Tạo mùa vụ thất bại");
-    },
   });
 };
 
@@ -82,9 +80,6 @@ export const useUpdateCropSeason = (id: string) => {
       });
       toast.success("Cập nhật mùa vụ thành công!");
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? "Cập nhật thất bại");
-    },
   });
 };
 
@@ -99,9 +94,7 @@ export const useSendProductionRequest = (cropSeasonId: string) => {
       await qc.refetchQueries({ queryKey: ["crop-seasons"] });
       toast.success("Đã gửi yêu cầu phê duyệt lên Owner!");
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? "Gửi yêu cầu thất bại");
-    },
+    onError: (error) => onMutationError(error, "Gửi yêu cầu thất bại"),
   });
 };
 
@@ -155,8 +148,6 @@ export const useReplyProductionRequest = (requestId: string) => {
       await qc.refetchQueries({ queryKey: ["crop-seasons"] });
       toast.success("Đã phản hồi yêu cầu thành công!");
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? "Phản hồi thất bại");
-    },
+    onError: (error) => onMutationError(error, "Phản hồi thất bại"),
   });
 };

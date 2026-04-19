@@ -40,6 +40,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
+import { handleApiErrorUnprocessentity } from "@/lib/axios";
+import {
+  isApiErrorResponse,
+  isApiErrorUnprocessableEntityResponse,
+} from "@/lib/utils";
 import {
   useManagerListCropSeasons,
   useCreateCropSeason,
@@ -82,6 +88,7 @@ import {
   startOfDay,
 } from "date-fns";
 import ProPagination from "@/components/common/pro-pagination";
+import { toast } from "sonner";
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -318,6 +325,7 @@ function CreateCropSeasonScreen({
       expectedHarvestDate: "",
     },
   });
+  useClearServerFieldErrors(form);
   const plantDateValue = form.watch("plantDate");
   const minPlantDate = getMinPlantDate();
   const parsedPlantDate = parseBackendDate(plantDateValue);
@@ -362,8 +370,28 @@ function CreateCropSeasonScreen({
       return;
     }
 
-    await mutateAsync(data);
-    handleBack();
+    try {
+      await mutateAsync(data);
+      handleBack();
+    } catch (error) {
+      if (
+        isApiErrorUnprocessableEntityResponse<CreateCropSeasonBodyType>(error)
+      ) {
+        handleApiErrorUnprocessentity<CreateCropSeasonBodyType>(
+          error.response!.data.errors,
+          form.setError,
+          { getValues: form.getValues },
+        );
+        return;
+      }
+
+      if (isApiErrorResponse(error)) {
+        toast.error(error.response?.data.message ?? "Tạo mùa vụ thất bại");
+        return;
+      }
+
+      toast.error("Tạo mùa vụ thất bại");
+    }
   };
 
   return (
@@ -532,6 +560,7 @@ function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
       notes: season.notes ?? "",
     },
   });
+  useClearServerFieldErrors(form);
   const plantDateValue = form.watch("plantDate");
   const minPlantDate = getMinPlantDate();
   const parsedPlantDate = parseBackendDate(plantDateValue);
@@ -568,8 +597,28 @@ function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
       return;
     }
 
-    await mutateAsync(data);
-    setOpen(false);
+    try {
+      await mutateAsync(data);
+      setOpen(false);
+    } catch (error) {
+      if (
+        isApiErrorUnprocessableEntityResponse<UpdateCropSeasonBodyType>(error)
+      ) {
+        handleApiErrorUnprocessentity<UpdateCropSeasonBodyType>(
+          error.response!.data.errors,
+          form.setError,
+          { getValues: form.getValues },
+        );
+        return;
+      }
+
+      if (isApiErrorResponse(error)) {
+        toast.error(error.response?.data.message ?? "Cập nhật thất bại");
+        return;
+      }
+
+      toast.error("Cập nhật thất bại");
+    }
   };
 
   return (

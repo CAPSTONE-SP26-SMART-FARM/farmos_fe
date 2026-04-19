@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/endpoints";
 import ticketService from "@/services/ticketService";
 import { toast } from "sonner";
+import { onMutationError } from "@/lib/axios";
 import type {
   CreateIncidentTicketBodyType,
   ListIncidentTicketsQueryType,
@@ -73,9 +74,8 @@ export const useDoctorAcceptTicket = () => {
       queryClient.invalidateQueries({ queryKey: ["tickets", "doctor"] });
       toast.success("Đã tiếp nhận ticket thành công.");
     },
-    onError: () => {
-      toast.error("Không thể tiếp nhận ticket. Vui lòng thử lại.");
-    },
+    onError: (error) =>
+      onMutationError(error, "Không thể tiếp nhận ticket. Vui lòng thử lại."),
   });
 };
 
@@ -90,9 +90,8 @@ export const useCreateIncidentTicket = () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.tickets.all });
       toast.success("Đã tạo ticket sự cố thành công.");
     },
-    onError: () => {
-      toast.error("Không thể tạo ticket sự cố. Vui lòng thử lại.");
-    },
+    onError: (error) =>
+      onMutationError(error, "Không thể tạo ticket sự cố. Vui lòng thử lại."),
   });
 };
 
@@ -104,9 +103,8 @@ export const useEndIncidentTicket = () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.tickets.all });
       toast.success("Đã kết thúc ticket sự cố.");
     },
-    onError: () => {
-      toast.error("Không thể kết thúc ticket. Vui lòng thử lại.");
-    },
+    onError: (error) =>
+      onMutationError(error, "Không thể kết thúc ticket. Vui lòng thử lại."),
   });
 };
 
@@ -133,9 +131,8 @@ export const useCreateTicketMessage = (ticketId: string) => {
         queryKey: ["tickets", ticketId, "messages"],
       });
     },
-    onError: () => {
-      toast.error("Không thể gửi tin nhắn. Vui lòng thử lại.");
-    },
+    onError: (error) =>
+      onMutationError(error, "Không thể gửi tin nhắn. Vui lòng thử lại."),
   });
 };
 
@@ -162,8 +159,7 @@ export const useCreatePrescription = (ticketId: string) => {
       });
       toast.success("Đã tạo đơn thuốc thành công.");
     },
-    onError: () => {
-      toast.error("Không thể tạo đơn thuốc. Vui lòng thử lại.");
-    },
+    onError: (error) =>
+      onMutationError(error, "Không thể tạo đơn thuốc. Vui lòng thử lại."),
   });
 };

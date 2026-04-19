@@ -1,6 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { getErrorMessage } from "@/lib/queryClient";
-import { isAxiosError } from "@/lib/utils";
+import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
+import { handleApiErrorUnprocessentity } from "@/lib/axios";
+import {
+  isApiErrorResponse,
+  isApiErrorUnprocessableEntityResponse,
+} from "@/lib/utils";
 import {
   useAdminCreateMilestoneTemplate,
   useAdminUpdateMilestoneTemplate,
@@ -11,7 +15,6 @@ import type {
   MilestoneTemplateResType,
   UpdateMilestoneTemplateBodyType,
 } from "@/schemaValidatation/milestoneTemplate";
-import type { ApiErrorUnprocessableEntityResponse } from "@/types/api";
 import { z } from "zod";
 import {
   Field,
@@ -49,7 +52,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { Controller, useFieldArray, useForm, type Path } from "react-hook-form";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import {
   DndContext,
@@ -312,6 +315,7 @@ export default function MilestoneTemplateForm({
     resolver: zodResolver(MilestoneTemplateFormSchema),
     defaultValues: buildDefaultValues(template),
   });
+  useClearServerFieldErrors(form);
 
   useEffect(() => {
     form.reset(buildDefaultValues(template));
@@ -404,24 +408,6 @@ export default function MilestoneTemplateForm({
     closeForm();
   };
 
-  const applyServerFieldErrors = (error: unknown) => {
-    if (!isAxiosError(error) || error.response?.status !== 422) {
-      return;
-    }
-
-    const responseData = error.response
-      .data as ApiErrorUnprocessableEntityResponse<MilestoneTemplateFormValues>;
-
-    if (!Array.isArray(responseData.errors)) {
-      return;
-    }
-
-    responseData.errors.forEach(({ field, message }) => {
-      const fieldPath = String(field) as Path<MilestoneTemplateFormValues>;
-      form.setError(fieldPath, { message });
-    });
-  };
-
   const save = async (values: MilestoneTemplateFormValues) => {
     const normalizedItems = values.items.map((item, index) => ({
       stageName: item.stageName.trim(),
@@ -462,8 +448,23 @@ export default function MilestoneTemplateForm({
       form.reset(values);
       closeForm();
     } catch (error) {
-      applyServerFieldErrors(error);
-      toast.error(getErrorMessage(error));
+      if (isApiErrorUnprocessableEntityResponse(error)) {
+        handleApiErrorUnprocessentity<MilestoneTemplateFormValues>(
+          error.response!.data.errors,
+          form.setError,
+          { getValues: form.getValues },
+        );
+        return;
+      }
+
+      if (isApiErrorResponse(error)) {
+        toast.error(
+          error.response?.data.message || "Không thể lưu milestone template.",
+        );
+        return;
+      }
+
+      toast.error("Không thể lưu milestone template.");
     }
   };
 
