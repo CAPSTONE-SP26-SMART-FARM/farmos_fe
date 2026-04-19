@@ -109,6 +109,7 @@ interface IotDeviceListProps {
   onEdit: (device: IotDeviceResType) => void;
   onBack: () => void;
   actor?: IotActor;
+  defaultLimit?: number;
 }
 
 export default function IotDeviceList({
@@ -118,10 +119,11 @@ export default function IotDeviceList({
   onDetail,
   onEdit,
   actor = "owner",
+  defaultLimit = 8,
 }: IotDeviceListProps) {
   const [query, setQuery] = useState<ListIotDevicesQueryType>({
     page: 1,
-    limit: 8,
+    limit: defaultLimit,
   });
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<DeviceStatusType | "all">(
@@ -220,7 +222,7 @@ export default function IotDeviceList({
             </Select>
 
             <Select
-              value={String(query.limit ?? 8)}
+              value={String(query.limit ?? defaultLimit)}
               onValueChange={(value) => {
                 setQuery((prev) => ({
                   ...prev,

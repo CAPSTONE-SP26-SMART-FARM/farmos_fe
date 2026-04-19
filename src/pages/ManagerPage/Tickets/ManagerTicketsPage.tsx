@@ -63,6 +63,13 @@ import { useAuthStore } from "@/stores/authStore";
 import { useSearchParams } from "react-router";
 import { useManagerListCropSeasons } from "@/queries/useCropSeason";
 import { useManagerListProductionMilestones } from "@/queries/useProductionMilestone";
+import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
+import { handleApiErrorUnprocessentity } from "@/lib/axios";
+import {
+  isApiErrorUnprocessableEntityResponse,
+  isApiErrorResponse,
+} from "@/lib/utils";
+import { toast } from "sonner";
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -442,6 +449,7 @@ function CreateTicketPanel({
       severity: "low",
     },
   });
+  useClearServerFieldErrors(form);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setShow(true));
@@ -453,13 +461,32 @@ function CreateTicketPanel({
     setTimeout(onBack, 300);
   };
 
-  const onSubmit = (data: CreateIncidentTicketBodyType) => {
-    createMutation.mutate(data, {
-      onSuccess: () => {
-        onCreated();
-        handleBack();
-      },
-    });
+  const onSubmit = async (data: CreateIncidentTicketBodyType) => {
+    try {
+      await createMutation.mutateAsync(data);
+      onCreated();
+      handleBack();
+    } catch (error) {
+      if (
+        isApiErrorUnprocessableEntityResponse<CreateIncidentTicketBodyType>(
+          error,
+        )
+      ) {
+        handleApiErrorUnprocessentity<CreateIncidentTicketBodyType>(
+          error.response!.data.errors,
+          form.setError,
+          { getValues: form.getValues },
+        );
+        return;
+      }
+
+      if (isApiErrorResponse(error)) {
+        toast.error(error.response?.data.message ?? "Tạo ticket thất bại");
+        return;
+      }
+
+      toast.error("Tạo ticket thất bại");
+    }
   };
 
   return (
@@ -658,6 +685,11 @@ function CreateTicketPanel({
                   <SelectItem value="critical">Nghiêm trọng</SelectItem>
                 </SelectContent>
               </Select>
+              {form.formState.errors.severity && (
+                <p className="text-xs text-destructive">
+                  {form.formState.errors.severity.message}
+                </p>
+              )}
             </div>
 
             <div className="flex gap-3 pt-2">

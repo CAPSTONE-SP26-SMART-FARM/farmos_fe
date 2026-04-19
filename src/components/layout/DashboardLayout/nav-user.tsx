@@ -32,7 +32,7 @@ export function NavUser({ user }: NavUserProps) {
     await logoutMutate.mutateAsync();
   };
 
-  const avatarFallback = user.email?.slice(0, 2).toUpperCase() || "U";
+  const avatarFallback = "U";
 
   return (
     <SidebarMenu>

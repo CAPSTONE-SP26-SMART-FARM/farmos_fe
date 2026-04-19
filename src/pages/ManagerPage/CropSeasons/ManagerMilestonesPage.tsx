@@ -43,23 +43,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertTriangle,
   ArrowLeft,
   ArrowUp,
   ArrowDown,
+  Eye,
   MoreVertical,
   Pencil,
   Trash2,
   Plus,
-  Cpu,
-  Radio,
   RefreshCw,
-  Check,
-  X,
   CalendarDays,
   GripVertical,
 } from "lucide-react";
@@ -67,32 +62,17 @@ import { useEffect, useState, type DragEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import {
   useManagerListProductionMilestones,
-  useManagerCreateProductionMilestone,
   useManagerCreateProductionMilestoneBatch,
   useManagerUpdateProductionMilestone,
   useManagerDeleteProductionMilestone,
-  useManagerMilestoneAssignment,
-  useManagerListAvailableIotDevices,
-  useManagerAssignIotDevice,
-  useManagerUnassignIotDevice,
-  useManagerListBoundSensors,
-  useManagerBindSensors,
-  useManagerUnbindSensors,
-  useManagerListSensorsForDevice,
-  useManagerSensorThresholds,
-  useManagerUpsertSensorThreshold,
 } from "@/queries/useProductionMilestone";
 import { useManagerListMilestoneTemplates } from "@/queries/useMilestoneTemplate";
-import ManagerMilestoneTasksSection, {
-  ManagerMilestoneTaskAssignmentScreen,
-} from "@/pages/ManagerPage/EmployeeTasks/ManagerMilestoneTasksSection";
 import { useManagerCropSeasonDetail } from "@/queries/useCropSeason";
 import type {
   ProductionMilestoneResType,
   ProductionMilestoneStatusType,
 } from "@/schemaValidatation/productionMilestone";
 import type { MilestoneTemplateResType } from "@/schemaValidatation/milestoneTemplate";
-import type { ThresholdEligibleSensorType } from "@/schemaValidatation/sensorThreshold";
 import { ProductionStatusName } from "@/types/cropSeason";
 import {
   addDays,
@@ -117,49 +97,6 @@ const STATUS_META: Record<
   in_progress: { label: "Đang thực hiện", variant: "default" },
   completed: { label: "Hoàn thành", variant: "outline" },
 };
-
-const SENSOR_TYPE_LABELS: Record<string, string> = {
-  soil_moisture: "Độ ẩm đất",
-  air_temperature: "Nhiệt độ không khí",
-  air_humidity: "Độ ẩm không khí",
-  light_intensity: "Cường độ ánh sáng",
-};
-
-function formatDeviceLabel(device?: {
-  deviceName?: string;
-  deviceCode?: string;
-  deviceType?: string;
-}) {
-  const name = device?.deviceName?.trim() || "Thiết bị không xác định";
-  const code = device?.deviceCode ? ` (${device.deviceCode})` : "";
-  const type = device?.deviceType
-    ? ` · ${device.deviceType.replace(/_/g, " ")}`
-    : "";
-  return `${name}${code}${type}`;
-}
-
-function formatThresholdText(sensor: {
-  threshold?: {
-    optimalMin: number | null;
-    optimalMax: number | null;
-    source: string;
-  };
-  unit?: string | null;
-}) {
-  const t = sensor.threshold;
-  if (!t || t.optimalMin == null || t.optimalMax == null) {
-    return "Chưa cấu hình ngưỡng";
-  }
-  const unit = sensor.unit ? ` ${sensor.unit}` : "";
-  return `${t.optimalMin} - ${t.optimalMax}${unit} (${t.source})`;
-}
-
-const THRESHOLD_ELIGIBLE = new Set([
-  "soil_moisture",
-  "air_temperature",
-  "air_humidity",
-  "light_intensity",
-]);
 
 // ============================================================
 // Create / Edit Milestone
@@ -187,56 +124,6 @@ function formatPickerDate(value: string | null | undefined) {
   const parsed = parseBackendDate(value);
   return parsed ? format(parsed, DATE_DISPLAY_FORMAT) : "";
 }
-
-type MilestoneFormState = {
-  stageName: string;
-  milestoneOrder: number;
-  expectedStartDate: string;
-  expectedEndDate: string;
-  status: ProductionMilestoneStatusType;
-};
-
-type MilestoneFormErrors = Partial<Record<keyof MilestoneFormState, string>>;
-
-const defaultMilestoneForm = (milestoneOrder = 1): MilestoneFormState => ({
-  stageName: "",
-  milestoneOrder,
-  expectedStartDate: "",
-  expectedEndDate: "",
-  status: "pending",
-});
-
-const validateMilestoneForm = (
-  values: MilestoneFormState,
-): MilestoneFormErrors => {
-  const errors: MilestoneFormErrors = {};
-
-  if (!values.stageName.trim()) {
-    errors.stageName = "Tên giai đoạn là bắt buộc.";
-  }
-
-  const expectedStartDate = parseBackendDate(values.expectedStartDate);
-  const expectedEndDate = parseBackendDate(values.expectedEndDate);
-
-  if (values.expectedStartDate && !expectedStartDate) {
-    errors.expectedStartDate = "Ngày bắt đầu dự kiến không hợp lệ.";
-  }
-
-  if (values.expectedEndDate && !expectedEndDate) {
-    errors.expectedEndDate = "Ngày kết thúc dự kiến không hợp lệ.";
-  }
-
-  if (
-    expectedStartDate &&
-    expectedEndDate &&
-    !isAfter(startOfDay(expectedEndDate), startOfDay(expectedStartDate))
-  ) {
-    errors.expectedEndDate =
-      "Ngày kết thúc dự kiến phải sau ngày bắt đầu dự kiến.";
-  }
-
-  return errors;
-};
 
 const DatePickerField = ({
   label,
@@ -295,78 +182,6 @@ const DatePickerField = ({
         </PopoverContent>
       </Popover>
       {error && <p className="text-xs text-destructive mt-1">{error}</p>}
-    </div>
-  );
-};
-
-const MilestoneFormFields = ({
-  form,
-  errors,
-  onChange,
-}: {
-  form: MilestoneFormState;
-  errors: MilestoneFormErrors;
-  onChange: <K extends keyof MilestoneFormState>(
-    key: K,
-    value: MilestoneFormState[K],
-  ) => void;
-}) => {
-  const parsedExpectedStartDate = parseBackendDate(form.expectedStartDate);
-  const minExpectedEndDate = parsedExpectedStartDate
-    ? addDays(startOfDay(parsedExpectedStartDate), 1)
-    : undefined;
-
-  return (
-    <div className="space-y-3 py-2">
-      <div>
-        <label className="text-sm font-medium">Tên giai đoạn *</label>
-        <Input
-          className="mt-1"
-          placeholder="Ví dụ: Nảy mầm"
-          value={form.stageName}
-          onChange={(e) => onChange("stageName", e.target.value)}
-        />
-        {errors.stageName && (
-          <p className="text-xs text-destructive mt-1">{errors.stageName}</p>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <DatePickerField
-          label="Ngày bắt đầu dự kiến"
-          placeholder="Chọn ngày bắt đầu"
-          value={form.expectedStartDate}
-          error={errors.expectedStartDate}
-          onChange={(value) => onChange("expectedStartDate", value)}
-        />
-        <DatePickerField
-          label="Ngày kết thúc dự kiến"
-          placeholder="Chọn ngày kết thúc"
-          value={form.expectedEndDate}
-          error={errors.expectedEndDate}
-          onChange={(value) => onChange("expectedEndDate", value)}
-          minDate={minExpectedEndDate}
-        />
-      </div>
-
-      <div>
-        <label className="text-sm font-medium">Trạng thái</label>
-        <Select
-          value={form.status}
-          onValueChange={(v) =>
-            onChange("status", v as ProductionMilestoneStatusType)
-          }
-        >
-          <SelectTrigger className="mt-1">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="pending">Chờ xử lý</SelectItem>
-            <SelectItem value="in_progress">Đang thực hiện</SelectItem>
-            <SelectItem value="completed">Hoàn thành</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
     </div>
   );
 };
@@ -628,6 +443,22 @@ const MilestoneEditDialog = ({
   );
 };
 
+type DraftMilestoneItem = {
+  stageName: string;
+  milestoneOrder: number;
+  expectedStartDate: string;
+  expectedEndDate: string;
+  status: ProductionMilestoneStatusType;
+};
+
+const createEmptyDraft = (milestoneOrder: number): DraftMilestoneItem => ({
+  stageName: "",
+  milestoneOrder,
+  expectedStartDate: "",
+  expectedEndDate: "",
+  status: "pending",
+});
+
 const CreateMilestonesScreen = ({
   cropSeasonId,
   cropSeasonLabel,
@@ -645,12 +476,15 @@ const CreateMilestonesScreen = ({
   const [templateSearch, setTemplateSearch] = useState("");
   const [templatePage, setTemplatePage] = useState(1);
   const [templateStartDate, setTemplateStartDate] = useState(initialStartDate);
-  const [manualForm, setManualForm] = useState<MilestoneFormState>(
-    defaultMilestoneForm(nextMilestoneOrder),
-  );
-  const [manualErrors, setManualErrors] = useState<MilestoneFormErrors>({});
+  const [showTemplates, setShowTemplates] = useState(false);
 
-  const createMutation = useManagerCreateProductionMilestone(cropSeasonId);
+  // Template preview & unified draft state
+  const [previewTemplate, setPreviewTemplate] =
+    useState<MilestoneTemplateResType | null>(null);
+  const [draftItems, setDraftItems] = useState<DraftMilestoneItem[]>([
+    createEmptyDraft(nextMilestoneOrder),
+  ]);
+
   const createBatchMutation =
     useManagerCreateProductionMilestoneBatch(cropSeasonId);
 
@@ -671,38 +505,6 @@ const CreateMilestonesScreen = ({
   useEffect(() => {
     setTemplatePage(1);
   }, [templateSearch]);
-
-  useEffect(() => {
-    setManualForm((prev) => {
-      if (prev.milestoneOrder >= nextMilestoneOrder) return prev;
-      return { ...prev, milestoneOrder: nextMilestoneOrder };
-    });
-  }, [nextMilestoneOrder]);
-
-  const updateManualForm = <K extends keyof MilestoneFormState>(
-    key: K,
-    value: MilestoneFormState[K],
-  ) => {
-    setManualForm((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleManualSubmit = () => {
-    const payloadOrder = nextMilestoneOrder;
-    const errors = validateMilestoneForm(manualForm);
-    setManualErrors(errors);
-    if (Object.keys(errors).length > 0) return;
-
-    createMutation.mutate(
-      {
-        stageName: manualForm.stageName.trim(),
-        milestoneOrder: payloadOrder,
-        expectedStartDate: manualForm.expectedStartDate || null,
-        expectedEndDate: manualForm.expectedEndDate || null,
-        status: manualForm.status,
-      },
-      { onSuccess: onBack },
-    );
-  };
 
   const buildTemplateItems = (template: MilestoneTemplateResType) => {
     const sortedTemplateItems = template.items
@@ -747,12 +549,80 @@ const CreateMilestonesScreen = ({
     const items = buildTemplateItems(template);
     if (!items) return;
 
+    const newDrafts: DraftMilestoneItem[] = items.map((item) => ({
+      stageName: item.stageName,
+      milestoneOrder: item.milestoneOrder,
+      expectedStartDate: item.expectedStartDate ?? "",
+      expectedEndDate: "",
+      status: item.status,
+    }));
+
+    // Keep existing drafts that have content, then append template items
+    setDraftItems((prev) => {
+      const existing = prev.filter((d) => d.stageName.trim());
+      const merged = [...existing, ...newDrafts];
+      return merged.map((item, i) => ({
+        ...item,
+        milestoneOrder: nextMilestoneOrder + i,
+      }));
+    });
+    setPreviewTemplate(null);
+    setShowTemplates(false);
+  };
+
+  const updateDraftItem = (
+    index: number,
+    patch: Partial<DraftMilestoneItem>,
+  ) => {
+    setDraftItems((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, ...patch } : item)),
+    );
+  };
+
+  const removeDraftItem = (index: number) => {
+    setDraftItems((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      return next.map((item, i) => ({
+        ...item,
+        milestoneOrder: nextMilestoneOrder + i,
+      }));
+    });
+  };
+
+  const handleSubmitDraft = () => {
+    const validItems = draftItems.filter((item) => item.stageName.trim());
+    if (validItems.length === 0) {
+      toast.error("Cần ít nhất 1 mốc có tên giai đoạn.");
+      return;
+    }
+
+    const items = validItems.map((item) => ({
+      stageName: item.stageName.trim(),
+      milestoneOrder: item.milestoneOrder,
+      expectedStartDate: item.expectedStartDate || null,
+      expectedEndDate: item.expectedEndDate || null,
+      actualStartDate: null,
+      actualEndDate: null,
+      status: item.status,
+    }));
+
     createBatchMutation.mutate(
       { items },
       {
         onSuccess: onBack,
       },
     );
+  };
+
+  const clearDraft = () => {
+    setDraftItems([createEmptyDraft(nextMilestoneOrder)]);
+  };
+
+  const addDraftItem = () => {
+    setDraftItems((prev) => [
+      ...prev,
+      createEmptyDraft(nextMilestoneOrder + prev.length),
+    ]);
   };
 
   return (
@@ -775,149 +645,324 @@ const CreateMilestonesScreen = ({
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Áp dụng mẫu mốc sản xuất</CardTitle>
-          <CardDescription>Tạo nhanh nhiều mốc từ mẫu có sẵn.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-2">
-            <div>
-              <label className="text-sm font-medium">Tìm mẫu</label>
-              <Input
-                className="mt-1"
-                value={templateSearch}
-                onChange={(e) => setTemplateSearch(e.target.value)}
-                placeholder="Tìm theo tên mẫu"
-              />
-            </div>
-            <DatePickerField
-              label="Ngày bắt đầu từ mẫu (tùy chọn)"
-              value={templateStartDate}
-              onChange={setTemplateStartDate}
-              placeholder="Chọn ngày bắt đầu"
-            />
-          </div>
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowTemplates(!showTemplates)}
+        >
+          <Eye className="h-4 w-4 mr-1" />
+          {showTemplates ? "Ẩn mẫu" : "Áp dụng mẫu"}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={addDraftItem}
+        >
+          <Plus className="h-4 w-4 mr-1" />
+          Thêm mốc
+        </Button>
+        {draftItems.length > 1 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearDraft}
+          >
+            <Trash2 className="h-3.5 w-3.5 mr-1" />
+            Xóa tất cả
+          </Button>
+        )}
+      </div>
 
-          {templateQuery.isLoading ? (
-            <div className="space-y-2">
-              {[0, 1, 2].map((idx) => (
-                <Skeleton
-                  key={idx}
-                  className="h-24 w-full"
+      {/* Template Browser */}
+      <div
+        className={`grid transition-all duration-300 ease-in-out ${
+          showTemplates
+            ? "grid-rows-[1fr] opacity-100"
+            : "grid-rows-[0fr] opacity-0"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <Card>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-sm">Chọn mẫu mốc sản xuất</CardTitle>
+              <CardDescription className="text-xs">
+                Nhấn mẫu để xem trước, rồi áp dụng vào form bên dưới.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-4 pb-3 space-y-3">
+              <div className="grid gap-3 md:grid-cols-2">
+                <Input
+                  value={templateSearch}
+                  onChange={(e) => setTemplateSearch(e.target.value)}
+                  placeholder="Tìm theo tên mẫu"
+                  className="h-8 text-sm"
                 />
-              ))}
-            </div>
-          ) : templates.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground border rounded-md">
-              Không tìm thấy mẫu nào.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {templates.map((template) => (
-                <div
-                  key={template.id}
-                  className="rounded-md border p-3 space-y-3"
-                >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <p className="font-semibold truncate">{template.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {template.description || "Không có mô tả"}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {template.items.length} giai đoạn
-                      </p>
-                    </div>
-                    <Button
-                      size="sm"
-                      disabled={createBatchMutation.isPending}
-                      onClick={() => handleApplyTemplate(template)}
+                <DatePickerField
+                  label=""
+                  value={templateStartDate}
+                  onChange={setTemplateStartDate}
+                  placeholder="Ngày bắt đầu (tùy chọn)"
+                />
+              </div>
+
+              {templateQuery.isLoading ? (
+                <Skeleton className="h-16 w-full" />
+              ) : templates.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-2">
+                  Không tìm thấy mẫu.
+                </p>
+              ) : (
+                <div className="space-y-1.5">
+                  {templates.map((template) => (
+                    <button
+                      key={template.id}
+                      type="button"
+                      onClick={() => setPreviewTemplate(template)}
+                      className="w-full text-left rounded-md border p-2.5 hover:bg-muted/50 transition-colors"
                     >
-                      {createBatchMutation.isPending ? (
-                        <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
-                      ) : (
-                        <Plus className="h-3 w-3 mr-1" />
-                      )}
-                      Áp dụng
-                    </Button>
-                  </div>
-                  {template.items.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {template.items
-                        .slice()
-                        .sort((a, b) => a.milestoneOrder - b.milestoneOrder)
-                        .slice(0, 4)
-                        .map((item) => (
-                          <Badge
-                            key={`${template.id}-${item.id}`}
-                            variant="outline"
-                            className="text-xs"
-                          >
-                            #{item.milestoneOrder} {item.stageName}
-                          </Badge>
-                        ))}
-                      {template.items.length > 4 && (
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">
+                            {template.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {template.items.length} giai đoạn
+                            {template.description
+                              ? ` · ${template.description}`
+                              : ""}
+                          </p>
+                        </div>
                         <Badge
                           variant="outline"
-                          className="text-xs"
+                          className="text-xs shrink-0"
                         >
-                          +{template.items.length - 4} mục nữa
+                          <Eye className="h-3 w-3 mr-1" />
+                          Xem
                         </Badge>
+                      </div>
+                      {template.items.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {template.items
+                            .slice()
+                            .sort((a, b) => a.milestoneOrder - b.milestoneOrder)
+                            .slice(0, 4)
+                            .map((item) => (
+                              <Badge
+                                key={`${template.id}-${item.id}`}
+                                variant="secondary"
+                                className="text-xs"
+                              >
+                                #{item.milestoneOrder} {item.stageName}
+                              </Badge>
+                            ))}
+                          {template.items.length > 4 && (
+                            <Badge
+                              variant="secondary"
+                              className="text-xs"
+                            >
+                              +{template.items.length - 4}
+                            </Badge>
+                          )}
+                        </div>
                       )}
+                    </button>
+                  ))}
+                  {templateMeta && templateMeta.totalPages > 1 && (
+                    <div className="flex items-center justify-end gap-2 pt-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs"
+                        disabled={templatePage <= 1}
+                        onClick={() => setTemplatePage((prev) => prev - 1)}
+                      >
+                        Trước
+                      </Button>
+                      <span className="text-xs text-muted-foreground">
+                        {templatePage}/{templateMeta.totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs"
+                        disabled={templatePage >= templateMeta.totalPages}
+                        onClick={() => setTemplatePage((prev) => prev + 1)}
+                      >
+                        Sau
+                      </Button>
                     </div>
                   )}
                 </div>
-              ))}
-            </div>
-          )}
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
-          {templateMeta && templateMeta.totalPages > 1 && (
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>
-                Trang {templatePage} / {templateMeta.totalPages}
-              </span>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={templatePage <= 1}
-                  onClick={() => setTemplatePage((prev) => prev - 1)}
-                >
-                  Trước
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={templatePage >= templateMeta.totalPages}
-                  onClick={() => setTemplatePage((prev) => prev + 1)}
-                >
-                  Sau
-                </Button>
+      {/* Template Preview Dialog */}
+      <Dialog
+        open={!!previewTemplate}
+        onOpenChange={(open) => {
+          if (!open) setPreviewTemplate(null);
+        }}
+      >
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Xem trước mẫu mốc sản xuất</DialogTitle>
+          </DialogHeader>
+          {previewTemplate && (
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <p className="font-semibold text-base">
+                  {previewTemplate.name}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {previewTemplate.description || "Không có mô tả"}
+                </p>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  <Badge variant="secondary">
+                    {previewTemplate.items.length} giai đoạn
+                  </Badge>
+                  <Badge variant="outline">{previewTemplate.farmType}</Badge>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Danh sách giai đoạn</p>
+                <div className="rounded-md border divide-y">
+                  {previewTemplate.items
+                    .slice()
+                    .sort((a, b) => a.milestoneOrder - b.milestoneOrder)
+                    .map((item, index) => (
+                      <div
+                        key={item.id}
+                        className="flex items-start gap-3 p-3"
+                      >
+                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
+                          {index + 1}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium">
+                            {item.stageName}
+                          </p>
+                          {item.daysBetween != null && item.daysBetween > 0 && (
+                            <p className="text-xs text-muted-foreground">
+                              Cách giai đoạn trước: {item.daysBetween} ngày
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                </div>
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setPreviewTemplate(null)}
+            >
+              Đóng
+            </Button>
+            <Button
+              onClick={() => {
+                if (previewTemplate) handleApplyTemplate(previewTemplate);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Áp dụng vào form
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
+      {/* Unified Milestone Form */}
       <Card>
         <CardHeader>
-          <CardTitle>Tạo thủ công</CardTitle>
+          <CardTitle>Danh sách mốc sản xuất</CardTitle>
           <CardDescription>
-            Tạo một mốc riêng với giai đoạn và thời gian tùy chỉnh. Thứ tự sẽ
-            được tự động gán.
+            Thêm mốc thủ công hoặc áp dụng mẫu, rồi chỉnh sửa trước khi tạo.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="mb-3 rounded-md border border-dashed bg-muted/20 p-2.5 text-xs text-muted-foreground">
-            Mốc mới sẽ được thêm ở vị trí #{nextMilestoneOrder}. Bạn có thể đổi
-            thứ tự sau bằng kéo-thả trong danh sách.
+        <CardContent className="space-y-3 transition-all duration-300 ease-in-out">
+          <div className="rounded-md border border-dashed bg-muted/20 p-2.5 text-xs text-muted-foreground">
+            Các mốc sẽ được tạo bắt đầu từ vị trí #{nextMilestoneOrder}. Bạn có
+            thể đổi thứ tự sau bằng kéo-thả trong danh sách.
           </div>
-          <MilestoneFormFields
-            form={manualForm}
-            errors={manualErrors}
-            onChange={updateManualForm}
-          />
+
+          {draftItems.map((draft, index) => {
+            const parsedStart = parseBackendDate(draft.expectedStartDate);
+            const minEnd = parsedStart
+              ? addDays(startOfDay(parsedStart), 1)
+              : undefined;
+
+            return (
+              <div
+                key={index}
+                className="rounded-md border p-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200"
+              >
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Mốc #{draft.milestoneOrder}
+                  </p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2"
+                    disabled={draftItems.length <= 1}
+                    onClick={() => removeDraftItem(index)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Tên giai đoạn *</label>
+                  <Input
+                    className="mt-1"
+                    value={draft.stageName}
+                    onChange={(e) =>
+                      updateDraftItem(index, { stageName: e.target.value })
+                    }
+                    placeholder="Ví dụ: Nảy mầm"
+                  />
+                </div>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <DatePickerField
+                    label="Ngày bắt đầu dự kiến"
+                    placeholder="Chọn ngày bắt đầu"
+                    value={draft.expectedStartDate}
+                    onChange={(value) =>
+                      updateDraftItem(index, { expectedStartDate: value })
+                    }
+                  />
+                  <DatePickerField
+                    label="Ngày kết thúc dự kiến"
+                    placeholder="Chọn ngày kết thúc"
+                    value={draft.expectedEndDate}
+                    onChange={(value) =>
+                      updateDraftItem(index, { expectedEndDate: value })
+                    }
+                    minDate={minEnd}
+                  />
+                </div>
+              </div>
+            );
+          })}
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={addDraftItem}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Thêm mốc
+          </Button>
+
           <div className="flex justify-end gap-2 pt-2">
             <Button
               variant="outline"
@@ -926,639 +971,20 @@ const CreateMilestonesScreen = ({
               Hủy
             </Button>
             <Button
-              disabled={createMutation.isPending}
-              onClick={handleManualSubmit}
+              disabled={createBatchMutation.isPending}
+              onClick={handleSubmitDraft}
             >
-              {createMutation.isPending ? (
+              {createBatchMutation.isPending ? (
                 <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
               ) : (
                 <Plus className="h-4 w-4 mr-2" />
               )}
-              Tạo mốc
+              Tạo {draftItems.filter((d) => d.stageName.trim()).length || ""}{" "}
+              mốc
             </Button>
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
-};
-
-// ============================================================
-// IoT Assignment Section (#80)
-// ============================================================
-
-const IotAssignmentSection = ({ milestoneId }: { milestoneId: string }) => {
-  const [showPicker, setShowPicker] = useState(false);
-  const [pickerPage, setPickerPage] = useState(1);
-  const [confirmUnassign, setConfirmUnassign] = useState(false);
-
-  const assignmentQuery = useManagerMilestoneAssignment(milestoneId);
-  const assignment = assignmentQuery.data?.data?.data ?? null;
-
-  const availableQuery = useManagerListAvailableIotDevices(
-    milestoneId,
-    { page: pickerPage, limit: 5 },
-    showPicker,
-  );
-  const available = availableQuery.data?.data.data ?? [];
-  const availableMeta = availableQuery.data?.data.meta;
-
-  const assignMutation = useManagerAssignIotDevice(milestoneId);
-  const unassignMutation = useManagerUnassignIotDevice(milestoneId);
-
-  const handleAssign = (deviceId: string) => {
-    assignMutation.mutate(
-      { iotDeviceId: deviceId },
-      { onSuccess: () => setShowPicker(false) },
-    );
-  };
-
-  const handleUnassign = () => {
-    if (!assignment) return;
-    unassignMutation.mutate(
-      { iotDeviceId: assignment.device.deviceId },
-      { onSuccess: () => setConfirmUnassign(false) },
-    );
-  };
-
-  if (assignmentQuery.isLoading) {
-    return <Skeleton className="h-20 w-full" />;
-  }
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold flex items-center gap-2">
-          <Cpu className="h-4 w-4" />
-          Gán thiết bị IoT
-        </p>
-        {!assignment && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              setShowPicker(true);
-              setPickerPage(1);
-            }}
-          >
-            <Plus className="h-3 w-3 mr-1" />
-            Gán thiết bị
-          </Button>
-        )}
-        {assignment && (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="text-destructive hover:text-destructive"
-            onClick={() => setConfirmUnassign(true)}
-          >
-            <X className="h-3 w-3 mr-1" />
-            Bỏ gán
-          </Button>
-        )}
-      </div>
-
-      {!assignment ? (
-        <p className="text-xs text-muted-foreground py-2">
-          Chưa có thiết bị IoT nào được gán cho mốc này.
-        </p>
-      ) : (
-        <div className="rounded-md border p-3 bg-muted/30 text-sm space-y-1">
-          <p className="font-medium">{formatDeviceLabel(assignment.device)}</p>
-          <p className="text-muted-foreground text-xs">
-            Mã lượt gán:{" "}
-            <span className="font-mono">{assignment.assignmentId}</span>
-          </p>
-          <p className="text-muted-foreground text-xs">
-            Thời điểm gán: {formatDate(assignment.assignedAt)}
-          </p>
-          {assignment.device.isDeleted && (
-            <p className="text-xs text-destructive">
-              Thiết bị đã bị xóa mềm; dữ liệu hiển thị từ lịch sử gán.
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Device picker dialog */}
-      <Dialog
-        open={showPicker}
-        onOpenChange={setShowPicker}
-      >
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Chọn thiết bị IoT</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-2 max-h-80 overflow-y-auto">
-            {availableQuery.isLoading ? (
-              [0, 1, 2].map((i) => (
-                <Skeleton
-                  key={i}
-                  className="h-14 w-full"
-                />
-              ))
-            ) : available.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">
-                Không có thiết bị khả dụng.
-              </p>
-            ) : (
-              available.map((dev) => (
-                <div
-                  key={dev.id}
-                  className="flex items-center justify-between rounded-md border p-3 hover:bg-muted/50 cursor-pointer"
-                  onClick={() => handleAssign(dev.id)}
-                >
-                  <div>
-                    <p className="font-medium text-sm">{dev.deviceName}</p>
-                    <p className="text-xs text-muted-foreground capitalize">
-                      {dev.deviceType.replace("_", " ")} · {dev.status}
-                    </p>
-                  </div>
-                  <Button
-                    size="sm"
-                    disabled={assignMutation.isPending}
-                  >
-                    {assignMutation.isPending ? (
-                      <RefreshCw className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <Check className="h-3 w-3" />
-                    )}
-                  </Button>
-                </div>
-              ))
-            )}
-          </div>
-          {availableMeta && availableMeta.totalPages > 1 && (
-            <div className="flex items-center justify-between pt-2 text-xs">
-              <span>
-                Trang {pickerPage} / {availableMeta.totalPages}
-              </span>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={pickerPage <= 1}
-                  onClick={() => setPickerPage((p) => p - 1)}
-                >
-                  Trước
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={pickerPage >= availableMeta.totalPages}
-                  onClick={() => setPickerPage((p) => p + 1)}
-                >
-                  Sau
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <ConfirmDialog
-        open={confirmUnassign}
-        title="Bỏ gán thiết bị?"
-        description="Liên kết cảm biến và ngưỡng của lượt gán này cũng sẽ bị xóa."
-        confirmLabel="Bỏ gán"
-        variant="destructive"
-        onCancel={() => setConfirmUnassign(false)}
-        onConfirm={handleUnassign}
-      />
-    </div>
-  );
-};
-
-// ============================================================
-// Sensor Binding Section (#81)
-// ============================================================
-
-const SensorBindingSection = ({
-  assignmentId,
-  iotDeviceId,
-}: {
-  assignmentId: string;
-  iotDeviceId?: string;
-}) => {
-  const [confirmUnbind, setConfirmUnbind] = useState<string | null>(null);
-
-  // Fetch all sensors on the IoT board
-  const sensorQuery = useManagerListSensorsForDevice(iotDeviceId);
-  const allSensors = sensorQuery.data?.data.data ?? [];
-
-  const boundQuery = useManagerListBoundSensors(assignmentId);
-  const boundSensors = boundQuery.data?.data.data ?? [];
-  const boundIds = new Set(boundSensors.map((s) => s.sensorId));
-
-  const unboundSensors = allSensors.filter((s) => !boundIds.has(s.id));
-
-  const bindMutation = useManagerBindSensors(assignmentId);
-  const unbindMutation = useManagerUnbindSensors(assignmentId);
-
-  const handleBind = (sensorId: string) => {
-    bindMutation.mutate({ sensorIds: [sensorId] });
-  };
-
-  const handleUnbind = (sensorId: string) => {
-    unbindMutation.mutate(
-      { sensorIds: [sensorId] },
-      { onSuccess: () => setConfirmUnbind(null) },
-    );
-  };
-
-  if (boundQuery.isLoading) return <Skeleton className="h-20 w-full" />;
-
-  return (
-    <div className="space-y-3">
-      <p className="text-sm font-semibold flex items-center gap-2">
-        <Radio className="h-4 w-4" />
-        Liên kết cảm biến
-      </p>
-
-      {/* Bound sensors */}
-      {boundSensors.length === 0 ? (
-        <p className="text-xs text-muted-foreground">
-          Chưa có cảm biến nào được liên kết.
-        </p>
-      ) : (
-        <div className="space-y-1">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            Đã liên kết
-          </p>
-          {boundSensors.map((s) => (
-            <div
-              key={s.bindingId}
-              className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
-            >
-              <div>
-                <span className="font-medium">
-                  {s.sensorName ||
-                    SENSOR_TYPE_LABELS[s.sensorType] ||
-                    s.sensorType}
-                </span>
-                <Badge
-                  variant="outline"
-                  className="ml-2 text-xs capitalize"
-                >
-                  {s.status}
-                </Badge>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {`${s.sensorName || SENSOR_TYPE_LABELS[s.sensorType] || s.sensorType} (Ngưỡng: ${formatThresholdText(s)}) trên ${boundQuery.data?.data.device.deviceName ?? "thiết bị"}`}
-                </p>
-              </div>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="text-destructive hover:text-destructive h-7 w-7 p-0"
-                onClick={() => setConfirmUnbind(s.sensorId)}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Available to bind */}
-      {unboundSensors.length > 0 && (
-        <div className="space-y-1">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            Có thể liên kết
-          </p>
-          {unboundSensors.map((s) => (
-            <div
-              key={s.id}
-              className="flex items-center justify-between rounded-md border border-dashed px-3 py-2 text-sm"
-            >
-              <span className="text-muted-foreground">
-                {SENSOR_TYPE_LABELS[s.sensorType] ?? s.sensorType}
-              </span>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7"
-                disabled={bindMutation.isPending}
-                onClick={() => handleBind(s.id)}
-              >
-                <Plus className="h-3 w-3 mr-1" />
-                Liên kết
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <ConfirmDialog
-        open={!!confirmUnbind}
-        title="Gỡ liên kết cảm biến?"
-        description="Thao tác này sẽ gỡ cảm biến khỏi lượt gán này."
-        confirmLabel="Gỡ liên kết"
-        variant="destructive"
-        onCancel={() => setConfirmUnbind(null)}
-        onConfirm={() => confirmUnbind && handleUnbind(confirmUnbind)}
-      />
-    </div>
-  );
-};
-
-// ============================================================
-// Sensor Threshold Section (#82)
-// ============================================================
-
-const ThresholdSection = ({ assignmentId }: { assignmentId: string }) => {
-  const [editing, setEditing] = useState<ThresholdEligibleSensorType | null>(
-    null,
-  );
-  const [form, setForm] = useState({ optimalMin: 0, optimalMax: 100 });
-
-  const thresholdQuery = useManagerSensorThresholds(assignmentId);
-  const items = thresholdQuery.data?.data.data ?? [];
-
-  const eligibleItems = items.filter((i) =>
-    THRESHOLD_ELIGIBLE.has(i.sensorType),
-  );
-
-  const upsertMutation = useManagerUpsertSensorThreshold(assignmentId);
-
-  const startEdit = (sensorType: ThresholdEligibleSensorType) => {
-    const existing = items.find((i) => i.sensorType === sensorType);
-    setForm({
-      optimalMin:
-        existing?.threshold?.optimalMin ?? Number(existing?.minValue ?? 0),
-      optimalMax:
-        existing?.threshold?.optimalMax ?? Number(existing?.maxValue ?? 100),
-    });
-    setEditing(sensorType);
-  };
-
-  const handleSave = () => {
-    if (!editing) return;
-    upsertMutation.mutate(
-      {
-        sensorType: editing,
-        optimalMin: form.optimalMin,
-        optimalMax: form.optimalMax,
-      },
-      { onSuccess: () => setEditing(null) },
-    );
-  };
-
-  if (thresholdQuery.isLoading) return <Skeleton className="h-20 w-full" />;
-
-  if (eligibleItems.length === 0) {
-    return (
-      <div className="space-y-2">
-        <p className="text-sm font-semibold">Ngưỡng cảm biến</p>
-        <p className="text-xs text-muted-foreground">
-          Không có cảm biến đủ điều kiện đặt ngưỡng.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      <p className="text-sm font-semibold">Ngưỡng cảm biến</p>
-      <p className="text-xs text-muted-foreground">
-        Thiết lập giá trị min/max tối ưu. Chỉ số ngoài khoảng này sẽ tạo cảnh
-        báo.
-      </p>
-
-      <div className="space-y-2">
-        {eligibleItems.map((item) => {
-          const isEditing = editing === item.sensorType;
-          const t = item.threshold;
-          return (
-            <div
-              key={item.sensorId}
-              className="rounded-md border p-3 space-y-2"
-            >
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium">
-                  {SENSOR_TYPE_LABELS[item.sensorType] ?? item.sensorType}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant={
-                      item.source === "milestone"
-                        ? "default"
-                        : item.source === "zone"
-                          ? "secondary"
-                          : "outline"
-                    }
-                    className="text-xs"
-                  >
-                    {item.source === "none"
-                      ? "Chưa có ngưỡng"
-                      : item.source === "milestone"
-                        ? "Từ mốc"
-                        : item.source === "zone"
-                          ? "Từ vùng"
-                          : `Từ ${item.source}`}
-                  </Badge>
-                  {!isEditing && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 w-7 p-0"
-                      onClick={() =>
-                        startEdit(
-                          item.sensorType as ThresholdEligibleSensorType,
-                        )
-                      }
-                    >
-                      <Pencil className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              {!isEditing && t && (
-                <p className="text-xs text-muted-foreground">
-                  Tối ưu: {t.optimalMin} – {t.optimalMax}
-                  &nbsp;·&nbsp;Khoảng đo: {item.minValue} – {item.maxValue}
-                </p>
-              )}
-
-              {isEditing && (
-                <div className="space-y-2">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-xs font-medium">Nhỏ nhất</label>
-                      <Input
-                        type="number"
-                        className="mt-1 h-8"
-                        value={form.optimalMin}
-                        onFocus={(e) => e.target.select()}
-                        onChange={(e) =>
-                          setForm((p) => ({
-                            ...p,
-                            optimalMin: Number(e.target.value),
-                          }))
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium">Lớn nhất</label>
-                      <Input
-                        type="number"
-                        className="mt-1 h-8"
-                        value={form.optimalMax}
-                        onFocus={(e) => e.target.select()}
-                        onChange={(e) =>
-                          setForm((p) => ({
-                            ...p,
-                            optimalMax: Number(e.target.value),
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7"
-                      onClick={() => setEditing(null)}
-                    >
-                      Hủy
-                    </Button>
-                    <Button
-                      size="sm"
-                      className="h-7"
-                      disabled={
-                        upsertMutation.isPending ||
-                        form.optimalMin > form.optimalMax
-                      }
-                      onClick={handleSave}
-                    >
-                      {upsertMutation.isPending ? "Đang lưu..." : "Lưu"}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
-// ============================================================
-// Read-only IoT Assignment View
-// ============================================================
-
-const IotAssignmentReadOnly = ({ milestoneId }: { milestoneId: string }) => {
-  const assignmentQuery = useManagerMilestoneAssignment(milestoneId);
-  const assignment = assignmentQuery.data?.data?.data ?? null;
-
-  if (assignmentQuery.isLoading) return <Skeleton className="h-20 w-full" />;
-
-  return (
-    <div className="space-y-3">
-      <p className="text-sm font-semibold flex items-center gap-2">
-        <Cpu className="h-4 w-4" />
-        Thiết bị IoT được gán
-      </p>
-      {!assignment ? (
-        <p className="text-xs text-muted-foreground py-2">
-          Chưa có thiết bị IoT nào được gán cho mốc này.
-        </p>
-      ) : (
-        <>
-          <div className="rounded-md border p-3 bg-muted/30 text-sm space-y-1">
-            <p className="font-medium">
-              {formatDeviceLabel(assignment.device)}
-            </p>
-            <p className="text-muted-foreground text-xs">
-              Mã lượt gán:{" "}
-              <span className="font-mono">{assignment.assignmentId}</span>
-            </p>
-            <p className="text-muted-foreground text-xs">
-              Thời điểm gán: {formatDate(assignment.assignedAt)}
-            </p>
-            {assignment.device.isDeleted && (
-              <p className="text-xs text-destructive">
-                Thiết bị đã bị xóa mềm; dữ liệu hiển thị từ lịch sử gán.
-              </p>
-            )}
-          </div>
-          <SensorBindingReadOnly
-            sensors={assignment.sensors}
-            deviceName={assignment.device.deviceName}
-          />
-        </>
-      )}
-    </div>
-  );
-};
-
-// ============================================================
-// Read-only Sensor Binding View
-// ============================================================
-
-const SensorBindingReadOnly = ({
-  sensors,
-  deviceName,
-}: {
-  sensors: Array<{
-    bindingId: string;
-    sensorId: string;
-    sensorName: string;
-    sensorType: string;
-    status: string;
-    unit: string | null;
-    threshold: {
-      source: "milestone" | "zone" | "none";
-      optimalMin: number | null;
-      optimalMax: number | null;
-    };
-  }>;
-  deviceName?: string;
-}) => {
-  const boundSensors = sensors ?? [];
-
-  return (
-    <div className="space-y-3">
-      <p className="text-sm font-semibold flex items-center gap-2">
-        <Radio className="h-4 w-4" />
-        Liên kết cảm biến
-      </p>
-      {boundSensors.length === 0 ? (
-        <p className="text-xs text-muted-foreground">
-          Chưa có cảm biến nào được liên kết.
-        </p>
-      ) : (
-        <div className="space-y-1">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            Đã liên kết
-          </p>
-          {boundSensors.map((s) => (
-            <div
-              key={s.bindingId}
-              className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
-            >
-              <div>
-                <span className="font-medium">
-                  {s.sensorName ||
-                    SENSOR_TYPE_LABELS[s.sensorType] ||
-                    s.sensorType}
-                </span>
-                <Badge
-                  variant="outline"
-                  className="ml-2 text-xs capitalize"
-                >
-                  {s.status}
-                </Badge>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {`${s.sensorName || SENSOR_TYPE_LABELS[s.sensorType] || s.sensorType} (Ngưỡng: ${formatThresholdText(s)}) trên ${deviceName || "thiết bị"}`}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 };
@@ -1572,11 +998,6 @@ const ManagerMilestonesPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const [selectedMilestone, setSelectedMilestone] =
-    useState<ProductionMilestoneResType | null>(null);
-  const [detailTab, setDetailTab] = useState<"iot" | "tasks" | "assignment">(
-    "iot",
-  );
   const [page, setPage] = useState(1);
   const [showCreateScreen, setShowCreateScreen] = useState(false);
   const [editingMilestone, setEditingMilestone] =
@@ -1673,7 +1094,6 @@ const ManagerMilestonesPage = () => {
     deleteMutation.mutate(milestoneId, {
       onSuccess: () => {
         setConfirmDelete(null);
-        if (selectedMilestone?.id === milestoneId) setSelectedMilestone(null);
       },
     });
   };
@@ -1695,28 +1115,52 @@ const ManagerMilestonesPage = () => {
       .map((item) => item.milestoneOrder)
       .sort((a, b) => a - b);
 
+    // Capture dates at each position (sorted by order) so they stay with the slot
+    const stableDates = original.map((item) => ({
+      expectedStartDate: item.expectedStartDate,
+      expectedEndDate: item.expectedEndDate,
+    }));
+
     const nextWithOrder = next.map((item, index) => ({
       ...item,
       milestoneOrder: stableOrders[index],
+      expectedStartDate: stableDates[index].expectedStartDate,
+      expectedEndDate: stableDates[index].expectedEndDate,
     }));
 
-    const originalOrderById = new Map(
-      original.map((item) => [item.id, item.milestoneOrder]),
+    const originalById = new Map(
+      original.map((item) => [
+        item.id,
+        {
+          milestoneOrder: item.milestoneOrder,
+          expectedStartDate: item.expectedStartDate,
+          expectedEndDate: item.expectedEndDate,
+        },
+      ]),
     );
 
     const changedItems = nextWithOrder
-      .filter((item) => originalOrderById.get(item.id) !== item.milestoneOrder)
-      .map((item) => ({ id: item.id, targetOrder: item.milestoneOrder }));
+      .filter((item) => {
+        const orig = originalById.get(item.id);
+        return (
+          orig &&
+          (orig.milestoneOrder !== item.milestoneOrder ||
+            orig.expectedStartDate !== item.expectedStartDate ||
+            orig.expectedEndDate !== item.expectedEndDate)
+        );
+      })
+      .map((item) => ({
+        id: item.id,
+        targetOrder: item.milestoneOrder,
+        expectedStartDate: item.expectedStartDate,
+        expectedEndDate: item.expectedEndDate,
+      }));
 
     if (!changedItems.length) {
       return;
     }
 
     setOrderedMilestones(nextWithOrder);
-    setSelectedMilestone((prev) => {
-      if (!prev) return prev;
-      return nextWithOrder.find((item) => item.id === prev.id) ?? prev;
-    });
     setIsReordering(true);
 
     try {
@@ -1724,6 +1168,7 @@ const ManagerMilestonesPage = () => {
         Math.max(...original.map((item) => item.milestoneOrder), totalItems) +
         1000;
 
+      // Phase 1: move all changed items to temporary orders (no date change yet)
       for (const [index, item] of changedItems.entries()) {
         await reorderMutation.mutateAsync({
           milestoneId: item.id,
@@ -1731,12 +1176,17 @@ const ManagerMilestonesPage = () => {
         });
       }
 
+      // Phase 2: set final order + swap dates to match the new position
       for (const item of changedItems.sort(
         (a, b) => a.targetOrder - b.targetOrder,
       )) {
         await reorderMutation.mutateAsync({
           milestoneId: item.id,
-          body: { milestoneOrder: item.targetOrder },
+          body: {
+            milestoneOrder: item.targetOrder,
+            expectedStartDate: item.expectedStartDate ?? null,
+            expectedEndDate: item.expectedEndDate ?? null,
+          },
         });
       }
 
@@ -1744,10 +1194,6 @@ const ManagerMilestonesPage = () => {
       toast.success("Đã cập nhật thứ tự mốc.");
     } catch {
       setOrderedMilestones(original);
-      setSelectedMilestone((prev) => {
-        if (!prev) return prev;
-        return original.find((item) => item.id === prev.id) ?? prev;
-      });
       toast.error("Không thể cập nhật thứ tự mốc. Vui lòng thử lại.");
     } finally {
       setIsReordering(false);
@@ -1825,13 +1271,15 @@ const ManagerMilestonesPage = () => {
     await reorderMilestones(milestoneId, targetMilestoneId);
   };
 
-  // assignment from query (for passing assignmentId to sub-sections)
-  const assignmentQuery = useManagerMilestoneAssignment(
-    selectedMilestone?.id ?? "",
-    !!selectedMilestone,
-  );
-  const assignmentId = assignmentQuery.data?.data?.data?.assignmentId ?? null;
-  const iotDeviceId = assignmentQuery.data?.data?.data?.iotDeviceId ?? null;
+  const milestoneDetailUrl = (mId: string) => {
+    const base = `/dashboard/manager/crop-seasons/${id}/milestones/${mId}`;
+    return zoneId ? `${base}?zoneId=${encodeURIComponent(zoneId)}` : base;
+  };
+
+  const milestoneOverviewUrl = (mId: string) => {
+    const base = `/dashboard/manager/crop-seasons/${id}/milestones/${mId}/overview`;
+    return zoneId ? `${base}?zoneId=${encodeURIComponent(zoneId)}` : base;
+  };
 
   if (showCreateScreen) {
     return (
@@ -1912,7 +1360,7 @@ const ManagerMilestonesPage = () => {
 
       <div className="grid gap-4 lg:grid-cols-5">
         {/* Left: Milestone List */}
-        <Card className={selectedMilestone ? "lg:col-span-2" : "lg:col-span-5"}>
+        <Card className="lg:col-span-5">
           <CardHeader>
             <CardTitle>Danh sách mốc</CardTitle>
             <CardDescription>
@@ -1956,23 +1404,12 @@ const ManagerMilestonesPage = () => {
                     onDragOver={(event) => handleMilestoneDragOver(event, m.id)}
                     onDrop={(event) => void handleMilestoneDrop(event, m.id)}
                     onDragEnd={handleMilestoneDragEnd}
-                    onClick={() => {
-                      if (selectedMilestone?.id === m.id) {
-                        setSelectedMilestone(null);
-                        return;
-                      }
-                      setSelectedMilestone(m);
-                      setDetailTab("iot");
-                    }}
+                    onClick={() => navigate(milestoneDetailUrl(m.id))}
                     className={`flex items-start justify-between rounded-md border p-3 transition-colors ${
                       isPlanningCropSeason && !isReordering
                         ? "cursor-grab active:cursor-grabbing"
                         : "cursor-pointer"
-                    } ${
-                      selectedMilestone?.id === m.id
-                        ? "border-primary bg-muted/30"
-                        : "hover:bg-muted/50"
-                    } ${isDragging ? "opacity-60" : ""} ${
+                    } hover:bg-muted/50 ${isDragging ? "opacity-60" : ""} ${
                       isDragOver ? "ring-2 ring-primary/30" : ""
                     }`}
                   >
@@ -2015,6 +1452,15 @@ const ManagerMilestonesPage = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(milestoneOverviewUrl(m.id));
+                          }}
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          Xem chi tiết
+                        </DropdownMenuItem>
                         {isPlanningCropSeason && (
                           <>
                             <DropdownMenuItem
@@ -2110,111 +1556,6 @@ const ManagerMilestonesPage = () => {
             )}
           </CardContent>
         </Card>
-
-        {/* Right: Milestone Detail */}
-        {selectedMilestone && (
-          <Card className="lg:col-span-3">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="text-base">
-                    #{selectedMilestone.milestoneOrder}{" "}
-                    {selectedMilestone.stageName}
-                  </CardTitle>
-                  <CardDescription>
-                    <Badge
-                      variant={STATUS_META[selectedMilestone.status].variant}
-                      className="text-xs mt-1"
-                    >
-                      {STATUS_META[selectedMilestone.status].label}
-                    </Badge>
-                  </CardDescription>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => setSelectedMilestone(null)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              {selectedMilestone.expectedStartDate && (
-                <p className="text-sm text-muted-foreground">
-                  {formatDate(selectedMilestone.expectedStartDate)}
-                  {selectedMilestone.expectedEndDate
-                    ? ` → ${formatDate(selectedMilestone.expectedEndDate)}`
-                    : ""}
-                </p>
-              )}
-
-              <Tabs
-                value={detailTab}
-                onValueChange={(value) =>
-                  setDetailTab(value as "iot" | "tasks" | "assignment")
-                }
-                className="space-y-4"
-              >
-                <TabsList
-                  variant="line"
-                  className="w-full justify-start"
-                >
-                  <TabsTrigger value="iot">Thiết bị IoT</TabsTrigger>
-                  <TabsTrigger value="tasks">Nhiệm vụ</TabsTrigger>
-                  <TabsTrigger value="assignment">Gán nông dân</TabsTrigger>
-                </TabsList>
-
-                <TabsContent
-                  value="iot"
-                  className="space-y-4"
-                >
-                  {/* IoT Device Assignment (#80) */}
-                  {isPlanningCropSeason ? (
-                    <IotAssignmentSection milestoneId={selectedMilestone.id} />
-                  ) : (
-                    <IotAssignmentReadOnly milestoneId={selectedMilestone.id} />
-                  )}
-
-                  {/* Sensor Binding (#81) — only when device is assigned */}
-                  {isPlanningCropSeason && assignmentId && (
-                    <>
-                      <Separator />
-                      <SensorBindingSection
-                        assignmentId={assignmentId}
-                        iotDeviceId={iotDeviceId ?? undefined}
-                      />
-                    </>
-                  )}
-
-                  {/* Threshold (#82) — only when device is assigned */}
-                  {isPlanningCropSeason && assignmentId && (
-                    <>
-                      <Separator />
-                      <ThresholdSection assignmentId={assignmentId} />
-                    </>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="tasks">
-                  <ManagerMilestoneTasksSection
-                    milestoneId={selectedMilestone.id}
-                    canEdit={canEditMilestone}
-                  />
-                </TabsContent>
-
-                <TabsContent value="assignment">
-                  <ManagerMilestoneTaskAssignmentScreen
-                    milestoneId={selectedMilestone.id}
-                    canEdit={canEditMilestone}
-                    onBack={() => setDetailTab("tasks")}
-                  />
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        )}
       </div>
 
       {editingMilestone && canEditMilestone && (

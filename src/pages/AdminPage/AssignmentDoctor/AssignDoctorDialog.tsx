@@ -34,6 +34,12 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
+import { handleApiErrorUnprocessentity } from "@/lib/axios";
+import {
+  isApiErrorUnprocessableEntityResponse,
+  isApiErrorResponse,
+} from "@/lib/utils";
 
 type DoctorOption = {
   id: string;
@@ -65,6 +71,7 @@ const AssignDoctorDialog = () => {
       notes: "",
     },
   });
+  useClearServerFieldErrors(form);
 
   const { mutateAsync, isPending } = useAdminAsignDoctor();
 
@@ -90,7 +97,25 @@ const AssignDoctorDialog = () => {
       toast.success("Phân công bác sĩ thành công");
       setOpen(false);
       reset();
-    } catch {
+    } catch (error) {
+      if (
+        isApiErrorUnprocessableEntityResponse<CreateAssignmentFormValues>(error)
+      ) {
+        handleApiErrorUnprocessentity<CreateAssignmentFormValues>(
+          error.response!.data.errors,
+          form.setError,
+          { getValues: form.getValues },
+        );
+        return;
+      }
+
+      if (isApiErrorResponse(error)) {
+        toast.error(
+          error.response?.data.message ?? "Phân công bác sĩ thất bại",
+        );
+        return;
+      }
+
       toast.error("Phân công bác sĩ thất bại");
     }
   });

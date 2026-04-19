@@ -428,17 +428,31 @@ export const useManagerSensorThresholds = (
     enabled: !!assignmentId && enabled,
   });
 
-export const useManagerUpsertSensorThreshold = (assignmentId: string) => {
+export const useManagerUpsertSensorThreshold = (
+  assignmentId: string,
+  milestoneId?: string,
+) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: UpsertSensorThresholdBodyType) =>
-      sensorThresholdService.create(assignmentId, body),
+    mutationFn: ({
+      isUpdate,
+      ...body
+    }: UpsertSensorThresholdBodyType & { isUpdate?: boolean }) =>
+      isUpdate
+        ? sensorThresholdService.update(assignmentId, body)
+        : sensorThresholdService.create(assignmentId, body),
     onSuccess: () => {
       toast.success("Lưu threshold thành công!");
       qc.invalidateQueries({
         queryKey:
           QUERY_KEYS.manager.productionMilestones.thresholds(assignmentId),
       });
+      if (milestoneId) {
+        qc.invalidateQueries({
+          queryKey:
+            QUERY_KEYS.manager.productionMilestones.assignment(milestoneId),
+        });
+      }
     },
     onError: (error) => onMutationError(error, "Lưu threshold thất bại"),
   });
@@ -457,8 +471,13 @@ export const useOwnerSensorThresholds = (
 export const useOwnerUpsertSensorThreshold = (assignmentId: string) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: UpsertSensorThresholdBodyType) =>
-      ownerSensorThresholdService.create(assignmentId, body),
+    mutationFn: ({
+      isUpdate,
+      ...body
+    }: UpsertSensorThresholdBodyType & { isUpdate?: boolean }) =>
+      isUpdate
+        ? ownerSensorThresholdService.update(assignmentId, body)
+        : ownerSensorThresholdService.create(assignmentId, body),
     onSuccess: () => {
       toast.success("Lưu threshold thành công!");
       qc.invalidateQueries({

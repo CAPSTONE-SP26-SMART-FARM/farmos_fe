@@ -92,8 +92,12 @@ import type {
   IotDeviceTemplateResType,
   SensorTemplateResType,
 } from "@/schemaValidatation/iotTemplate";
-import { isApiErrorUnprocessableEntityResponse } from "@/lib/utils";
+import {
+  isApiErrorUnprocessableEntityResponse,
+  isApiErrorResponse,
+} from "@/lib/utils";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
+import { toast } from "sonner";
 
 type IotActor = "owner" | "manager";
 
@@ -1391,6 +1395,7 @@ function EditDeviceForm({
       items: [{ sensorType: "soil_moisture", minValue: 0, maxValue: 100 }],
     },
   });
+  useClearServerFieldErrors(sensorForm);
 
   const {
     fields: sensorFields,
@@ -1514,8 +1519,22 @@ function EditDeviceForm({
       sensorForm.reset({
         items: [{ sensorType: defaultSensorType, minValue: 0, maxValue: 100 }],
       });
-    } catch {
-      // error handled by mutation
+    } catch (error) {
+      if (isApiErrorUnprocessableEntityResponse<SensorBatchFormType>(error)) {
+        handleApiErrorUnprocessentity<SensorBatchFormType>(
+          error.response!.data.errors,
+          sensorForm.setError,
+          { getValues: sensorForm.getValues },
+        );
+        return;
+      }
+
+      if (isApiErrorResponse(error)) {
+        toast.error(error.response?.data.message ?? "Thêm cảm biến thất bại");
+        return;
+      }
+
+      toast.error("Thêm cảm biến thất bại");
     }
   };
 

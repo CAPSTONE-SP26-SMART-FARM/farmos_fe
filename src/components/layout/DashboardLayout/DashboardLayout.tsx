@@ -16,9 +16,43 @@ import {
 import { Outlet, useLocation } from "react-router";
 import { useMemo } from "react";
 import { useSocketInit } from "@/hooks/useSocket";
+import { sidebarData } from "./sidebarItemData";
 
 /**
- * Generate breadcrumb items from current path
+ * Static Vietnamese labels for generic path segments (roles, dashboard root)
+ */
+const SEGMENT_LABELS: Record<string, string> = {
+  dashboard: "Bảng Điều Khiển",
+  admin: "Quản Trị",
+  owner: "Chủ Trang Trại",
+  manager: "Quản Lý",
+  doctor: "Bác Sĩ",
+  farmer: "Nông Dân",
+};
+
+/**
+ * Build a map from sidebar URLs to their Vietnamese titles.
+ * This covers all feature-level pages (e.g. /dashboard/owner/iot-devices → "Thiết Bị IoT").
+ */
+function buildSidebarUrlMap(): Record<string, string> {
+  const map: Record<string, string> = {};
+  const allNavs = [
+    ...sidebarData.navAdmin,
+    ...sidebarData.navOwner,
+    ...sidebarData.navManager,
+    ...sidebarData.navDoctor,
+    ...sidebarData.navFarmer,
+  ];
+  for (const item of allNavs) {
+    map[item.url] = item.title;
+  }
+  return map;
+}
+
+const sidebarUrlMap = buildSidebarUrlMap();
+
+/**
+ * Generate breadcrumb items from current path with Vietnamese labels
  */
 function useBreadcrumbs() {
   const location = useLocation();
@@ -31,6 +65,8 @@ function useBreadcrumbs() {
     paths.forEach((segment, index) => {
       currentPath += `/${segment}`;
       const label =
+        SEGMENT_LABELS[segment] ??
+        sidebarUrlMap[currentPath] ??
         segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " ");
       breadcrumbs.push({
         label,

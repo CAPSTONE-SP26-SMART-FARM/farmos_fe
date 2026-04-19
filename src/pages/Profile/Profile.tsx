@@ -24,6 +24,13 @@ import { Loader2 } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import { useEffect, useMemo, useRef, useState } from "react";
 import envConfig from "@/config";
+import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
+import { handleApiErrorUnprocessentity } from "@/lib/axios";
+import {
+  isApiErrorUnprocessableEntityResponse,
+  isApiErrorResponse,
+} from "@/lib/utils";
+import { toast } from "sonner";
 
 const Profile = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -41,6 +48,7 @@ const Profile = () => {
   });
   const { mutateAsync: update, isPending } = useUpdateProfile();
   const meQuery = useCurrentUser();
+  useClearServerFieldErrors(form);
 
   useEffect(() => {
     const me = meQuery.data;
@@ -95,8 +103,22 @@ const Profile = () => {
         ...data,
         avatarUrl: nextAvatarUrl,
       });
-    } catch (_error) {
-      // có thể toast lỗi ở đây nếu cần
+    } catch (error) {
+      if (isApiErrorUnprocessableEntityResponse<UpdateProfileType>(error)) {
+        handleApiErrorUnprocessentity<UpdateProfileType>(
+          error.response!.data.errors,
+          form.setError,
+          { getValues: form.getValues },
+        );
+        return;
+      }
+
+      if (isApiErrorResponse(error)) {
+        toast.error(error.response?.data.message ?? "Cập nhật hồ sơ thất bại");
+        return;
+      }
+
+      toast.error("Cập nhật hồ sơ thất bại");
     } finally {
       setUploading(false);
     }

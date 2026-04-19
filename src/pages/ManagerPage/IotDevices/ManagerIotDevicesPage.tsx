@@ -39,7 +39,7 @@ type ManagerFarmSummary = {
   zoneCount: number;
 };
 
-const ASSIGNED_ZONE_LIMIT = 200;
+const ASSIGNED_ZONE_LIMIT = 50;
 
 function getManagerFarmSummaries(zoneFarmIds: string[]): ManagerFarmSummary[] {
   const byFarm = new Map<string, number>();
@@ -243,6 +243,7 @@ export default function ManagerIotDevicesPage() {
         farmId={farmId}
         farmName={farmName}
         actor="manager"
+        defaultLimit={50}
         onCreate={() => setNav({ level: 3 })}
         onDetail={(device) => setNav({ level: 2, device })}
         onEdit={(device) => setNav({ level: 4, device })}

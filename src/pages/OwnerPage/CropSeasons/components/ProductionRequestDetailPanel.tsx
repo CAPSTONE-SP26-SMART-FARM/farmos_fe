@@ -25,6 +25,13 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
+import { handleApiErrorUnprocessentity } from "@/lib/axios";
+import {
+  isApiErrorUnprocessableEntityResponse,
+  isApiErrorResponse,
+} from "@/lib/utils";
+import { toast } from "sonner";
 
 interface Props {
   requestId: string;
@@ -111,6 +118,7 @@ export default function ProductionRequestDetailPanel({
     resolver: zodResolver(ReplyProductionRequestBodySchema),
     defaultValues: { status: "rejected", description: "" },
   });
+  useClearServerFieldErrors(rejectForm);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setShow(true));
@@ -138,17 +146,40 @@ export default function ProductionRequestDetailPanel({
   });
 
   const handleConfirm = async () => {
-    if (confirmAction === "approve") {
-      await replyMutation.mutateAsync({ status: "approved" });
-    } else if (confirmAction === "reject") {
-      const values = rejectForm.getValues();
-      await replyMutation.mutateAsync({
-        status: "rejected",
-        description: values.description,
-      });
+    try {
+      if (confirmAction === "approve") {
+        await replyMutation.mutateAsync({ status: "approved" });
+      } else if (confirmAction === "reject") {
+        const values = rejectForm.getValues();
+        await replyMutation.mutateAsync({
+          status: "rejected",
+          description: values.description,
+        });
+      }
+      setConfirmAction(null);
+      setShowRejectForm(false);
+    } catch (error) {
+      if (
+        isApiErrorUnprocessableEntityResponse<ReplyProductionRequestBodyType>(
+          error,
+        )
+      ) {
+        handleApiErrorUnprocessentity<ReplyProductionRequestBodyType>(
+          error.response!.data.errors,
+          rejectForm.setError,
+          { getValues: rejectForm.getValues },
+        );
+        setConfirmAction(null);
+        return;
+      }
+
+      if (isApiErrorResponse(error)) {
+        toast.error(error.response?.data.message ?? "Xử lý yêu cầu thất bại");
+        return;
+      }
+
+      toast.error("Xử lý yêu cầu thất bại");
     }
-    setConfirmAction(null);
-    setShowRejectForm(false);
   };
 
   const reqStatus = req

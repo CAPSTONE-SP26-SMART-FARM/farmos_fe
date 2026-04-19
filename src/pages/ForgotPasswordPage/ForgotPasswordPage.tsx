@@ -23,6 +23,13 @@ import {
   type ForgotPasswordBodyType,
 } from "@/schemaValidatation/auth";
 import { useForgotPassword } from "@/queries/useAuth";
+import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
+import { handleApiErrorUnprocessentity } from "@/lib/axios";
+import {
+  isApiErrorUnprocessableEntityResponse,
+  isApiErrorResponse,
+} from "@/lib/utils";
+import { toast } from "sonner";
 
 function ForgotPasswordPage() {
   const form = useForm<ForgotPasswordBodyType>({
@@ -32,10 +39,31 @@ function ForgotPasswordPage() {
     },
   });
 
-  const { mutate: forgotPassword, isPending } = useForgotPassword();
+  const { mutateAsync: forgotPassword, isPending } = useForgotPassword();
+  useClearServerFieldErrors(form);
 
-  const handleSubmit = (data: ForgotPasswordBodyType) => {
-    forgotPassword({ ...data });
+  const handleSubmit = async (data: ForgotPasswordBodyType) => {
+    try {
+      await forgotPassword({ ...data });
+    } catch (error) {
+      if (
+        isApiErrorUnprocessableEntityResponse<ForgotPasswordBodyType>(error)
+      ) {
+        handleApiErrorUnprocessentity<ForgotPasswordBodyType>(
+          error.response!.data.errors,
+          form.setError,
+          { getValues: form.getValues },
+        );
+        return;
+      }
+
+      if (isApiErrorResponse(error)) {
+        toast.error(error.response?.data.message ?? "Gửi yêu cầu thất bại");
+        return;
+      }
+
+      toast.error("Gửi yêu cầu thất bại");
+    }
   };
 
   return (

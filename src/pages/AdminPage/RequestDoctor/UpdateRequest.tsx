@@ -44,6 +44,13 @@ import {
 } from "@/components/ui/field";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
+import { handleApiErrorUnprocessentity } from "@/lib/axios";
+import {
+  isApiErrorUnprocessableEntityResponse,
+  isApiErrorResponse,
+} from "@/lib/utils";
+import { toast } from "sonner";
 
 interface Props {
   id?: string;
@@ -65,6 +72,7 @@ const UpdateRequest = ({ id, setId }: Props) => {
       reason: "",
     },
   });
+  useClearServerFieldErrors(form);
 
   const detailQuery = useAdminDoctorRequestDetail(id!, !!id);
   const request: DoctorRequestWithProfileAndUserResType | undefined = id
@@ -104,8 +112,28 @@ const UpdateRequest = ({ id, setId }: Props) => {
             },
           },
         );
-      } catch {
-        /* error handled by mutation's onError */
+      } catch (error) {
+        if (
+          isApiErrorUnprocessableEntityResponse<UpdateDoctorRequestStatusBodyType>(
+            error,
+          )
+        ) {
+          handleApiErrorUnprocessentity<UpdateDoctorRequestStatusBodyType>(
+            error.response!.data.errors,
+            form.setError,
+            { getValues: form.getValues },
+          );
+          return;
+        }
+
+        if (isApiErrorResponse(error)) {
+          toast.error(
+            error.response?.data.message ?? "Cập nhật yêu cầu thất bại",
+          );
+          return;
+        }
+
+        toast.error("Cập nhật yêu cầu thất bại");
       }
     },
   );

@@ -14,11 +14,17 @@ import type {
   ListProductionRequestsResType,
 } from "@/types/cropSeason";
 
+const toISO = (v: string) => (v ? `${v}T00:00:00.000Z` : v);
+
 const CS = API_ENDPOINTS.CROP_SEASON;
 
 export const cropSeasonService = {
   create: (body: CreateCropSeasonBodyType) =>
-    api.post<CropSeasonType, CreateCropSeasonBodyType>(CS.MANAGER.CREATE, body),
+    api.post<CropSeasonType, CreateCropSeasonBodyType>(CS.MANAGER.CREATE, {
+      ...body,
+      plantDate: toISO(body.plantDate),
+      expectedHarvestDate: toISO(body.expectedHarvestDate),
+    }),
 
   listByZone: (zoneId: string, query: ListCropSeasonsQueryType) =>
     api.get<ListCropSeasonsResType>(
@@ -28,10 +34,13 @@ export const cropSeasonService = {
   detail: (id: string) => api.get<CropSeasonType>(CS.MANAGER.DETAIL(id)),
 
   update: (id: string, body: UpdateCropSeasonBodyType) =>
-    api.put<CropSeasonType, UpdateCropSeasonBodyType>(
-      CS.MANAGER.UPDATE(id),
-      body,
-    ),
+    api.put<CropSeasonType, UpdateCropSeasonBodyType>(CS.MANAGER.UPDATE(id), {
+      ...body,
+      ...(body.plantDate && { plantDate: toISO(body.plantDate) }),
+      ...(body.expectedHarvestDate && {
+        expectedHarvestDate: toISO(body.expectedHarvestDate),
+      }),
+    }),
 
   sendRequest: (cropSeasonId: string, body: SendProductionRequestBodyType) =>
     api.post<ProductionRequestType, SendProductionRequestBodyType>(

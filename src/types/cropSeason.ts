@@ -71,10 +71,10 @@ export const CreateCropSeasonBodySchema = z.object({
   variety: z.string().optional(),
   plantDate: z
     .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Ngày phải theo định dạng YYYY-MM-DD"),
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
   expectedHarvestDate: z
     .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Ngày phải theo định dạng YYYY-MM-DD"),
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
   totalAreaSqm: z.number().positive().optional(),
   plantCount: z.number().int().positive().optional(),
   notes: z.string().optional(),
@@ -89,11 +89,11 @@ export const UpdateCropSeasonBodySchema = z.object({
   variety: z.string().optional(),
   plantDate: z
     .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Ngày phải theo định dạng YYYY-MM-DD")
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format")
     .optional(),
   expectedHarvestDate: z
     .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Ngày phải theo định dạng YYYY-MM-DD")
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format")
     .optional(),
   totalAreaSqm: z.number().positive().optional(),
   plantCount: z.number().int().positive().optional(),

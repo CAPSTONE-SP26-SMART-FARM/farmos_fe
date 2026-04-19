@@ -28,6 +28,13 @@ import {
   useTicketPrescriptions,
   useCreatePrescription,
 } from "@/queries/useTicket";
+import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
+import { handleApiErrorUnprocessentity } from "@/lib/axios";
+import {
+  isApiErrorUnprocessableEntityResponse,
+  isApiErrorResponse,
+} from "@/lib/utils";
+import { toast } from "sonner";
 import type { TicketIncidentResType } from "@/schemaValidatation/ticket";
 import { CreatePrescriptionBodySchema } from "@/schemaValidatation/prescription";
 import type { CreatePrescriptionBodyType } from "@/schemaValidatation/prescription";
@@ -121,14 +128,32 @@ function CreatePrescriptionDialog({
       dosage: "",
     },
   });
+  useClearServerFieldErrors(form);
 
-  const onSubmit = (data: CreatePrescriptionBodyType) => {
-    createRxMutation.mutate(data, {
-      onSuccess: () => {
-        form.reset();
-        onOpenChange(false);
-      },
-    });
+  const onSubmit = async (data: CreatePrescriptionBodyType) => {
+    try {
+      await createRxMutation.mutateAsync(data);
+      form.reset();
+      onOpenChange(false);
+    } catch (error) {
+      if (
+        isApiErrorUnprocessableEntityResponse<CreatePrescriptionBodyType>(error)
+      ) {
+        handleApiErrorUnprocessentity<CreatePrescriptionBodyType>(
+          error.response!.data.errors,
+          form.setError,
+          { getValues: form.getValues },
+        );
+        return;
+      }
+
+      if (isApiErrorResponse(error)) {
+        toast.error(error.response?.data.message ?? "Tạo đơn thuốc thất bại");
+        return;
+      }
+
+      toast.error("Tạo đơn thuốc thất bại");
+    }
   };
 
   return (

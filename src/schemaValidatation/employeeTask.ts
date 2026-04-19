@@ -41,8 +41,6 @@ export const CreateEmployeeTaskItemSchema = z.object({
   title: z.string().min(1, "Tiêu đề là bắt buộc").max(255),
   description: z.string().nullable().optional(),
   priority: TaskPrioritySchema.default("normal"),
-  dueDate: z.string().datetime().nullable().optional(),
-  startDate: z.string().datetime().nullable().optional(),
 });
 
 export const CreateEmployeeTaskBatchBodySchema = z
@@ -75,8 +73,6 @@ export const UpdateEmployeeTaskBodySchema = z.object({
   description: z.string().nullable().optional(),
   priority: TaskPrioritySchema.optional(),
   status: TaskStatusSchema.optional(),
-  dueDate: z.string().datetime().nullable().optional(),
-  startDate: z.string().datetime().nullable().optional(),
 });
 
 // ── Assign farmer ──────────────────────────────────────────────────────

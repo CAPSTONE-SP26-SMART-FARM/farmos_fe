@@ -60,7 +60,6 @@ import {
   Milestone,
   MoreVertical,
   Radio,
-  Ruler,
   Sprout,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -463,15 +462,6 @@ export default function CropSeasonDetailPanel({
                   icon={<Calendar className="h-3 w-3" />}
                   label="Thu hoạch thực tế"
                   value={formatDate(season.actualHarvestDate)}
-                />
-                <InfoCell
-                  icon={<Ruler className="h-3 w-3" />}
-                  label="Diện tích (m²)"
-                  value={
-                    season.totalAreaSqm != null
-                      ? `${season.totalAreaSqm} m²`
-                      : "—"
-                  }
                 />
                 <InfoCell
                   icon={<Layers className="h-3 w-3" />}

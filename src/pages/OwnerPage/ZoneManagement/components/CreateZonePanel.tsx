@@ -14,13 +14,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
 import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
@@ -45,8 +38,6 @@ interface Props {
   farmId: string;
   onBack: () => void;
 }
-
-const ZONE_TYPES = [{ value: "cultivation", label: "Canh tác" }] as const;
 
 const CreateZonePanel = ({ farmCode, farmId, onBack }: Props) => {
   const [show, setShow] = useState(false);
@@ -151,37 +142,6 @@ const CreateZonePanel = ({ farmCode, farmId, onBack }: Props) => {
                         id="zone-name"
                         placeholder="Ví dụ: Khu ruộng phía Bắc"
                       />
-                      {fieldState.invalid && (
-                        <FieldError errors={[fieldState.error]} />
-                      )}
-                    </Field>
-                  )}
-                />
-
-                <Controller
-                  name="zoneType"
-                  control={form.control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>Loại khu vực</FieldLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn loại khu vực" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ZONE_TYPES.map((type) => (
-                            <SelectItem
-                              key={type.value}
-                              value={type.value}
-                            >
-                              {type.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
                       {fieldState.invalid && (
                         <FieldError errors={[fieldState.error]} />
                       )}

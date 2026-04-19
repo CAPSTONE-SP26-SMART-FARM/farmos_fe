@@ -2,7 +2,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Card,
   CardContent,
@@ -24,11 +23,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,7 +53,6 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
-  CalendarDays,
 } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import {
@@ -81,7 +74,7 @@ import type {
 } from "@/schemaValidatation/employeeTask";
 import type { EmployeeTaskTemplateResType } from "@/schemaValidatation/employeeTaskTemplate";
 
-import { format, isValid, parse } from "date-fns";
+import { format } from "date-fns";
 import useDebounce from "@/hooks/useDebounce";
 
 // ============================================================
@@ -132,60 +125,6 @@ function isOverdue(task: EmployeeTaskResType) {
   return new Date(task.dueDate) < new Date();
 }
 
-const DATE_VALUE_FORMAT = "yyyy-MM-dd";
-
-function parseDateValue(value: string) {
-  if (!value) return undefined;
-  const parsed = parse(value, DATE_VALUE_FORMAT, new Date());
-  return isValid(parsed) ? parsed : undefined;
-}
-
-const DatePickerField = ({
-  value,
-  onChange,
-  placeholder,
-  className,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-  className?: string;
-}) => {
-  const selected = parseDateValue(value);
-
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          className={`h-8 justify-between text-xs font-normal ${className ?? ""}`}
-        >
-          {selected ? (
-            format(selected, "dd/MM/yyyy")
-          ) : (
-            <span className="text-muted-foreground">{placeholder}</span>
-          )}
-          <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-auto p-0"
-        align="start"
-      >
-        <Calendar
-          mode="single"
-          selected={selected}
-          onSelect={(date) =>
-            onChange(date ? format(date, DATE_VALUE_FORMAT) : "")
-          }
-          initialFocus
-        />
-      </PopoverContent>
-    </Popover>
-  );
-};
-
 // ============================================================
 // Batch Create Dialog
 // ============================================================
@@ -194,8 +133,6 @@ type TaskDraft = {
   title: string;
   description: string;
   priority: TaskPriorityType;
-  startDate: string;
-  dueDate: string;
   assignedTo: string;
 };
 
@@ -203,8 +140,6 @@ const emptyDraft = (): TaskDraft => ({
   title: "",
   description: "",
   priority: "normal",
-  startDate: "",
-  dueDate: "",
   assignedTo: "",
 });
 
@@ -264,8 +199,6 @@ function BatchCreateDialog({
       title: item.title,
       description: item.description ?? "",
       priority: item.priority as TaskPriorityType,
-      startDate: "",
-      dueDate: "",
       assignedTo: "",
     }));
     setDrafts((prev) => [...prev.filter((d) => d.title.trim()), ...newDrafts]);
@@ -273,16 +206,12 @@ function BatchCreateDialog({
   };
 
   const handleSubmit = () => {
-    const toISOOrNull = (v: string) => (v ? `${v}T00:00:00.000Z` : null);
-
     const tasks: CreateEmployeeTaskItemType[] = drafts
       .filter((d) => d.title.trim())
       .map((d) => ({
         title: d.title.trim(),
         description: d.description.trim() || null,
         priority: d.priority,
-        startDate: toISOOrNull(d.startDate),
-        dueDate: toISOOrNull(d.dueDate),
         assignedTo: d.assignedTo || null,
       }));
 
@@ -467,18 +396,6 @@ function BatchCreateDialog({
                         <SelectItem value="urgent">Khẩn cấp</SelectItem>
                       </SelectContent>
                     </Select>
-                    <DatePickerField
-                      value={draft.startDate}
-                      onChange={(value) =>
-                        updateDraft(idx, { startDate: value })
-                      }
-                      placeholder="Ngày bắt đầu"
-                    />
-                    <DatePickerField
-                      value={draft.dueDate}
-                      onChange={(value) => updateDraft(idx, { dueDate: value })}
-                      placeholder="Hạn chót"
-                    />
                     <Select
                       value={draft.assignedTo || "none"}
                       onValueChange={(v) =>
@@ -560,8 +477,6 @@ function TaskDetailSheet({
     description: "",
     priority: "normal" as TaskPriorityType,
     status: "pending" as TaskStatusType,
-    startDate: "",
-    dueDate: "",
   });
   const [farmerIdInput, setFarmerIdInput] = useState("");
   const [showAssign, setShowAssign] = useState(false);
@@ -574,8 +489,6 @@ function TaskDetailSheet({
         description: task.description ?? "",
         priority: task.priority,
         status: task.status,
-        startDate: task.startDate?.slice(0, 10) ?? "",
-        dueDate: task.dueDate?.slice(0, 10) ?? "",
       });
     }
     setIsEditing(true);
@@ -586,8 +499,6 @@ function TaskDetailSheet({
   const PriorityIcon = PRIORITY_META[task.priority].icon;
 
   const handleSave = () => {
-    const toISOOrNull = (v: string) => (v ? `${v}T00:00:00.000Z` : null);
-
     updateMutation.mutate(
       {
         taskId: task.id,
@@ -596,8 +507,6 @@ function TaskDetailSheet({
           description: editForm.description.trim() || null,
           priority: editForm.priority,
           status: editForm.status,
-          startDate: toISOOrNull(editForm.startDate),
-          dueDate: toISOOrNull(editForm.dueDate),
         },
       },
       { onSuccess: () => setIsEditing(false) },
@@ -677,16 +586,6 @@ function TaskDetailSheet({
                     <p className="font-medium">
                       {STATUS_META[task.status].label}
                     </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">
-                      Ngày bắt đầu
-                    </p>
-                    <p>{formatDate(task.startDate)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Hạn chót</p>
-                    <p>{formatDate(task.dueDate)}</p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">
@@ -845,37 +744,6 @@ function TaskDetailSheet({
                     </Select>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-xs font-medium">Ngày bắt đầu</label>
-                    <DatePickerField
-                      value={editForm.startDate}
-                      onChange={(value) =>
-                        setEditForm((f) => ({
-                          ...f,
-                          startDate: value,
-                        }))
-                      }
-                      placeholder="Ngày bắt đầu"
-                      className="mt-1 w-full"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium">Hạn chót</label>
-                    <DatePickerField
-                      value={editForm.dueDate}
-                      onChange={(value) =>
-                        setEditForm((f) => ({
-                          ...f,
-                          dueDate: value,
-                        }))
-                      }
-                      placeholder="Hạn chót"
-                      className="mt-1 w-full"
-                    />
-                  </div>
-                </div>
-
                 <div className="flex gap-2 pt-2">
                   <Button
                     type="submit"
@@ -1152,8 +1020,7 @@ export default function OwnerMilestoneTasksSection({
                   <div className="min-w-0">
                     <p className="truncate font-medium text-xs">{task.title}</p>
                     <p className="text-[10px] text-muted-foreground truncate">
-                      {getAssigneeLabel(task.assignedTo)} · Hạn:{" "}
-                      {formatDate(task.dueDate)}
+                      {getAssigneeLabel(task.assignedTo)}
                     </p>
                   </div>
                   {isOverdue(task) && (

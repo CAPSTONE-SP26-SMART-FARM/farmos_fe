@@ -14,6 +14,34 @@ import queryString from "query-string";
 const MANAGER = API_ENDPOINTS.MANAGER;
 const OWNER = API_ENDPOINTS.OWNER;
 
+const toISOOrNull = (v: string | null | undefined): string | null =>
+  v ? `${v}T00:00:00Z` : null;
+
+const convertMilestoneDates = <
+  T extends {
+    expectedStartDate?: string | null;
+    actualStartDate?: string | null;
+    expectedEndDate?: string | null;
+    actualEndDate?: string | null;
+  },
+>(
+  body: T,
+): T => ({
+  ...body,
+  ...(body.expectedStartDate !== undefined && {
+    expectedStartDate: toISOOrNull(body.expectedStartDate),
+  }),
+  ...(body.actualStartDate !== undefined && {
+    actualStartDate: toISOOrNull(body.actualStartDate),
+  }),
+  ...(body.expectedEndDate !== undefined && {
+    expectedEndDate: toISOOrNull(body.expectedEndDate),
+  }),
+  ...(body.actualEndDate !== undefined && {
+    actualEndDate: toISOOrNull(body.actualEndDate),
+  }),
+});
+
 export const productionMilestoneService = {
   listAll: (query: ListProductionMilestonesQueryType) =>
     api.get<ListProductionMilestonesResType>(
@@ -56,7 +84,7 @@ export const productionMilestoneService = {
   ) =>
     api.post<ProductionMilestoneResType, CreateProductionMilestoneItemBodyType>(
       MANAGER.PRODUCTION_MILESTONE.CREATE_ITEM(cropSeasonId),
-      body,
+      convertMilestoneDates(body),
     ),
 
   createBatch: (
@@ -66,7 +94,9 @@ export const productionMilestoneService = {
     api.post<
       ProductionMilestoneResType[],
       CreateProductionMilestoneBatchBodyType
-    >(MANAGER.PRODUCTION_MILESTONE.CREATE_BATCH(cropSeasonId), body),
+    >(MANAGER.PRODUCTION_MILESTONE.CREATE_BATCH(cropSeasonId), {
+      items: body.items.map(convertMilestoneDates),
+    }),
 
   update: (
     milestoneId: string,
@@ -75,7 +105,7 @@ export const productionMilestoneService = {
   ) =>
     api.put<ProductionMilestoneResType, UpdateProductionMilestoneBodyType>(
       MANAGER.PRODUCTION_MILESTONE.UPDATE(milestoneId, cropSeasonId),
-      body,
+      convertMilestoneDates(body),
     ),
 
   delete: (milestoneId: string, cropSeasonId: string) =>
