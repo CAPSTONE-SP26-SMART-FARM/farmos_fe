@@ -312,8 +312,8 @@ const UserTable = ({ onViewDetail }: UserTableProps) => {
         </Table>
       </div>
 
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-xs text-muted-foreground">
+      <div className="py-4">
+        <div className="text-xs text-muted-foreground">
           Hiển thị <strong>{table.getPaginationRowModel().rows.length}</strong>{" "}
           trên <strong>{totalRecords}</strong> kết quả
         </div>

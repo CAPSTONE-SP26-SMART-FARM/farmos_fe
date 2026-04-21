@@ -50,3 +50,33 @@ export function isApiErrorUnprocessableEntityResponse<
 export function decodeAccessToken(token: string): TokenPayload | null {
   return jwtDecode(token);
 }
+
+export function getSubscriptionStatusBadgeVariant(
+  status?: string | null,
+): "default" | "secondary" | "destructive" | "outline" {
+  switch (status) {
+    case "ACTIVE":
+      return "default";
+    case "CANCELLED":
+      return "destructive";
+    case "SUSPENDED":
+      return "outline";
+    case "PENDING":
+    case "EXPIRED":
+    default:
+      return "secondary";
+  }
+}
+
+export function getSubscriptionPlanStatusBadgeVariant(
+  status?: string | null,
+): "default" | "secondary" | "destructive" | "outline" {
+  switch (status) {
+    case "ACTIVE":
+      return "default";
+    case "ARCHIVED":
+      return "destructive";
+    default:
+      return "outline";
+  }
+}

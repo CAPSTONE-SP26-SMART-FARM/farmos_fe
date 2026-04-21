@@ -449,10 +449,7 @@ function CreateCropSeasonScreen({
               />
             </Field>
 
-            <Field
-              label="Giống / Loại"
-              error={form.formState.errors.variety?.message}
-            >
+            <Field label="Giống / Loại">
               <Input
                 {...form.register("variety")}
                 placeholder="(tuỳ chọn)"
@@ -497,21 +494,24 @@ function CreateCropSeasonScreen({
               />
             </div>
 
-            <Field
-              label="Số lượng cây"
-              error={form.formState.errors.plantCount?.message}
-            >
-              <Input
-                type="number"
-                {...form.register("plantCount", { valueAsNumber: true })}
-                autoComplete="off"
-              />
-            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Diện tích (m²)">
+                <Input
+                  type="number"
+                  {...form.register("totalAreaSqm", { valueAsNumber: true })}
+                  autoComplete="off"
+                />
+              </Field>
+              <Field label="Số lượng cây">
+                <Input
+                  type="number"
+                  {...form.register("plantCount", { valueAsNumber: true })}
+                  autoComplete="off"
+                />
+              </Field>
+            </div>
 
-            <Field
-              label="Ghi chú"
-              error={form.formState.errors.notes?.message}
-            >
+            <Field label="Ghi chú">
               <Textarea
                 {...form.register("notes")}
                 rows={2}
@@ -558,9 +558,11 @@ function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
     defaultValues: {
       cropName: season.cropName,
       variety: season.variety ?? "",
-      plantDate: season.plantDate ? season.plantDate.slice(0, 10) : undefined,
+      plantDate: season.plantDate
+        ? `${season.plantDate.slice(0, 10)}T00:00:00.000Z`
+        : undefined,
       expectedHarvestDate: season.expectedHarvestDate
-        ? season.expectedHarvestDate.slice(0, 10)
+        ? `${season.expectedHarvestDate.slice(0, 10)}T00:00:00.000Z`
         : undefined,
       totalAreaSqm: season.totalAreaSqm ?? undefined,
       plantCount: season.plantCount ?? undefined,
@@ -659,10 +661,7 @@ function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
               autoComplete="off"
             />
           </Field>
-          <Field
-            label="Giống / Loại"
-            error={form.formState.errors.variety?.message}
-          >
+          <Field label="Giống / Loại">
             <Input
               {...form.register("variety")}
               autoComplete="off"
@@ -704,20 +703,23 @@ function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
               )}
             />
           </div>
-          <Field
-            label="Số lượng cây"
-            error={form.formState.errors.plantCount?.message}
-          >
-            <Input
-              type="number"
-              {...form.register("plantCount", { valueAsNumber: true })}
-              autoComplete="off"
-            />
-          </Field>
-          <Field
-            label="Ghi chú"
-            error={form.formState.errors.notes?.message}
-          >
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Diện tích (m²)">
+              <Input
+                type="number"
+                {...form.register("totalAreaSqm", { valueAsNumber: true })}
+                autoComplete="off"
+              />
+            </Field>
+            <Field label="Số lượng cây">
+              <Input
+                type="number"
+                {...form.register("plantCount", { valueAsNumber: true })}
+                autoComplete="off"
+              />
+            </Field>
+          </div>
+          <Field label="Ghi chú">
             <Textarea
               {...form.register("notes")}
               rows={2}
@@ -755,7 +757,6 @@ function SendRequestDialog({ season }: { season: CropSeasonType }) {
     resolver: zodResolver(SendProductionRequestBodySchema),
     defaultValues: { description: "" },
   });
-  useClearServerFieldErrors(form);
 
   if (season.status === ProductionStatusName.Sent) {
     return (
@@ -773,30 +774,8 @@ function SendRequestDialog({ season }: { season: CropSeasonType }) {
   if (!canSend(season.status)) return null;
 
   const onSubmit = async (data: SendProductionRequestBodyType) => {
-    try {
-      await mutateAsync(data);
-      setOpen(false);
-    } catch (error) {
-      if (
-        isApiErrorUnprocessableEntityResponse<SendProductionRequestBodyType>(
-          error,
-        )
-      ) {
-        handleApiErrorUnprocessentity<SendProductionRequestBodyType>(
-          error.response!.data.errors,
-          form.setError,
-          { getValues: form.getValues },
-        );
-        return;
-      }
-
-      if (isApiErrorResponse(error)) {
-        toast.error(error.response?.data.message ?? "Gửi yêu cầu thất bại");
-        return;
-      }
-
-      toast.error("Gửi yêu cầu thất bại");
-    }
+    await mutateAsync(data);
+    setOpen(false);
   };
 
   return (
@@ -842,10 +821,7 @@ function SendRequestDialog({ season }: { season: CropSeasonType }) {
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-4"
           >
-            <Field
-              label="Ghi chú cho chủ vườn (tuỳ chọn)"
-              error={form.formState.errors.description?.message}
-            >
+            <Field label="Ghi chú cho chủ vườn (tuỳ chọn)">
               <Textarea
                 {...form.register("description")}
                 rows={3}
@@ -900,6 +876,10 @@ function CropSeasonDetailContent({ season }: { season: CropSeasonType }) {
             ["Ngày trồng", formatDate(season.plantDate)],
             ["Thu hoạch dự kiến", formatDate(season.expectedHarvestDate)],
             ["Thu hoạch thực tế", formatDate(season.actualHarvestDate)],
+            [
+              "Diện tích",
+              season.totalAreaSqm ? `${season.totalAreaSqm} m²` : "—",
+            ],
             ["Số cây", season.plantCount ?? "—"],
           ] as [string, React.ReactNode][]
         ).map(([label, value]) => (
@@ -1240,6 +1220,7 @@ export default function ManagerCropSeasonsPage() {
                   <TableHead>Giống</TableHead>
                   <TableHead>Ngày trồng</TableHead>
                   <TableHead>Thu hoạch dự kiến</TableHead>
+                  <TableHead>Diện tích</TableHead>
                   <TableHead>Trạng thái</TableHead>
                   <TableHead className="text-right">Thao tác</TableHead>
                 </TableRow>
@@ -1248,7 +1229,7 @@ export default function ManagerCropSeasonsPage() {
                 {isLoading &&
                   Array.from({ length: 4 }).map((_, i) => (
                     <TableRow key={i}>
-                      {Array.from({ length: 6 }).map((_, j) => (
+                      {Array.from({ length: 7 }).map((_, j) => (
                         <TableCell key={j}>
                           <Skeleton className="h-4 w-full" />
                         </TableCell>
@@ -1258,7 +1239,7 @@ export default function ManagerCropSeasonsPage() {
                 {!isLoading && seasons.length === 0 && (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={7}
                       className="text-center text-muted-foreground py-12"
                     >
                       {!zoneId
@@ -1277,6 +1258,9 @@ export default function ManagerCropSeasonsPage() {
                     </TableCell>
                     <TableCell>{formatDate(s.plantDate)}</TableCell>
                     <TableCell>{formatDate(s.expectedHarvestDate)}</TableCell>
+                    <TableCell>
+                      {s.totalAreaSqm ? `${s.totalAreaSqm} m²` : "—"}
+                    </TableCell>
                     <TableCell>
                       <StatusBadge status={s.status} />
                     </TableCell>

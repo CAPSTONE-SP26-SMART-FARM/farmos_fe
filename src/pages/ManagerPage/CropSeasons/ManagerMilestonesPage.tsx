@@ -481,6 +481,8 @@ const CreateMilestonesScreen = ({
   // Template preview & unified draft state
   const [previewTemplate, setPreviewTemplate] =
     useState<MilestoneTemplateResType | null>(null);
+  const [pendingTemplate, setPendingTemplate] =
+    useState<MilestoneTemplateResType | null>(null);
   const [draftItems, setDraftItems] = useState<DraftMilestoneItem[]>([
     createEmptyDraft(nextMilestoneOrder),
   ]);
@@ -545,7 +547,24 @@ const CreateMilestonesScreen = ({
     return items;
   };
 
+  const hasFormContent = draftItems.some(
+    (d) =>
+      d.stageName.trim() ||
+      d.expectedStartDate.trim() ||
+      d.expectedEndDate.trim(),
+  );
+
   const handleApplyTemplate = (template: MilestoneTemplateResType) => {
+    // If form already has content, ask for confirmation first
+    if (hasFormContent) {
+      setPendingTemplate(template);
+      setPreviewTemplate(null);
+      return;
+    }
+    applyTemplate(template);
+  };
+
+  const applyTemplate = (template: MilestoneTemplateResType) => {
     const items = buildTemplateItems(template);
     if (!items) return;
 
@@ -557,16 +576,15 @@ const CreateMilestonesScreen = ({
       status: item.status,
     }));
 
-    // Keep existing drafts that have content, then append template items
-    setDraftItems((prev) => {
-      const existing = prev.filter((d) => d.stageName.trim());
-      const merged = [...existing, ...newDrafts];
-      return merged.map((item, i) => ({
+    // Overwrite all existing drafts with template items
+    setDraftItems(
+      newDrafts.map((item, i) => ({
         ...item,
         milestoneOrder: nextMilestoneOrder + i,
-      }));
-    });
+      })),
+    );
     setPreviewTemplate(null);
+    setPendingTemplate(null);
     setShowTemplates(false);
   };
 
@@ -720,7 +738,7 @@ const CreateMilestonesScreen = ({
                       key={template.id}
                       type="button"
                       onClick={() => setPreviewTemplate(template)}
-                      className="w-full text-left rounded-md border p-2.5 hover:bg-muted/50 transition-colors"
+                      className="w-full text-left cursor-pointer rounded-md border p-2.5 hover:bg-muted/50 transition-colors"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
@@ -877,6 +895,19 @@ const CreateMilestonesScreen = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Overwrite Confirmation Dialog */}
+      <ConfirmDialog
+        open={!!pendingTemplate}
+        title="Ghi đè dữ liệu hiện tại?"
+        description="Form đang có dữ liệu. Áp dụng mẫu sẽ xóa tất cả mốc hiện tại và thay bằng mốc từ mẫu."
+        confirmLabel="Ghi đè"
+        variant="destructive"
+        onCancel={() => setPendingTemplate(null)}
+        onConfirm={() => {
+          if (pendingTemplate) applyTemplate(pendingTemplate);
+        }}
+      />
 
       {/* Unified Milestone Form */}
       <Card>

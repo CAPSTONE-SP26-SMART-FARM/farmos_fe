@@ -19,6 +19,27 @@ export const API_ENDPOINTS = {
     BASE: "/users",
     BY_ID: (id: string | number) => `/users/${id}`,
   },
+  SUBSCRIPTION_PLANS: {
+    BASE: "/plans",
+    BY_ID: (id: string) => `/plans/${id}`,
+    ARCHIVE: (id: string) => `/plans/${id}/archive`,
+    VERSIONS: (id: string) => `/plans/${id}/versions`,
+  },
+  SUBSCRIPTIONS: {
+    BASE: "/subscriptions",
+    MY: "/subscriptions/my",
+    BY_ID: (id: string) => `/subscriptions/${id}`,
+    RENEW: (id: string) => `/subscriptions/${id}/renew`,
+    CANCEL: (id: string) => `/subscriptions/${id}/cancel`,
+    AUTO_RENEW: (id: string) => `/subscriptions/${id}/auto-renew`,
+    PLAN_VERSION: (id: string) => `/subscriptions/${id}/plan-version`,
+    ENTITLEMENTS: (id: string) => `/subscriptions/${id}/entitlements`,
+    USAGE: (id: string) => `/subscriptions/${id}/usage`,
+  },
+  FEATURES: {
+    BASE: "/features",
+    BY_CODE: (featureCode: string) => `/features/${featureCode}`,
+  },
   FARMS: {
     BASE: "/farms",
     BY_ID: (id: string | number) => `/farms/${id}`,
@@ -400,6 +421,52 @@ export const QUERY_KEYS = {
     list: (farmId?: string | number) => ["sensors", "list", farmId],
     detail: (id: string | number) => ["sensors", id],
     data: (id: string | number) => ["sensors", id, "data"],
+  },
+  subscriptionPlans: {
+    all: ["subscription-plans"],
+    list: (query?: Record<string, unknown>) => [
+      "subscription-plans",
+      "list",
+      ...(query !== undefined ? [query] : []),
+    ],
+    detail: (id: string) => ["subscription-plans", id],
+    versions: (planId: string, query?: Record<string, unknown>) => [
+      "subscription-plans",
+      planId,
+      "versions",
+      ...(query !== undefined ? [query] : []),
+    ],
+  },
+  subscriptions: {
+    all: ["subscriptions"],
+    list: (query?: Record<string, unknown>) => [
+      "subscriptions",
+      "list",
+      ...(query !== undefined ? [query] : []),
+    ],
+    my: () => ["subscriptions", "my"],
+    detail: (id: string) => ["subscriptions", id],
+    entitlements: (id: string, query?: Record<string, unknown>) => [
+      "subscriptions",
+      id,
+      "entitlements",
+      ...(query !== undefined ? [query] : []),
+    ],
+    usage: (id: string, query?: Record<string, unknown>) => [
+      "subscriptions",
+      id,
+      "usage",
+      ...(query !== undefined ? [query] : []),
+    ],
+  },
+  features: {
+    all: ["features"],
+    list: (query?: Record<string, unknown>) => [
+      "features",
+      "list",
+      ...(query !== undefined ? [query] : []),
+    ],
+    detail: (code: string) => ["features", code],
   },
   admin: {
     farms: {

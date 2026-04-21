@@ -17,7 +17,6 @@ interface MilestoneStepperProps {
 
 export function MilestoneStepper({
   steps,
-  currentStep,
   stepStatuses,
   onStepClick,
 }: MilestoneStepperProps) {

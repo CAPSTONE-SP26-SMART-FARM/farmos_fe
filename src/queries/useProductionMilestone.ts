@@ -28,7 +28,8 @@ import type {
 import type { UpsertSensorThresholdBodyType } from "@/schemaValidatation/sensorThreshold";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { onMutationError } from "@/lib/axios";
+import type { AxiosError } from "axios";
+import type { ApiResponseType } from "@/types/api";
 
 // ============================================================
 // Production Milestones
@@ -66,7 +67,9 @@ export const useManagerCreateProductionMilestone = (cropSeasonId: string) => {
         queryKey: QUERY_KEYS.manager.productionMilestones.list(cropSeasonId),
       });
     },
-    onError: (error) => onMutationError(error, "Tạo milestone thất bại"),
+    onError: (error: AxiosError<ApiResponseType>) => {
+      toast.error(error?.response?.data?.message ?? "Tạo milestone thất bại");
+    },
   });
 };
 
@@ -83,7 +86,9 @@ export const useManagerCreateProductionMilestoneBatch = (
         queryKey: QUERY_KEYS.manager.productionMilestones.list(cropSeasonId),
       });
     },
-    onError: (error) => onMutationError(error, "Tạo milestones thất bại"),
+    onError: (error: AxiosError<ApiResponseType>) => {
+      toast.error(error?.response?.data?.message ?? "Tạo milestones thất bại");
+    },
   });
 };
 
@@ -122,9 +127,11 @@ export const useManagerUpdateProductionMilestone = (
         });
       }
     },
-    onError: (error) => {
+    onError: (error: AxiosError<ApiResponseType>) => {
       if (!silent) {
-        onMutationError(error, "Cập nhật milestone thất bại");
+        toast.error(
+          error?.response?.data?.message ?? "Cập nhật milestone thất bại",
+        );
       }
     },
   });
@@ -144,7 +151,9 @@ export const useManagerDeleteProductionMilestone = (cropSeasonId: string) => {
         queryKey: QUERY_KEYS.manager.productionMilestones.detail(milestoneId),
       });
     },
-    onError: (error) => onMutationError(error, "Xóa milestone thất bại"),
+    onError: (error: AxiosError<ApiResponseType>) => {
+      toast.error(error?.response?.data?.message ?? "Xóa milestone thất bại");
+    },
   });
 };
 
@@ -188,7 +197,9 @@ export const useManagerAssignIotDevice = (milestoneId: string) => {
           QUERY_KEYS.manager.productionMilestones.assignment(milestoneId),
       });
     },
-    onError: (error) => onMutationError(error, "Gán thiết bị thất bại"),
+    onError: (error: AxiosError<ApiResponseType>) => {
+      toast.error(error?.response?.data?.message ?? "Gán thiết bị thất bại");
+    },
   });
 };
 
@@ -215,7 +226,9 @@ export const useManagerUnassignIotDevice = (milestoneId: string) => {
         queryKey: ["manager", "production-milestones", "assignment"],
       });
     },
-    onError: (error) => onMutationError(error, "Gỡ thiết bị thất bại"),
+    onError: (error: AxiosError<ApiResponseType>) => {
+      toast.error(error?.response?.data?.message ?? "Gỡ thiết bị thất bại");
+    },
   });
 };
 
@@ -255,7 +268,9 @@ export const useOwnerAssignIotDevice = (milestoneId: string) => {
         queryKey: QUERY_KEYS.owner.productionMilestones.assignment(milestoneId),
       });
     },
-    onError: (error) => onMutationError(error, "Gán thiết bị thất bại"),
+    onError: (error: AxiosError<ApiResponseType>) => {
+      toast.error(error?.response?.data?.message ?? "Gán thiết bị thất bại");
+    },
   });
 };
 
@@ -281,7 +296,9 @@ export const useOwnerUnassignIotDevice = (milestoneId: string) => {
         queryKey: ["owner", "production-milestones", "assignment"],
       });
     },
-    onError: (error) => onMutationError(error, "Gỡ thiết bị thất bại"),
+    onError: (error: AxiosError<ApiResponseType>) => {
+      toast.error(error?.response?.data?.message ?? "Gỡ thiết bị thất bại");
+    },
   });
 };
 
@@ -340,7 +357,9 @@ export const useManagerBindSensors = (assignmentId: string) => {
           QUERY_KEYS.manager.productionMilestones.thresholds(assignmentId),
       });
     },
-    onError: (error) => onMutationError(error, "Bind sensor thất bại"),
+    onError: (error: AxiosError<ApiResponseType>) => {
+      toast.error(error?.response?.data?.message ?? "Bind sensor thất bại");
+    },
   });
 };
 
@@ -360,7 +379,9 @@ export const useManagerUnbindSensors = (assignmentId: string) => {
           QUERY_KEYS.manager.productionMilestones.thresholds(assignmentId),
       });
     },
-    onError: (error) => onMutationError(error, "Unbind sensor thất bại"),
+    onError: (error: AxiosError<ApiResponseType>) => {
+      toast.error(error?.response?.data?.message ?? "Unbind sensor thất bại");
+    },
   });
 };
 
@@ -390,7 +411,9 @@ export const useOwnerBindSensors = (assignmentId: string) => {
           QUERY_KEYS.owner.productionMilestones.thresholds(assignmentId),
       });
     },
-    onError: (error) => onMutationError(error, "Bind sensor thất bại"),
+    onError: (error: AxiosError<ApiResponseType>) => {
+      toast.error(error?.response?.data?.message ?? "Bind sensor thất bại");
+    },
   });
 };
 
@@ -410,7 +433,9 @@ export const useOwnerUnbindSensors = (assignmentId: string) => {
           QUERY_KEYS.owner.productionMilestones.thresholds(assignmentId),
       });
     },
-    onError: (error) => onMutationError(error, "Unbind sensor thất bại"),
+    onError: (error: AxiosError<ApiResponseType>) => {
+      toast.error(error?.response?.data?.message ?? "Unbind sensor thất bại");
+    },
   });
 };
 
@@ -428,33 +453,21 @@ export const useManagerSensorThresholds = (
     enabled: !!assignmentId && enabled,
   });
 
-export const useManagerUpsertSensorThreshold = (
-  assignmentId: string,
-  milestoneId?: string,
-) => {
+export const useManagerUpsertSensorThreshold = (assignmentId: string) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      isUpdate,
-      ...body
-    }: UpsertSensorThresholdBodyType & { isUpdate?: boolean }) =>
-      isUpdate
-        ? sensorThresholdService.update(assignmentId, body)
-        : sensorThresholdService.create(assignmentId, body),
+    mutationFn: (body: UpsertSensorThresholdBodyType) =>
+      sensorThresholdService.create(assignmentId, body),
     onSuccess: () => {
       toast.success("Lưu threshold thành công!");
       qc.invalidateQueries({
         queryKey:
           QUERY_KEYS.manager.productionMilestones.thresholds(assignmentId),
       });
-      if (milestoneId) {
-        qc.invalidateQueries({
-          queryKey:
-            QUERY_KEYS.manager.productionMilestones.assignment(milestoneId),
-        });
-      }
     },
-    onError: (error) => onMutationError(error, "Lưu threshold thất bại"),
+    onError: (error: AxiosError<ApiResponseType>) => {
+      toast.error(error?.response?.data?.message ?? "Lưu threshold thất bại");
+    },
   });
 };
 
@@ -471,13 +484,8 @@ export const useOwnerSensorThresholds = (
 export const useOwnerUpsertSensorThreshold = (assignmentId: string) => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      isUpdate,
-      ...body
-    }: UpsertSensorThresholdBodyType & { isUpdate?: boolean }) =>
-      isUpdate
-        ? ownerSensorThresholdService.update(assignmentId, body)
-        : ownerSensorThresholdService.create(assignmentId, body),
+    mutationFn: (body: UpsertSensorThresholdBodyType) =>
+      ownerSensorThresholdService.create(assignmentId, body),
     onSuccess: () => {
       toast.success("Lưu threshold thành công!");
       qc.invalidateQueries({
@@ -485,6 +493,8 @@ export const useOwnerUpsertSensorThreshold = (assignmentId: string) => {
           QUERY_KEYS.owner.productionMilestones.thresholds(assignmentId),
       });
     },
-    onError: (error) => onMutationError(error, "Lưu threshold thất bại"),
+    onError: (error: AxiosError<ApiResponseType>) => {
+      toast.error(error?.response?.data?.message ?? "Lưu threshold thất bại");
+    },
   });
 };

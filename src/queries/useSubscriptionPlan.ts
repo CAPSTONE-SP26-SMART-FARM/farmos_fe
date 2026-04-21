@@ -1,0 +1,106 @@
+import { QUERY_KEYS } from "@/constants";
+import type {
+  CreatePlanBodyType,
+  CreatePlanVersionBodyType,
+  ListPlansQueryType,
+  ListPlanVersionsQueryType,
+  UpdatePlanBodyType,
+} from "@/schemaValidatation/subscriptionPlan";
+import subscriptionPlanService from "@/services/subscriptionPlanService";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+export const useListSubscriptionPlans = (query: ListPlansQueryType) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.subscriptionPlans.list(query),
+    queryFn: () => subscriptionPlanService.listPlans(query),
+  });
+};
+
+export const useSubscriptionPlanDetail = (id: string, enabled: boolean) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.subscriptionPlans.detail(id),
+    queryFn: () => subscriptionPlanService.getPlanDetail(id),
+    enabled,
+  });
+};
+
+export const useListSubscriptionPlanVersions = (
+  planId: string,
+  query: ListPlanVersionsQueryType,
+  enabled: boolean,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.subscriptionPlans.versions(planId, query),
+    queryFn: () => subscriptionPlanService.listPlanVersions(planId, query),
+    enabled,
+  });
+};
+
+export const useAdminCreateSubscriptionPlan = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreatePlanBodyType) =>
+      subscriptionPlanService.createPlan(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.subscriptionPlans.all,
+      });
+    },
+  });
+};
+
+export const useAdminUpdateSubscriptionPlan = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdatePlanBodyType }) =>
+      subscriptionPlanService.updatePlan(id, data),
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.subscriptionPlans.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.subscriptionPlans.detail(variables.id),
+      });
+    },
+  });
+};
+
+export const useAdminArchiveSubscriptionPlan = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => subscriptionPlanService.archivePlan(id),
+    onSuccess: (_result, id) => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.subscriptionPlans.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.subscriptionPlans.detail(id),
+      });
+    },
+  });
+};
+
+export const useAdminCreateSubscriptionPlanVersion = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      planId,
+      data,
+    }: {
+      planId: string;
+      data: CreatePlanVersionBodyType;
+    }) => subscriptionPlanService.createPlanVersion(planId, data),
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.subscriptionPlans.versions(variables.planId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.subscriptionPlans.detail(variables.planId),
+      });
+    },
+  });
+};

@@ -208,6 +208,11 @@ const normalizeErrorText = (message: string) => {
   return translateBackendMessage(message);
 };
 
+const showErrorToastOnce = (message: string) => {
+  const id = `api-error:${message.trim().toLowerCase()}`;
+  toast.error(message, { id });
+};
+
 const isFormFieldPath = (
   field: string,
   getValues?: () => Record<string, unknown>,
@@ -257,7 +262,7 @@ export const handleApiErrorUnprocessentity = <
     });
   }
 
-  const onGlobalMessage = options?.onGlobalMessage ?? toast.error;
+  const onGlobalMessage = options?.onGlobalMessage ?? showErrorToastOnce;
   [...new Set(globalMessages)].forEach((message) => onGlobalMessage(message));
 
   if (!errors || errors.length === 0) {
@@ -291,5 +296,5 @@ export const onMutationError = (
     return;
   }
 
-  toast.error(getApiErrorMessageVi(error, fallbackMessage));
+  showErrorToastOnce(getApiErrorMessageVi(error, fallbackMessage));
 };

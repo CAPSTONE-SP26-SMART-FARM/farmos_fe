@@ -120,6 +120,12 @@ const BACKEND_ERROR_MAP: Record<string, string> = {
     "Diện tích mùa vụ không được vượt quá tổng diện tích có sẵn của khu vực.",
   "production request not found.": "Không tìm thấy yêu cầu sản xuất.",
   "date must be in yyyy-mm-dd format": "Ngày phải có định dạng YYYY-MM-DD.",
+  "no milestone found in crop season.":
+    "Không tìm thấy mốc sản xuất trong mùa vụ.",
+  "no employee task found in milestone.":
+    "Không tìm thấy công việc nhân viên trong mốc sản xuất.",
+  "no farmer assigned to task in milestone.":
+    "Không có nông dân được gán cho công việc trong mốc sản xuất.",
 
   // ── Production Milestone ─────────────────────────────────────────────
   "production milestone not found.": "Không tìm thấy mốc sản xuất.",
@@ -319,6 +325,12 @@ const BACKEND_ERROR_MAP: Record<string, string> = {
     "Tối ưu tối đa phải lớn hơn hoặc bằng tối ưu tối thiểu.",
   "error.sensortemplatethresholdoptimalwithinrange":
     "Khoảng tối ưu phải nằm trong min và max.",
+  "error.nothavemilestoneincropseason":
+    "Không tìm thấy mốc sản xuất trong mùa vụ.",
+  "error.nothaveemployeetaskinmilestone":
+    "Không tìm thấy công việc nhân viên trong mốc sản xuất.",
+  "error.noassignfarmertotask":
+    "Không có nông dân được gán cho công việc trong mốc sản xuất.",
 
   // ── Zod v4 built-in validation messages ──────────────────────────────
   required: "Trường này là bắt buộc.",

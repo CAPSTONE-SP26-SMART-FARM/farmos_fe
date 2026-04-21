@@ -8,7 +8,11 @@ import AdminFarmsPage from "@/pages/AdminPage/Farms/AdminFarmsPage";
 import AdminIotTemplatesPage from "@/pages/AdminPage/IotTemplates/AdminIotTemplatesPage";
 import AdminEmployeeTaskTemplatesPage from "@/pages/AdminPage/EmployeeTaskTemplates/AdminEmployeeTaskTemplatesPage";
 import AdminMilestoneTemplatePage from "@/pages/AdminPage/AdminMilestoneTemplatePage";
-import AdminPackagesPage from "@/pages/AdminPage/Packages/AdminPackagesPage";
+import AdminSubscriptionPlansPage from "@/pages/AdminPage/SubscriptionPlans/AdminSubscriptionPlansPage";
+import AdminSubscriptionPlanDetailPage from "@/pages/AdminPage/SubscriptionPlans/AdminSubscriptionPlanDetailPage";
+import AdminSubscriptionPlanVersionCreatePage from "@/pages/AdminPage/SubscriptionPlans/AdminSubscriptionPlanVersionCreatePage";
+import AdminSubscriptionsPage from "@/pages/AdminPage/Subscriptions/AdminSubscriptionsPage";
+import AdminSubscriptionDetailPage from "@/pages/AdminPage/Subscriptions/AdminSubscriptionDetailPage";
 import AdminTicketAnalyticsPage from "@/pages/AdminPage/TicketAnalytics/AdminTicketAnalyticsPage";
 import AdminUsersPage from "@/pages/AdminPage/Users/AdminUsersPage";
 import DoctorPage from "@/pages/DoctorPage/DoctorPage";
@@ -30,6 +34,9 @@ import OwnerEmployeeTaskTemplatesPage from "@/pages/OwnerPage/EmployeeTaskTempla
 import OwnerIotDevicesPage from "@/pages/OwnerPage/IotDevices/OwnerIotDevicesPage";
 import OwnerSensorReadingPage from "@/pages/OwnerPage/SensorReadings/OwnerSensorReadingPage";
 import OwnerSensorDashboardPage from "@/pages/OwnerPage/SensorDashboard/OwnerSensorDashboardPage";
+import OwnerSubscriptionPlansPage from "@/pages/OwnerPage/SubscriptionPlans/OwnerSubscriptionPlansPage";
+import OwnerSubscriptionsPage from "@/pages/OwnerPage/Subscriptions/OwnerSubscriptionsPage";
+import OwnerSubscriptionDetailPage from "@/pages/OwnerPage/Subscriptions/OwnerSubscriptionDetailPage";
 import OwnerPage from "@/pages/OwnerPage/OwnerPage";
 import RegisterPage from "@/pages/RegisterPage/RegisterPage";
 import type { AppRoutes } from "./types";
@@ -69,8 +76,28 @@ const routes: AppRoutes = [
         allowedRoles: [RoleName.Admin],
       },
       {
-        path: "/dashboard/admin/packages",
-        component: AdminPackagesPage,
+        path: "/dashboard/admin/subscription-plans",
+        component: AdminSubscriptionPlansPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/subscription-plans/:planId",
+        component: AdminSubscriptionPlanDetailPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/subscription-plans/:planId/versions/new",
+        component: AdminSubscriptionPlanVersionCreatePage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/subscriptions",
+        component: AdminSubscriptionsPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/subscriptions/:subscriptionId",
+        component: AdminSubscriptionDetailPage,
         allowedRoles: [RoleName.Admin],
       },
       {
@@ -137,6 +164,21 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/owner",
         component: OwnerPage,
+        allowedRoles: [RoleName.Owner],
+      },
+      {
+        path: "/dashboard/owner/subscription-plans",
+        component: OwnerSubscriptionPlansPage,
+        allowedRoles: [RoleName.Owner],
+      },
+      {
+        path: "/dashboard/owner/subscriptions",
+        component: OwnerSubscriptionsPage,
+        allowedRoles: [RoleName.Owner],
+      },
+      {
+        path: "/dashboard/owner/subscriptions/:subscriptionId",
+        component: OwnerSubscriptionDetailPage,
         allowedRoles: [RoleName.Owner],
       },
       {

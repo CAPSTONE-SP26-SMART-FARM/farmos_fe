@@ -34,7 +34,12 @@ export const sidebarData: SidebarData = {
     },
     {
       title: "Gói Đăng Ký",
-      url: "/dashboard/admin/packages",
+      url: "/dashboard/admin/subscription-plans",
+      icon: Package,
+    },
+    {
+      title: "Vòng Đời Đăng Ký",
+      url: "/dashboard/admin/subscriptions",
       icon: Package,
     },
     // {
@@ -87,6 +92,16 @@ export const sidebarData: SidebarData = {
       url: "/dashboard/owner",
       icon: LayoutDashboard,
       isActive: true,
+    },
+    {
+      title: "Gói Đăng Ký",
+      url: "/dashboard/owner/subscription-plans",
+      icon: Package,
+    },
+    {
+      title: "Gói Đăng Ký Của Tôi",
+      url: "/dashboard/owner/subscriptions",
+      icon: Package,
     },
     // {
     //   title: "Đăng Ký Dịch Vụ",
@@ -181,11 +196,11 @@ export const sidebarData: SidebarData = {
       url: "/dashboard/manager/sensor-dashboard",
       icon: Activity,
     },
-    {
-      title: "Mẫu Nhiệm Vụ",
-      url: "/dashboard/manager/employee-task-templates",
-      icon: ClipboardList,
-    },
+    // {
+    //   title: "Mẫu Nhiệm Vụ",
+    //   url: "/dashboard/manager/employee-task-templates",
+    //   icon: ClipboardList,
+    // },
     {
       title: "Điều Phối Sự Cố",
       url: "/dashboard/manager/tickets",
