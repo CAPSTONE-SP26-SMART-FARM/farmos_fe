@@ -18,7 +18,7 @@ createRoot(document.getElementById("root")!).render(
       <ReactQueryDevtools initialIsOpen={false} />
       <BrowserRouter>
         <App />
-        <Toaster />
+        <Toaster position="top-right"/>
         <RefreshToken />
       </BrowserRouter>
     </QueryClientProvider>

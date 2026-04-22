@@ -32,6 +32,7 @@
 
 ## Tech Stack
 
+
 | Category           | Technology                                   | Version |
 | ------------------ | -------------------------------------------- | ------- |
 | **Framework**      | React                                        | 19      |
@@ -53,6 +54,7 @@
 | **Auth Utilities** | jwt-decode                                   | 4       |
 | **Query Strings**  | query-string                                 | 9       |
 | **Theme**          | next-themes (light / dark)                   | 0.4     |
+
 
 ---
 
@@ -227,6 +229,7 @@ Page Component
 
 ### State Separation
 
+
 | Concern        | Solution                  | Where                     |
 | -------------- | ------------------------- | ------------------------- |
 | Server data    | React Query               | `queries/` + `services/`  |
@@ -235,6 +238,7 @@ Page Component
 | Form state     | React Hook Form + Zod     | Inline in page components |
 | UI ephemeral   | `useState` / `useReducer` | Inline in components      |
 | Theme          | next-themes               | `components/common/`      |
+
 
 ---
 
@@ -461,11 +465,13 @@ pnpm build    # includes tsc -b type check
 
 ### Layouts
 
-| Layout | Purpose | Authentication |
-| --- | --- | --- |
-| `MainLayout` | Public pages (Home) | None |
-| `SimpleLayout` | Auth pages (Login, Register) | `isRestricted: true` — redirects logged-in users |
-| `DashboardLayout` | All dashboard views | `allowedRoles: [...]` — requires auth + role match |
+
+| Layout            | Purpose                      | Authentication                                     |
+| ----------------- | ---------------------------- | -------------------------------------------------- |
+| `MainLayout`      | Public pages (Home)          | None                                               |
+| `SimpleLayout`    | Auth pages (Login, Register) | `isRestricted: true` — redirects logged-in users   |
+| `DashboardLayout` | All dashboard views          | `allowedRoles: [...]` — requires auth + role match |
+
 
 ### Route Definitions
 
@@ -483,6 +489,7 @@ const routes: AppRoutes = [
 
 ### Role → Base Path Mapping
 
+
 | Role    | Base Path            | DB Enum   |
 | ------- | -------------------- | --------- |
 | Admin   | `/dashboard/admin`   | `admin`   |
@@ -490,6 +497,7 @@ const routes: AppRoutes = [
 | Manager | `/dashboard/manager` | `manager` |
 | Farmer  | `/dashboard/farmer`  | `farmer`  |
 | Doctor  | `/dashboard/doctor`  | `doctor`  |
+
 
 ### ProtectedRoute Behavior
 
@@ -571,6 +579,7 @@ For API data. All hooks live in `src/queries/`.
 
 **Default Configuration** (from `lib/queryClient.ts`):
 
+
 | Setting                | Value           | Explanation                       |
 | ---------------------- | --------------- | --------------------------------- |
 | `staleTime`            | 5 minutes       | Data considered fresh for 5m      |
@@ -578,6 +587,7 @@ For API data. All hooks live in `src/queries/`.
 | `retry`                | 2× for 5xx only | No retry on 4xx client errors     |
 | `refetchOnWindowFocus` | `false`         | No refetch on tab focus           |
 | Mutation `retry`       | `false`         | Never retry writes                |
+
 
 ---
 
@@ -971,20 +981,22 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 ## File & Naming Conventions
 
-| Type | Convention | Example |
-| --- | --- | --- |
-| **Page folders** | PascalCase | `AdminPage/`, `IotTemplates/` |
-| **Page files** | PascalCase descriptive | `AdminIotTemplatesPage.tsx` |
-| **Components** | PascalCase | `FarmTable.tsx`, `HeroSection.tsx` |
-| **Hooks** | camelCase with `use` prefix | `useDebounce.tsx`, `useAdmin.ts` |
-| **Services** | camelCase + `Service` suffix | `adminService.ts` |
-| **Stores** | camelCase + `Store` suffix | `authStore.ts` |
-| **Schemas** | camelCase (in `schemaValidatation/`) | `doctorProfile.ts` |
-| **Constants** | SCREAMING_SNAKE_CASE | `API_ENDPOINTS`, `QUERY_KEYS` |
-| **Types** | PascalCase + `Type` suffix | `UserResType`, `LoginBodyType` |
-| **Zod schemas** | PascalCase + `Schema` suffix | `LoginBodySchema`, `UserResSchema` |
-| **Query hooks** | `use` + Entity + Action | `useExampleList`, `useCreateExample` |
-| **CSS** | Tailwind only — no custom CSS | `className="flex gap-2"` |
+
+| Type             | Convention                           | Example                              |
+| ---------------- | ------------------------------------ | ------------------------------------ |
+| **Page folders** | PascalCase                           | `AdminPage/`, `IotTemplates/`        |
+| **Page files**   | PascalCase descriptive               | `AdminIotTemplatesPage.tsx`          |
+| **Components**   | PascalCase                           | `FarmTable.tsx`, `HeroSection.tsx`   |
+| **Hooks**        | camelCase with `use` prefix          | `useDebounce.tsx`, `useAdmin.ts`     |
+| **Services**     | camelCase + `Service` suffix         | `adminService.ts`                    |
+| **Stores**       | camelCase + `Store` suffix           | `authStore.ts`                       |
+| **Schemas**      | camelCase (in `schemaValidatation/`) | `doctorProfile.ts`                   |
+| **Constants**    | SCREAMING_SNAKE_CASE                 | `API_ENDPOINTS`, `QUERY_KEYS`        |
+| **Types**        | PascalCase + `Type` suffix           | `UserResType`, `LoginBodyType`       |
+| **Zod schemas**  | PascalCase + `Schema` suffix         | `LoginBodySchema`, `UserResSchema`   |
+| **Query hooks**  | `use` + Entity + Action              | `useExampleList`, `useCreateExample` |
+| **CSS**          | Tailwind only — no custom CSS        | `className="flex gap-2"`             |
+
 
 ### Import Aliases
 
@@ -1064,11 +1076,13 @@ Validation errors (422):
 
 These enums come from `prisma/schema.prisma`. Use `as const` objects or Zod enums in FE.
 
+
 | DB Enum    | Values                                          |
 | ---------- | ----------------------------------------------- |
 | `UserRole` | `admin`, `owner`, `manager`, `farmer`, `doctor` |
 | `FarmType` | `cultivation`                                   |
 | `ZoneType` | `cultivation`                                   |
+
 
 > **Note (April 2026):** The backend Prisma schema still defines `rancher` role and `livestock`/`mixed` farm types, but the **frontend does not use them**. All FE enums, schemas, UI, and constants must stay cultivation-only. Do not re-introduce `livestock` or `mixed` in FE code.
 
@@ -1076,22 +1090,24 @@ These enums come from `prisma/schema.prisma`. Use `as const` objects or Zod enum
 
 ### BE Module → FE Feature Mapping
 
-| BE Module | FE Location |
-| --- | --- |
-| `auth` | `services/authService`, `queries/useAuth`, `stores/authStore` |
-| `farm-management` | `services/ownerService`, `schemaValidatation/farmManagement` |
-| `farm-member` | `services/ownerService`, `schemaValidatation/farmMember` |
-| `zone-management` | `services/zoneService`, `types/zone` |
-| `zone-member-management` | `services/zoneService`, `schemaValidatation/zoneMember` |
-| `doctor-profile` | `services/doctorService`, `schemaValidatation/doctorProfile` |
-| `doctor-assignment` | `services/adminService` + `doctorService`, `schemaValidatation/doctorAssignment` |
-| `crop-season` | `services/cropSeasonService`, `types/cropSeason` |
-| `iot-device-template` | `services/iotTemplateService`, `queries/useIotTemplate`, `schemaValidatation/iotTemplate` |
-| `sensor-template` | `services/iotTemplateService`, `queries/useIotTemplate`, `schemaValidatation/iotTemplate` |
-| `production-milestone` | TBD |
-| `employee-task` / `employee-task-template` | TBD |
-| `iot-device` | TBD |
-| `sensor` | TBD |
+
+| BE Module                                  | FE Location                                                                               |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| `auth`                                     | `services/authService`, `queries/useAuth`, `stores/authStore`                             |
+| `farm-management`                          | `services/ownerService`, `schemaValidatation/farmManagement`                              |
+| `farm-member`                              | `services/ownerService`, `schemaValidatation/farmMember`                                  |
+| `zone-management`                          | `services/zoneService`, `types/zone`                                                      |
+| `zone-member-management`                   | `services/zoneService`, `schemaValidatation/zoneMember`                                   |
+| `doctor-profile`                           | `services/doctorService`, `schemaValidatation/doctorProfile`                              |
+| `doctor-assignment`                        | `services/adminService` + `doctorService`, `schemaValidatation/doctorAssignment`          |
+| `crop-season`                              | `services/cropSeasonService`, `types/cropSeason`                                          |
+| `iot-device-template`                      | `services/iotTemplateService`, `queries/useIotTemplate`, `schemaValidatation/iotTemplate` |
+| `sensor-template`                          | `services/iotTemplateService`, `queries/useIotTemplate`, `schemaValidatation/iotTemplate` |
+| `production-milestone`                     | TBD                                                                                       |
+| `employee-task` / `employee-task-template` | TBD                                                                                       |
+| `iot-device`                               | TBD                                                                                       |
+| `sensor`                                   | TBD                                                                                       |
+
 
 ### BE Role-Based Methods
 
@@ -1207,9 +1223,11 @@ File: `components.json`
 
 ## Environment Variables
 
+
 | Variable       | Description          | Example                 |
 | -------------- | -------------------- | ----------------------- |
 | `VITE_API_URL` | Backend API base URL | `http://localhost:3000` |
+
 
 All env vars must be prefixed with `VITE_` to be accessible in client code via `import.meta.env`.
 
@@ -1288,12 +1306,14 @@ const handleBack = () => {
 
 **How it works:**
 
-| Phase | `show` | CSS Classes Applied | Visual Result |
-| --- | --- | --- | --- |
-| Mount | false | `opacity-0 translate-y-4` | Hidden, shifted down 16px |
-| Enter | true | `opacity-100 translate-y-0` | Fades in + slides up |
-| Exit | false | `opacity-0 translate-y-4` | Fades out + slides down |
-| Unmount | — | `setTimeout(onBack, 300)` fires | Parent removes component |
+
+| Phase   | `show` | CSS Classes Applied             | Visual Result             |
+| ------- | ------ | ------------------------------- | ------------------------- |
+| Mount   | false  | `opacity-0 translate-y-4`       | Hidden, shifted down 16px |
+| Enter   | true   | `opacity-100 translate-y-0`     | Fades in + slides up      |
+| Exit    | false  | `opacity-0 translate-y-4`       | Fades out + slides down   |
+| Unmount | —      | `setTimeout(onBack, 300)` fires | Parent removes component  |
+
 
 **Files using this pattern** (13 panels):
 
@@ -1307,12 +1327,14 @@ const handleBack = () => {
 
 ### When to Use Which Pattern
 
+
 | Scenario                         | Pattern                           |
 | -------------------------------- | --------------------------------- |
 | Dashboard page root              | `animate-in fade-in duration-300` |
 | Panel that replaces current view | `show` state + `transition-all`   |
 | Marketing/landing page sections  | Framer Motion `whileInView`       |
 | Carousel / slide transitions     | Framer Motion `AnimatePresence`   |
+
 
 ### Framer Motion (HomePage Only)
 
@@ -1474,3 +1496,4 @@ const { data } = useExampleList({ page, limit });
   buildHref={(p) => `?page=${p}`}
 />;
 ```
+

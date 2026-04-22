@@ -67,6 +67,11 @@ export const sidebarData: SidebarData = {
       url: "/dashboard/admin/iot-templates",
       icon: SlidersHorizontal,
     },
+    {
+      title: "Thiết Bị IoT",
+      url: "/dashboard/admin/iot-devices",
+      icon: Cpu,
+    },
     { title: "Quản Lý Người Dùng", url: "/dashboard/admin/users", icon: Users },
     {
       title: "Quản Lý Trang Trại",

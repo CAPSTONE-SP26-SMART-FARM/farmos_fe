@@ -494,22 +494,13 @@ function CreateCropSeasonScreen({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Diện tích (m²)">
-                <Input
-                  type="number"
-                  {...form.register("totalAreaSqm", { valueAsNumber: true })}
-                  autoComplete="off"
-                />
-              </Field>
-              <Field label="Số lượng cây">
-                <Input
-                  type="number"
-                  {...form.register("plantCount", { valueAsNumber: true })}
-                  autoComplete="off"
-                />
-              </Field>
-            </div>
+            <Field label="Số lượng cây">
+              <Input
+                type="number"
+                {...form.register("plantCount", { valueAsNumber: true })}
+                autoComplete="off"
+              />
+            </Field>
 
             <Field label="Ghi chú">
               <Textarea
@@ -564,7 +555,6 @@ function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
       expectedHarvestDate: season.expectedHarvestDate
         ? `${season.expectedHarvestDate.slice(0, 10)}T00:00:00.000Z`
         : undefined,
-      totalAreaSqm: season.totalAreaSqm ?? undefined,
       plantCount: season.plantCount ?? undefined,
       notes: season.notes ?? "",
     },
@@ -703,22 +693,13 @@ function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
               )}
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Diện tích (m²)">
-              <Input
-                type="number"
-                {...form.register("totalAreaSqm", { valueAsNumber: true })}
-                autoComplete="off"
-              />
-            </Field>
-            <Field label="Số lượng cây">
-              <Input
-                type="number"
-                {...form.register("plantCount", { valueAsNumber: true })}
-                autoComplete="off"
-              />
-            </Field>
-          </div>
+          <Field label="Số lượng cây">
+            <Input
+              type="number"
+              {...form.register("plantCount", { valueAsNumber: true })}
+              autoComplete="off"
+            />
+          </Field>
           <Field label="Ghi chú">
             <Textarea
               {...form.register("notes")}
@@ -876,10 +857,6 @@ function CropSeasonDetailContent({ season }: { season: CropSeasonType }) {
             ["Ngày trồng", formatDate(season.plantDate)],
             ["Thu hoạch dự kiến", formatDate(season.expectedHarvestDate)],
             ["Thu hoạch thực tế", formatDate(season.actualHarvestDate)],
-            [
-              "Diện tích",
-              season.totalAreaSqm ? `${season.totalAreaSqm} m²` : "—",
-            ],
             ["Số cây", season.plantCount ?? "—"],
           ] as [string, React.ReactNode][]
         ).map(([label, value]) => (
@@ -1220,7 +1197,6 @@ export default function ManagerCropSeasonsPage() {
                   <TableHead>Giống</TableHead>
                   <TableHead>Ngày trồng</TableHead>
                   <TableHead>Thu hoạch dự kiến</TableHead>
-                  <TableHead>Diện tích</TableHead>
                   <TableHead>Trạng thái</TableHead>
                   <TableHead className="text-right">Thao tác</TableHead>
                 </TableRow>
@@ -1229,7 +1205,7 @@ export default function ManagerCropSeasonsPage() {
                 {isLoading &&
                   Array.from({ length: 4 }).map((_, i) => (
                     <TableRow key={i}>
-                      {Array.from({ length: 7 }).map((_, j) => (
+                      {Array.from({ length: 6 }).map((_, j) => (
                         <TableCell key={j}>
                           <Skeleton className="h-4 w-full" />
                         </TableCell>
@@ -1239,7 +1215,7 @@ export default function ManagerCropSeasonsPage() {
                 {!isLoading && seasons.length === 0 && (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={6}
                       className="text-center text-muted-foreground py-12"
                     >
                       {!zoneId
@@ -1258,9 +1234,6 @@ export default function ManagerCropSeasonsPage() {
                     </TableCell>
                     <TableCell>{formatDate(s.plantDate)}</TableCell>
                     <TableCell>{formatDate(s.expectedHarvestDate)}</TableCell>
-                    <TableCell>
-                      {s.totalAreaSqm ? `${s.totalAreaSqm} m²` : "—"}
-                    </TableCell>
                     <TableCell>
                       <StatusBadge status={s.status} />
                     </TableCell>

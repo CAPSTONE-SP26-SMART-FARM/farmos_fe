@@ -343,6 +343,8 @@ export default function CropSeasonDetailPanel({
       })
     : null;
   const seasonName = season?.cropName ?? "Mùa vụ";
+  const canReportMilestoneIncident =
+    season?.status !== "planning" && season?.status !== "sent";
 
   return (
     <div
@@ -614,20 +616,22 @@ export default function CropSeasonDetailPanel({
                                     </Badge>
                                   </TableCell>
                                   <TableCell>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-7 w-7"
-                                      title="Báo cáo sự cố"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        navigate(
-                                          `/dashboard/owner/tickets?milestoneId=${milestone.id}&milestoneName=${encodeURIComponent(`#${milestone.milestoneOrder} ${milestone.stageName}`)}`,
-                                        );
-                                      }}
-                                    >
-                                      <AlertTriangle className="h-4 w-4" />
-                                    </Button>
+                                    {canReportMilestoneIncident && (
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7"
+                                        title="Báo cáo sự cố"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          navigate(
+                                            `/dashboard/owner/tickets?milestoneId=${milestone.id}&milestoneName=${encodeURIComponent(`#${milestone.milestoneOrder} ${milestone.stageName}`)}`,
+                                          );
+                                        }}
+                                      >
+                                        <AlertTriangle className="h-4 w-4" />
+                                      </Button>
+                                    )}
                                   </TableCell>
                                 </TableRow>
                                 {isExpanded && (

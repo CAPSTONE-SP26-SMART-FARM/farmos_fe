@@ -54,7 +54,7 @@ export function useSensorDashboard(
   });
   const zonesQueryOwner = useOwnerListZones(farmId ?? "", {
     page: 1,
-    limit: 80,
+    limit: 10,
   });
   const zonesQuery = role === "manager" ? zonesQueryManager : zonesQueryOwner;
 

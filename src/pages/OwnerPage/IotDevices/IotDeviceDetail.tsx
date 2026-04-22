@@ -7,46 +7,28 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft,
-  Cpu,
-  Wifi,
-  Radio,
-  CircuitBoard,
   Calendar,
+  CircuitBoard,
+  Cpu,
   Power,
   PowerOff,
-  Wrench,
+  Radio,
   ShieldOff,
-  Lock,
-  Loader2,
-  Thermometer,
-  Droplets,
-  Sun,
-  Sprout,
-  Trash2,
+  Wifi,
+  Wrench,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
+  useAdminIotDeviceDetail,
   useManagerIotDeviceDetail,
-  useManagerLockSensors,
   useOwnerIotDeviceDetail,
-  useOwnerLockSensors,
 } from "@/queries/useIotDevice";
-import {
-  useManagerDeleteSensor,
-  useManagerListSensors,
-  useOwnerDeleteSensor,
-  useOwnerListSensors,
-} from "@/queries/useSensor";
-import type { IotDeviceResType } from "@/schemaValidatation/iotDevice";
-import type { SensorResType } from "@/schemaValidatation/sensor";
+import type { IotDeviceDetailResType } from "@/schemaValidatation/iotDevice";
 
-type IotActor = "owner" | "manager";
-
-// ── Metadata maps ──────────────────────────────────────────────────────
+type IotActor = "owner" | "manager" | "admin";
 
 const STATUS_META: Record<
   string,
@@ -70,7 +52,7 @@ const STATUS_META: Record<
       "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300",
     icon: Wrench,
   },
-  decommissioned: {
+  retired: {
     label: "Ngưng hoạt động",
     className: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
     icon: ShieldOff,
@@ -89,51 +71,23 @@ const DEVICE_TYPE_LABEL: Record<string, string> = {
   wifi_module: "Mô-đun WiFi",
 };
 
-const SENSOR_TYPE_META: Record<
-  string,
-  { label: string; icon: typeof Thermometer; unit: string }
-> = {
-  soil_moisture: { label: "Độ ẩm đất", icon: Droplets, unit: "%" },
-  air_temperature: { label: "Nhiệt độ KK", icon: Thermometer, unit: "°C" },
-  air_humidity: { label: "Độ ẩm KK", icon: Sprout, unit: "%" },
-  light_intensity: { label: "Cường độ sáng", icon: Sun, unit: "lux" },
+const SENSOR_TYPE_LABEL: Record<string, string> = {
+  soil_moisture: "Độ ẩm đất",
+  air_temperature: "Nhiệt độ không khí",
+  air_humidity: "Độ ẩm không khí",
+  light_intensity: "Cường độ sáng",
 };
 
-const SENSOR_STATUS_META: Record<string, { label: string; className: string }> =
-  {
-    active: {
-      label: "Hoạt động",
-      className:
-        "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300",
-    },
-    inactive: {
-      label: "Tắt",
-      className:
-        "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
-    },
-    calibration: {
-      label: "Hiệu chuẩn",
-      className:
-        "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
-    },
-    error: {
-      label: "Lỗi",
-      className: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
-    },
-    damaged: {
-      label: "Hư hỏng",
-      className:
-        "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300",
-    },
-  };
-
-// ── Props ──────────────────────────────────────────────────────────────
+const SENSOR_STATUS_LABEL: Record<string, string> = {
+  active: "Hoạt động",
+  inactive: "Tắt",
+  calibrating: "Hiệu chuẩn",
+};
 
 interface IotDeviceDetailProps {
   deviceId: string;
   farmId: string;
   onBack: () => void;
-  onEdit?: (device: IotDeviceResType) => void;
   actor?: IotActor;
 }
 
@@ -141,13 +95,11 @@ export default function IotDeviceDetail({
   deviceId,
   farmId,
   onBack,
-  onEdit,
   actor = "owner",
 }: IotDeviceDetailProps) {
   const [show, setShow] = useState(false);
-  const [confirmLock, setConfirmLock] = useState(false);
-  const [deleteSensorTarget, setDeleteSensorTarget] =
-    useState<SensorResType | null>(null);
+
+  const adminDeviceQuery = useAdminIotDeviceDetail(deviceId, actor === "admin");
 
   const ownerDeviceQuery = useOwnerIotDeviceDetail(
     deviceId,
@@ -159,43 +111,20 @@ export default function IotDeviceDetail({
     farmId,
     actor === "manager",
   );
+
   const deviceData =
-    actor === "owner" ? ownerDeviceQuery.data : managerDeviceQuery.data;
+    actor === "admin"
+      ? adminDeviceQuery.data
+      : actor === "owner"
+        ? ownerDeviceQuery.data
+        : managerDeviceQuery.data;
   const deviceLoading =
-    actor === "owner"
-      ? ownerDeviceQuery.isLoading
-      : managerDeviceQuery.isLoading;
+    actor === "admin"
+      ? adminDeviceQuery.isLoading
+      : actor === "owner"
+        ? ownerDeviceQuery.isLoading
+        : managerDeviceQuery.isLoading;
   const device = deviceData?.data;
-
-  const isBoard = device?.deviceType === "board_module";
-
-  const ownerSensorsQuery = useOwnerListSensors(
-    deviceId,
-    { page: 1, limit: 100 },
-    actor === "owner" && isBoard,
-  );
-  const managerSensorsQuery = useManagerListSensors(
-    deviceId,
-    { page: 1, limit: 100 },
-    actor === "manager" && isBoard,
-  );
-  const sensorsData =
-    actor === "owner" ? ownerSensorsQuery.data : managerSensorsQuery.data;
-  const sensorsLoading =
-    actor === "owner"
-      ? ownerSensorsQuery.isLoading
-      : managerSensorsQuery.isLoading;
-  const sensors = sensorsData?.data?.data ?? [];
-
-  const ownerLockMutation = useOwnerLockSensors();
-  const managerLockMutation = useManagerLockSensors();
-  const lockMutation =
-    actor === "owner" ? ownerLockMutation : managerLockMutation;
-
-  const ownerDeleteSensorMutation = useOwnerDeleteSensor();
-  const managerDeleteSensorMutation = useManagerDeleteSensor();
-  const deleteSensorMutation =
-    actor === "owner" ? ownerDeleteSensorMutation : managerDeleteSensorMutation;
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setShow(true));
@@ -221,20 +150,10 @@ export default function IotDeviceDetail({
   const DIcon = DEVICE_TYPE_ICON[device.deviceType] ?? Cpu;
   const dtLabel = DEVICE_TYPE_LABEL[device.deviceType] ?? device.deviceType;
 
-  const canLock = isBoard && !device.sensorsLockedAt && sensors.length === 4;
-  const sensorTypeSet = new Set(sensors.map((s) => s.sensorType));
-  const hasAll4Types =
-    sensorTypeSet.has("soil_moisture") &&
-    sensorTypeSet.has("air_temperature") &&
-    sensorTypeSet.has("air_humidity") &&
-    sensorTypeSet.has("light_intensity");
-  const lockReady = canLock && hasAll4Types;
-
   return (
     <div
       className={`space-y-5 transition-all duration-300 ease-out ${show ? "translate-x-0 opacity-100" : "translate-x-4 opacity-0"}`}
     >
-      {/* Header */}
       <div className="flex flex-wrap items-center gap-3">
         <Button
           variant="ghost"
@@ -253,29 +172,14 @@ export default function IotDeviceDetail({
           <SIcon className="h-3 w-3" />
           {sMeta.label}
         </span>
-        {device.sensorsLockedAt && (
-          <Badge className="gap-1 bg-blue-600">
-            <Lock className="h-3 w-3" />
-            Cảm biến đã khóa
-          </Badge>
-        )}
-        {onEdit && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="ml-auto"
-            onClick={() => onEdit(device)}
-          >
-            Chỉnh sửa
-          </Button>
-        )}
       </div>
 
-      {/* Device info */}
       <Card>
         <CardHeader>
           <CardTitle>Thông tin thiết bị</CardTitle>
-          <CardDescription>Chi tiết cấu hình thiết bị IoT.</CardDescription>
+          <CardDescription>
+            Chi tiết cấu hình thiết bị IoT cấp phát.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
@@ -309,7 +213,7 @@ export default function IotDeviceDetail({
                 device.macAddress ? (
                   <span className="font-mono">{device.macAddress}</span>
                 ) : (
-                  "—"
+                  "-"
                 )
               }
             />
@@ -317,9 +221,7 @@ export default function IotDeviceDetail({
               <InfoRow
                 label="Mã bo mạch"
                 value={
-                  <span className="font-mono">
-                    {device.iotDeviceBoardId.slice(0, 8)}…
-                  </span>
+                  <span className="font-mono">{device.iotDeviceBoardId}</span>
                 }
               />
             )}
@@ -332,152 +234,128 @@ export default function IotDeviceDetail({
                 </span>
               }
             />
-            {device.lastSeenAt && (
+            <InfoRow
+              label="Nông trại"
+              value={
+                device.farm
+                  ? `${device.farm.name} (${device.farm.code})`
+                  : "Chưa gán nông trại"
+              }
+            />
+            {device.latestLog && (
               <InfoRow
-                label="Lần cuối hoạt động"
-                value={new Date(device.lastSeenAt).toLocaleString("vi-VN")}
+                label="Nhật ký mới nhất"
+                value={`${device.latestLog.action} - ${new Date(device.latestLog.createdAt).toLocaleString("vi-VN")}`}
               />
             )}
-            <InfoRow
-              label="Cập nhật lúc"
-              value={new Date(device.updatedAt).toLocaleDateString("vi-VN")}
-            />
           </div>
         </CardContent>
       </Card>
 
-      {/* Sensors section (only for board_module) */}
-      {isBoard && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Cảm biến ({sensors.length}/4)</CardTitle>
-                <CardDescription>
-                  Bo mạch cần đúng 4 cảm biến (mỗi loại 1) để khóa.
-                </CardDescription>
-              </div>
-              {lockReady && (
-                <Button
-                  size="sm"
-                  onClick={() => setConfirmLock(true)}
-                  disabled={lockMutation.isPending}
-                >
-                  {lockMutation.isPending ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Lock className="mr-2 h-4 w-4" />
-                  )}
-                  Khóa cảm biến
-                </Button>
-              )}
+      <Card>
+        <CardHeader>
+          <CardTitle>Cảm biến trên bo mạch ({device.sensors.length})</CardTitle>
+          <CardDescription>
+            Cảm biến được trả trực tiếp từ chi tiết cấp phát.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {device.sensors.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Chưa có cảm biến.</p>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2">
+              {device.sensors.map((sensor) => (
+                <SensorCard
+                  key={sensor.id}
+                  sensor={sensor}
+                />
+              ))}
             </div>
-          </CardHeader>
-          <CardContent>
-            {sensorsLoading ? (
-              <div className="flex justify-center py-6">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-              </div>
-            ) : sensors.length === 0 ? (
-              <p className="py-6 text-center text-muted-foreground">
-                Chưa có cảm biến nào. Thêm cảm biến từ biểu mẫu chỉnh sửa.
-              </p>
-            ) : (
-              <div className="grid gap-3 md:grid-cols-2">
-                {sensors.map((sensor) => {
-                  const meta =
-                    SENSOR_TYPE_META[sensor.sensorType] ??
-                    SENSOR_TYPE_META.soil_moisture;
-                  const Icon = meta.icon;
-                  const sStatus =
-                    SENSOR_STATUS_META[sensor.status] ??
-                    SENSOR_STATUS_META.inactive;
+          )}
+        </CardContent>
+      </Card>
 
-                  return (
-                    <div
-                      key={sensor.id}
-                      className="rounded-lg border bg-background p-3 space-y-2"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-4 w-4 text-primary" />
-                          <span className="text-sm font-medium">
-                            {meta.label}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span
-                            className={`rounded-md px-1.5 py-0.5 text-[10px] font-medium ${sStatus.className}`}
-                          >
-                            {sStatus.label}
-                          </span>
-                          {!device.sensorsLockedAt && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-destructive"
-                              onClick={() => setDeleteSensorTarget(sensor)}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex gap-4 text-xs text-muted-foreground">
-                        <span>
-                          Tối thiểu: {sensor.minValue} {meta.unit}
-                        </span>
-                        <span>
-                          Tối đa: {sensor.maxValue} {meta.unit}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Lock sensors confirmation */}
-      <ConfirmDialog
-        open={confirmLock}
-        title="Khóa cảm biến?"
-        description="Sau khi khóa, bạn không thể thêm/xóa cảm biến trên bo mạch này. Bạn có chắc chắn?"
-        confirmLabel="Khóa"
-        cancelLabel="Hủy"
-        onCancel={() => setConfirmLock(false)}
-        onConfirm={() => {
-          setConfirmLock(false);
-          lockMutation.mutate({ deviceId, farmId });
-        }}
-      />
-
-      {/* Delete sensor confirmation */}
-      <ConfirmDialog
-        open={!!deleteSensorTarget}
-        title="Xóa cảm biến?"
-        description={`Xóa cảm biến "${SENSOR_TYPE_META[deleteSensorTarget?.sensorType ?? ""]?.label ?? ""}" khỏi bo mạch?`}
-        confirmLabel="Xóa"
-        cancelLabel="Hủy"
-        variant="destructive"
-        onCancel={() => setDeleteSensorTarget(null)}
-        onConfirm={() => {
-          if (deleteSensorTarget) {
-            deleteSensorMutation.mutate({
-              sensorId: deleteSensorTarget.id,
-              iotDeviceId: deviceId,
-            });
-          }
-          setDeleteSensorTarget(null);
-        }}
-      />
+      <Card>
+        <CardHeader>
+          <CardTitle>Thiết bị con ({device.subDevices.length})</CardTitle>
+          <CardDescription>
+            WiFi/LoRa được liên kết cùng board module.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {device.subDevices.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Không có thiết bị con.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {device.subDevices.map((sub) => (
+                <SubDeviceCard
+                  key={sub.id}
+                  device={sub}
+                />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
-// ── Helper ─────────────────────────────────────────────────────────────
+function SensorCard({
+  sensor,
+}: {
+  sensor: IotDeviceDetailResType["sensors"][number];
+}) {
+  const label = SENSOR_TYPE_LABEL[sensor.sensorType] ?? sensor.sensorType;
+  const status = SENSOR_STATUS_LABEL[sensor.status] ?? sensor.status;
+
+  return (
+    <div className="rounded-lg border bg-background p-3 space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-medium">{label}</span>
+        <Badge variant="outline">{status}</Badge>
+      </div>
+      <div className="text-xs text-muted-foreground">
+        Nhỏ nhất: {sensor.minValue} | Lớn nhất: {sensor.maxValue}
+      </div>
+    </div>
+  );
+}
+
+function SubDeviceCard({
+  device,
+}: {
+  device: IotDeviceDetailResType["subDevices"][number];
+}) {
+  const DIcon = useMemo(
+    () => DEVICE_TYPE_ICON[device.deviceType] ?? Cpu,
+    [device.deviceType],
+  );
+
+  return (
+    <div className="rounded-lg border p-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <DIcon className="h-4 w-4 text-primary" />
+          <span className="font-medium">{device.deviceName}</span>
+        </div>
+        <Badge variant="outline">
+          {DEVICE_TYPE_LABEL[device.deviceType] ?? device.deviceType}
+        </Badge>
+      </div>
+      <div className="mt-2 text-xs text-muted-foreground">
+        {device.macAddress ? (
+          <p className="font-mono">{device.macAddress}</p>
+        ) : (
+          <p>Không có MAC</p>
+        )}
+        {device.farm ? <p>Farm: {device.farm.name}</p> : <p>Chưa gán farm</p>}
+      </div>
+    </div>
+  );
+}
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (

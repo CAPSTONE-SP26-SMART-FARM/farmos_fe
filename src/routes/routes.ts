@@ -6,6 +6,10 @@ import AdminDoctorAssignmentPage from "@/pages/AdminPage/DoctorAssignment/AdminD
 import AdminDoctorPerformancePage from "@/pages/AdminPage/DoctorPerformance/AdminDoctorPerformancePage";
 import AdminFarmsPage from "@/pages/AdminPage/Farms/AdminFarmsPage";
 import AdminIotTemplatesPage from "@/pages/AdminPage/IotTemplates/AdminIotTemplatesPage";
+import AdminIotDevicesPage from "@/pages/AdminPage/IotDevices/AdminIotDevicesPage";
+import AdminCreateIotDevicesPage from "@/pages/AdminPage/IotDevices/AdminCreateIotDevicesPage";
+import AdminIotDeviceDetailPage from "@/pages/AdminPage/IotDevices/AdminIotDeviceDetailPage";
+import AdminEditIotDevicePage from "@/pages/AdminPage/IotDevices/AdminEditIotDevicePage";
 import AdminEmployeeTaskTemplatesPage from "@/pages/AdminPage/EmployeeTaskTemplates/AdminEmployeeTaskTemplatesPage";
 import AdminMilestoneTemplatePage from "@/pages/AdminPage/AdminMilestoneTemplatePage";
 import AdminSubscriptionPlansPage from "@/pages/AdminPage/SubscriptionPlans/AdminSubscriptionPlansPage";
@@ -123,6 +127,26 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/admin/iot-templates",
         component: AdminIotTemplatesPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/iot-devices",
+        component: AdminIotDevicesPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/iot-devices/create",
+        component: AdminCreateIotDevicesPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/iot-devices/:deviceId",
+        component: AdminIotDeviceDetailPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/iot-devices/:deviceId/edit",
+        component: AdminEditIotDevicePage,
         allowedRoles: [RoleName.Admin],
       },
       {

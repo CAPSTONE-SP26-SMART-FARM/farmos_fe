@@ -234,19 +234,21 @@ const validateMilestoneEditForm = (
     }
   }
 
-  if (values.actualStartDate && !actualStartDate) {
-    errors.actualStartDate = "Ngày bắt đầu thực tế không hợp lệ.";
-  }
-  if (values.actualEndDate && !actualEndDate) {
-    errors.actualEndDate = "Ngày kết thúc thực tế không hợp lệ.";
-  }
-  if (
-    actualStartDate &&
-    actualEndDate &&
-    !isAfter(startOfDay(actualEndDate), startOfDay(actualStartDate))
-  ) {
-    errors.actualEndDate =
-      "Ngày kết thúc thực tế phải sau ngày bắt đầu thực tế.";
+  if (mode === "approved") {
+    if (values.actualStartDate && !actualStartDate) {
+      errors.actualStartDate = "Ngày bắt đầu thực tế không hợp lệ.";
+    }
+    if (values.actualEndDate && !actualEndDate) {
+      errors.actualEndDate = "Ngày kết thúc thực tế không hợp lệ.";
+    }
+    if (
+      actualStartDate &&
+      actualEndDate &&
+      !isAfter(startOfDay(actualEndDate), startOfDay(actualStartDate))
+    ) {
+      errors.actualEndDate =
+        "Ngày kết thúc thực tế phải sau ngày bắt đầu thực tế.";
+    }
   }
 
   return errors;
@@ -329,23 +331,25 @@ const MilestoneEditFormFields = ({
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <DatePickerField
-          label="Ngày bắt đầu thực tế"
-          placeholder="Chọn ngày bắt đầu"
-          value={form.actualStartDate}
-          error={errors.actualStartDate}
-          onChange={(value) => onChange("actualStartDate", value)}
-        />
-        <DatePickerField
-          label="Ngày kết thúc thực tế"
-          placeholder="Chọn ngày kết thúc"
-          value={form.actualEndDate}
-          error={errors.actualEndDate}
-          onChange={(value) => onChange("actualEndDate", value)}
-          minDate={minActualEndDate}
-        />
-      </div>
+      {mode === "approved" && (
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <DatePickerField
+            label="Ngày bắt đầu thực tế"
+            placeholder="Chọn ngày bắt đầu"
+            value={form.actualStartDate}
+            error={errors.actualStartDate}
+            onChange={(value) => onChange("actualStartDate", value)}
+          />
+          <DatePickerField
+            label="Ngày kết thúc thực tế"
+            placeholder="Chọn ngày kết thúc"
+            value={form.actualEndDate}
+            error={errors.actualEndDate}
+            onChange={(value) => onChange("actualEndDate", value)}
+            minDate={minActualEndDate}
+          />
+        </div>
+      )}
 
       <div>
         <label className="text-sm font-medium">Trạng thái</label>
@@ -492,7 +496,7 @@ const CreateMilestonesScreen = ({
 
   const templateQuery = useManagerListMilestoneTemplates({
     page: templatePage,
-    limit: 6,
+    limit: 50,
     search: templateSearch || undefined,
     type: "crop_season",
   });
@@ -531,7 +535,7 @@ const CreateMilestonesScreen = ({
       return {
         stageName: item.stageName.trim(),
         milestoneOrder: nextMilestoneOrder + index,
-        expectedStartDate,
+        expectedStartDate: expectedStartDate ?? "",
         expectedEndDate: null,
         actualStartDate: null,
         actualEndDate: null,
@@ -608,17 +612,79 @@ const CreateMilestonesScreen = ({
   };
 
   const handleSubmitDraft = () => {
+    if (!cropSeasonId.trim()) {
+      toast.error("Không có ngữ cảnh mùa vụ hợp lệ để tạo mốc.");
+      return;
+    }
+
     const validItems = draftItems.filter((item) => item.stageName.trim());
     if (validItems.length === 0) {
       toast.error("Cần ít nhất 1 mốc có tên giai đoạn.");
       return;
     }
 
+    const normalizedItems = validItems.map((item, index) => ({
+      ...item,
+      index,
+      parsedStart: parseBackendDate(item.expectedStartDate),
+      parsedEnd: parseBackendDate(item.expectedEndDate),
+    }));
+
+    const missingDatesIndex = normalizedItems.findIndex(
+      (item) => !item.expectedStartDate.trim() || !item.expectedEndDate.trim(),
+    );
+    if (missingDatesIndex >= 0) {
+      toast.error(
+        `Mốc #${normalizedItems[missingDatesIndex].milestoneOrder}: Ngày bắt đầu và ngày kết thúc là bắt buộc.`,
+      );
+      return;
+    }
+
+    const invalidDatesIndex = normalizedItems.findIndex(
+      (item) => !item.parsedStart || !item.parsedEnd,
+    );
+    if (invalidDatesIndex >= 0) {
+      toast.error(
+        `Mốc #${normalizedItems[invalidDatesIndex].milestoneOrder}: Ngày không hợp lệ.`,
+      );
+      return;
+    }
+
+    const invalidRangeIndex = normalizedItems.findIndex((item) => {
+      if (!item.parsedStart || !item.parsedEnd) return false;
+      return !isAfter(startOfDay(item.parsedEnd), startOfDay(item.parsedStart));
+    });
+    if (invalidRangeIndex >= 0) {
+      toast.error(
+        `Mốc #${normalizedItems[invalidRangeIndex].milestoneOrder}: Ngày bắt đầu phải trước ngày kết thúc.`,
+      );
+      return;
+    }
+
+    const sortedForOverlap = normalizedItems
+      .map((item) => ({
+        ...item,
+        startValue: startOfDay(item.parsedStart!).getTime(),
+        endValue: startOfDay(item.parsedEnd!).getTime(),
+      }))
+      .sort((a, b) => a.startValue - b.startValue);
+
+    for (let i = 1; i < sortedForOverlap.length; i++) {
+      const prev = sortedForOverlap[i - 1];
+      const cur = sortedForOverlap[i];
+      if (cur.startValue <= prev.endValue) {
+        toast.error(
+          `Mốc #${cur.milestoneOrder} bị trùng khoảng thời gian với mốc #${prev.milestoneOrder}.`,
+        );
+        return;
+      }
+    }
+
     const items = validItems.map((item) => ({
       stageName: item.stageName.trim(),
       milestoneOrder: item.milestoneOrder,
-      expectedStartDate: item.expectedStartDate || null,
-      expectedEndDate: item.expectedEndDate || null,
+      expectedStartDate: item.expectedStartDate,
+      expectedEndDate: item.expectedEndDate,
       actualStartDate: null,
       actualEndDate: null,
       status: item.status,
@@ -1059,7 +1125,7 @@ const ManagerMilestonesPage = () => {
 
   const listQuery = useManagerListProductionMilestones(id, {
     page,
-    limit: 10,
+    limit: 50,
   });
   const milestones = listQuery.data?.data.data ?? [];
   const totalPages = listQuery.data?.data.meta.totalPages ?? 1;
@@ -1071,6 +1137,29 @@ const ManagerMilestonesPage = () => {
     cropSeason?.status === ProductionStatusName.Approved;
   const canEditMilestone = isPlanningCropSeason || isApprovedCropSeason;
   const canDeleteMilestone = isPlanningCropSeason;
+
+  const findOverlappingMilestone = (
+    startDate: string | null | undefined,
+    endDate: string | null | undefined,
+    excludeMilestoneId?: string,
+  ) => {
+    const parsedStart = parseBackendDate(startDate);
+    const parsedEnd = parseBackendDate(endDate);
+    if (!parsedStart || !parsedEnd) return null;
+
+    const nextStart = startOfDay(parsedStart).getTime();
+    const nextEnd = startOfDay(parsedEnd).getTime();
+
+    return orderedMilestones.find((item) => {
+      if (excludeMilestoneId && item.id === excludeMilestoneId) return false;
+      const itemStart = parseBackendDate(item.expectedStartDate);
+      const itemEnd = parseBackendDate(item.expectedEndDate);
+      if (!itemStart || !itemEnd) return false;
+      const itemStartValue = startOfDay(itemStart).getTime();
+      const itemEndValue = startOfDay(itemEnd).getTime();
+      return nextStart <= itemEndValue && itemStartValue <= nextEnd;
+    });
+  };
 
   const updateMutation = useManagerUpdateProductionMilestone(id);
   const reorderMutation = useManagerUpdateProductionMilestone(id, {
@@ -1088,12 +1177,46 @@ const ManagerMilestonesPage = () => {
 
   const handleUpdate = (form: MilestoneEditFormState) => {
     if (!editingMilestone) return;
+    if (!cropSeason?.id) {
+      toast.error("Không tìm thấy thông tin mùa vụ hợp lệ.");
+      return;
+    }
 
     if (!canEditMilestone) {
       toast.error(
         "Chỉ có thể chỉnh sửa mốc khi mùa vụ ở planning hoặc approved.",
       );
       return;
+    }
+
+    if (isPlanningCropSeason) {
+      if (!form.expectedStartDate || !form.expectedEndDate) {
+        toast.error("Ngày bắt đầu và ngày kết thúc dự kiến là bắt buộc.");
+        return;
+      }
+
+      const parsedStart = parseBackendDate(form.expectedStartDate);
+      const parsedEnd = parseBackendDate(form.expectedEndDate);
+      if (!parsedStart || !parsedEnd) {
+        toast.error("Ngày dự kiến không hợp lệ.");
+        return;
+      }
+      if (!isAfter(startOfDay(parsedEnd), startOfDay(parsedStart))) {
+        toast.error("Ngày bắt đầu phải trước ngày kết thúc.");
+        return;
+      }
+
+      const overlapped = findOverlappingMilestone(
+        form.expectedStartDate,
+        form.expectedEndDate,
+        editingMilestone.id,
+      );
+      if (overlapped) {
+        toast.error(
+          `Khoảng thời gian bị trùng với mốc #${overlapped.milestoneOrder} (${overlapped.stageName}).`,
+        );
+        return;
+      }
     }
 
     const payload = isApprovedCropSeason
@@ -1374,7 +1497,7 @@ const ManagerMilestonesPage = () => {
           </div>
           <div className="ml-auto">
             <Button
-              disabled={!isPlanningCropSeason}
+              disabled={!isPlanningCropSeason || !cropSeason?.id}
               onClick={() => setShowCreateScreen(true)}
             >
               <Plus className="h-4 w-4 mr-1" />

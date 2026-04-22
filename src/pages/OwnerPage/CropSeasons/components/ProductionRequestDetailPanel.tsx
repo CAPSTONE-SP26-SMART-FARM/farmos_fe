@@ -384,12 +384,6 @@ export default function ProductionRequestDetailPanel({
                     label="Thu hoạch dự kiến"
                     value={formatDate(season.expectedHarvestDate)}
                   />
-                  {season.totalAreaSqm != null && (
-                    <InfoRow
-                      label="Diện tích"
-                      value={`${season.totalAreaSqm} m²`}
-                    />
-                  )}
                 </div>
                 {season.notes && (
                   <>

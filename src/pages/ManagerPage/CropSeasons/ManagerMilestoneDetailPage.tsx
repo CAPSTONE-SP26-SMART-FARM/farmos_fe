@@ -87,6 +87,7 @@ import { useManagerCropSeasonDetail } from "@/queries/useCropSeason";
 import ManagerMilestoneTasksSection, {
   ManagerMilestoneTaskAssignmentScreen,
 } from "@/pages/ManagerPage/EmployeeTasks/ManagerMilestoneTasksSection";
+import { useManagerListEmployeeTasks } from "@/queries/useEmployeeTask";
 import type {
   ProductionMilestoneResType,
   ProductionMilestoneStatusType,
@@ -102,6 +103,7 @@ import {
   parse,
   startOfDay,
 } from "date-fns";
+import { toast } from "sonner";
 
 // ============================================================
 // Helpers
@@ -121,6 +123,13 @@ const SENSOR_TYPE_LABELS: Record<string, string> = {
   air_temperature: "Nhiệt độ không khí",
   air_humidity: "Độ ẩm không khí",
   light_intensity: "Cường độ ánh sáng",
+};
+
+const SENSOR_TYPE_UNITS: Record<string, string> = {
+  soil_moisture: "%",
+  air_temperature: "°C",
+  air_humidity: "%",
+  light_intensity: "lux",
 };
 
 function formatDeviceLabel(device?: {
@@ -243,19 +252,21 @@ const validateMilestoneEditForm = (
     }
   }
 
-  if (values.actualStartDate && !actualStartDate) {
-    errors.actualStartDate = "Ngày bắt đầu thực tế không hợp lệ.";
-  }
-  if (values.actualEndDate && !actualEndDate) {
-    errors.actualEndDate = "Ngày kết thúc thực tế không hợp lệ.";
-  }
-  if (
-    actualStartDate &&
-    actualEndDate &&
-    !isAfter(startOfDay(actualEndDate), startOfDay(actualStartDate))
-  ) {
-    errors.actualEndDate =
-      "Ngày kết thúc thực tế phải sau ngày bắt đầu thực tế.";
+  if (mode === "approved") {
+    if (values.actualStartDate && !actualStartDate) {
+      errors.actualStartDate = "Ngày bắt đầu thực tế không hợp lệ.";
+    }
+    if (values.actualEndDate && !actualEndDate) {
+      errors.actualEndDate = "Ngày kết thúc thực tế không hợp lệ.";
+    }
+    if (
+      actualStartDate &&
+      actualEndDate &&
+      !isAfter(startOfDay(actualEndDate), startOfDay(actualStartDate))
+    ) {
+      errors.actualEndDate =
+        "Ngày kết thúc thực tế phải sau ngày bắt đầu thực tế.";
+    }
   }
 
   return errors;
@@ -399,23 +410,25 @@ const MilestoneEditFormFields = ({
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        <DatePickerField
-          label="Ngày bắt đầu thực tế"
-          placeholder="Chọn ngày bắt đầu"
-          value={form.actualStartDate}
-          error={errors.actualStartDate}
-          onChange={(value) => onChange("actualStartDate", value)}
-        />
-        <DatePickerField
-          label="Ngày kết thúc thực tế"
-          placeholder="Chọn ngày kết thúc"
-          value={form.actualEndDate}
-          error={errors.actualEndDate}
-          onChange={(value) => onChange("actualEndDate", value)}
-          minDate={minActualEndDate}
-        />
-      </div>
+      {mode === "approved" && (
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <DatePickerField
+            label="Ngày bắt đầu thực tế"
+            placeholder="Chọn ngày bắt đầu"
+            value={form.actualStartDate}
+            error={errors.actualStartDate}
+            onChange={(value) => onChange("actualStartDate", value)}
+          />
+          <DatePickerField
+            label="Ngày kết thúc thực tế"
+            placeholder="Chọn ngày kết thúc"
+            value={form.actualEndDate}
+            error={errors.actualEndDate}
+            onChange={(value) => onChange("actualEndDate", value)}
+            minDate={minActualEndDate}
+          />
+        </div>
+      )}
 
       <div>
         <label className="text-sm font-medium">Trạng thái</label>
@@ -881,13 +894,7 @@ const SensorBindingSection = ({
   );
 };
 
-const ThresholdSection = ({
-  assignmentId,
-  milestoneId,
-}: {
-  assignmentId: string;
-  milestoneId: string;
-}) => {
+const ThresholdSection = ({ assignmentId }: { assignmentId: string }) => {
   const [editing, setEditing] = useState<ThresholdEligibleSensorType | null>(
     null,
   );
@@ -900,10 +907,7 @@ const ThresholdSection = ({
     THRESHOLD_ELIGIBLE.has(i.sensorType),
   );
 
-  const upsertMutation = useManagerUpsertSensorThreshold(
-    assignmentId,
-    milestoneId,
-  );
+  const upsertMutation = useManagerUpsertSensorThreshold(assignmentId);
 
   const startEdit = (sensorType: ThresholdEligibleSensorType) => {
     const existing = items.find((i) => i.sensorType === sensorType);
@@ -918,13 +922,17 @@ const ThresholdSection = ({
 
   const handleSave = () => {
     if (!editing) return;
-    const existingItem = items.find((i) => i.sensorType === editing);
+    const existing = items.find((i) => i.sensorType === editing);
+    const isUpdate = existing?.source === "milestone";
+
     upsertMutation.mutate(
       {
-        sensorType: editing,
-        optimalMin: form.optimalMin,
-        optimalMax: form.optimalMax,
-        isUpdate: existingItem?.source === "milestone",
+        body: {
+          sensorType: editing,
+          optimalMin: form.optimalMin,
+          optimalMax: form.optimalMax,
+        },
+        isUpdate,
       },
       { onSuccess: () => setEditing(null) },
     );
@@ -955,6 +963,17 @@ const ThresholdSection = ({
         {eligibleItems.map((item) => {
           const isEditing = editing === item.sensorType;
           const t = item.threshold;
+          const unit = SENSOR_TYPE_UNITS[item.sensorType] ?? "";
+          const minWithUnit = `${item.minValue}${unit ? ` ${unit}` : ""}`;
+          const maxWithUnit = `${item.maxValue}${unit ? ` ${unit}` : ""}`;
+          const optimalMinWithUnit =
+            t?.optimalMin != null
+              ? `${t.optimalMin}${unit ? ` ${unit}` : ""}`
+              : "—";
+          const optimalMaxWithUnit =
+            t?.optimalMax != null
+              ? `${t.optimalMax}${unit ? ` ${unit}` : ""}`
+              : "—";
           return (
             <div
               key={item.sensorId}
@@ -1001,17 +1020,27 @@ const ThresholdSection = ({
               </div>
 
               {!isEditing && t && (
-                <p className="text-xs text-muted-foreground">
-                  Tối ưu: {t.optimalMin} – {t.optimalMax}
-                  &nbsp;·&nbsp;Khoảng đo: {item.minValue} – {item.maxValue}
-                </p>
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p>
+                    Ngưỡng tối ưu: {optimalMinWithUnit} – {optimalMaxWithUnit}
+                  </p>
+                  <p>
+                    Khoảng đo cảm biến: {minWithUnit} – {maxWithUnit}
+                  </p>
+                </div>
               )}
 
               {isEditing && (
                 <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    Đơn vị: {unit || "—"} · Khoảng đo cảm biến: {minWithUnit} –{" "}
+                    {maxWithUnit}
+                  </p>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-xs font-medium">Nhỏ nhất</label>
+                      <label className="text-xs font-medium">
+                        Ngưỡng min {unit ? `(${unit})` : ""}
+                      </label>
                       <Input
                         type="number"
                         className="mt-1 h-8"
@@ -1026,7 +1055,9 @@ const ThresholdSection = ({
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-medium">Lớn nhất</label>
+                      <label className="text-xs font-medium">
+                        Ngưỡng max {unit ? `(${unit})` : ""}
+                      </label>
                       <Input
                         type="number"
                         className="mt-1 h-8"
@@ -1144,9 +1175,11 @@ const SensorBindingReadOnly = ({
 const TasksAndAssignmentStep = ({
   milestoneId,
   canEdit,
+  hasTasks,
 }: {
   milestoneId: string;
   canEdit: boolean;
+  hasTasks: boolean;
 }) => {
   const [showAssignment, setShowAssignment] = useState(false);
 
@@ -1167,11 +1200,17 @@ const TasksAndAssignmentStep = ({
         <Button
           size="sm"
           variant="outline"
+          disabled={!hasTasks}
           onClick={() => setShowAssignment(true)}
         >
           Gán nông dân cho nhiệm vụ
         </Button>
       </div>
+      {!hasTasks && (
+        <p className="text-xs text-amber-600">
+          Cần tạo ít nhất 1 nhiệm vụ trước khi gán nhân viên.
+        </p>
+      )}
       <ManagerMilestoneTasksSection
         milestoneId={milestoneId}
         canEdit={canEdit}
@@ -1223,6 +1262,29 @@ const ManagerMilestoneDetailPage = () => {
     cropSeason?.status === ProductionStatusName.Approved;
   const canEditMilestone = isPlanningCropSeason || isApprovedCropSeason;
 
+  const findOverlappingMilestone = (
+    startDate: string | null | undefined,
+    endDate: string | null | undefined,
+    excludeMilestoneId?: string,
+  ) => {
+    const parsedStart = parseBackendDate(startDate);
+    const parsedEnd = parseBackendDate(endDate);
+    if (!parsedStart || !parsedEnd) return null;
+
+    const nextStart = startOfDay(parsedStart).getTime();
+    const nextEnd = startOfDay(parsedEnd).getTime();
+
+    return milestones.find((item) => {
+      if (excludeMilestoneId && item.id === excludeMilestoneId) return false;
+      const itemStart = parseBackendDate(item.expectedStartDate);
+      const itemEnd = parseBackendDate(item.expectedEndDate);
+      if (!itemStart || !itemEnd) return false;
+      const itemStartValue = startOfDay(itemStart).getTime();
+      const itemEndValue = startOfDay(itemEnd).getTime();
+      return nextStart <= itemEndValue && itemStartValue <= nextEnd;
+    });
+  };
+
   const updateMutation = useManagerUpdateProductionMilestone(csId);
   const deleteMutation = useManagerDeleteProductionMilestone(csId);
 
@@ -1232,39 +1294,67 @@ const ManagerMilestoneDetailPage = () => {
   const assignmentId = assignment?.assignmentId ?? null;
   const iotDeviceId = assignment?.iotDeviceId ?? null;
   const hasDevice = !!assignment;
+  const thresholdValidationQuery = useManagerSensorThresholds(
+    assignmentId ?? "",
+    !!assignmentId,
+  );
+
+  const taskValidationQuery = useManagerListEmployeeTasks(
+    msId,
+    { page: 1, limit: 100 },
+    !!msId,
+  );
+  const milestoneTasks = taskValidationQuery.data?.data?.data ?? [];
+  const taskMeta = taskValidationQuery.data?.data?.meta;
+  const totalTaskItems = taskMeta?.totalItems ?? milestoneTasks.length;
+  const hasTasks = totalTaskItems > 0;
+  const fetchedAllTasks = taskMeta
+    ? !taskMeta.hasNextPage
+    : milestoneTasks.length >= totalTaskItems;
+  const allTasksAssigned =
+    hasTasks &&
+    fetchedAllTasks &&
+    milestoneTasks.every((task) => Boolean(task.assignedTo));
+  const canCompleteMilestoneSetup = hasTasks && allTasksAssigned;
 
   // Bound sensors that require thresholds
-  const boundSensors = assignment?.sensors ?? [];
-  const eligibleBoundSensors = boundSensors.filter((s) =>
+  const thresholdValidationItems = thresholdValidationQuery.data?.data.data ?? [];
+  const hasBoundSensors = thresholdValidationItems.length > 0;
+  const eligibleBoundSensors = thresholdValidationItems.filter((s) =>
     THRESHOLD_ELIGIBLE.has(s.sensorType),
   );
   const hasSensorsWithoutThreshold =
     eligibleBoundSensors.length > 0 &&
-    eligibleBoundSensors.some((s) => s.threshold?.source === "none");
+    eligibleBoundSensors.some(
+      (s) =>
+        s.source === "none" ||
+        s.threshold?.optimalMin == null ||
+        s.threshold?.optimalMax == null,
+    );
 
-  // Step 3 is locked when there are eligible sensors missing thresholds
-  const isStep3Locked = hasSensorsWithoutThreshold;
+  const canProceedToTaskStep =
+    !hasDevice || (hasBoundSensors && !hasSensorsWithoutThreshold);
 
   // Derive step statuses
   const stepStatuses: StepStatus[] = (() => {
     const statuses: StepStatus[] = [];
 
-    // Step 0: IoT
-    if (hasDevice) {
-      statuses.push(currentStep === 0 ? "current" : "completed");
-    } else {
-      statuses.push(currentStep === 0 ? "current" : "upcoming");
-    }
+    // Step 0: IoT (optional)
+    statuses.push(currentStep === 0 ? "current" : "completed");
 
-    // Step 1: Sensors & Thresholds — locked if no device
+    // Step 1: Sensors & Thresholds — only available when IoT is assigned
     if (!hasDevice) {
       statuses.push("locked");
+    } else if (currentStep === 1) {
+      statuses.push("current");
+    } else if (canProceedToTaskStep && currentStep > 1) {
+      statuses.push("completed");
     } else {
-      statuses.push(currentStep === 1 ? "current" : "upcoming");
+      statuses.push("upcoming");
     }
 
-    // Step 2: Tasks — locked if sensors exist but missing thresholds
-    if (isStep3Locked) {
+    // Step 2: Tasks — if IoT is assigned, sensors + thresholds must be valid
+    if (!canProceedToTaskStep) {
       statuses.push("locked");
     } else {
       statuses.push(currentStep === 2 ? "current" : "upcoming");
@@ -1278,8 +1368,62 @@ const ManagerMilestoneDetailPage = () => {
     setCurrentStep(index);
   };
 
+  const handleSkipIotStep = () => {
+    if (hasDevice) return;
+    handleStepClick(2);
+  };
+
+  const handleFinish = () => {
+    if (!hasTasks) {
+      toast.error("Cần tạo ít nhất 1 nhiệm vụ trước khi hoàn thành.");
+      return;
+    }
+    if (!allTasksAssigned) {
+      toast.error(
+        "Cần gán nhân viên cho tất cả nhiệm vụ trước khi hoàn thành.",
+      );
+      return;
+    }
+    navigate(backTarget);
+  };
+
   const handleUpdate = (form: MilestoneEditFormState) => {
     if (!milestone) return;
+    if (!cropSeason?.id) {
+      toast.error("Không tìm thấy thông tin mùa vụ hợp lệ.");
+      return;
+    }
+
+    if (isPlanningCropSeason) {
+      if (!form.expectedStartDate || !form.expectedEndDate) {
+        toast.error("Ngày bắt đầu và ngày kết thúc dự kiến là bắt buộc.");
+        return;
+      }
+
+      const parsedStart = parseBackendDate(form.expectedStartDate);
+      const parsedEnd = parseBackendDate(form.expectedEndDate);
+      if (!parsedStart || !parsedEnd) {
+        toast.error("Ngày dự kiến không hợp lệ.");
+        return;
+      }
+
+      if (!isAfter(startOfDay(parsedEnd), startOfDay(parsedStart))) {
+        toast.error("Ngày bắt đầu phải trước ngày kết thúc.");
+        return;
+      }
+
+      const overlapped = findOverlappingMilestone(
+        form.expectedStartDate,
+        form.expectedEndDate,
+        milestone.id,
+      );
+      if (overlapped) {
+        toast.error(
+          `Khoảng thời gian bị trùng với mốc #${overlapped.milestoneOrder} (${overlapped.stageName}).`,
+        );
+        return;
+      }
+    }
 
     const payload = isApprovedCropSeason
       ? {
@@ -1460,11 +1604,18 @@ const ManagerMilestoneDetailPage = () => {
               </CardTitle>
               <CardDescription>
                 {currentStep === 0 &&
-                  "Gán thiết bị IoT (board_module) cho mốc sản xuất này."}
+                  "Gán thiết bị IoT (không bắt buộc). Có thể bỏ qua nếu mốc không cần IoT."}
                 {currentStep === 1 &&
                   "Liên kết cảm biến từ thiết bị và cấu hình ngưỡng tối ưu."}
                 {currentStep === 2 && "Quản lý nhiệm vụ và phân công nông dân."}
               </CardDescription>
+              {currentStep === 1 && hasDevice && !hasBoundSensors && (
+                <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  Cần liên kết ít nhất 1 cảm biến trước khi qua bước gán nhiệm
+                  vụ.
+                </p>
+              )}
               {currentStep === 1 && hasSensorsWithoutThreshold && (
                 <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
                   <AlertTriangle className="h-3 w-3" />
@@ -1472,15 +1623,46 @@ const ManagerMilestoneDetailPage = () => {
                   dân.
                 </p>
               )}
+              {currentStep === 2 && !hasTasks && (
+                <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  Cần tạo ít nhất 1 nhiệm vụ để bật nút hoàn thành.
+                </p>
+              )}
+              {currentStep === 2 && hasTasks && !allTasksAssigned && (
+                <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  Cần gán nhân viên cho tất cả nhiệm vụ để bật nút hoàn thành.
+                </p>
+              )}
+              {currentStep === 2 && canCompleteMilestoneSetup && (
+                <p className="text-xs text-emerald-600 mt-1 flex items-center gap-1">
+                  <Check className="h-3 w-3" />
+                  Đã đủ điều kiện hoàn thành cấu hình mốc.
+                </p>
+              )}
             </div>
             <div className="flex gap-2">
+              {currentStep === 0 && !hasDevice && canEditMilestone && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSkipIotStep}
+                >
+                  Bỏ qua IoT
+                </Button>
+              )}
               {currentStep > 0 && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() =>
                     handleStepClick(
-                      currentStep === 1 && !hasDevice ? 0 : currentStep - 1,
+                      currentStep === 2 && !hasDevice
+                        ? 0
+                        : currentStep === 1 && !hasDevice
+                          ? 0
+                          : currentStep - 1,
                     )
                   }
                 >
@@ -1497,6 +1679,19 @@ const ManagerMilestoneDetailPage = () => {
                 >
                   Bước tiếp
                   <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              )}
+              {currentStep === 2 && (
+                <Button
+                  size="sm"
+                  disabled={
+                    !canEditMilestone ||
+                    taskValidationQuery.isLoading ||
+                    !canCompleteMilestoneSetup
+                  }
+                  onClick={handleFinish}
+                >
+                  Hoàn thành
                 </Button>
               )}
             </div>
@@ -1524,10 +1719,7 @@ const ManagerMilestoneDetailPage = () => {
                     iotDeviceId={iotDeviceId ?? undefined}
                   />
                   <Separator />
-                  <ThresholdSection
-                    assignmentId={assignmentId}
-                    milestoneId={msId}
-                  />
+                  <ThresholdSection assignmentId={assignmentId} />
                 </div>
               ) : !isPlanningCropSeason && assignment ? (
                 <SensorBindingReadOnly
@@ -1538,7 +1730,7 @@ const ManagerMilestoneDetailPage = () => {
                 <div className="rounded-md border border-dashed p-6 text-center">
                   <Radio className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
                   <p className="text-sm text-muted-foreground">
-                    Cần gán thiết bị IoT trước khi liên kết cảm biến.
+                    Mốc này chưa gán IoT. Bạn có thể bỏ qua bước này.
                   </p>
                 </div>
               )}
@@ -1550,6 +1742,7 @@ const ManagerMilestoneDetailPage = () => {
             <TasksAndAssignmentStep
               milestoneId={msId}
               canEdit={canEditMilestone}
+              hasTasks={hasTasks}
             />
           )}
         </CardContent>

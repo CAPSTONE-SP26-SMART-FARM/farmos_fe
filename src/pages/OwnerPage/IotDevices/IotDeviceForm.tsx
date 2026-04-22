@@ -59,6 +59,10 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
+  useAdminCreateIotDeviceBatch,
+  useAdminCreateSensorBatch,
+  useAdminIotDeviceDetail,
+  useAdminUpdateIotDevice,
   useManagerCreateIotDevices,
   useManagerUpdateIotDevice,
   useOwnerCreateIotDevices,
@@ -71,6 +75,10 @@ import {
   useOwnerListSensors,
 } from "@/queries/useSensor";
 import {
+  useAdminIotDeviceTemplateDetail,
+  useAdminListIotDeviceTemplates,
+  useAdminListSensorTemplates,
+  useAdminSensorTemplateDetail,
   useManagerIotDeviceTemplateDetail,
   useManagerListIotDeviceTemplates,
   useManagerListSensorTemplates,
@@ -83,6 +91,7 @@ import {
 import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import {
   DeviceStatusSchema,
+  type IotDeviceDetailResType,
   IotDeviceTypeSchema,
   type IotDeviceResType,
   type UpdateIotDeviceBodyType,
@@ -99,7 +108,7 @@ import {
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
 import { toast } from "sonner";
 
-type IotActor = "owner" | "manager";
+type IotActor = "owner" | "manager" | "admin";
 
 // ── Form schemas ───────────────────────────────────────────────────────
 
@@ -279,7 +288,7 @@ const STATUS_LABEL: Record<string, string> = {
   active: "Hoạt động",
   inactive: "Tắt",
   maintenance: "Bảo trì",
-  decommissioned: "Ngưng hoạt động",
+  retired: "Ngưng hoạt động",
 };
 
 const SENSOR_TYPE_LABEL: Record<string, string> = {
@@ -324,6 +333,12 @@ function DeviceTemplatePicker({
 }) {
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const { data: adminTemplatesRes, isLoading: adminLoading } =
+    useAdminListIotDeviceTemplates({
+      page: 1,
+      limit: 50,
+      type: deviceType,
+    });
   const { data: ownerTemplatesRes, isLoading: ownerLoading } =
     useOwnerListIotDeviceTemplates(
       {
@@ -343,6 +358,11 @@ function DeviceTemplatePicker({
       actor === "manager",
     );
 
+  const { data: adminDetailRes } = useAdminIotDeviceTemplateDetail(
+    previewId ?? "",
+    actor === "admin" && !!previewId,
+  );
+
   const { data: ownerDetailRes } = useOwnerIotDeviceTemplateDetail(
     previewId ?? "",
     actor === "owner" && !!previewId,
@@ -353,9 +373,23 @@ function DeviceTemplatePicker({
   );
 
   const templatesRes =
-    actor === "owner" ? ownerTemplatesRes : managerTemplatesRes;
-  const detailRes = actor === "owner" ? ownerDetailRes : managerDetailRes;
-  const isLoading = actor === "owner" ? ownerLoading : managerLoading;
+    actor === "admin"
+      ? adminTemplatesRes
+      : actor === "owner"
+        ? ownerTemplatesRes
+        : managerTemplatesRes;
+  const detailRes =
+    actor === "admin"
+      ? adminDetailRes
+      : actor === "owner"
+        ? ownerDetailRes
+        : managerDetailRes;
+  const isLoading =
+    actor === "admin"
+      ? adminLoading
+      : actor === "owner"
+        ? ownerLoading
+        : managerLoading;
 
   const templates = templatesRes?.data?.data ?? [];
   const detail = detailRes?.data;
@@ -563,6 +597,11 @@ function SensorTemplatePicker({
 }) {
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const { data: adminTemplatesRes, isLoading: adminLoading } =
+    useAdminListSensorTemplates({
+      page: 1,
+      limit: 50,
+    });
   const { data: ownerTemplatesRes, isLoading: ownerLoading } =
     useOwnerListSensorTemplates(
       {
@@ -580,6 +619,11 @@ function SensorTemplatePicker({
       actor === "manager",
     );
 
+  const { data: adminDetailRes } = useAdminSensorTemplateDetail(
+    previewId ?? "",
+    actor === "admin" && !!previewId,
+  );
+
   const { data: ownerDetailRes } = useOwnerSensorTemplateDetail(
     previewId ?? "",
     actor === "owner" && !!previewId,
@@ -590,9 +634,23 @@ function SensorTemplatePicker({
   );
 
   const templatesRes =
-    actor === "owner" ? ownerTemplatesRes : managerTemplatesRes;
-  const detailRes = actor === "owner" ? ownerDetailRes : managerDetailRes;
-  const isLoading = actor === "owner" ? ownerLoading : managerLoading;
+    actor === "admin"
+      ? adminTemplatesRes
+      : actor === "owner"
+        ? ownerTemplatesRes
+        : managerTemplatesRes;
+  const detailRes =
+    actor === "admin"
+      ? adminDetailRes
+      : actor === "owner"
+        ? ownerDetailRes
+        : managerDetailRes;
+  const isLoading =
+    actor === "admin"
+      ? adminLoading
+      : actor === "owner"
+        ? ownerLoading
+        : managerLoading;
 
   const templates = templatesRes?.data?.data ?? [];
   const detail = detailRes?.data;
@@ -782,7 +840,7 @@ function SensorTemplatePicker({
 
 interface IotDeviceFormProps {
   farmId: string;
-  device?: IotDeviceResType;
+  device?: IotDeviceResType | IotDeviceDetailResType;
   onBack: () => void;
   actor?: IotActor;
 }
@@ -1018,16 +1076,41 @@ function BatchCreateForm({
   show: boolean;
   handleBack: () => void;
 }) {
+  const adminCreateMutation = useAdminCreateIotDeviceBatch();
   const ownerCreateMutation = useOwnerCreateIotDevices();
   const managerCreateMutation = useManagerCreateIotDevices();
-  const createAsync =
-    actor === "owner"
-      ? ownerCreateMutation.mutateAsync
-      : managerCreateMutation.mutateAsync;
+  const createAsync = ({
+    farmId,
+    body,
+  }: {
+    farmId: string;
+    body: BatchCreateFormType;
+  }) => {
+    if (actor === "admin") {
+      return adminCreateMutation.mutateAsync({
+        farmId: farmId.trim() || undefined,
+        body,
+      });
+    }
+
+    if (actor === "owner") {
+      return ownerCreateMutation.mutateAsync({
+        farmId,
+        body,
+      });
+    }
+
+    return managerCreateMutation.mutateAsync({
+      farmId,
+      body,
+    });
+  };
   const isPending =
-    actor === "owner"
-      ? ownerCreateMutation.isPending
-      : managerCreateMutation.isPending;
+    actor === "admin"
+      ? adminCreateMutation.isPending
+      : actor === "owner"
+        ? ownerCreateMutation.isPending
+        : managerCreateMutation.isPending;
 
   const form = useForm<BatchCreateFormType>({
     resolver: zodResolver(BatchCreateFormSchema),
@@ -1327,7 +1410,7 @@ function EditDeviceForm({
   handleBack,
 }: {
   farmId: string;
-  device: IotDeviceResType;
+  device: IotDeviceResType | IotDeviceDetailResType;
   actor: IotActor;
   show: boolean;
   confirmSave: boolean;
@@ -1336,30 +1419,182 @@ function EditDeviceForm({
   setPendingData: (v: EditFormType | null) => void;
   handleBack: () => void;
 }) {
+  const adminUpdateMutation = useAdminUpdateIotDevice();
   const ownerUpdateMutation = useOwnerUpdateIotDevice();
   const managerUpdateMutation = useManagerUpdateIotDevice();
-  const updateAsync =
-    actor === "owner"
-      ? ownerUpdateMutation.mutateAsync
-      : managerUpdateMutation.mutateAsync;
-  const isPending =
-    actor === "owner"
-      ? ownerUpdateMutation.isPending
-      : managerUpdateMutation.isPending;
+  const updateAsync = ({
+    deviceId,
+    farmId,
+    body,
+  }: {
+    deviceId: string;
+    farmId: string;
+    body: UpdateIotDeviceBodyType;
+  }) => {
+    if (actor === "admin") {
+      return adminUpdateMutation.mutateAsync({ deviceId, body });
+    }
 
+    if (actor === "owner") {
+      return ownerUpdateMutation.mutateAsync({ deviceId, farmId, body });
+    }
+
+    return managerUpdateMutation.mutateAsync({ deviceId, farmId, body });
+  };
+  const isPending =
+    actor === "admin"
+      ? adminUpdateMutation.isPending
+      : actor === "owner"
+        ? ownerUpdateMutation.isPending
+        : managerUpdateMutation.isPending;
+
+  const adminCreateSensorsMutation = useAdminCreateSensorBatch();
   const ownerCreateSensorsMutation = useOwnerCreateSensors();
   const managerCreateSensorsMutation = useManagerCreateSensors();
-  const createSensorsAsync =
-    actor === "owner"
-      ? ownerCreateSensorsMutation.mutateAsync
-      : managerCreateSensorsMutation.mutateAsync;
+  const createSensorsAsync = ({
+    iotDeviceId,
+    body,
+  }: {
+    iotDeviceId: string;
+    body: { items: SensorBatchFormType["items"] };
+  }) => {
+    if (actor === "admin") {
+      return adminCreateSensorsMutation.mutateAsync({
+        deviceId: iotDeviceId,
+        body,
+      });
+    }
+
+    if (actor === "owner") {
+      return ownerCreateSensorsMutation.mutateAsync({ iotDeviceId, body });
+    }
+
+    return managerCreateSensorsMutation.mutateAsync({ iotDeviceId, body });
+  };
   const sensorsPending =
-    actor === "owner"
-      ? ownerCreateSensorsMutation.isPending
-      : managerCreateSensorsMutation.isPending;
+    actor === "admin"
+      ? adminCreateSensorsMutation.isPending
+      : actor === "owner"
+        ? ownerCreateSensorsMutation.isPending
+        : managerCreateSensorsMutation.isPending;
   const [showSensorForm, setShowSensorForm] = useState(false);
 
   const isBoard = device.deviceType === "board_module";
+
+  const deviceSubDevices =
+    "subDevices" in device && Array.isArray(device.subDevices)
+      ? device.subDevices
+      : [];
+  const [editableSubDevices, setEditableSubDevices] = useState(
+    deviceSubDevices.map((sub) => ({
+      id: sub.id,
+      deviceName: sub.deviceName,
+      deviceType: sub.deviceType,
+      status: sub.status,
+      macAddress: sub.macAddress ?? "",
+      isDirty: false,
+      isSaving: false,
+    })),
+  );
+
+  useEffect(() => {
+    setEditableSubDevices(
+      deviceSubDevices.map((sub) => ({
+        id: sub.id,
+        deviceName: sub.deviceName,
+        deviceType: sub.deviceType,
+        status: sub.status,
+        macAddress: sub.macAddress ?? "",
+        isDirty: false,
+        isSaving: false,
+      })),
+    );
+  }, [device.id]);
+
+  const patchSubDevice = (
+    id: string,
+    patch: Partial<{
+      deviceName: string;
+      status: z.infer<typeof DeviceStatusSchema>;
+      macAddress: string;
+    }>,
+  ) => {
+    setEditableSubDevices((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              ...patch,
+              isDirty: true,
+            }
+          : item,
+      ),
+    );
+  };
+
+  const saveSubDevice = async (id: string) => {
+    const target = editableSubDevices.find((item) => item.id === id);
+    if (!target) return;
+
+    const normalizedMac = target.macAddress.trim().toUpperCase();
+
+    setEditableSubDevices((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              isSaving: true,
+            }
+          : item,
+      ),
+    );
+
+    try {
+      await updateAsync({
+        deviceId: target.id,
+        farmId,
+        body: {
+          deviceName: target.deviceName.trim(),
+          status: target.status,
+          ...(target.deviceType === "wifi_module" && normalizedMac
+            ? { macAddress: normalizedMac }
+            : {}),
+        },
+      });
+
+      setEditableSubDevices((prev) =>
+        prev.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                macAddress: normalizedMac || item.macAddress,
+                isDirty: false,
+                isSaving: false,
+              }
+            : item,
+        ),
+      );
+      toast.success("Cập nhật thiết bị con thành công");
+    } catch (error) {
+      setEditableSubDevices((prev) =>
+        prev.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                isSaving: false,
+              }
+            : item,
+        ),
+      );
+
+      if (isApiErrorResponse(error)) {
+        toast.error(error.response?.data.message ?? "Cập nhật thiết bị con thất bại");
+        return;
+      }
+
+      toast.error("Cập nhật thiết bị con thất bại");
+    }
+  };
 
   const ownerSensorsQuery = useOwnerListSensors(
     device.id,
@@ -1371,9 +1606,18 @@ function EditDeviceForm({
     { page: 1, limit: 100 },
     actor === "manager" && isBoard,
   );
-  const existingSensorsData =
-    actor === "owner" ? ownerSensorsQuery.data : managerSensorsQuery.data;
-  const existingSensors = existingSensorsData?.data?.data ?? [];
+  const adminDetailQuery = useAdminIotDeviceDetail(
+    device.id,
+    actor === "admin" && isBoard,
+  );
+  const existingSensors =
+    actor === "admin"
+      ? (adminDetailQuery.data?.data.sensors ?? []).map((s) => ({
+          sensorType: s.sensorType,
+        }))
+      : actor === "owner"
+        ? (ownerSensorsQuery.data?.data?.data ?? [])
+        : (managerSensorsQuery.data?.data?.data ?? []);
   const existingSensorTypes = new Set(existingSensors.map((s) => s.sensorType));
   const remainingSensorSlots = Math.max(0, 4 - existingSensors.length);
 
@@ -1451,7 +1695,6 @@ function EditDeviceForm({
       const normalizedMac = data.macAddress.trim().toUpperCase();
       const body: UpdateIotDeviceBodyType = {
         deviceName: data.deviceName.trim(),
-        deviceType: data.deviceType,
         ...(data.deviceType === "wifi_module" && normalizedMac
           ? { macAddress: normalizedMac }
           : {}),
@@ -1699,6 +1942,114 @@ function EditDeviceForm({
           </Button>
         </div>
       </form>
+
+      {actor === "admin" && isBoard && editableSubDevices.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Thiết bị con</CardTitle>
+            <CardDescription>
+              Chỉnh sửa nhanh các mô-đun WiFi/LoRa thuộc bo mạch này.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {editableSubDevices.map((subDevice) => {
+              const SubIcon = DEVICE_TYPE_ICON[subDevice.deviceType] ?? Cpu;
+              const showMacField = subDevice.deviceType === "wifi_module";
+
+              return (
+                <div
+                  key={subDevice.id}
+                  className="rounded-lg border bg-muted/10 p-3 space-y-3"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <SubIcon className="h-4 w-4 text-primary" />
+                      <p className="text-sm font-medium">
+                        {DEVICE_TYPE_LABEL[subDevice.deviceType] ??
+                          subDevice.deviceType}
+                      </p>
+                      <Badge variant="outline">{subDevice.id.slice(0, 8)}...</Badge>
+                    </div>
+                    <Button
+                      size="sm"
+                      disabled={
+                        subDevice.isSaving ||
+                        !subDevice.isDirty ||
+                        !subDevice.deviceName.trim()
+                      }
+                      onClick={() => void saveSubDevice(subDevice.id)}
+                    >
+                      {subDevice.isSaving && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
+                      Lưu thiết bị con
+                    </Button>
+                  </div>
+
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <Field>
+                      <FieldLabel>Tên thiết bị con</FieldLabel>
+                      <Input
+                        value={subDevice.deviceName}
+                        onChange={(e) =>
+                          patchSubDevice(subDevice.id, {
+                            deviceName: e.target.value,
+                          })
+                        }
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel>Trạng thái</FieldLabel>
+                      <Select
+                        value={subDevice.status}
+                        onValueChange={(value) =>
+                          patchSubDevice(subDevice.id, {
+                            status: value as z.infer<typeof DeviceStatusSchema>,
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(STATUS_LABEL).map(([val, label]) => (
+                            <SelectItem
+                              key={val}
+                              value={val}
+                            >
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                  </div>
+
+                  {showMacField ? (
+                    <Field>
+                      <FieldLabel>Địa chỉ MAC</FieldLabel>
+                      <Input
+                        className="font-mono"
+                        placeholder="AA:BB:CC:DD:EE:FF"
+                        value={subDevice.macAddress}
+                        onChange={(e) =>
+                          patchSubDevice(subDevice.id, {
+                            macAddress: e.target.value,
+                          })
+                        }
+                      />
+                    </Field>
+                  ) : (
+                    <div className="rounded-md border border-dashed bg-muted/20 p-3 text-xs text-muted-foreground">
+                      Địa chỉ MAC chỉ áp dụng cho mô-đun WiFi.
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Sensor creation for board_module */}
       {isBoard && !device.sensorsLockedAt && (

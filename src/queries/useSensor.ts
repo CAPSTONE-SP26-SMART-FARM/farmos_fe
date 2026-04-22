@@ -12,6 +12,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { onMutationError } from "@/lib/axios";
 
+function unsupportedProvisioningSensorWrite(role: "owner" | "manager") {
+  return Promise.reject(
+    new Error(
+      `Luồng đã ngừng hỗ trợ: vai trò ${role} không còn được phép thao tác ghi cảm biến. Vui lòng sử dụng API cấp phát của quản trị viên.`,
+    ),
+  );
+}
+
 // ── List ───────────────────────────────────────────────────────────────
 
 export const useOwnerListSensors = (
@@ -37,9 +45,16 @@ export const useOwnerCreateSensors = () => {
     }: {
       iotDeviceId: string;
       body: CreateSensorBatchBodyType;
-    }) => ownerSensorService.create(iotDeviceId, body),
-    onSuccess: (_res, { iotDeviceId }) => {
-      toast.success("Tạo cảm biến thành công!");
+    }) => {
+      void iotDeviceId;
+      void body;
+      return unsupportedProvisioningSensorWrite("owner");
+    },
+    onError: (error, { iotDeviceId }) => {
+      onMutationError(
+        error,
+        "Owner không thể tạo cảm biến ở luồng provisioning",
+      );
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.owner.sensors.list(iotDeviceId),
       });
@@ -60,14 +75,21 @@ export const useOwnerUpdateSensor = () => {
       sensorId: string;
       iotDeviceId: string;
       body: UpdateSensorBodyType;
-    }) => ownerSensorService.update(sensorId, iotDeviceId, body),
-    onSuccess: (_res, { iotDeviceId }) => {
-      toast.success("Cập nhật cảm biến thành công!");
+    }) => {
+      void sensorId;
+      void iotDeviceId;
+      void body;
+      return unsupportedProvisioningSensorWrite("owner");
+    },
+    onError: (error, { iotDeviceId }) => {
+      onMutationError(
+        error,
+        "Owner không thể cập nhật cảm biến ở luồng provisioning",
+      );
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.owner.sensors.list(iotDeviceId),
       });
     },
-    onError: (error) => onMutationError(error, "Cập nhật cảm biến thất bại"),
   });
 };
 
@@ -82,14 +104,20 @@ export const useOwnerDeleteSensor = () => {
     }: {
       sensorId: string;
       iotDeviceId: string;
-    }) => ownerSensorService.delete(sensorId, iotDeviceId),
-    onSuccess: (_res, { iotDeviceId }) => {
-      toast.success("Xóa cảm biến thành công!");
+    }) => {
+      void sensorId;
+      void iotDeviceId;
+      return unsupportedProvisioningSensorWrite("owner");
+    },
+    onError: (error, { iotDeviceId }) => {
+      onMutationError(
+        error,
+        "Owner không thể xóa cảm biến ở luồng provisioning",
+      );
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.owner.sensors.list(iotDeviceId),
       });
     },
-    onError: (error) => onMutationError(error, "Xóa cảm biến thất bại"),
   });
 };
 
@@ -116,9 +144,16 @@ export const useManagerCreateSensors = () => {
     }: {
       iotDeviceId: string;
       body: CreateSensorBatchBodyType;
-    }) => managerSensorService.create(iotDeviceId, body),
-    onSuccess: (_res, { iotDeviceId }) => {
-      toast.success("Tạo cảm biến thành công!");
+    }) => {
+      void iotDeviceId;
+      void body;
+      return unsupportedProvisioningSensorWrite("manager");
+    },
+    onError: (error, { iotDeviceId }) => {
+      onMutationError(
+        error,
+        "Manager không thể tạo cảm biến ở luồng provisioning",
+      );
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.manager.sensors.list(iotDeviceId),
       });
@@ -137,14 +172,21 @@ export const useManagerUpdateSensor = () => {
       sensorId: string;
       iotDeviceId: string;
       body: UpdateSensorBodyType;
-    }) => managerSensorService.update(sensorId, iotDeviceId, body),
-    onSuccess: (_res, { iotDeviceId }) => {
-      toast.success("Cập nhật cảm biến thành công!");
+    }) => {
+      void sensorId;
+      void iotDeviceId;
+      void body;
+      return unsupportedProvisioningSensorWrite("manager");
+    },
+    onError: (error, { iotDeviceId }) => {
+      onMutationError(
+        error,
+        "Manager không thể cập nhật cảm biến ở luồng provisioning",
+      );
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.manager.sensors.list(iotDeviceId),
       });
     },
-    onError: (error) => onMutationError(error, "Cập nhật cảm biến thất bại"),
   });
 };
 
@@ -157,13 +199,19 @@ export const useManagerDeleteSensor = () => {
     }: {
       sensorId: string;
       iotDeviceId: string;
-    }) => managerSensorService.delete(sensorId, iotDeviceId),
-    onSuccess: (_res, { iotDeviceId }) => {
-      toast.success("Xóa cảm biến thành công!");
+    }) => {
+      void sensorId;
+      void iotDeviceId;
+      return unsupportedProvisioningSensorWrite("manager");
+    },
+    onError: (error, { iotDeviceId }) => {
+      onMutationError(
+        error,
+        "Manager không thể xóa cảm biến ở luồng provisioning",
+      );
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.manager.sensors.list(iotDeviceId),
       });
     },
-    onError: (error) => onMutationError(error, "Xóa cảm biến thất bại"),
   });
 };

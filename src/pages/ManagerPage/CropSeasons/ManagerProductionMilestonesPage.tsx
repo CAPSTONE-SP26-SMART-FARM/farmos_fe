@@ -143,7 +143,7 @@ export default function ManagerProductionMilestonesPage() {
 
   const { data, isLoading } = useManagerListCropSeasons(zoneId, {
     page,
-    limit: 10,
+    limit: 50,
   });
 
   const seasons = data?.data.data ?? [];

@@ -7,7 +7,7 @@ export const DeviceStatusSchema = z.enum([
   "active",
   "inactive",
   "maintenance",
-  "decommissioned",
+  "retired",
 ]);
 
 export const IotDeviceTypeSchema = z.enum([
@@ -101,32 +101,103 @@ export const CreateIotDeviceBatchBodySchema = z
 
 export const UpdateIotDeviceBodySchema = z.object({
   deviceName: z.string().min(1).max(255).optional(),
-  deviceType: IotDeviceTypeSchema.optional(),
   macAddress: z
     .string()
     .max(17)
     .regex(/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/)
-    .nullable()
     .optional(),
   status: DeviceStatusSchema.optional(),
 });
 
+export const AdminCreateSensorBodySchema = z
+  .object({
+    sensorType: z.string(),
+    status: z.string().optional(),
+    minValue: z.number(),
+    maxValue: z.number(),
+  })
+  .refine((v) => v.minValue <= v.maxValue, {
+    message: "minValue must be <= maxValue",
+    path: ["minValue"],
+  });
+
+export const AdminCreateSensorBatchBodySchema = z.object({
+  items: z.array(AdminCreateSensorBodySchema).min(1),
+});
+
+export const AdminUpdateSensorBodySchema = z
+  .object({
+    sensorType: z.string().optional(),
+    status: z.string().optional(),
+    minValue: z.number().optional(),
+    maxValue: z.number().optional(),
+  })
+  .refine(
+    (v) =>
+      v.sensorType !== undefined ||
+      v.status !== undefined ||
+      v.minValue !== undefined ||
+      v.maxValue !== undefined,
+    { message: "At least one field must be provided" },
+  );
+
+export const AdminAssignOwnerBodySchema = z.object({
+  iotDeviceId: z.string().uuid(),
+  ownerId: z.string().uuid(),
+  subscriptionId: z.string().uuid(),
+});
+
+export const AdminUnassignOwnerBodySchema = z.object({
+  iotDeviceId: z.string().uuid(),
+  reason: z.string().max(500).optional(),
+});
+
 // ── Response schemas ───────────────────────────────────────────────────
+
+export const IotDeviceLatestLogSchema = z.object({
+  id: z.string().uuid(),
+  action: z.string(),
+  reason: z.string().nullable(),
+  performedBy: z.string().uuid(),
+  zoneIdSnapshot: z.string().uuid().nullable(),
+  createdAt: z.string(),
+});
 
 export const IotDeviceResSchema = z.object({
   id: z.string().uuid(),
-  farmId: z.string().uuid(),
   deviceName: z.string(),
-  deviceType: z.string(),
+  deviceType: IotDeviceTypeSchema,
   macAddress: z.string().nullable(),
   status: DeviceStatusSchema,
-  lastSeenAt: z.string().nullable(),
   installedAt: z.string(),
   iotDeviceBoardId: z.string().uuid().nullable(),
-  sensorsLockedAt: z.string().nullable(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  deletedAt: z.string().nullable(),
+  sensorsLockedAt: z.string().nullable().optional(),
+  latestLog: IotDeviceLatestLogSchema.nullable(),
+});
+
+export const FarmSummarySchema = z.object({
+  id: z.string().uuid(),
+  code: z.string(),
+  name: z.string(),
+});
+
+export const SensorSummarySchema = z.object({
+  id: z.string().uuid(),
+  sensorType: z.string(),
+  status: z.string(),
+  minValue: z.string(),
+  maxValue: z.string(),
+});
+
+export const IotDeviceDetailResSchema = IotDeviceResSchema.extend({
+  farm: FarmSummarySchema.nullable(),
+  sensors: z.array(SensorSummarySchema),
+  subDevices: z.array(
+    IotDeviceResSchema.extend({
+      farm: FarmSummarySchema.nullable(),
+      sensors: z.array(SensorSummarySchema),
+    }),
+  ),
 });
 
 // ── List query ─────────────────────────────────────────────────────────
@@ -139,16 +210,32 @@ export const ListIotDevicesQuerySchema = PagingRequestSchema.extend({
 // ── List response ──────────────────────────────────────────────────────
 
 export const ListIotDevicesResSchema = PagingResponseSchema(IotDeviceResSchema);
+export const IotDeviceBatchResSchema = z.array(IotDeviceResSchema);
 
 // ── Type exports ───────────────────────────────────────────────────────
 
 export type DeviceStatusType = z.infer<typeof DeviceStatusSchema>;
 export type IotDeviceType = z.infer<typeof IotDeviceTypeSchema>;
 export type IotDeviceResType = z.infer<typeof IotDeviceResSchema>;
+export type IotDeviceDetailResType = z.infer<typeof IotDeviceDetailResSchema>;
 export type CreateIotDeviceItemType = z.infer<typeof CreateIotDeviceItemSchema>;
 export type CreateIotDeviceBatchBodyType = z.infer<
   typeof CreateIotDeviceBatchBodySchema
 >;
+export type AdminCreateIotDeviceBatchBodyType = CreateIotDeviceBatchBodyType;
 export type UpdateIotDeviceBodyType = z.infer<typeof UpdateIotDeviceBodySchema>;
+export type AdminCreateSensorBatchBodyType = z.infer<
+  typeof AdminCreateSensorBatchBodySchema
+>;
+export type AdminUpdateSensorBodyType = z.infer<
+  typeof AdminUpdateSensorBodySchema
+>;
+export type AdminAssignOwnerBodyType = z.infer<
+  typeof AdminAssignOwnerBodySchema
+>;
+export type AdminUnassignOwnerBodyType = z.infer<
+  typeof AdminUnassignOwnerBodySchema
+>;
 export type ListIotDevicesQueryType = z.infer<typeof ListIotDevicesQuerySchema>;
 export type ListIotDevicesResType = z.infer<typeof ListIotDevicesResSchema>;
+export type IotDeviceBatchResType = z.infer<typeof IotDeviceBatchResSchema>;

@@ -54,6 +54,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useMemo, useState, type FormEvent } from "react";
 import {
   useManagerListEmployeeTasks,
@@ -108,6 +109,45 @@ const PRIORITY_META: Record<
   },
 };
 
+const CHILDREN_CONTAINER_MOTION = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.06,
+      delayChildren: 0.03,
+    },
+  },
+};
+
+const CHILD_ITEM_MOTION = {
+  hidden: { opacity: 0, y: 8 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.22,
+      ease: "easeOut",
+    },
+  },
+};
+
+const CHILD_TOGGLE_MOTION = {
+  initial: { opacity: 0, y: -6, height: 0 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    height: "auto",
+    transition: { duration: 0.2, ease: "easeOut" },
+  },
+  exit: {
+    opacity: 0,
+    y: -4,
+    height: 0,
+    transition: { duration: 0.16, ease: "easeInOut" },
+  },
+};
+
 function formatDate(d: string | null | undefined) {
   if (!d) return "—";
   try {
@@ -125,7 +165,7 @@ function isOverdue(task: EmployeeTaskResType) {
 }
 
 // ============================================================
-// Batch Create Dialog
+// Batch Create Inline Panel
 // ============================================================
 
 type TaskDraft = {
@@ -140,21 +180,24 @@ const emptyDraft = (): TaskDraft => ({
   priority: "normal",
 });
 
-function BatchCreateDialog({
-  open,
-  onClose,
+function BatchCreateInlinePanel({
   milestoneId,
+  onCreated,
+  onCancel,
 }: {
-  open: boolean;
-  onClose: () => void;
   milestoneId: string;
+  onCreated: () => void;
+  onCancel: () => void;
 }) {
   const createBatch = useManagerCreateEmployeeTaskBatch(milestoneId);
   const [drafts, setDrafts] = useState<TaskDraft[]>([emptyDraft()]);
 
-  // ── Template apply ─────────────────────────────────────
   const [templateQuery, setTemplateQuery] = useState({ page: 1, limit: 6 });
   const [templateSearch, setTemplateSearch] = useState("");
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [previewTemplate, setPreviewTemplate] =
+    useState<EmployeeTaskTemplateResType | null>(null);
+
   const debouncedTemplateSearch = useDebounce(templateSearch, 500);
   const effectiveTemplateQuery = useMemo(
     () => ({ ...templateQuery, search: debouncedTemplateSearch || undefined }),
@@ -165,19 +208,6 @@ function BatchCreateDialog({
   );
   const templates = templateList.data?.data?.data ?? [];
   const templateMeta = templateList.data?.data?.meta;
-  const [showTemplates, setShowTemplates] = useState(false);
-
-  const resetState = () => {
-    setDrafts([emptyDraft()]);
-    setShowTemplates(false);
-    setTemplateSearch("");
-    setTemplateQuery({ page: 1, limit: 6 });
-  };
-
-  const handleClose = () => {
-    resetState();
-    onClose();
-  };
 
   const updateDraft = (idx: number, patch: Partial<TaskDraft>) => {
     setDrafts((prev) =>
@@ -195,8 +225,9 @@ function BatchCreateDialog({
       description: item.description ?? "",
       priority: item.priority as TaskPriorityType,
     }));
-    setDrafts((prev) => [...prev.filter((d) => d.title.trim()), ...newDrafts]);
+    setDrafts(newDrafts.length > 0 ? newDrafts : [emptyDraft()]);
     setShowTemplates(false);
+    setPreviewTemplate(null);
   };
 
   const handleSubmit = () => {
@@ -213,7 +244,10 @@ function BatchCreateDialog({
     createBatch.mutate(
       { tasks },
       {
-        onSuccess: () => handleClose(),
+        onSuccess: () => {
+          setDrafts([emptyDraft()]);
+          onCreated();
+        },
       },
     );
   };
@@ -224,29 +258,29 @@ function BatchCreateDialog({
   };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => !v && handleClose()}
-    >
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ClipboardList className="h-5 w-5" />
-            Tạo nhiệm vụ hàng loạt
-          </DialogTitle>
-        </DialogHeader>
-
-        {/* Template picker toggle */}
-        <div className="flex items-center gap-2">
+    <Card className="border-dashed">
+      <CardHeader>
+        <CardTitle className="text-sm flex items-center gap-2">
+          <ClipboardList className="h-4 w-4" />
+          Tạo nhiệm vụ hàng loạt
+        </CardTitle>
+        <CardDescription className="text-xs">
+          Chọn mẫu để điền nhanh form bên dưới hoặc nhập thủ công.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
+            type="button"
             variant="outline"
             size="sm"
-            onClick={() => setShowTemplates(!showTemplates)}
+            onClick={() => setShowTemplates((prev) => !prev)}
           >
             <FileText className="h-4 w-4 mr-1" />
-            {showTemplates ? "Ẩn mẫu" : "Áp dụng mẫu"}
+            {showTemplates ? "Ẩn template" : "Chọn template"}
           </Button>
           <Button
+            type="button"
             variant="outline"
             size="sm"
             onClick={() => setDrafts((prev) => [...prev, emptyDraft()])}
@@ -256,87 +290,128 @@ function BatchCreateDialog({
           </Button>
         </div>
 
-        {/* Template browser */}
-        {showTemplates && (
-          <Card>
-            <CardHeader className="py-3 px-4">
-              <CardTitle className="text-sm">Chọn mẫu nhiệm vụ</CardTitle>
-              <CardDescription className="text-xs">
-                Nhấn mẫu để thêm các nhiệm vụ từ mẫu
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="px-4 pb-3 space-y-2">
-              <Input
-                placeholder="Tìm kiếm mẫu..."
-                value={templateSearch}
-                onChange={(e) => {
-                  setTemplateSearch(e.target.value);
-                  setTemplateQuery((q) => ({ ...q, page: 1 }));
-                }}
-                className="h-8 text-sm"
-              />
-              {templateList.isLoading ? (
-                <Skeleton className="h-16 w-full" />
-              ) : templates.length === 0 ? (
-                <p className="text-xs text-muted-foreground py-2">
-                  Không tìm thấy mẫu.
-                </p>
-              ) : (
-                <div className="space-y-1.5">
-                  {templates.map((tpl) => (
-                    <button
-                      key={tpl.id}
-                      type="button"
-                      onClick={() => applyTemplate(tpl)}
-                      className="w-full text-left rounded-md border p-2.5 hover:bg-muted/50 transition-colors"
+        <AnimatePresence initial={false}>
+          {showTemplates && (
+            <motion.div
+              key="template-list"
+              initial={CHILD_TOGGLE_MOTION.initial}
+              animate={CHILD_TOGGLE_MOTION.animate}
+              exit={CHILD_TOGGLE_MOTION.exit}
+              className="overflow-hidden"
+            >
+              <Card>
+                <CardHeader className="py-3 px-4">
+                  <CardTitle className="text-sm">Danh sách template</CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-3 space-y-2">
+                  <Input
+                    placeholder="Tìm template..."
+                    value={templateSearch}
+                    onChange={(e) => {
+                      setTemplateSearch(e.target.value);
+                      setTemplateQuery((q) => ({ ...q, page: 1 }));
+                    }}
+                    className="h-8 text-sm"
+                  />
+                  {templateList.isLoading ? (
+                    <Skeleton className="h-16 w-full" />
+                  ) : templates.length === 0 ? (
+                    <p className="text-xs text-muted-foreground py-2">
+                      Không tìm thấy template.
+                    </p>
+                  ) : (
+                    <motion.div
+                      className="space-y-1.5"
+                      variants={CHILDREN_CONTAINER_MOTION}
+                      initial="hidden"
+                      animate="visible"
                     >
-                      <p className="text-sm font-medium">{tpl.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {tpl.items.length} nhiệm vụ
-                        {tpl.description ? ` · ${tpl.description}` : ""}
-                      </p>
-                    </button>
-                  ))}
-                  {templateMeta && templateMeta.totalPages > 1 && (
-                    <div className="flex items-center justify-end gap-2 pt-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 text-xs"
-                        disabled={!templateMeta.hasPreviousPage}
-                        onClick={() =>
-                          setTemplateQuery((q) => ({ ...q, page: q.page - 1 }))
-                        }
-                      >
-                        <ChevronLeft className="h-3 w-3" />
-                      </Button>
-                      <span className="text-xs text-muted-foreground">
-                        {templateMeta.page}/{templateMeta.totalPages}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 text-xs"
-                        disabled={!templateMeta.hasNextPage}
-                        onClick={() =>
-                          setTemplateQuery((q) => ({ ...q, page: q.page + 1 }))
-                        }
-                      >
-                        <ChevronRight className="h-3 w-3" />
-                      </Button>
-                    </div>
+                      {templates.map((tpl) => (
+                        <motion.div
+                          key={tpl.id}
+                          variants={CHILD_ITEM_MOTION}
+                          className="rounded-md border p-2.5"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <p className="text-sm font-medium">{tpl.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {tpl.items.length} nhiệm vụ
+                                {tpl.description ? ` · ${tpl.description}` : ""}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 text-xs"
+                                onClick={() => setPreviewTemplate(tpl)}
+                              >
+                                <Eye className="h-3.5 w-3.5 mr-1" />
+                                Xem
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() => applyTemplate(tpl)}
+                              >
+                                Chọn
+                              </Button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                      {templateMeta && templateMeta.totalPages > 1 && (
+                        <div className="flex items-center justify-end gap-2 pt-1">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                            disabled={!templateMeta.hasPreviousPage}
+                            onClick={() =>
+                              setTemplateQuery((q) => ({
+                                ...q,
+                                page: q.page - 1,
+                              }))
+                            }
+                          >
+                            <ChevronLeft className="h-3 w-3" />
+                          </Button>
+                          <span className="text-xs text-muted-foreground">
+                            {templateMeta.page}/{templateMeta.totalPages}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                            disabled={!templateMeta.hasNextPage}
+                            onClick={() =>
+                              setTemplateQuery((q) => ({
+                                ...q,
+                                page: q.page + 1,
+                              }))
+                            }
+                          >
+                            <ChevronRight className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                    </motion.div>
                   )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <form
           className="space-y-3"
           onSubmit={handleSubmitForm}
         >
-          {/* Draft list */}
           <div className="space-y-3">
             {drafts.map((draft, idx) => (
               <Card key={idx}>
@@ -357,7 +432,7 @@ function BatchCreateDialog({
                         onChange={(e) =>
                           updateDraft(idx, { description: e.target.value })
                         }
-                        className="min-h-[50px] text-sm"
+                        className="min-h-12.5 text-sm"
                       />
                     </div>
                     {drafts.length > 1 && (
@@ -372,34 +447,32 @@ function BatchCreateDialog({
                       </Button>
                     )}
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <Select
-                      value={draft.priority}
-                      onValueChange={(v) =>
-                        updateDraft(idx, { priority: v as TaskPriorityType })
-                      }
-                    >
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue placeholder="Ưu tiên" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">Thấp</SelectItem>
-                        <SelectItem value="normal">Bình thường</SelectItem>
-                        <SelectItem value="high">Cao</SelectItem>
-                        <SelectItem value="urgent">Khẩn cấp</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <Select
+                    value={draft.priority}
+                    onValueChange={(v) =>
+                      updateDraft(idx, { priority: v as TaskPriorityType })
+                    }
+                  >
+                    <SelectTrigger className="h-8 text-xs max-w-55">
+                      <SelectValue placeholder="Ưu tiên" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Thấp</SelectItem>
+                      <SelectItem value="normal">Bình thường</SelectItem>
+                      <SelectItem value="high">Cao</SelectItem>
+                      <SelectItem value="urgent">Khẩn cấp</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </CardContent>
               </Card>
             ))}
           </div>
 
-          <DialogFooter>
+          <div className="flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"
-              onClick={handleClose}
+              onClick={onCancel}
             >
               Hủy
             </Button>
@@ -413,10 +486,56 @@ function BatchCreateDialog({
                 ? "Đang tạo..."
                 : `Tạo ${drafts.filter((d) => d.title.trim()).length} nhiệm vụ`}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </CardContent>
+
+      <Dialog
+        open={!!previewTemplate}
+        onOpenChange={(open) => !open && setPreviewTemplate(null)}
+      >
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Chi tiết template</DialogTitle>
+            <CardDescription className="text-xs">
+              {previewTemplate?.name}
+            </CardDescription>
+          </DialogHeader>
+
+          <div className="max-h-[65vh] overflow-y-auto pr-1 space-y-1.5">
+            {previewTemplate?.items.map((item) => (
+              <div
+                key={item.id}
+                className="rounded-md border px-2 py-1.5 text-xs"
+              >
+                <p className="font-medium text-sm">{item.title}</p>
+                <p className="text-muted-foreground">
+                  {item.description || "Không có mô tả"}
+                </p>
+                <p className="text-muted-foreground mt-0.5">
+                  Ưu tiên: {PRIORITY_META[item.priority].label}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setPreviewTemplate(null)}
+            >
+              Đóng
+            </Button>
+            <Button
+              onClick={() => previewTemplate && applyTemplate(previewTemplate)}
+              disabled={!previewTemplate}
+            >
+              Dùng template này
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
   );
 }
 
@@ -638,7 +757,7 @@ function TaskDetailSheet({
                 <div>
                   <label className="text-xs font-medium">Mô tả</label>
                   <Textarea
-                    className="mt-1 min-h-[60px] text-sm"
+                    className="mt-1 min-h-15 text-sm"
                     value={editForm.description}
                     onChange={(e) =>
                       setEditForm((f) => ({
@@ -969,12 +1088,18 @@ export function ManagerMilestoneTaskAssignmentScreen({
           Không có nhiệm vụ phù hợp bộ lọc.
         </p>
       ) : (
-        <div className="space-y-2">
+        <motion.div
+          className="space-y-2"
+          variants={CHILDREN_CONTAINER_MOTION}
+          initial="hidden"
+          animate="visible"
+        >
           {tasks.map((task) => {
             const isHighlighted = initialTaskId === task.id;
             return (
-              <div
+              <motion.div
                 key={task.id}
+                variants={CHILD_ITEM_MOTION}
                 className={`rounded-md border p-3 space-y-2 ${
                   isHighlighted ? "border-primary ring-1 ring-primary/30" : ""
                 }`}
@@ -1020,9 +1145,18 @@ export function ManagerMilestoneTaskAssignmentScreen({
                 </div>
 
                 {canEdit && (
-                  <div className="flex flex-wrap items-center gap-2">
+                  <AnimatePresence
+                    mode="wait"
+                    initial={false}
+                  >
                     {!task.assignedTo ? (
-                      <>
+                      <motion.div
+                        key={`${task.id}-assign`}
+                        className="flex flex-wrap items-center gap-2"
+                        initial={CHILD_TOGGLE_MOTION.initial}
+                        animate={CHILD_TOGGLE_MOTION.animate}
+                        exit={CHILD_TOGGLE_MOTION.exit}
+                      >
                         <Select
                           value={farmerSelections[task.id] || "none"}
                           onValueChange={(v) =>
@@ -1058,25 +1192,32 @@ export function ManagerMilestoneTaskAssignmentScreen({
                         >
                           {assignMutation.isPending ? "Đang gán..." : "Gán"}
                         </Button>
-                      </>
+                      </motion.div>
                     ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8"
-                        onClick={() => setConfirmUnassignTask(task)}
-                        disabled={unassignMutation.isPending}
+                      <motion.div
+                        key={`${task.id}-unassign`}
+                        initial={CHILD_TOGGLE_MOTION.initial}
+                        animate={CHILD_TOGGLE_MOTION.animate}
+                        exit={CHILD_TOGGLE_MOTION.exit}
                       >
-                        <UserMinus className="h-3.5 w-3.5 mr-1" />
-                        Hủy gán
-                      </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8"
+                          onClick={() => setConfirmUnassignTask(task)}
+                          disabled={unassignMutation.isPending}
+                        >
+                          <UserMinus className="h-3.5 w-3.5 mr-1" />
+                          Hủy gán
+                        </Button>
+                      </motion.div>
                     )}
-                  </div>
+                  </AnimatePresence>
                 )}
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       )}
 
       {meta && meta.totalPages > 1 && (
@@ -1161,6 +1302,8 @@ export default function ManagerMilestoneTasksSection({
   const tasks = data?.data?.data ?? [];
   const meta = data?.data?.meta;
   const deleteMutation = useManagerDeleteEmployeeTask(milestoneId);
+  const assignMutation = useManagerAssignFarmerToTask(milestoneId);
+  const unassignMutation = useManagerUnassignFarmerFromTask(milestoneId);
 
   const farmersQuery = useManagerEligibleFarmers(milestoneId);
   const farmers = useMemo(() => {
@@ -1184,6 +1327,11 @@ export default function ManagerMilestoneTasksSection({
     null,
   );
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [farmerSelections, setFarmerSelections] = useState<
+    Record<string, string>
+  >({});
+  const [confirmUnassignTask, setConfirmUnassignTask] =
+    useState<EmployeeTaskResType | null>(null);
 
   const handleDelete = (taskId: string) => {
     deleteMutation.mutate(taskId, {
@@ -1191,6 +1339,27 @@ export default function ManagerMilestoneTasksSection({
         setConfirmDelete(null);
         if (selectedTask?.id === taskId) setSelectedTask(null);
       },
+    });
+  };
+
+  const handleAssign = (taskId: string) => {
+    const farmerId = farmerSelections[taskId]?.trim();
+    if (!farmerId) return;
+
+    assignMutation.mutate(
+      { taskId, body: { farmerId } },
+      {
+        onSuccess: () => {
+          setFarmerSelections((prev) => ({ ...prev, [taskId]: "" }));
+        },
+      },
+    );
+  };
+
+  const handleUnassign = () => {
+    if (!confirmUnassignTask) return;
+    unassignMutation.mutate(confirmUnassignTask.id, {
+      onSuccess: () => setConfirmUnassignTask(null),
     });
   };
 
@@ -1223,14 +1392,32 @@ export default function ManagerMilestoneTasksSection({
               variant="outline"
               size="sm"
               className="h-7 text-xs"
-              onClick={() => setShowCreate(true)}
+              onClick={() => setShowCreate((prev) => !prev)}
             >
               <Plus className="h-3.5 w-3.5 mr-1" />
-              Tạo mới
+              {showCreate ? "Đóng form" : "Tạo mới"}
             </Button>
           </div>
         )}
       </div>
+
+      <AnimatePresence initial={false}>
+        {showCreate && canEdit && (
+          <motion.div
+            key="task-create-panel"
+            initial={CHILD_TOGGLE_MOTION.initial}
+            animate={CHILD_TOGGLE_MOTION.animate}
+            exit={CHILD_TOGGLE_MOTION.exit}
+            className="overflow-hidden"
+          >
+            <BatchCreateInlinePanel
+              milestoneId={milestoneId}
+              onCreated={() => setShowCreate(false)}
+              onCancel={() => setShowCreate(false)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2">
@@ -1293,81 +1480,166 @@ export default function ManagerMilestoneTasksSection({
           Chưa có nhiệm vụ nào.
         </p>
       ) : (
-        <div className="space-y-1.5">
+        <motion.div
+          className="space-y-1.5"
+          variants={CHILDREN_CONTAINER_MOTION}
+          initial="hidden"
+          animate="visible"
+        >
           {tasks.map((task) => {
             const PIcon = PRIORITY_META[task.priority].icon;
             return (
-              <div
+              <motion.div
                 key={task.id}
-                className="flex items-center justify-between rounded-md border px-3 py-2 text-sm hover:bg-muted/50 transition-colors cursor-pointer"
+                variants={CHILD_ITEM_MOTION}
+                className="rounded-md border px-3 py-2 text-sm hover:bg-muted/50 transition-colors cursor-pointer space-y-2"
                 onClick={() => setSelectedTask(task)}
               >
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <PIcon
-                    className={`h-3.5 w-3.5 shrink-0 ${PRIORITY_META[task.priority].className}`}
-                  />
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-xs">{task.title}</p>
-                    <p className="text-[10px] text-muted-foreground truncate">
-                      {getAssigneeLabel(task.assignedTo)}
-                    </p>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <PIcon
+                      className={`h-3.5 w-3.5 shrink-0 ${PRIORITY_META[task.priority].className}`}
+                    />
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-xs">
+                        {task.title}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground truncate">
+                        {getAssigneeLabel(task.assignedTo)}
+                      </p>
+                    </div>
+                    {isOverdue(task) && (
+                      <Badge
+                        variant="destructive"
+                        className="text-[10px] shrink-0"
+                      >
+                        Quá hạn
+                      </Badge>
+                    )}
                   </div>
-                  {isOverdue(task) && (
+                  <div className="flex items-center gap-2 shrink-0 ml-2">
                     <Badge
-                      variant="destructive"
-                      className="text-[10px] shrink-0"
+                      variant={STATUS_META[task.status].variant}
+                      className="text-[10px]"
                     >
-                      Quá hạn
+                      {STATUS_META[task.status].label}
                     </Badge>
-                  )}
+                    {canEdit && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreVertical className="h-3.5 w-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedTask(task);
+                            }}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            Xem chi tiết
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setConfirmDelete(task.id);
+                            }}
+                            className="text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Xóa
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0 ml-2">
-                  <Badge
-                    variant={STATUS_META[task.status].variant}
-                    className="text-[10px]"
+
+                {canEdit && (
+                  <AnimatePresence
+                    mode="wait"
+                    initial={false}
                   >
-                    {STATUS_META[task.status].label}
-                  </Badge>
-                  {canEdit && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
+                    {!task.assignedTo ? (
+                      <motion.div
+                        key={`${task.id}-main-assign`}
+                        className="flex flex-wrap items-center gap-2"
+                        onClick={(e) => e.stopPropagation()}
+                        initial={CHILD_TOGGLE_MOTION.initial}
+                        animate={CHILD_TOGGLE_MOTION.animate}
+                        exit={CHILD_TOGGLE_MOTION.exit}
+                      >
+                        <Select
+                          value={farmerSelections[task.id] || "none"}
+                          onValueChange={(v) =>
+                            setFarmerSelections((prev) => ({
+                              ...prev,
+                              [task.id]: v === "none" ? "" : v,
+                            }))
+                          }
+                        >
+                          <SelectTrigger className="h-7 text-xs w-56">
+                            <SelectValue placeholder="Chọn nông dân" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Chọn nông dân</SelectItem>
+                            {farmers.map((farmer) => (
+                              <SelectItem
+                                key={farmer.id}
+                                value={farmer.id}
+                              >
+                                {farmer.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={(e) => e.stopPropagation()}
+                          size="sm"
+                          className="h-7"
+                          onClick={() => handleAssign(task.id)}
+                          disabled={
+                            assignMutation.isPending ||
+                            !farmerSelections[task.id]?.trim()
+                          }
                         >
-                          <MoreVertical className="h-3.5 w-3.5" />
+                          {assignMutation.isPending
+                            ? "Đang gán..."
+                            : "Gán ngay"}
                         </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedTask(task);
-                          }}
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key={`${task.id}-main-unassign`}
+                        onClick={(e) => e.stopPropagation()}
+                        initial={CHILD_TOGGLE_MOTION.initial}
+                        animate={CHILD_TOGGLE_MOTION.animate}
+                        exit={CHILD_TOGGLE_MOTION.exit}
+                      >
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7"
+                          onClick={() => setConfirmUnassignTask(task)}
+                          disabled={unassignMutation.isPending}
                         >
-                          <Eye className="h-4 w-4 mr-2" />
-                          Xem chi tiết
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setConfirmDelete(task.id);
-                          }}
-                          className="text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Xóa
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-                </div>
-              </div>
+                          <UserMinus className="h-3.5 w-3.5 mr-1" />
+                          Hủy gán
+                        </Button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                )}
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       )}
 
       {/* Pagination */}
@@ -1399,13 +1671,6 @@ export default function ManagerMilestoneTasksSection({
         </div>
       )}
 
-      {/* Dialogs */}
-      <BatchCreateDialog
-        open={showCreate}
-        onClose={() => setShowCreate(false)}
-        milestoneId={milestoneId}
-      />
-
       <TaskDetailSheet
         task={selectedTask}
         milestoneId={milestoneId}
@@ -1423,6 +1688,16 @@ export default function ManagerMilestoneTasksSection({
         variant="destructive"
         onCancel={() => setConfirmDelete(null)}
         onConfirm={() => confirmDelete && handleDelete(confirmDelete)}
+      />
+
+      <ConfirmDialog
+        open={!!confirmUnassignTask}
+        title="Hủy gán nông dân?"
+        description="Nông dân sẽ không còn được gán cho nhiệm vụ này."
+        confirmLabel="Hủy gán"
+        variant="destructive"
+        onCancel={() => setConfirmUnassignTask(null)}
+        onConfirm={handleUnassign}
       />
     </div>
   );

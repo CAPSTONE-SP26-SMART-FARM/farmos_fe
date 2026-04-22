@@ -1,28 +1,201 @@
 import { QUERY_KEYS } from "@/constants";
 import {
+  adminIotDeviceService,
   managerIotDeviceService,
   ownerIotDeviceService,
 } from "@/services/iotDeviceService";
 import type {
+  AdminAssignOwnerBodyType,
+  AdminCreateIotDeviceBatchBodyType,
+  AdminCreateSensorBatchBodyType,
+  AdminUnassignOwnerBodyType,
+  AdminUpdateSensorBodyType,
   CreateIotDeviceBatchBodyType,
   ListIotDevicesQueryType,
   UpdateIotDeviceBodyType,
 } from "@/schemaValidatation/iotDevice";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { onMutationError } from "@/lib/axios";
 
-// ── List ───────────────────────────────────────────────────────────────
+// ── Admin hooks (provisioning write authority) ───────────────────────
 
-export const useOwnerListIotDevices = (
-  farmId: string,
+export const useAdminListIotDevices = (
   query: ListIotDevicesQueryType,
   enabled = true,
 ) => {
   return useQuery({
-    queryKey: QUERY_KEYS.owner.iotDevices.list(farmId, query),
-    queryFn: () => ownerIotDeviceService.list(farmId, query),
-    enabled: !!farmId && enabled,
+    queryKey: QUERY_KEYS.admin.iotDevices.list(query),
+    queryFn: () => adminIotDeviceService.list(query),
+    enabled,
+  });
+};
+
+export const useAdminIotDeviceDetail = (deviceId: string, enabled = true) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.admin.iotDevices.detail(deviceId),
+    queryFn: () => adminIotDeviceService.detail(deviceId),
+    enabled: !!deviceId && enabled,
+  });
+};
+
+export const useAdminCreateIotDeviceBatch = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      body,
+      farmId,
+    }: {
+      body: AdminCreateIotDeviceBatchBodyType;
+      farmId?: string;
+    }) =>
+      farmId
+        ? adminIotDeviceService.createBatchByFarm(farmId, body)
+        : adminIotDeviceService.createBatch(body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.admin.iotDevices.list(),
+      });
+    },
+    onError: (error) =>
+      onMutationError(error, "Tạo batch thiết bị IoT thất bại"),
+  });
+};
+
+export const useAdminUpdateIotDevice = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      deviceId,
+      body,
+    }: {
+      deviceId: string;
+      body: UpdateIotDeviceBodyType;
+    }) => adminIotDeviceService.update(deviceId, body),
+    onSuccess: (_res, { deviceId }) => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.admin.iotDevices.list(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.admin.iotDevices.detail(deviceId),
+      });
+    },
+    onError: (error) =>
+      onMutationError(error, "Cập nhật thiết bị IoT thất bại"),
+  });
+};
+
+export const useAdminDeleteIotDevice = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (deviceId: string) => adminIotDeviceService.delete(deviceId),
+    onSuccess: (_res, deviceId) => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.admin.iotDevices.list(),
+      });
+      queryClient.removeQueries({
+        queryKey: QUERY_KEYS.admin.iotDevices.detail(deviceId),
+      });
+    },
+    onError: (error) => onMutationError(error, "Xóa thiết bị IoT thất bại"),
+  });
+};
+
+export const useAdminCreateSensorBatch = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      deviceId,
+      body,
+    }: {
+      deviceId: string;
+      body: AdminCreateSensorBatchBodyType;
+    }) => adminIotDeviceService.createSensorBatch(deviceId, body),
+    onSuccess: (_res, { deviceId }) => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.admin.iotDevices.detail(deviceId),
+      });
+    },
+    onError: (error) => onMutationError(error, "Thêm cảm biến thất bại"),
+  });
+};
+
+export const useAdminUpdateSensor = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      deviceId,
+      sensorId,
+      body,
+    }: {
+      deviceId: string;
+      sensorId: string;
+      body: AdminUpdateSensorBodyType;
+    }) => adminIotDeviceService.updateSensor(deviceId, sensorId, body),
+    onSuccess: (_res, { deviceId }) => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.admin.iotDevices.detail(deviceId),
+      });
+    },
+    onError: (error) => onMutationError(error, "Cập nhật cảm biến thất bại"),
+  });
+};
+
+export const useAdminDeleteSensor = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      deviceId,
+      sensorId,
+    }: {
+      deviceId: string;
+      sensorId: string;
+    }) => adminIotDeviceService.deleteSensor(deviceId, sensorId),
+    onSuccess: (_res, { deviceId }) => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.admin.iotDevices.detail(deviceId),
+      });
+    },
+    onError: (error) => onMutationError(error, "Xóa cảm biến thất bại"),
+  });
+};
+
+export const useAdminAssignIotOwner = () => {
+  return useMutation({
+    mutationFn: (body: AdminAssignOwnerBodyType) =>
+      adminIotDeviceService.assignOwner(body),
+    onError: (error) =>
+      onMutationError(error, "Gán owner cho thiết bị thất bại"),
+  });
+};
+
+export const useAdminUnassignIotOwner = () => {
+  return useMutation({
+    mutationFn: (body: AdminUnassignOwnerBodyType) =>
+      adminIotDeviceService.unassignOwner(body),
+    onError: (error) =>
+      onMutationError(error, "Thu hồi owner khỏi thiết bị thất bại"),
+  });
+};
+
+function unsupportedProvisioningWrite(role: "owner" | "manager") {
+  return Promise.reject(
+    new Error(
+      `Luồng đã ngừng hỗ trợ: vai trò ${role} không còn được phép thao tác ghi IoT. Vui lòng sử dụng API cấp phát của quản trị viên.`,
+    ),
+  );
+}
+
+// ── List ───────────────────────────────────────────────────────────────
+
+export const useOwnerListIotDevices = (
+  _farmId: string,
+  query: ListIotDevicesQueryType,
+  enabled = true,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.owner.iotDevices.list(query),
+    queryFn: () => ownerIotDeviceService.list(query),
+    enabled,
   });
 };
 
@@ -30,20 +203,20 @@ export const useOwnerListIotDevices = (
 
 export const useOwnerIotDeviceDetail = (
   deviceId: string,
-  farmId: string,
+  _farmId: string,
   enabled = true,
 ) => {
   return useQuery({
-    queryKey: QUERY_KEYS.owner.iotDevices.detail(deviceId, farmId),
-    queryFn: () => ownerIotDeviceService.detail(deviceId, farmId),
-    enabled: !!deviceId && !!farmId && enabled,
+    queryKey: QUERY_KEYS.owner.iotDevices.detail(deviceId),
+    queryFn: () => ownerIotDeviceService.detail(deviceId),
+    enabled: !!deviceId && enabled,
   });
 };
 
 // ── Create (batch) ─────────────────────────────────────────────────────
 
 export const useOwnerCreateIotDevices = () => {
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
       farmId,
@@ -51,11 +224,18 @@ export const useOwnerCreateIotDevices = () => {
     }: {
       farmId: string;
       body: CreateIotDeviceBatchBodyType;
-    }) => ownerIotDeviceService.create(farmId, body),
-    onSuccess: (_res, { farmId }) => {
-      toast.success("Tạo thiết bị IoT thành công!");
-      qc.invalidateQueries({
-        queryKey: QUERY_KEYS.owner.iotDevices.list(farmId),
+    }) => {
+      void farmId;
+      void body;
+      return unsupportedProvisioningWrite("owner");
+    },
+    onError: (error) => {
+      onMutationError(
+        error,
+        "Owner không thể tạo thiết bị ở luồng provisioning",
+      );
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.owner.iotDevices.list(),
       });
     },
   });
@@ -64,7 +244,7 @@ export const useOwnerCreateIotDevices = () => {
 // ── Update ─────────────────────────────────────────────────────────────
 
 export const useOwnerUpdateIotDevice = () => {
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
       deviceId,
@@ -74,14 +254,19 @@ export const useOwnerUpdateIotDevice = () => {
       deviceId: string;
       farmId: string;
       body: UpdateIotDeviceBodyType;
-    }) => ownerIotDeviceService.update(deviceId, farmId, body),
-    onSuccess: (_res, { deviceId, farmId }) => {
-      toast.success("Cập nhật thiết bị IoT thành công!");
-      qc.invalidateQueries({
-        queryKey: QUERY_KEYS.owner.iotDevices.list(farmId),
-      });
-      qc.invalidateQueries({
-        queryKey: QUERY_KEYS.owner.iotDevices.detail(deviceId, farmId),
+    }) => {
+      void deviceId;
+      void farmId;
+      void body;
+      return unsupportedProvisioningWrite("owner");
+    },
+    onError: (error) => {
+      onMutationError(
+        error,
+        "Owner không thể cập nhật thiết bị ở luồng provisioning",
+      );
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.owner.iotDevices.list(),
       });
     },
   });
@@ -90,68 +275,87 @@ export const useOwnerUpdateIotDevice = () => {
 // ── Delete ─────────────────────────────────────────────────────────────
 
 export const useOwnerDeleteIotDevice = () => {
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ deviceId, farmId }: { deviceId: string; farmId: string }) =>
-      ownerIotDeviceService.delete(deviceId, farmId),
-    onSuccess: (_res, { deviceId, farmId }) => {
-      toast.success("Xóa thiết bị IoT thành công!");
-      qc.invalidateQueries({
-        queryKey: QUERY_KEYS.owner.iotDevices.list(farmId),
-      });
-      qc.removeQueries({
-        queryKey: QUERY_KEYS.owner.iotDevices.detail(deviceId, farmId),
+    mutationFn: ({
+      deviceId,
+      farmId,
+    }: {
+      deviceId: string;
+      farmId: string;
+    }) => {
+      void deviceId;
+      void farmId;
+      return unsupportedProvisioningWrite("owner");
+    },
+    onError: (error) => {
+      onMutationError(
+        error,
+        "Owner không thể xóa thiết bị ở luồng provisioning",
+      );
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.owner.iotDevices.list(),
       });
     },
-    onError: (error) => onMutationError(error, "Xóa thiết bị IoT thất bại"),
   });
 };
 
 // ── Lock Sensors ───────────────────────────────────────────────────────
 
 export const useOwnerLockSensors = () => {
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ deviceId, farmId }: { deviceId: string; farmId: string }) =>
-      ownerIotDeviceService.lockSensors(deviceId, farmId),
-    onSuccess: (_res, { deviceId, farmId }) => {
-      toast.success("Khóa cảm biến thành công!");
-      qc.invalidateQueries({
-        queryKey: QUERY_KEYS.owner.iotDevices.detail(deviceId, farmId),
+    mutationFn: ({
+      deviceId,
+      farmId,
+    }: {
+      deviceId: string;
+      farmId: string;
+    }) => {
+      void deviceId;
+      void farmId;
+      return unsupportedProvisioningWrite("owner");
+    },
+    onError: (error) => {
+      onMutationError(
+        error,
+        "Owner không thể khóa cảm biến ở luồng provisioning",
+      );
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.owner.iotDevices.list(),
       });
     },
-    onError: (error) => onMutationError(error, "Khóa cảm biến thất bại"),
   });
 };
 
 // ── Manager hooks ─────────────────────────────────────────────────────
 
 export const useManagerListIotDevices = (
-  farmId: string,
+  _farmId: string,
   query: ListIotDevicesQueryType,
   enabled = true,
 ) => {
   return useQuery({
-    queryKey: QUERY_KEYS.manager.iotDevices.list(farmId, query),
-    queryFn: () => managerIotDeviceService.list(farmId, query),
-    enabled: !!farmId && enabled,
+    queryKey: QUERY_KEYS.manager.iotDevices.list(query),
+    queryFn: () => managerIotDeviceService.list(query),
+    enabled,
   });
 };
 
 export const useManagerIotDeviceDetail = (
   deviceId: string,
-  farmId: string,
+  _farmId: string,
   enabled = true,
 ) => {
   return useQuery({
-    queryKey: QUERY_KEYS.manager.iotDevices.detail(deviceId, farmId),
-    queryFn: () => managerIotDeviceService.detail(deviceId, farmId),
-    enabled: !!deviceId && !!farmId && enabled,
+    queryKey: QUERY_KEYS.manager.iotDevices.detail(deviceId),
+    queryFn: () => managerIotDeviceService.detail(deviceId),
+    enabled: !!deviceId && enabled,
   });
 };
 
 export const useManagerCreateIotDevices = () => {
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
       farmId,
@@ -159,18 +363,25 @@ export const useManagerCreateIotDevices = () => {
     }: {
       farmId: string;
       body: CreateIotDeviceBatchBodyType;
-    }) => managerIotDeviceService.create(farmId, body),
-    onSuccess: (_res, { farmId }) => {
-      toast.success("Tạo thiết bị IoT thành công!");
-      qc.invalidateQueries({
-        queryKey: QUERY_KEYS.manager.iotDevices.list(farmId),
+    }) => {
+      void farmId;
+      void body;
+      return unsupportedProvisioningWrite("manager");
+    },
+    onError: (error) => {
+      onMutationError(
+        error,
+        "Manager không thể tạo thiết bị ở luồng provisioning",
+      );
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.manager.iotDevices.list(),
       });
     },
   });
 };
 
 export const useManagerUpdateIotDevice = () => {
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
       deviceId,
@@ -180,48 +391,72 @@ export const useManagerUpdateIotDevice = () => {
       deviceId: string;
       farmId: string;
       body: UpdateIotDeviceBodyType;
-    }) => managerIotDeviceService.update(deviceId, farmId, body),
-    onSuccess: (_res, { deviceId, farmId }) => {
-      toast.success("Cập nhật thiết bị IoT thành công!");
-      qc.invalidateQueries({
-        queryKey: QUERY_KEYS.manager.iotDevices.list(farmId),
-      });
-      qc.invalidateQueries({
-        queryKey: QUERY_KEYS.manager.iotDevices.detail(deviceId, farmId),
+    }) => {
+      void deviceId;
+      void farmId;
+      void body;
+      return unsupportedProvisioningWrite("manager");
+    },
+    onError: (error) => {
+      onMutationError(
+        error,
+        "Manager không thể cập nhật thiết bị ở luồng provisioning",
+      );
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.manager.iotDevices.list(),
       });
     },
   });
 };
 
 export const useManagerDeleteIotDevice = () => {
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ deviceId, farmId }: { deviceId: string; farmId: string }) =>
-      managerIotDeviceService.delete(deviceId, farmId),
-    onSuccess: (_res, { deviceId, farmId }) => {
-      toast.success("Xóa thiết bị IoT thành công!");
-      qc.invalidateQueries({
-        queryKey: QUERY_KEYS.manager.iotDevices.list(farmId),
-      });
-      qc.removeQueries({
-        queryKey: QUERY_KEYS.manager.iotDevices.detail(deviceId, farmId),
+    mutationFn: ({
+      deviceId,
+      farmId,
+    }: {
+      deviceId: string;
+      farmId: string;
+    }) => {
+      void deviceId;
+      void farmId;
+      return unsupportedProvisioningWrite("manager");
+    },
+    onError: (error) => {
+      onMutationError(
+        error,
+        "Manager không thể xóa thiết bị ở luồng provisioning",
+      );
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.manager.iotDevices.list(),
       });
     },
-    onError: (error) => onMutationError(error, "Xóa thiết bị IoT thất bại"),
   });
 };
 
 export const useManagerLockSensors = () => {
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ deviceId, farmId }: { deviceId: string; farmId: string }) =>
-      managerIotDeviceService.lockSensors(deviceId, farmId),
-    onSuccess: (_res, { deviceId, farmId }) => {
-      toast.success("Khóa cảm biến thành công!");
-      qc.invalidateQueries({
-        queryKey: QUERY_KEYS.manager.iotDevices.detail(deviceId, farmId),
+    mutationFn: ({
+      deviceId,
+      farmId,
+    }: {
+      deviceId: string;
+      farmId: string;
+    }) => {
+      void deviceId;
+      void farmId;
+      return unsupportedProvisioningWrite("manager");
+    },
+    onError: (error) => {
+      onMutationError(
+        error,
+        "Manager không thể khóa cảm biến ở luồng provisioning",
+      );
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.manager.iotDevices.list(),
       });
     },
-    onError: (error) => onMutationError(error, "Khóa cảm biến thất bại"),
   });
 };

@@ -16,12 +16,16 @@ const DateOnlyStringSchema = z
   .nullable()
   .optional();
 
+const RequiredDateOnlyStringSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/);
+
 export const CreateProductionMilestoneItemBodySchema = z.object({
   stageName: z.string().min(1).max(100),
   milestoneOrder: z.number().int().positive(),
-  expectedStartDate: DateOnlyStringSchema,
+  expectedStartDate: RequiredDateOnlyStringSchema,
   actualStartDate: DateOnlyStringSchema,
-  expectedEndDate: DateOnlyStringSchema,
+  expectedEndDate: RequiredDateOnlyStringSchema,
   actualEndDate: DateOnlyStringSchema,
   status: ProductionMilestoneStatusSchema.optional(),
 });

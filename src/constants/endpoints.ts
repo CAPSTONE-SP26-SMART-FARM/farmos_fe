@@ -113,6 +113,26 @@ export const API_ENDPOINTS = {
       UPDATE: (id: string) => `/employee-task-template/${id}/admin`,
       DELETE: (id: string) => `/employee-task-template/${id}/admin`,
     },
+    IOT_DEVICE: {
+      LIST: "/iot-device-provisioning/admin/iot-device",
+      DETAIL: (deviceId: string) =>
+        `/iot-device-provisioning/admin/iot-device/${deviceId}`,
+      CREATE_BATCH: "/iot-device-provisioning/admin/iot-device",
+      CREATE_BATCH_BY_FARM: (farmId: string) =>
+        `/iot-device-provisioning/admin/farm/${farmId}`,
+      UPDATE: (deviceId: string) =>
+        `/iot-device-provisioning/admin/iot-device/${deviceId}`,
+      DELETE: (deviceId: string) =>
+        `/iot-device-provisioning/admin/iot-device/${deviceId}`,
+      CREATE_SENSOR_BATCH: (deviceId: string) =>
+        `/iot-device-provisioning/admin/sensor/iot-device/${deviceId}`,
+      UPDATE_SENSOR: (deviceId: string, sensorId: string) =>
+        `/iot-device-provisioning/admin/sensor/iot-device/${deviceId}/${sensorId}`,
+      DELETE_SENSOR: (deviceId: string, sensorId: string) =>
+        `/iot-device-provisioning/admin/sensor/iot-device/${deviceId}/${sensorId}`,
+      ASSIGN_OWNER: "/iot-device-provisioning/admin/provision/assign-owner",
+      UNASSIGN_OWNER: "/iot-device-provisioning/admin/provision/unassign-owner",
+    },
   },
   MANAGER: {
     ZONES: {
@@ -123,16 +143,9 @@ export const API_ENDPOINTS = {
       DETAIL: (id: string) => `/manager/employee-task-template/${id}`,
     },
     IOT_DEVICE: {
-      LIST: (farmId: string) => `/iot-device/manager/farm/${farmId}`,
-      CREATE: (farmId: string) => `/iot-device/manager/farm/${farmId}`,
-      DETAIL: (deviceId: string, farmId: string) =>
-        `/iot-device/manager/farm/${farmId}/${deviceId}`,
-      UPDATE: (deviceId: string, farmId: string) =>
-        `/iot-device/manager/farm/${farmId}/${deviceId}`,
-      DELETE: (deviceId: string, farmId: string) =>
-        `/iot-device/manager/farm/${farmId}/${deviceId}`,
-      LOCK_SENSORS: (deviceId: string, farmId: string) =>
-        `/iot-device/manager/farm/${farmId}/${deviceId}/lock-sensors`,
+      LIST: "/iot-device-provisioning/manager/iot-device",
+      DETAIL: (deviceId: string) =>
+        `/iot-device-provisioning/manager/iot-device/${deviceId}`,
     },
     IOT_DEVICE_TEMPLATE: {
       LIST: "/manager/iot-device-template",
@@ -224,6 +237,9 @@ export const API_ENDPOINTS = {
     },
   },
   OWNER: {
+    ZONES: {
+      LIST: "/owner/zones",
+    },
     MY_DOCTOR: {
       LIST: "/doctor-assignment/owner/my-doctors",
       DETAIL: (id: string) => `/doctor-assignment/owner/my-doctors/${id}`,
@@ -233,16 +249,9 @@ export const API_ENDPOINTS = {
       DETAIL: (id: string) => `/owner/employee-task-template/${id}`,
     },
     IOT_DEVICE: {
-      LIST: (farmId: string) => `/iot-device/owner/farm/${farmId}`,
-      CREATE: (farmId: string) => `/iot-device/owner/farm/${farmId}`,
-      DETAIL: (deviceId: string, farmId: string) =>
-        `/iot-device/owner/farm/${farmId}/${deviceId}`,
-      UPDATE: (deviceId: string, farmId: string) =>
-        `/iot-device/owner/farm/${farmId}/${deviceId}`,
-      DELETE: (deviceId: string, farmId: string) =>
-        `/iot-device/owner/farm/${farmId}/${deviceId}`,
-      LOCK_SENSORS: (deviceId: string, farmId: string) =>
-        `/iot-device/owner/farm/${farmId}/${deviceId}/lock-sensors`,
+      LIST: "/iot-device-provisioning/owner/iot-device",
+      DETAIL: (deviceId: string) =>
+        `/iot-device-provisioning/owner/iot-device/${deviceId}`,
     },
     SENSOR: {
       LIST: (iotDeviceId: string) => `/sensor/owner/iot-device/${iotDeviceId}`,
@@ -523,6 +532,15 @@ export const QUERY_KEYS = {
       ],
       detail: (id: string) => ["admin", "employee-task-templates", id],
     },
+    iotDevices: {
+      list: (query?: Record<string, unknown>) => [
+        "admin",
+        "iot-devices",
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ],
+      detail: (deviceId: string) => ["admin", "iot-devices", deviceId],
+    },
   },
   manager: {
     zones: {
@@ -544,20 +562,16 @@ export const QUERY_KEYS = {
       detail: (id: string) => ["manager", "employee-task-templates", id],
     },
     iotDevices: {
-      list: (farmId: string, query?: Record<string, unknown>) => [
+      list: (query?: Record<string, unknown>) => [
         "manager",
         "iot-devices",
-        "farm",
-        farmId,
         "list",
         ...(query !== undefined ? [query] : []),
       ],
-      detail: (deviceId: string, farmId: string) => [
+      detail: (deviceId: string) => [
         "manager",
         "iot-devices",
         deviceId,
-        "farm",
-        farmId,
       ],
     },
     iotDeviceTemplates: {
@@ -679,6 +693,14 @@ export const QUERY_KEYS = {
     },
   },
   owner: {
+    zones: {
+      list: (query?: Record<string, unknown>) => [
+        "owner",
+        "zones",
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ],
+    },
     farm: {
       my: () => ["owner", "farm", "my"],
     },
@@ -692,20 +714,16 @@ export const QUERY_KEYS = {
       detail: (id: string) => ["owner", "employee-task-templates", id],
     },
     iotDevices: {
-      list: (farmId: string, query?: Record<string, unknown>) => [
+      list: (query?: Record<string, unknown>) => [
         "owner",
         "iot-devices",
-        "farm",
-        farmId,
         "list",
         ...(query !== undefined ? [query] : []),
       ],
-      detail: (deviceId: string, farmId: string) => [
+      detail: (deviceId: string) => [
         "owner",
         "iot-devices",
         deviceId,
-        "farm",
-        farmId,
       ],
     },
     sensors: {

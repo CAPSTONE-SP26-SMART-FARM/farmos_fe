@@ -21,6 +21,7 @@ import type { MessageResType } from "@/types/api";
 
 const ZONES = API_ENDPOINTS.ZONES;
 const MANAGER = API_ENDPOINTS.MANAGER;
+const OWNER = API_ENDPOINTS.OWNER;
 
 export const zoneService = {
   listByFarm: (farmId: string, query: ListZonesQueryType) =>
@@ -34,6 +35,14 @@ export const zoneService = {
   listAssignedForManager: (query: ListZonesQueryType) =>
     api.get<ListZonesResType>(
       `${MANAGER.ZONES.LIST}?${queryString.stringify(query, {
+        skipEmptyString: true,
+        skipNull: true,
+      })}`,
+    ),
+
+  listForOwner: (query: ListZonesQueryType) =>
+    api.get<ListZonesResType>(
+      `${OWNER.ZONES.LIST}?${queryString.stringify(query, {
         skipEmptyString: true,
         skipNull: true,
       })}`,
