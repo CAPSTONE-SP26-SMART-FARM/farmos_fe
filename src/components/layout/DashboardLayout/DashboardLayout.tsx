@@ -16,6 +16,9 @@ import {
 import { Outlet, useLocation } from "react-router";
 import { useMemo } from "react";
 import { useSocketInit } from "@/hooks/useSocket";
+import { useSocketAuthSync } from "@/hooks/useSocketAuthSync";
+import { useRealtimeEvents } from "@/hooks/useRealtimeEvents";
+import NotificationBell from "@/components/notifications/NotificationBell";
 import { sidebarData } from "./sidebarItemData";
 
 /**
@@ -120,6 +123,9 @@ function DashboardHeader() {
           ))}
         </BreadcrumbList>
       </Breadcrumb>
+      <div className="ml-auto flex items-center gap-2">
+        <NotificationBell />
+      </div>
     </header>
   );
 }
@@ -140,6 +146,8 @@ function DashboardContent() {
  */
 export default function DashboardLayout() {
   useSocketInit();
+  useSocketAuthSync();
+  useRealtimeEvents();
 
   return (
     <SidebarProvider>

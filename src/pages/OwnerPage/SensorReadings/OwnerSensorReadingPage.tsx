@@ -3,7 +3,7 @@ import {
   useOwnerLatestSensorReadings,
   useSensorReadingRealtime,
 } from "@/queries/useSensorReading";
-import { useZoneSubscription } from "@/hooks/useSocket";
+import { useZoneSubscription } from "@/hooks/useZoneSubscription";
 import SensorReadingDashboard from "@/pages/SensorReadings/components/SensorReadingDashboard";
 
 export default function OwnerSensorReadingPage() {

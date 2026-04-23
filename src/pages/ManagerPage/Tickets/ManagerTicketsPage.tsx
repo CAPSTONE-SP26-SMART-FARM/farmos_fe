@@ -37,6 +37,9 @@ import {
   useCreateTicketMessage,
   useTicketPrescriptions,
 } from "@/queries/useTicket";
+import { useRealtimeTicket } from "@/hooks/useRealtimeTicket";
+import { useTicketSubscription } from "@/hooks/useTicketSubscription";
+import { RoleName } from "@/constants/role";
 import type { TicketIncidentResType } from "@/schemaValidatation/ticket";
 import {
   CreateIncidentTicketBodySchema,
@@ -127,6 +130,9 @@ function TicketDetailPanel({ ticketId, onBack }: TicketDetailPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const user = useAuthStore((s) => s.user);
+
+  // Realtime: subscribe ticket room + listen ticket.message.created.
+  useTicketSubscription(ticketId);
 
   const { data: ticketData, isLoading: ticketLoading } =
     useManagerTicketDetail(ticketId);
@@ -443,7 +449,7 @@ function CreateTicketPanel({
   const form = useForm<CreateIncidentTicketBodyType>({
     resolver: zodResolver(CreateIncidentTicketBodySchema),
     defaultValues: {
-      milestoneId: "",
+      milestoneId: initialMilestoneId ?? "",
       title: "",
       description: "",
       severity: "low",
@@ -742,6 +748,9 @@ function ManagerTicketsPage() {
     page,
     limit,
   });
+
+  // Realtime: invalidate ticket list khi có event thuộc zone đang xem.
+  useRealtimeTicket(RoleName.Manager, { zoneId: selectedZoneId });
 
   const tickets = data?.data.data ?? [];
   const meta = data?.data.meta;

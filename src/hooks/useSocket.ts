@@ -1,8 +1,9 @@
 import { useEffect, useRef } from "react";
 import type { Socket } from "socket.io-client";
-import { getSocket, disconnectSocket, getSocketInstance } from "@/lib/socket";
+import { getSocket, disconnectSocket } from "@/lib/socket";
 import { useSocketStore } from "@/stores/socketStore";
 import { useAuthStore } from "@/stores/authStore";
+import { useNotificationStore } from "@/stores/notificationStore";
 
 /**
  * Initialises the Socket.IO connection once and keeps the socketStore in sync.
@@ -21,6 +22,7 @@ export function useSocketInit(): void {
     if (!isAuth) {
       disconnectSocket();
       resetSocket();
+      useNotificationStore.getState().reset();
       return;
     }
 
@@ -43,20 +45,4 @@ export function useSocketInit(): void {
   }, [isAuth, setConnected, resetSocket]);
 }
 
-/**
- * Subscribe the client to a specific zone room.
- * The backend will push `sensor.reading.changed` and `alert.created` events
- * scoped to this zone.
- */
-export function useZoneSubscription(zoneId: string | undefined): void {
-  useEffect(() => {
-    const socket = getSocketInstance();
-    if (!socket?.connected || !zoneId) return;
-
-    socket.emit("zone.subscribe", { zoneId }, (res: { ok: boolean }) => {
-      if (!res.ok) {
-        console.warn("[socket] zone.subscribe failed for", zoneId);
-      }
-    });
-  }, [zoneId]);
-}
+// `useZoneSubscription` đã tách sang `@/hooks/useZoneSubscription`.

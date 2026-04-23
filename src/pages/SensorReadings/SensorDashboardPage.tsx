@@ -3,7 +3,7 @@ import {
   useSensorDashboard,
   useDashboardRealtime,
 } from "@/queries/useSensorDashboard";
-import { useZoneSubscription } from "@/hooks/useSocket";
+import { useZoneSubscription } from "@/hooks/useZoneSubscription";
 import { aggregateStats } from "./utils/sensorDashboard";
 import SummaryStats from "./components/SummaryStats";
 import ZoneAssignmentCard from "./components/ZoneAssignmentCard";

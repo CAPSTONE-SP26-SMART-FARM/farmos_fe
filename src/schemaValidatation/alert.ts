@@ -1,11 +1,16 @@
 import { z } from "zod";
 
-// ── Severity enum ──────────────────────────────────────────────────────
+// ── Severity enum (mirror BE Prisma `IncidentSeverity`) ────────────────
 
-export const IncidentSeveritySchema = z.enum(["LOW", "MEDIUM", "HIGH"]);
+export const IncidentSeveritySchema = z.enum([
+  "low",
+  "medium",
+  "high",
+  "critical",
+]);
 export type IncidentSeverityType = z.infer<typeof IncidentSeveritySchema>;
 
-// ── Single alert ───────────────────────────────────────────────────────
+// ── Single alert (mirror BE AlertResSchema) ────────────────────────────
 
 export const AlertResSchema = z.object({
   id: z.string().uuid(),
@@ -21,30 +26,33 @@ export const AlertResSchema = z.object({
   thresholdValue: z.string().nullable(),
   actualValue: z.string().nullable(),
   isResolved: z.boolean(),
-  resolvedAt: z.string().nullable(),
-  createdAt: z.string(),
+  resolvedAt: z.string().datetime().nullable(),
+  createdAt: z.string().datetime(),
 });
 
-// ── List query ─────────────────────────────────────────────────────────
+// ── List query — BE strict, chỉ chấp nhận page/limit ───────────────────
 
 export const ListAlertsQuerySchema = z.object({
   page: z.number().int().positive().optional(),
   limit: z.number().int().positive().optional(),
-  search: z.string().optional(),
-  farmId: z.string().uuid().optional(),
-  zoneId: z.string().uuid().optional(),
-  severity: IncidentSeveritySchema.optional(),
-  isResolved: z.boolean().optional(),
+});
+
+// ── Paging meta (mirror BE PagingMetaSchema) ───────────────────────────
+
+export const AlertPagingMetaSchema = z.object({
+  page: z.number().int().positive(),
+  limit: z.number().int().positive(),
+  totalItems: z.number().int().min(0),
+  totalPages: z.number().int().min(0),
+  hasNextPage: z.boolean(),
+  hasPreviousPage: z.boolean(),
 });
 
 // ── List response (paginated) ──────────────────────────────────────────
 
 export const ListAlertsResSchema = z.object({
   data: z.array(AlertResSchema),
-  page: z.number(),
-  limit: z.number(),
-  total: z.number(),
-  hasMore: z.boolean(),
+  meta: AlertPagingMetaSchema,
 });
 
 // ── Type exports ───────────────────────────────────────────────────────

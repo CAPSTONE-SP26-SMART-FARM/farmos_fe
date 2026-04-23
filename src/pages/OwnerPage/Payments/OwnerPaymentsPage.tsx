@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import InvoiceStatusBadge, {
+  type InvoiceStatus,
+} from "@/components/common/InvoiceStatusBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,6 +39,7 @@ import {
   useServicePackages,
 } from "@/queries/useCredit";
 import { useInvoiceCheckout, useOwnerInvoices } from "@/queries/useInvoice";
+import { useRealtimeBilling } from "@/hooks/useRealtimeBilling";
 import type { ListInvoicesQueryType } from "@/schemaValidatation/invoice";
 import type {
   CreditHistoryQueryType,
@@ -49,14 +53,6 @@ const formatCurrency = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value);
 
-const INVOICE_STATUS_LABEL: Record<string, string> = {
-  DRAFT: "Nháp",
-  OPEN: "Chờ thanh toán",
-  PAID: "Đã thanh toán",
-  VOID: "Đã hủy",
-  UNCOLLECTIBLE: "Không thu được",
-};
-
 const TX_STATUS_LABEL: Record<string, string> = {
   PENDING: "Đang xử lý",
   SUCCESS: "Thành công",
@@ -65,6 +61,10 @@ const TX_STATUS_LABEL: Record<string, string> = {
 
 function OwnerPaymentsPage() {
   const navigate = useNavigate();
+
+  // Realtime: invalidate invoices / subscriptions khi BE push event billing.
+  useRealtimeBilling();
+
   const [invoiceQuery, setInvoiceQuery] = useState<ListInvoicesQueryType>({
     page: 1,
     limit: 10,
@@ -259,9 +259,9 @@ function OwnerPaymentsPage() {
                   </TableCell>
                   <TableCell>{formatCurrency(invoice.totalAmount)}</TableCell>
                   <TableCell>
-                    <Badge>
-                      {INVOICE_STATUS_LABEL[invoice.status] ?? invoice.status}
-                    </Badge>
+                    <InvoiceStatusBadge
+                      status={invoice.status as InvoiceStatus}
+                    />
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">

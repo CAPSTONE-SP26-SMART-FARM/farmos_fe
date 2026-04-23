@@ -7,6 +7,7 @@ import {
 } from "@/services/sensorReadingService";
 import { getSocketInstance } from "@/lib/socket";
 import { useSocketStore } from "@/stores/socketStore";
+import { RealtimeEvents } from "@/constants/realtime";
 
 // ── Owner ──────────────────────────────────────────────────────────────
 
@@ -95,12 +96,25 @@ export function useSensorReadingRealtime(
       debouncedInvalidate();
     };
 
+    // Sensor health events không kèm assignmentId trong payload BE →
+    // invalidate unconditionally: refetch reading để classifier cập nhật
+    // timestamp mới nhất / trạng thái BE đã chốt (timeout/hardware).
+    const handleSensorHealth = () => debouncedInvalidate();
+
     socket.on("sensor.reading.changed", handleReadingChanged);
     socket.on("alert.created", handleAlertCreated);
+    socket.on(RealtimeEvents.SensorTimeoutDetected, handleSensorHealth);
+    socket.on(RealtimeEvents.SensorTimeoutRecovered, handleSensorHealth);
+    socket.on(RealtimeEvents.SensorHardwareIssueDetected, handleSensorHealth);
+    socket.on(RealtimeEvents.SensorAlertRecovered, handleSensorHealth);
 
     return () => {
       socket.off("sensor.reading.changed", handleReadingChanged);
       socket.off("alert.created", handleAlertCreated);
+      socket.off(RealtimeEvents.SensorTimeoutDetected, handleSensorHealth);
+      socket.off(RealtimeEvents.SensorTimeoutRecovered, handleSensorHealth);
+      socket.off(RealtimeEvents.SensorHardwareIssueDetected, handleSensorHealth);
+      socket.off(RealtimeEvents.SensorAlertRecovered, handleSensorHealth);
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [connected, assignmentId, debouncedInvalidate]);

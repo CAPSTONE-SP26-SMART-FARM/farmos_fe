@@ -27,6 +27,9 @@ import {
   useCreateTicketMessage,
   useTicketPrescriptions,
 } from "@/queries/useTicket";
+import { useRealtimeTicket } from "@/hooks/useRealtimeTicket";
+import { useTicketSubscription } from "@/hooks/useTicketSubscription";
+import { RoleName } from "@/constants/role";
 import type { TicketIncidentResType } from "@/schemaValidatation/ticket";
 import { CreateIncidentTicketBodySchema } from "@/schemaValidatation/ticket";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -127,6 +130,9 @@ function TicketDetailPanel({ ticketId, onBack }: TicketDetailPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const user = useAuthStore((s) => s.user);
+
+  // Realtime: subscribe room ticket + listen ticket.message.created.
+  useTicketSubscription(ticketId);
 
   const { data: ticketData, isLoading: ticketLoading } =
     useOwnerTicketDetail(ticketId);
@@ -448,7 +454,7 @@ function CreateTicketPanel({
   const form = useForm<CreateIncidentTicketBodyType>({
     resolver: zodResolver(CreateIncidentTicketBodySchema),
     defaultValues: {
-      milestoneId: "",
+      milestoneId: initialMilestoneId ?? "",
       title: "",
       description: "",
       severity: "low",
@@ -739,6 +745,9 @@ function OwnerTicketsPage() {
     page,
     limit,
   });
+
+  // Realtime: invalidate list khi có ticket mới / kết thúc thuộc farm này.
+  useRealtimeTicket(RoleName.Owner, { farmId });
 
   const tickets = data?.data.data ?? [];
   const meta = data?.data.meta;

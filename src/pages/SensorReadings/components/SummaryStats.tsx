@@ -1,12 +1,6 @@
 import { memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Activity,
-  CheckCircle2,
-  AlertTriangle,
-  XCircle,
-  Clock,
-} from "lucide-react";
+import { Activity, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DashboardStats } from "../utils/sensorDashboard";
 
@@ -42,14 +36,6 @@ const STATS_CONFIG = [
     color: "text-red-600 dark:text-red-400",
     bgColor: "bg-red-50 dark:bg-red-950/40",
     ringColor: "ring-red-200 dark:ring-red-800",
-  },
-  {
-    key: "stale" as const,
-    label: "Mất tín hiệu",
-    icon: Clock,
-    color: "text-gray-500 dark:text-gray-400",
-    bgColor: "bg-gray-50 dark:bg-gray-900/40",
-    ringColor: "ring-gray-200 dark:ring-gray-700",
   },
 ];
 

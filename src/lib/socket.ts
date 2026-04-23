@@ -18,7 +18,14 @@ export function getSocket(): Socket {
     socket.disconnect();
   }
 
-  socket = io(import.meta.env.VITE_WS_URL ?? import.meta.env.VITE_API_URL, {
+  const base = (
+    (import.meta.env.VITE_WS_URL as string | undefined) ??
+    (import.meta.env.VITE_API_URL as string | undefined) ??
+    ""
+  ).replace(/\/$/, "");
+
+  // Namespace "/realtime" phải khớp BE RealtimeGateway.
+  socket = io(`${base}/realtime`, {
     auth: { token: token ? `Bearer ${token}` : "" },
     transports: ["websocket", "polling"],
     reconnection: true,

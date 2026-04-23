@@ -1,7 +1,14 @@
 import { memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Bell, AlertTriangle, XCircle, Info, Loader2 } from "lucide-react";
+import {
+  Bell,
+  AlertTriangle,
+  XCircle,
+  Info,
+  Loader2,
+  Siren,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -15,21 +22,27 @@ const SEVERITY_META: Record<
   IncidentSeverityType,
   { label: string; icon: typeof AlertTriangle; color: string; bgColor: string }
 > = {
-  LOW: {
+  low: {
     label: "Thấp",
     icon: Info,
     color: "text-blue-600 dark:text-blue-400",
     bgColor: "bg-blue-50 dark:bg-blue-950/40",
   },
-  MEDIUM: {
+  medium: {
     label: "Trung bình",
     icon: AlertTriangle,
     color: "text-amber-600 dark:text-amber-400",
     bgColor: "bg-amber-50 dark:bg-amber-950/40",
   },
-  HIGH: {
+  high: {
     label: "Cao",
     icon: XCircle,
+    color: "text-orange-600 dark:text-orange-400",
+    bgColor: "bg-orange-50 dark:bg-orange-950/40",
+  },
+  critical: {
+    label: "Nghiêm trọng",
+    icon: Siren,
     color: "text-red-600 dark:text-red-400",
     bgColor: "bg-red-50 dark:bg-red-950/40",
   },
@@ -40,14 +53,25 @@ function AlertItem({ alert }: { alert: AlertResType }) {
   const Icon = meta.icon;
 
   return (
-    <div className="flex items-start gap-3 py-3 border-b last:border-0">
+    <div
+      className={cn(
+        "flex items-start gap-3 py-3 border-b last:border-0",
+        alert.isResolved && "opacity-60",
+      )}
+    >
       <div
         className={cn(
           "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
           meta.bgColor,
         )}
       >
-        <Icon className={cn("h-3.5 w-3.5", meta.color)} />
+        <Icon
+          className={cn(
+            "h-3.5 w-3.5",
+            meta.color,
+            alert.severity === "critical" && !alert.isResolved && "animate-pulse",
+          )}
+        />
       </div>
       <div className="min-w-0 flex-1 space-y-1">
         <p className="text-sm font-medium leading-snug line-clamp-2">
@@ -56,7 +80,7 @@ function AlertItem({ alert }: { alert: AlertResType }) {
         <p className="text-xs text-muted-foreground line-clamp-1">
           {alert.zoneName} • {alert.message}
         </p>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center flex-wrap gap-2">
           <Badge
             variant="outline"
             className={cn(
@@ -67,6 +91,14 @@ function AlertItem({ alert }: { alert: AlertResType }) {
           >
             {meta.label}
           </Badge>
+          {alert.isResolved && (
+            <Badge
+              variant="outline"
+              className="h-5 text-[10px] border-0 px-1.5 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+            >
+              Đã xử lý
+            </Badge>
+          )}
           <span className="text-[10px] text-muted-foreground">
             {formatDistanceToNow(new Date(alert.createdAt), {
               addSuffix: true,
@@ -80,13 +112,10 @@ function AlertItem({ alert }: { alert: AlertResType }) {
 }
 
 export default memo(function AlertList() {
-  const { data, isLoading } = useListAlerts({
-    page: 1,
-    limit: 8,
-    isResolved: false,
-  });
+  const { data, isLoading } = useListAlerts({ page: 1, limit: 8 });
 
   const alerts = data?.data ?? [];
+  const totalItems = data?.meta?.totalItems ?? 0;
 
   return (
     <Card>
@@ -98,12 +127,12 @@ export default memo(function AlertList() {
               Cảnh báo gần đây
             </CardTitle>
           </div>
-          {data && data.total > 0 && (
+          {totalItems > 0 && (
             <Badge
               variant="secondary"
               className="h-5 text-[10px]"
             >
-              {data.total}
+              {totalItems}
             </Badge>
           )}
         </div>

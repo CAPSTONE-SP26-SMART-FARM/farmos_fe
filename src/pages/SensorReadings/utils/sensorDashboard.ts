@@ -6,15 +6,12 @@ import type { LatestSensorReadingResType } from "@/schemaValidatation/sensorRead
 
 export type SensorStatus = "normal" | "warning" | "critical" | "stale";
 
-const STALE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
-
 export function classifySensorStatus(
   reading: LatestSensorReadingResType,
 ): SensorStatus {
-  if (reading.value == null || reading.timestamp == null) return "stale";
-
-  const age = Date.now() - new Date(reading.timestamp).getTime();
-  if (age > STALE_THRESHOLD_MS) return "stale";
+  // Không classify "stale" dựa trên tuổi timestamp — UI hiển thị giá trị
+  // latest từ API bất kể thời điểm. Trạng thái health phụ thuộc threshold.
+  if (reading.value == null) return "normal";
 
   if (reading.threshold == null) return reading.isSafe ? "normal" : "warning";
 
@@ -143,6 +140,9 @@ export function aggregateStats(
   };
 
   for (const r of readings) {
+    // Sensor chưa có dữ liệu → không đếm vào health buckets để tránh
+    // inflate "Bình thường". Hiển thị trên card bằng empty state riêng.
+    if (r.value == null || r.timestamp == null) continue;
     const status = classifySensorStatus(r);
     stats[status]++;
   }
@@ -152,17 +152,15 @@ export function aggregateStats(
 
 // ── Worst-case status for a group ──────────────────────────────────────
 
-const SEVERITY_ORDER: SensorStatus[] = [
-  "critical",
-  "warning",
-  "stale",
-  "normal",
-];
+const SEVERITY_ORDER: SensorStatus[] = ["critical", "warning", "normal"];
 
 export function worstStatus(
   readings: LatestSensorReadingResType[],
 ): SensorStatus {
-  if (readings.length === 0) return "stale";
-  const statuses = readings.map(classifySensorStatus);
+  const validReadings = readings.filter(
+    (r) => r.value != null && r.timestamp != null,
+  );
+  if (validReadings.length === 0) return "normal";
+  const statuses = validReadings.map(classifySensorStatus);
   return SEVERITY_ORDER.find((s) => statuses.includes(s)) ?? "normal";
 }

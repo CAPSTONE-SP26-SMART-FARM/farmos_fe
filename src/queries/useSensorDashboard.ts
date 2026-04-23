@@ -16,6 +16,7 @@ import {
 } from "@/queries/useZone";
 import { getSocketInstance } from "@/lib/socket";
 import { useSocketStore } from "@/stores/socketStore";
+import { RealtimeEvents } from "@/constants/realtime";
 import type { ProductionMilestoneResType } from "@/schemaValidatation/productionMilestone";
 import type { MilestoneAssignmentDetailResType } from "@/schemaValidatation/milestoneIotDevice";
 import type {
@@ -236,12 +237,25 @@ export function useDashboardRealtime(
       queryClient.invalidateQueries({ queryKey: ["alerts"] });
     };
 
+    // Sensor health events: refetch tất cả readings trong dashboard — BE
+    // không gửi assignmentId trong payload nên không filter được. Debounce
+    // 500ms gộp burst.
+    const handleSensorHealth = () => debouncedInvalidate();
+
     socket.on("sensor.reading.changed", handleReadingChanged);
     socket.on("alert.created", handleAlertCreated);
+    socket.on(RealtimeEvents.SensorTimeoutDetected, handleSensorHealth);
+    socket.on(RealtimeEvents.SensorTimeoutRecovered, handleSensorHealth);
+    socket.on(RealtimeEvents.SensorHardwareIssueDetected, handleSensorHealth);
+    socket.on(RealtimeEvents.SensorAlertRecovered, handleSensorHealth);
 
     return () => {
       socket.off("sensor.reading.changed", handleReadingChanged);
       socket.off("alert.created", handleAlertCreated);
+      socket.off(RealtimeEvents.SensorTimeoutDetected, handleSensorHealth);
+      socket.off(RealtimeEvents.SensorTimeoutRecovered, handleSensorHealth);
+      socket.off(RealtimeEvents.SensorHardwareIssueDetected, handleSensorHealth);
+      socket.off(RealtimeEvents.SensorAlertRecovered, handleSensorHealth);
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [connected, zones, debouncedInvalidate, queryClient]);

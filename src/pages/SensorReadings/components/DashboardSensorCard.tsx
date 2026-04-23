@@ -12,6 +12,7 @@ import {
 import ThresholdBar from "./ThresholdBar";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
+import { CircleDashed } from "lucide-react";
 
 type DashboardSensorCardProps = {
   reading: LatestSensorReadingResType;
@@ -21,10 +22,13 @@ export default memo(function DashboardSensorCard({
   reading,
 }: DashboardSensorCardProps) {
   const meta = getSensorMeta(reading.sensorType);
-  const Icon = meta.icon;
   const status: SensorStatus = classifySensorStatus(reading);
   const statusMeta = STATUS_META[status];
   const hasValue = reading.value != null && reading.timestamp != null;
+
+  // Empty state: sensor chưa có dữ liệu → card hiển thị placeholder neutral,
+  // khác hẳn các trạng thái health (normal/warning/critical).
+  const Icon = hasValue ? meta.icon : CircleDashed;
 
   // Detect value change → flash animation
   const prevValueRef = useRef(reading.value);
@@ -46,30 +50,43 @@ export default memo(function DashboardSensorCard({
     <Card
       className={cn(
         "relative transition-all duration-300",
+        !hasValue && "border-dashed bg-muted/20",
         flash && "ring-2 ring-blue-400/60 dark:ring-blue-500/40",
       )}
     >
-      {/* Status dot */}
-      <div
-        className={cn(
-          "absolute top-3 right-3 h-2.5 w-2.5 rounded-full",
-          statusMeta.dotColor,
-          status === "critical" && "animate-pulse",
-        )}
-      />
+      {/* Status dot — chỉ hiển thị khi có dữ liệu */}
+      {hasValue && (
+        <div
+          className={cn(
+            "absolute top-3 right-3 h-2.5 w-2.5 rounded-full",
+            statusMeta.dotColor,
+            status === "critical" && "animate-pulse",
+          )}
+        />
+      )}
 
       <CardHeader className="pb-2 pt-3 px-4">
         <div className="flex items-center gap-2">
           <div
             className={cn(
               "flex h-8 w-8 items-center justify-center rounded-lg",
-              statusMeta.bgColor,
+              hasValue ? statusMeta.bgColor : "bg-muted",
             )}
           >
-            <Icon className={cn("h-4 w-4", statusMeta.color)} />
+            <Icon
+              className={cn(
+                "h-4 w-4",
+                hasValue ? statusMeta.color : "text-muted-foreground",
+              )}
+            />
           </div>
           <div>
-            <CardTitle className="text-sm font-medium leading-none">
+            <CardTitle
+              className={cn(
+                "text-sm font-medium leading-none",
+                !hasValue && "text-muted-foreground",
+              )}
+            >
               {meta.label}
             </CardTitle>
             <p className="mt-1 text-[11px] text-muted-foreground">
@@ -85,7 +102,7 @@ export default memo(function DashboardSensorCard({
           <span
             className={cn(
               "text-2xl font-bold tabular-nums transition-colors duration-300",
-              hasValue ? statusMeta.color : "text-muted-foreground",
+              hasValue ? statusMeta.color : "text-muted-foreground/60",
               flash && "text-blue-600 dark:text-blue-400",
             )}
           >
@@ -93,19 +110,26 @@ export default memo(function DashboardSensorCard({
           </span>
         </div>
 
-        {/* Status label */}
-        <div
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium",
-            statusMeta.bgColor,
-            statusMeta.color,
-          )}
-        >
+        {/* Status label — khác hẳn giữa có dữ liệu và chưa có */}
+        {hasValue ? (
           <div
-            className={cn("h-1.5 w-1.5 rounded-full", statusMeta.dotColor)}
-          />
-          {statusMeta.label}
-        </div>
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium",
+              statusMeta.bgColor,
+              statusMeta.color,
+            )}
+          >
+            <div
+              className={cn("h-1.5 w-1.5 rounded-full", statusMeta.dotColor)}
+            />
+            {statusMeta.label}
+          </div>
+        ) : (
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-muted-foreground/40 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+            <CircleDashed className="h-3 w-3" />
+            Chưa có dữ liệu
+          </div>
+        )}
 
         {/* Threshold bar */}
         <ThresholdBar
@@ -115,7 +139,7 @@ export default memo(function DashboardSensorCard({
           threshold={reading.threshold}
         />
 
-        {/* Timestamp */}
+        {/* Last seen */}
         <p className="text-[11px] text-muted-foreground">
           {reading.timestamp
             ? `Cập nhật ${formatDistanceToNow(new Date(reading.timestamp), { addSuffix: true, locale: vi })}`

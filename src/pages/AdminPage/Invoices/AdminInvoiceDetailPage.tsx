@@ -1,5 +1,10 @@
 import { useParams } from "react-router";
-import { Badge } from "@/components/ui/badge";
+import InvoiceStatusBadge, {
+  type InvoiceStatus,
+} from "@/components/common/InvoiceStatusBadge";
+import TransactionStatusBadge, {
+  type TransactionStatus,
+} from "@/components/common/TransactionStatusBadge";
 import {
   Card,
   CardContent,
@@ -51,7 +56,8 @@ function AdminInvoiceDetailPage() {
                 Mã hóa đơn: <span className="font-medium">{invoice.invoiceNumber}</span>
               </p>
               <p>
-                Trạng thái: <Badge>{invoice.status}</Badge>
+                Trạng thái:{" "}
+                <InvoiceStatusBadge status={invoice.status as InvoiceStatus} />
               </p>
               <p>Tổng tiền: {formatCurrency(invoice.totalAmount)}</p>
               <p>Loại tham chiếu: {invoice.referenceType}</p>
@@ -110,7 +116,9 @@ function AdminInvoiceDetailPage() {
                   <TableCell>{tx.gateway}</TableCell>
                   <TableCell>{tx.type}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{tx.status}</Badge>
+                    <TransactionStatusBadge
+                      status={tx.status as TransactionStatus}
+                    />
                   </TableCell>
                   <TableCell>{formatCurrency(tx.amount)}</TableCell>
                   <TableCell>{tx.createdAt}</TableCell>

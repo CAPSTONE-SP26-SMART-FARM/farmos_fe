@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
+import InvoiceStatusBadge, {
+  type InvoiceStatus,
+} from "@/components/common/InvoiceStatusBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -146,7 +149,9 @@ function AdminInvoicesPage() {
                   </TableCell>
                   <TableCell>{formatCurrency(invoice.totalAmount)}</TableCell>
                   <TableCell>
-                    <Badge>{invoice.status}</Badge>
+                    <InvoiceStatusBadge
+                      status={invoice.status as InvoiceStatus}
+                    />
                   </TableCell>
                   <TableCell className="text-right">
                     <Button

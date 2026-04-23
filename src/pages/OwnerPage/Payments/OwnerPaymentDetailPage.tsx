@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
+import InvoiceStatusBadge, {
+  type InvoiceStatus,
+} from "@/components/common/InvoiceStatusBadge";
+import TransactionStatusBadge, {
+  type TransactionStatus,
+} from "@/components/common/TransactionStatusBadge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -40,20 +45,6 @@ const formatDateTime = (value?: string | null) => {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
-};
-
-const TX_STATUS_LABEL: Record<string, string> = {
-  PENDING: "Đang xử lý",
-  SUCCESS: "Thành công",
-  FAILED: "Thất bại",
-};
-
-const INVOICE_STATUS_LABEL: Record<string, string> = {
-  DRAFT: "Nháp",
-  OPEN: "Chờ thanh toán",
-  PAID: "Đã thanh toán",
-  VOID: "Đã hủy",
-  UNCOLLECTIBLE: "Không thu được",
 };
 
 function OwnerPaymentDetailPage() {
@@ -118,9 +109,9 @@ function OwnerPaymentDetailPage() {
               </p>
               <p>
                 Trạng thái:{" "}
-                <Badge>
-                  {INVOICE_STATUS_LABEL[invoice.status] ?? invoice.status}
-                </Badge>
+                <InvoiceStatusBadge
+                  status={invoice.status as InvoiceStatus}
+                />
               </p>
               <p>Loại hóa đơn: {invoice.referenceType}</p>
               <p>Tổng tiền: {formatCurrency(invoice.totalAmount)}</p>
@@ -204,10 +195,9 @@ function OwnerPaymentDetailPage() {
                   <TableCell>{transaction.gateway}</TableCell>
                   <TableCell>{transaction.type}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">
-                      {TX_STATUS_LABEL[transaction.status] ??
-                        transaction.status}
-                    </Badge>
+                    <TransactionStatusBadge
+                      status={transaction.status as TransactionStatus}
+                    />
                   </TableCell>
                   <TableCell>{formatCurrency(transaction.amount)}</TableCell>
                   <TableCell>{formatDateTime(transaction.createdAt)}</TableCell>
