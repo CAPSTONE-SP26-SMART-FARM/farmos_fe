@@ -3,7 +3,7 @@ import {
   useSensorDashboard,
   useDashboardRealtime,
 } from "@/queries/useSensorDashboard";
-import { useZoneSubscription } from "@/hooks/useZoneSubscription";
+import { useZoneSubscriptions } from "@/hooks/useZoneSubscription";
 import { aggregateStats } from "./utils/sensorDashboard";
 import SummaryStats from "./components/SummaryStats";
 import ZoneAssignmentCard from "./components/ZoneAssignmentCard";
@@ -25,14 +25,8 @@ export default function SensorDashboardPage({
   // Realtime: invalidate readings when socket events arrive
   useDashboardRealtime(zones, role);
 
-  // Subscribe to all zone rooms for realtime events
-  const firstZoneId = zones[0]?.zoneId;
-  useZoneSubscription(firstZoneId);
-  // Subscribe remaining zones
-  const secondZoneId = zones[1]?.zoneId;
-  useZoneSubscription(secondZoneId);
-  const thirdZoneId = zones[2]?.zoneId;
-  useZoneSubscription(thirdZoneId);
+  // Subscribe all zones currently rendered on dashboard
+  useZoneSubscriptions(zones.map((zone) => zone.zoneId));
 
   const stats = aggregateStats(allReadings);
 
