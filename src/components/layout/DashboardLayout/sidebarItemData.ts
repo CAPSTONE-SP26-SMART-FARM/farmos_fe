@@ -2,6 +2,7 @@ import {
   Activity,
   Blocks,
   Building2,
+  ChartColumnIncreasing,
   ClipboardList,
   Cpu,
   LayoutDashboard,
@@ -14,6 +15,7 @@ import {
   SlidersHorizontal,
   Sprout,
   Ticket,
+  UserCheck,
   Users,
   Wallet,
 } from "lucide-react";
@@ -111,14 +113,26 @@ export const sidebarData: SidebarData = {
       ],
     },
     // Legacy doctor-ops items — uncomment if those features return:
-    // {
-    //   label: "Bác sĩ",
-    //   items: [
-    //     { title: "Đơn Xin Làm Bác Sĩ", url: "/dashboard/admin/doctor-applications", icon: UserCheck },
-    //     { title: "Phân Công Bác Sĩ", url: "/dashboard/admin/doctor-assignment", icon: Users },
-    //     { title: "Hiệu Suất Bác Sĩ", url: "/dashboard/admin/doctor-performance", icon: ChartColumnIncreasing },
-    //   ],
-    // },
+    {
+      label: "Bác sĩ",
+      items: [
+        {
+          title: "Đơn Xin Làm Bác Sĩ",
+          url: "/dashboard/admin/doctor-applications",
+          icon: UserCheck,
+        },
+        // {
+        //   title: "Phân Công Bác Sĩ",
+        //   url: "/dashboard/admin/doctor-assignment",
+        //   icon: Users,
+        // },
+        // {
+        //   title: "Hiệu Suất Bác Sĩ",
+        //   url: "/dashboard/admin/doctor-performance",
+        //   icon: ChartColumnIncreasing,
+        // },
+      ],
+    },
   ],
 
   // ──────────────────────────────────────────────────────────────────────
