@@ -5,6 +5,7 @@ import AdminDoctorApplicationsPage from "@/pages/AdminPage/DoctorApplications/Ad
 import AdminDoctorAssignmentPage from "@/pages/AdminPage/DoctorAssignment/AdminDoctorAssignmentPage";
 import AdminDoctorPerformancePage from "@/pages/AdminPage/DoctorPerformance/AdminDoctorPerformancePage";
 import AdminFarmsPage from "@/pages/AdminPage/Farms/AdminFarmsPage";
+import AdminFeaturesPage from "@/pages/AdminPage/Features/AdminFeaturesPage";
 import AdminIotTemplatesPage from "@/pages/AdminPage/IotTemplates/AdminIotTemplatesPage";
 import AdminInvoiceDetailPage from "@/pages/AdminPage/Invoices/AdminInvoiceDetailPage";
 import AdminInvoicesPage from "@/pages/AdminPage/Invoices/AdminInvoicesPage";
@@ -182,6 +183,11 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/admin/employee-task-templates",
         component: AdminEmployeeTaskTemplatesPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/features",
+        component: AdminFeaturesPage,
         allowedRoles: [RoleName.Admin],
       },
       {

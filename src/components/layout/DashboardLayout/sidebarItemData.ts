@@ -16,6 +16,7 @@ import {
   User,
   Send,
   Milestone,
+  Blocks,
 } from "lucide-react";
 import type { SidebarData } from "./types";
 
@@ -93,6 +94,11 @@ export const sidebarData: SidebarData = {
       title: "Mẫu Nhiệm Vụ Nhân Viên",
       url: "/dashboard/admin/employee-task-templates",
       icon: ClipboardList,
+    },
+    {
+      title: "Feature Menu",
+      url: "/dashboard/admin/features",
+      icon: Blocks,
     },
   ],
 
