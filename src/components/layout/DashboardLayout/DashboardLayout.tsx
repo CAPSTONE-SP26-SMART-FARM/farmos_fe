@@ -32,19 +32,24 @@ const SEGMENT_LABELS: Record<string, string> = {
 
 /**
  * Build a map from sidebar URLs to their Vietnamese titles.
- * This covers all feature-level pages (e.g. /dashboard/owner/iot-devices → "Thiết Bị IoT").
+ * Flattens groups → items across every role so feature-level paths
+ * (e.g. /dashboard/owner/iot-devices → "Thiết Bị IoT") resolve correctly.
  */
 function buildSidebarUrlMap(): Record<string, string> {
   const map: Record<string, string> = {};
-  const allNavs = [
-    ...sidebarData.navAdmin,
-    ...sidebarData.navOwner,
-    ...sidebarData.navManager,
-    ...sidebarData.navDoctor,
-    ...sidebarData.navFarmer,
+  const allRoleGroups = [
+    sidebarData.navAdmin,
+    sidebarData.navOwner,
+    sidebarData.navManager,
+    sidebarData.navDoctor ?? [],
+    sidebarData.navFarmer ?? [],
   ];
-  for (const item of allNavs) {
-    map[item.url] = item.title;
+  for (const groups of allRoleGroups) {
+    for (const group of groups) {
+      for (const item of group.items) {
+        map[item.url] = item.title;
+      }
+    }
   }
   return map;
 }

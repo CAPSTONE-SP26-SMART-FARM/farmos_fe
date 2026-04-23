@@ -1,11 +1,7 @@
-import SubscriptionLifecycleManagementPage from "@/pages/SubscriptionLifecycle/SubscriptionLifecycleManagementPage";
+import AdminSubscriptionsWorkspace from "./components/AdminSubscriptionsWorkspace";
 
 function AdminSubscriptionsPage() {
-  return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <SubscriptionLifecycleManagementPage mode="admin" />
-    </div>
-  );
+  return <AdminSubscriptionsWorkspace />;
 }
 
 export default AdminSubscriptionsPage;

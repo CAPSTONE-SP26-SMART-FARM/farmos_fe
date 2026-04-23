@@ -9,7 +9,6 @@ import type {
   UpdateSensorBodyType,
 } from "@/schemaValidatation/sensor";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { onMutationError } from "@/lib/axios";
 
 function unsupportedProvisioningSensorWrite(role: "owner" | "manager") {

@@ -1,338 +1,312 @@
 import {
   Activity,
-  ReceiptText,
-  Cpu,
-  Shield,
-  LayoutDashboard,
-  Package,
-  Ticket,
-  SlidersHorizontal,
-  Building2,
-  Users,
-  Sprout,
-  Map,
-  Settings,
-  ClipboardList,
-  User,
-  Send,
-  Milestone,
   Blocks,
+  Building2,
+  ClipboardList,
+  Cpu,
+  LayoutDashboard,
+  Map,
+  Milestone,
+  Package,
+  ReceiptText,
+  Settings,
+  Shield,
+  SlidersHorizontal,
+  Sprout,
+  Ticket,
+  Users,
+  Wallet,
 } from "lucide-react";
 import type { SidebarData } from "./types";
 
 export const sidebarData: SidebarData = {
-  // Admin Navigation
+  // ──────────────────────────────────────────────────────────────────────
+  // Admin
+  // ──────────────────────────────────────────────────────────────────────
   navAdmin: [
+    {
+      label: "Tổng quan",
+      items: [
+        {
+          title: "Tổng Quan",
+          url: "/dashboard/admin",
+          icon: Shield,
+          isActive: true,
+        },
+      ],
+    },
+    {
+      label: "Đăng ký & Thanh toán",
+      items: [
+        {
+          title: "Gói Đăng Ký",
+          url: "/dashboard/admin/subscription-plans",
+          icon: Package,
+        },
+        {
+          title: "Vòng Đời Đăng Ký",
+          url: "/dashboard/admin/subscriptions",
+          icon: Package,
+        },
+        {
+          title: "Hóa Đơn",
+          url: "/dashboard/admin/invoices",
+          icon: ReceiptText,
+        },
+      ],
+    },
+    {
+      label: "Quản trị hệ thống",
+      items: [
+        {
+          title: "Quản Lý Người Dùng",
+          url: "/dashboard/admin/users",
+          icon: Users,
+        },
+        {
+          title: "Quản Lý Trang Trại",
+          url: "/dashboard/admin/farms",
+          icon: Building2,
+        },
+        {
+          title: "Feature Menu",
+          url: "/dashboard/admin/features",
+          icon: Blocks,
+        },
+      ],
+    },
+    {
+      label: "Mẫu cấu hình",
+      items: [
+        {
+          title: "Mẫu IoT",
+          url: "/dashboard/admin/iot-templates",
+          icon: SlidersHorizontal,
+        },
+        {
+          title: "Thiết Bị IoT",
+          url: "/dashboard/admin/iot-devices",
+          icon: Cpu,
+        },
+        {
+          title: "Mẫu Cột Mốc",
+          url: "/dashboard/admin/milestone-templates",
+          icon: Milestone,
+        },
+        {
+          title: "Mẫu Nhiệm Vụ Nhân Viên",
+          url: "/dashboard/admin/employee-task-templates",
+          icon: ClipboardList,
+        },
+      ],
+    },
+    {
+      label: "Phân tích",
+      items: [
+        {
+          title: "Phân Tích Ticket",
+          url: "/dashboard/admin/ticket-analytics",
+          icon: Ticket,
+        },
+      ],
+    },
+    // Legacy doctor-ops items — uncomment if those features return:
     // {
-    //   title: "Danh Sách Yêu Cầu",
-    //   url: "/dashboard/admin/doctor-requests",
-    //   icon: Send,
+    //   label: "Bác sĩ",
+    //   items: [
+    //     { title: "Đơn Xin Làm Bác Sĩ", url: "/dashboard/admin/doctor-applications", icon: UserCheck },
+    //     { title: "Phân Công Bác Sĩ", url: "/dashboard/admin/doctor-assignment", icon: Users },
+    //     { title: "Hiệu Suất Bác Sĩ", url: "/dashboard/admin/doctor-performance", icon: ChartColumnIncreasing },
+    //   ],
     // },
-    {
-      title: "Tổng Quan",
-      url: "/dashboard/admin",
-      icon: Shield,
-      isActive: true,
-    },
-    {
-      title: "Gói Đăng Ký",
-      url: "/dashboard/admin/subscription-plans",
-      icon: Package,
-    },
-    {
-      title: "Vòng Đời Đăng Ký",
-      url: "/dashboard/admin/subscriptions",
-      icon: Package,
-    },
-    {
-      title: "Hóa Đơn",
-      url: "/dashboard/admin/invoices",
-      icon: ReceiptText,
-    },
-    // {
-    //   title: "Đơn Xin Làm Bác Sĩ",
-    //   url: "/dashboard/admin/doctor-applications",
-    //   icon: UserCheck,
-    // },
-    // {
-    //   title: "Phân Công Bác Sĩ",
-    //   url: "/dashboard/admin/doctor-assignment",
-    //   icon: Users,
-    // },
-    // {
-    //   title: "Hiệu Suất Bác Sĩ",
-    //   url: "/dashboard/admin/doctor-performance",
-    //   icon: ChartColumnIncreasing,
-    // },
-    {
-      title: "Phân Tích Ticket",
-      url: "/dashboard/admin/ticket-analytics",
-      icon: Ticket,
-    },
-    {
-      title: "Mẫu IoT",
-      url: "/dashboard/admin/iot-templates",
-      icon: SlidersHorizontal,
-    },
-    {
-      title: "Thiết Bị IoT",
-      url: "/dashboard/admin/iot-devices",
-      icon: Cpu,
-    },
-    { title: "Quản Lý Người Dùng", url: "/dashboard/admin/users", icon: Users },
-    {
-      title: "Quản Lý Trang Trại",
-      url: "/dashboard/admin/farms",
-      icon: Building2,
-    },
-    {
-      title: "Mẫu Cột Mốc",
-      url: "/dashboard/admin/milestone-templates",
-      icon: Milestone,
-    },
-    {
-      title: "Mẫu Nhiệm Vụ Nhân Viên",
-      url: "/dashboard/admin/employee-task-templates",
-      icon: ClipboardList,
-    },
-    {
-      title: "Feature Menu",
-      url: "/dashboard/admin/features",
-      icon: Blocks,
-    },
   ],
 
-  // Owner Navigation
+  // ──────────────────────────────────────────────────────────────────────
+  // Owner
+  // ──────────────────────────────────────────────────────────────────────
   navOwner: [
     {
-      title: "Tổng Quan",
-      url: "/dashboard/owner",
-      icon: LayoutDashboard,
-      isActive: true,
+      label: "Tổng quan",
+      items: [
+        {
+          title: "Tổng Quan",
+          url: "/dashboard/owner",
+          icon: LayoutDashboard,
+          isActive: true,
+        },
+      ],
     },
     {
-      title: "Gói Đăng Ký",
-      url: "/dashboard/owner/subscription-plans",
-      icon: Package,
+      label: "Gói & Thanh toán",
+      items: [
+        {
+          title: "Gói Đăng Ký",
+          url: "/dashboard/owner/subscription-plans",
+          icon: Package,
+        },
+        {
+          title: "Gói Đăng Ký Của Tôi",
+          url: "/dashboard/owner/subscriptions",
+          icon: Package,
+        },
+        {
+          title: "Lịch Sử Đăng Ký",
+          url: "/dashboard/owner/subscriptions/history",
+          icon: Package,
+        },
+        {
+          title: "Ví Credit",
+          url: "/dashboard/owner/wallet",
+          icon: Wallet,
+        },
+        {
+          title: "Thanh Toán",
+          url: "/dashboard/owner/payments",
+          icon: ReceiptText,
+        },
+      ],
     },
     {
-      title: "Gói Đăng Ký Của Tôi",
-      url: "/dashboard/owner/subscriptions",
-      icon: Package,
+      label: "Trang trại",
+      items: [
+        {
+          title: "Quản Lý Trang Trại",
+          url: "/dashboard/owner/farms",
+          icon: Building2,
+        },
+        {
+          title: "Quản Lý Khu Vực",
+          url: "/dashboard/owner/zones",
+          icon: Map,
+        },
+        {
+          title: "Vụ Mùa",
+          url: "/dashboard/owner/crop-seasons",
+          icon: Sprout,
+        },
+        {
+          title: "Quản Lý Quản Lý Viên",
+          url: "/dashboard/owner/managers",
+          icon: Users,
+        },
+      ],
     },
     {
-      title: "Lịch Sử Đăng Ký",
-      url: "/dashboard/owner/subscriptions/history",
-      icon: Package,
+      label: "Vận hành",
+      items: [
+        {
+          title: "Mẫu Nhiệm Vụ",
+          url: "/dashboard/owner/employee-task-templates",
+          icon: ClipboardList,
+        },
+        {
+          title: "Thiết Bị IoT",
+          url: "/dashboard/owner/iot-devices",
+          icon: Cpu,
+        },
+        {
+          title: "Tổng Quan Cảm Biến",
+          url: "/dashboard/owner/sensor-dashboard",
+          icon: Activity,
+        },
+      ],
     },
     {
-      title: "Thanh Toán",
-      url: "/dashboard/owner/payments",
-      icon: ReceiptText,
-    },
-    // {
-    //   title: "Đăng Ký Dịch Vụ",
-    //   url: "/dashboard/owner/subscription",
-    //   icon: Package,
-    // },
-    {
-      title: "Quản Lý Trang Trại",
-      url: "/dashboard/owner/farms",
-      icon: Building2,
-    },
-    { title: "Quản Lý Khu Vực", url: "/dashboard/owner/zones", icon: Map },
-    {
-      title: "Vụ Mùa",
-      url: "/dashboard/owner/crop-seasons",
-      icon: Sprout,
-    },
-    {
-      title: "Quản Lý Quản Lý Viên",
-      url: "/dashboard/owner/managers",
-      icon: Users,
-    },
-    // {
-    //   title: "Bác Sĩ Được Phân Công",
-    //   url: "/dashboard/owner/doctor",
-    //   icon: Stethoscope,
-    // },
-    // {
-    //   title: "Phân Tích Sản Xuất",
-    //   url: "/dashboard/owner/analytics",
-    //   icon: ChartColumnIncreasing,
-    // },
-    // TODO: Chưa có workflow/API thật, tạm ẩn tab để tránh vào màn placeholder.
-    // { title: "Gợi Ý AI", url: "/dashboard/owner/ai-insights", icon: Bot },
-    {
-      title: "Mẫu Nhiệm Vụ",
-      url: "/dashboard/owner/employee-task-templates",
-      icon: ClipboardList,
-    },
-    {
-      title: "Thiết Bị IoT",
-      url: "/dashboard/owner/iot-devices",
-      icon: Cpu,
-    },
-    {
-      title: "Tổng Quan Cảm Biến",
-      url: "/dashboard/owner/sensor-dashboard",
-      icon: Activity,
-    },
-    // {
-    //   title: "Giám Sát Ticket",
-    //   url: "/dashboard/owner/tickets",
-    //   icon: Ticket,
-    // },
-    {
-      title: "Giám Sát Sự Cố",
-      url: "/dashboard/owner/tickets",
-      icon: Ticket,
+      label: "Hỗ trợ",
+      items: [
+        {
+          title: "Giám Sát Sự Cố",
+          url: "/dashboard/owner/tickets",
+          icon: Ticket,
+        },
+      ],
     },
   ],
 
-  // Manager Navigation
+  // ──────────────────────────────────────────────────────────────────────
+  // Manager
+  // ──────────────────────────────────────────────────────────────────────
   navManager: [
     {
-      title: "Tổng Quan",
-      url: "/dashboard/manager",
-      icon: LayoutDashboard,
-      isActive: true,
+      label: "Tổng quan",
+      items: [
+        {
+          title: "Tổng Quan",
+          url: "/dashboard/manager",
+          icon: LayoutDashboard,
+          isActive: true,
+        },
+      ],
     },
     {
-      title: "Khu Vực Được Phân Công",
-      url: "/dashboard/manager/zones",
-      icon: Map,
+      label: "Vận hành vùng",
+      items: [
+        {
+          title: "Khu Vực Được Phân Công",
+          url: "/dashboard/manager/zones",
+          icon: Map,
+        },
+        {
+          title: "Quản Lý Vụ Mùa",
+          url: "/dashboard/manager/crop-seasons",
+          icon: Sprout,
+        },
+        {
+          title: "Cột Mốc Sản Xuất",
+          url: "/dashboard/manager/milestones",
+          icon: Milestone,
+        },
+      ],
     },
     {
-      title: "Quản Lý Vụ Mùa",
-      url: "/dashboard/manager/crop-seasons",
-      icon: Sprout,
+      label: "IoT & Cảm biến",
+      items: [
+        {
+          title: "Cấu Hình IoT",
+          url: "/dashboard/manager/iot-config",
+          icon: Settings,
+        },
+        {
+          title: "Tổng Quan Cảm Biến",
+          url: "/dashboard/manager/sensor-dashboard",
+          icon: Activity,
+        },
+      ],
     },
     {
-      title: "Cột Mốc Sản Xuất",
-      url: "/dashboard/manager/milestones",
-      icon: Milestone,
+      label: "Hỗ trợ",
+      items: [
+        {
+          title: "Điều Phối Sự Cố",
+          url: "/dashboard/manager/tickets",
+          icon: Ticket,
+        },
+      ],
     },
-    {
-      title: "Cấu Hình IoT",
-      url: "/dashboard/manager/iot-config",
-      icon: Settings,
-    },
-    {
-      title: "Tổng Quan Cảm Biến",
-      url: "/dashboard/manager/sensor-dashboard",
-      icon: Activity,
-    },
-    // {
-    //   title: "Mẫu Nhiệm Vụ",
-    //   url: "/dashboard/manager/employee-task-templates",
-    //   icon: ClipboardList,
-    // },
-    {
-      title: "Điều Phối Sự Cố",
-      url: "/dashboard/manager/tickets",
-      icon: Ticket,
-    },
-    // TODO: Chưa có workflow/API thật, tạm ẩn tab để tránh vào màn placeholder.
-    // {
-    //   title: "Tiến Độ Nhiệm Vụ",
-    //   url: "/dashboard/manager/progress",
-    //   icon: FolderKanban,
-    // },
-    // {
-    //   title: "Dữ Liệu Cảm Biến",
-    //   url: "/dashboard/manager/sensors",
-    //   icon: Activity,
-    // },
-    // {
-    //   title: "Điều Phối Sự Cố",
-    //   url: "/dashboard/manager/incidents",
-    //   icon: Bug,
-    // },
-    // {
-    //   title: "Báo Cáo Chủ Trang Trại",
-    //   url: "/dashboard/manager/reports",
-    //   icon: FileText,
-    // },
-    // {
-    //   title: "Thông Báo",
-    //   url: "/dashboard/manager/notifications",
-    //   icon: Bell,
-    // },
   ],
 
-  // Doctor Navigation
-  navDoctor: [
-    {
-      title: "Cập Nhật Hồ Sơ",
-      url: "/dashboard/doctor/update-profile",
-      icon: User,
-    },
-    {
-      title: "Danh Sách Yêu Cầu",
-      url: "/dashboard/doctor/my-request",
-      icon: Send,
-    },
-    {
-      title: "Tổng Quan",
-      url: "/dashboard/doctor",
-      icon: LayoutDashboard,
-      isActive: true,
-    },
-    {
-      title: "Hộp Thư Sự Cố",
-      url: "/dashboard/doctor/tickets",
-      icon: Ticket,
-    },
-    // TODO: Chưa có workflow/API thật, tạm ẩn các tab chỉ hiển thị placeholder.
-    // {
-    //   title: "Trang Trại Được Phân Công",
-    //   url: "/dashboard/doctor/assigned-farms",
-    //   icon: Building2,
-    // },
-    // {
-    //   title: "Hộp Thư Sự Cố",
-    //   url: "/dashboard/doctor/incidents",
-    //   icon: Bug,
-    // },
-    // {
-    //   title: "Chẩn Đoán & Kế Hoạch",
-    //   url: "/dashboard/doctor/treatment-plans",
-    //   icon: Pill,
-    // },
-    // {
-    //   title: "Theo Dõi Điều Trị",
-    //   url: "/dashboard/doctor/treatment-tracking",
-    //   icon: Activity,
-    // },
-    // {
-    //   title: "Lịch Sử Ticket",
-    //   url: "/dashboard/doctor/ticket-history",
-    //   icon: Ticket,
-    // },
-    // {
-    //   title: "Kho Kiến Thức",
-    //   url: "/dashboard/doctor/knowledge-base",
-    //   icon: BookOpen,
-    // },
-    // {
-    //   title: "Thông Báo",
-    //   url: "/dashboard/doctor/notifications",
-    //   icon: Bell,
-    // },
-    // {
-    //   title: "Báo Cáo & Thống Kê",
-    //   url: "/dashboard/doctor/reports",
-    //   icon: ChartColumnIncreasing,
-    // },
-  ],
-
-  navFarmer: [
-    // TODO: Chưa có route/feature cho Farmer dashboard, tạm ẩn tab.
-    // {
-    //   title: "Thông Báo",
-    //   url: "/dashboard/farmer/notifications",
-    //   icon: Bell,
-    // },
-  ],
+  // ──────────────────────────────────────────────────────────────────────
+  // Doctor & Farmer — không dùng trong dashboard hiện tại.
+  // Dashboard chỉ phục vụ admin / owner / manager. Uncomment lại khi cần.
+  // ──────────────────────────────────────────────────────────────────────
+  // navDoctor: [
+  //   {
+  //     label: "Hồ sơ",
+  //     items: [
+  //       { title: "Cập Nhật Hồ Sơ", url: "/dashboard/doctor/update-profile", icon: User },
+  //       { title: "Danh Sách Yêu Cầu", url: "/dashboard/doctor/my-request", icon: Send },
+  //     ],
+  //   },
+  //   {
+  //     label: "Tổng quan",
+  //     items: [
+  //       { title: "Tổng Quan", url: "/dashboard/doctor", icon: LayoutDashboard, isActive: true },
+  //       { title: "Hộp Thư Sự Cố", url: "/dashboard/doctor/tickets", icon: Ticket },
+  //     ],
+  //   },
+  // ],
+  //
+  // navFarmer: [
+  //   // TODO: Chưa có route/feature cho Farmer dashboard, tạm ẩn tab.
+  // ],
 };

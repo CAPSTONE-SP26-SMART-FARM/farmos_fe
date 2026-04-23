@@ -15,7 +15,7 @@ import {
 import { sidebarData } from "./sidebarItemData";
 import { useAuthStore } from "@/stores/authStore";
 import { Link } from "react-router";
-import type { NavItem } from "./types";
+import type { NavGroup } from "./types";
 import type { ComponentPropsWithoutRef } from "react";
 import type { RoleNameType } from "@/constants/role";
 import { useCurrentUser } from "@/queries";
@@ -23,16 +23,18 @@ import { useCurrentUser } from "@/queries";
 const STORAGE_KEY = "dashboard-item";
 const DEFAULT_ITEM = "Dashboard";
 
-const getNavItemsByRole = (role: RoleNameType): NavItem[] => {
-  const roleNavMap: Record<RoleNameType, NavItem[]> = {
-    farmer: sidebarData.navFarmer,
+// Dashboard currently only serves admin / owner / manager. Doctor and farmer
+// roles are intentionally not mapped here — their sidebar data is commented
+// out in `sidebarItemData.ts`. If they land on the dashboard, we fall back
+// to an empty group list.
+const getNavGroupsByRole = (role: RoleNameType): NavGroup[] => {
+  const roleNavMap: Partial<Record<RoleNameType, NavGroup[]>> = {
     admin: sidebarData.navAdmin,
     owner: sidebarData.navOwner,
     manager: sidebarData.navManager,
-    doctor: sidebarData.navDoctor,
   };
 
-  return roleNavMap[role] || sidebarData.navOwner;
+  return roleNavMap[role] ?? [];
 };
 
 type DashboardSidebarProps = ComponentPropsWithoutRef<typeof Sidebar>;
@@ -49,7 +51,7 @@ export function DashboardSidebar(props: DashboardSidebarProps) {
     return null;
   }
 
-  const navItems = getNavItemsByRole(user.role as RoleNameType);
+  const navGroups = getNavGroupsByRole(user.role as RoleNameType);
 
   return (
     <Sidebar
@@ -69,7 +71,7 @@ export function DashboardSidebar(props: DashboardSidebarProps) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain
-          items={navItems}
+          groups={navGroups}
           clickedItem={clickedItem}
           setClickedItem={setClickedItem}
         />

@@ -47,6 +47,9 @@ import OwnerSubscriptionPlansPage from "@/pages/OwnerPage/SubscriptionPlans/Owne
 import OwnerSubscriptionsPage from "@/pages/OwnerPage/Subscriptions/OwnerSubscriptionsPage";
 import OwnerSubscriptionDetailPage from "@/pages/OwnerPage/Subscriptions/OwnerSubscriptionDetailPage";
 import OwnerSubscriptionHistoryPage from "@/pages/OwnerPage/Subscriptions/OwnerSubscriptionHistoryPage";
+import OwnerWalletPage from "@/pages/OwnerPage/Wallet/OwnerWalletPage";
+import OrderSuccessPage from "@/pages/OrderResult/OrderSuccessPage";
+import OrderFailPage from "@/pages/OrderResult/OrderFailPage";
 import OwnerPage from "@/pages/OwnerPage/OwnerPage";
 import RegisterPage from "@/pages/RegisterPage/RegisterPage";
 import type { AppRoutes } from "./types";
@@ -65,7 +68,11 @@ import { RoleName } from "@/constants/role";
 const routes: AppRoutes = [
   {
     layout: MainLayout,
-    children: [{ path: "/", component: HomePage }],
+    children: [
+      { path: "/", component: HomePage },
+      { path: "/order-success", component: OrderSuccessPage },
+      { path: "/order-fail", component: OrderFailPage },
+    ],
   },
   {
     layout: SimpleLayout,
@@ -239,6 +246,11 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/owner/payments/:invoiceId",
         component: OwnerPaymentDetailPage,
+        allowedRoles: [RoleName.Owner],
+      },
+      {
+        path: "/dashboard/owner/wallet",
+        component: OwnerWalletPage,
         allowedRoles: [RoleName.Owner],
       },
       {

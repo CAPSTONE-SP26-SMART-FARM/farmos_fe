@@ -9,10 +9,17 @@ export interface NavItem {
   isActive?: boolean;
 }
 
+export interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
 export interface SidebarData {
-  navAdmin: NavItem[];
-  navOwner: NavItem[];
-  navManager: NavItem[];
-  navDoctor: NavItem[];
-  navFarmer: NavItem[];
+  navAdmin: NavGroup[];
+  navOwner: NavGroup[];
+  navManager: NavGroup[];
+  // Doctor and Farmer roles do not currently access the dashboard — keep the
+  // key shapes open if we bring them back, but leave them empty for now.
+  navDoctor?: NavGroup[];
+  navFarmer?: NavGroup[];
 }

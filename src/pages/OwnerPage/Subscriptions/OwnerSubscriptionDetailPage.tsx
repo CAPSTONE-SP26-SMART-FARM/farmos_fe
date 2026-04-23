@@ -1,14 +1,13 @@
-import SubscriptionLifecycleManagementPage from "@/pages/SubscriptionLifecycle/SubscriptionLifecycleManagementPage";
 import { useParams } from "react-router";
+import OwnerSubscriptionDashboard from "./components/OwnerSubscriptionDashboard";
 
 function OwnerSubscriptionDetailPage() {
   const { subscriptionId = "" } = useParams<{ subscriptionId: string }>();
 
   return (
-    <SubscriptionLifecycleManagementPage
-      mode="owner"
-      detailOnly
-      initialSubscriptionId={subscriptionId}
+    <OwnerSubscriptionDashboard
+      subscriptionId={subscriptionId}
+      showBreadcrumb
     />
   );
 }

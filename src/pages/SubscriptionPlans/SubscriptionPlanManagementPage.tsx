@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { format } from "date-fns";
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -146,6 +147,7 @@ const toPlanFormValue = (plan: PlanResType): CreatePlanBodyType => ({
 
 function SubscriptionPlanManagementPage({ mode }: Props) {
   const isAdmin = mode === "admin";
+  const navigate = useNavigate();
 
   const [planQuery, setPlanQuery] = useState<ListPlansQueryType>({
     page: 1,
@@ -395,9 +397,7 @@ function SubscriptionPlanManagementPage({ mode }: Props) {
         planVersionId: activeVersion.id,
       });
       setSelectedPlanId(planId);
-      toast.success(
-        `Tạo đăng ký thành công. Mã hóa đơn: ${checkout.data.invoiceNumber}`,
-      );
+      navigate(`/dashboard/owner/payments/${checkout.data.invoiceId}`);
     } catch (error) {
       toast.error(getApiErrorMessageVi(error, "Đăng ký gói thất bại."));
     }
@@ -407,7 +407,6 @@ function SubscriptionPlanManagementPage({ mode }: Props) {
     return (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
         <section className="relative overflow-hidden rounded-2xl border bg-card p-5 shadow-sm md:p-6">
-          <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/15 via-transparent to-transparent" />
           <div className="relative flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
               <Badge className="mb-2 flex w-fit items-center gap-1">
@@ -485,7 +484,7 @@ function SubscriptionPlanManagementPage({ mode }: Props) {
                 key={plan.id}
                 className="relative overflow-hidden border-2 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
               >
-                <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-linear-to-r from-primary via-primary/70 to-primary/20" />
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-primary" />
                 <CardHeader className="space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <CardTitle className="text-lg">{plan.name}</CardTitle>
@@ -549,7 +548,7 @@ function SubscriptionPlanManagementPage({ mode }: Props) {
   return (
     <div className="space-y-6">
       <section className="relative overflow-hidden rounded-2xl border bg-card p-5 shadow-sm md:p-6">
-        <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/10 via-transparent to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-primary/5" />
         <div className="relative flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <Badge className="mb-2 flex w-fit items-center gap-1">

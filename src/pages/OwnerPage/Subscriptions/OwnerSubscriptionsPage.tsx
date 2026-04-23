@@ -1,7 +1,7 @@
-import SubscriptionLifecycleManagementPage from "@/pages/SubscriptionLifecycle/SubscriptionLifecycleManagementPage";
+import OwnerSubscriptionDashboard from "./components/OwnerSubscriptionDashboard";
 
 function OwnerSubscriptionsPage() {
-  return <SubscriptionLifecycleManagementPage mode="owner" />;
+  return <OwnerSubscriptionDashboard />;
 }
 
 export default OwnerSubscriptionsPage;
