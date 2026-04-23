@@ -107,6 +107,13 @@ export const API_ENDPOINTS = {
       LIST: "/admin/users",
       DETAIL: (id: string) => `/admin/users/${id}`,
     },
+    FEATURES: {
+      LIST: "/features",
+      CREATE: "/features",
+      DETAIL: (featureCode: string) => `/features/${featureCode}`,
+      UPDATE: (featureCode: string) => `/features/${featureCode}`,
+      DELETE: (featureCode: string) => `/features/${featureCode}`,
+    },
     MILESTONE_TEMPLATES: {
       CREATE: "/template-product-milestone-for-crop-season",
       LIST: "/template-product-milestone-for-crop-season/admin",
@@ -555,6 +562,15 @@ export const QUERY_KEYS = {
         query,
       ],
       detail: (id: string) => ["admin", "users", id],
+    },
+    features: {
+      list: (query?: Record<string, unknown>) => [
+        "admin",
+        "features",
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ],
+      detail: (featureCode: string) => ["admin", "features", featureCode],
     },
     milestoneTemplates: {
       list: (query?: Record<string, unknown>) => [
