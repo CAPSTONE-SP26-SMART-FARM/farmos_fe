@@ -144,7 +144,6 @@ export const AdminUpdateSensorBodySchema = z
 export const AdminAssignOwnerBodySchema = z.object({
   iotDeviceId: z.string().uuid(),
   ownerId: z.string().uuid(),
-  subscriptionId: z.string().uuid(),
 });
 
 export const AdminUnassignOwnerBodySchema = z.object({
@@ -172,6 +171,7 @@ export const IotDeviceResSchema = z.object({
   installedAt: z.string(),
   iotDeviceBoardId: z.string().uuid().nullable(),
   sensorsLockedAt: z.string().nullable().optional(),
+  isAssigned: z.boolean().optional(),
   latestLog: IotDeviceLatestLogSchema.nullable(),
 });
 

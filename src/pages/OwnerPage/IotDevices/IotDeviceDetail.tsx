@@ -17,6 +17,8 @@ import {
   PowerOff,
   Radio,
   ShieldOff,
+  UserMinus,
+  UserPlus,
   Wifi,
   Wrench,
 } from "lucide-react";
@@ -27,6 +29,8 @@ import {
   useOwnerIotDeviceDetail,
 } from "@/queries/useIotDevice";
 import type { IotDeviceDetailResType } from "@/schemaValidatation/iotDevice";
+import AssignOwnerDialog from "@/pages/AdminPage/IotDevices/AssignOwnerDialog";
+import UnassignOwnerDialog from "@/pages/AdminPage/IotDevices/UnassignOwnerDialog";
 
 type IotActor = "owner" | "manager" | "admin";
 
@@ -98,6 +102,8 @@ export default function IotDeviceDetail({
   actor = "owner",
 }: IotDeviceDetailProps) {
   const [show, setShow] = useState(false);
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [unassignOpen, setUnassignOpen] = useState(false);
 
   const adminDeviceQuery = useAdminIotDeviceDetail(deviceId, actor === "admin");
 
@@ -172,7 +178,65 @@ export default function IotDeviceDetail({
           <SIcon className="h-3 w-3" />
           {sMeta.label}
         </span>
+
+        {actor === "admin" && (
+          <div className="ml-auto flex items-center gap-2">
+            {device.isAssigned ? (
+              <>
+                <Badge
+                  variant="outline"
+                  className="gap-1 border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                >
+                  Đã gán owner
+                  {device.farm ? ` · ${device.farm.name}` : ""}
+                </Badge>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => setUnassignOpen(true)}
+                >
+                  <UserMinus className="mr-2 h-4 w-4" />
+                  Thu hồi owner
+                </Button>
+              </>
+            ) : (
+              <>
+                <Badge
+                  variant="outline"
+                  className="border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                >
+                  Chưa gán owner
+                </Badge>
+                <Button
+                  size="sm"
+                  onClick={() => setAssignOpen(true)}
+                >
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Gán owner
+                </Button>
+              </>
+            )}
+          </div>
+        )}
       </div>
+
+      {actor === "admin" && (
+        <>
+          <AssignOwnerDialog
+            open={assignOpen}
+            onOpenChange={setAssignOpen}
+            iotDeviceId={device.id}
+            deviceName={device.deviceName}
+          />
+          <UnassignOwnerDialog
+            open={unassignOpen}
+            onOpenChange={setUnassignOpen}
+            iotDeviceId={device.id}
+            deviceName={device.deviceName}
+            farmName={device.farm?.name}
+          />
+        </>
+      )}
 
       <Card>
         <CardHeader>
@@ -351,7 +415,6 @@ function SubDeviceCard({
         ) : (
           <p>Không có MAC</p>
         )}
-        {device.farm ? <p>Farm: {device.farm.name}</p> : <p>Chưa gán farm</p>}
       </div>
     </div>
   );

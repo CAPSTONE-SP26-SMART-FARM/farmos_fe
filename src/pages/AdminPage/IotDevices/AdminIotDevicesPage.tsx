@@ -24,6 +24,8 @@ import {
   Plus,
   Search,
   Trash2,
+  UserMinus,
+  UserPlus,
   Wifi,
   Radio,
   CircuitBoard,
@@ -32,6 +34,8 @@ import {
   useAdminDeleteIotDevice,
   useAdminListIotDevices,
 } from "@/queries/useIotDevice";
+import AssignOwnerDialog from "@/pages/AdminPage/IotDevices/AssignOwnerDialog";
+import UnassignOwnerDialog from "@/pages/AdminPage/IotDevices/UnassignOwnerDialog";
 import type {
   DeviceStatusType,
   IotDeviceResType,
@@ -68,6 +72,12 @@ export default function AdminIotDevicesPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<DeviceStatusType | "all">("all");
   const [deleteTarget, setDeleteTarget] = useState<IotDeviceResType | null>(
+    null,
+  );
+  const [assignTarget, setAssignTarget] = useState<IotDeviceResType | null>(
+    null,
+  );
+  const [unassignTarget, setUnassignTarget] = useState<IotDeviceResType | null>(
     null,
   );
 
@@ -191,38 +201,66 @@ export default function AdminIotDevicesPage() {
                 return (
                   <div
                     key={device.id}
-                    className="rounded-xl border border-border/70 bg-background p-4"
+                    className="flex flex-col gap-3 rounded-xl border border-border/70 bg-background p-4"
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-4 w-4 text-primary" />
-                          <p className="font-medium">{device.deviceName}</p>
-                        </div>
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          <Badge variant="outline">
-                            {DEVICE_TYPE_LABEL[device.deviceType] ??
-                              device.deviceType}
-                          </Badge>
-                          <Badge variant="secondary">
-                            {DEVICE_STATUS_LABEL[device.status] ??
-                              device.status}
-                          </Badge>
-                        </div>
-                        <p className="mt-2 text-xs text-muted-foreground font-mono">
-                          {device.id}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-2">
+                      <Icon className="h-4 w-4 text-primary" />
+                      <p className="truncate font-medium">{device.deviceName}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      <Badge variant="outline">
+                        {DEVICE_TYPE_LABEL[device.deviceType] ??
+                          device.deviceType}
+                      </Badge>
+                      <Badge variant="secondary">
+                        {DEVICE_STATUS_LABEL[device.status] ?? device.status}
+                      </Badge>
+                      {device.isAssigned ? (
+                        <Badge className="border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                          Đã gán owner
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="outline"
+                          className="border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                        >
+                          Chưa gán owner
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground font-mono">
+                      {device.id}
+                    </p>
+                    <div className="mt-auto flex flex-wrap items-center gap-1 border-t pt-3">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          navigate(`/dashboard/admin/iot-devices/${device.id}`)
+                        }
+                      >
+                        Chi tiết
+                      </Button>
+                      {device.isAssigned ? (
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() =>
-                            navigate(`/dashboard/admin/iot-devices/${device.id}`)
-                          }
+                          onClick={() => setUnassignTarget(device)}
+                          className="border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-950"
                         >
-                          Chi tiết
+                          <UserMinus className="mr-1.5 h-4 w-4" />
+                          Thu hồi
                         </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          onClick={() => setAssignTarget(device)}
+                        >
+                          <UserPlus className="mr-1.5 h-4 w-4" />
+                          Gán owner
+                        </Button>
+                      )}
+                      <div className="ml-auto flex items-center gap-1">
                         <Button
                           size="icon"
                           variant="outline"
@@ -231,6 +269,7 @@ export default function AdminIotDevicesPage() {
                               `/dashboard/admin/iot-devices/${device.id}/edit`,
                             )
                           }
+                          title="Chỉnh sửa"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -238,6 +277,7 @@ export default function AdminIotDevicesPage() {
                           size="icon"
                           variant="destructive"
                           onClick={() => setDeleteTarget(device)}
+                          title="Xóa"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -283,6 +323,28 @@ export default function AdminIotDevicesPage() {
           )}
         </CardContent>
       </Card>
+
+      {assignTarget && (
+        <AssignOwnerDialog
+          open={!!assignTarget}
+          onOpenChange={(next) => {
+            if (!next) setAssignTarget(null);
+          }}
+          iotDeviceId={assignTarget.id}
+          deviceName={assignTarget.deviceName}
+        />
+      )}
+
+      {unassignTarget && (
+        <UnassignOwnerDialog
+          open={!!unassignTarget}
+          onOpenChange={(next) => {
+            if (!next) setUnassignTarget(null);
+          }}
+          iotDeviceId={unassignTarget.id}
+          deviceName={unassignTarget.deviceName}
+        />
+      )}
 
       <ConfirmDialog
         open={!!deleteTarget}

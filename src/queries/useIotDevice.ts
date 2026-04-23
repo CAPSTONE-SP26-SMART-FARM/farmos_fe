@@ -160,18 +160,36 @@ export const useAdminDeleteSensor = () => {
 };
 
 export const useAdminAssignIotOwner = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body: AdminAssignOwnerBodyType) =>
       adminIotDeviceService.assignOwner(body),
+    onSuccess: (_res, body) => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.admin.iotDevices.list(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.admin.iotDevices.detail(body.iotDeviceId),
+      });
+    },
     onError: (error) =>
       onMutationError(error, "Gán owner cho thiết bị thất bại"),
   });
 };
 
 export const useAdminUnassignIotOwner = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body: AdminUnassignOwnerBodyType) =>
       adminIotDeviceService.unassignOwner(body),
+    onSuccess: (_res, body) => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.admin.iotDevices.list(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.admin.iotDevices.detail(body.iotDeviceId),
+      });
+    },
     onError: (error) =>
       onMutationError(error, "Thu hồi owner khỏi thiết bị thất bại"),
   });
