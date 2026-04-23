@@ -52,6 +52,17 @@ import {
   isApiErrorUnprocessableEntityResponse,
 } from "@/lib/utils";
 import {
+  useOwnerCreditHistory,
+  useOwnerCredits,
+  usePurchaseServicePackage,
+  useServicePackages,
+} from "@/queries/useCredit";
+import {
+  useInvoiceCheckout,
+  useOwnerInvoices,
+  useSubscriptionPaymentStatus,
+} from "@/queries/useInvoice";
+import {
   useAdminForceUpgradePlanVersion,
   useAdminListSubscriptions,
   useOwnerMySubscription,
@@ -71,6 +82,11 @@ import {
   UpgradePlanVersionBodySchema,
   type UsageLedgerQueryType,
 } from "@/schemaValidatation/subscription";
+import type { ListInvoicesQueryType } from "@/schemaValidatation/invoice";
+import type {
+  CreditHistoryQueryType,
+  ListServicePackagesQueryType,
+} from "@/schemaValidatation/credit";
 import {
   ArrowLeft,
   CircleSlash,
@@ -117,6 +133,13 @@ const formatDateTime = (value?: string | null) => {
   return format(date, "dd/MM/yyyy HH:mm");
 };
 
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    maximumFractionDigits: 0,
+  }).format(value);
+
 function SubscriptionLifecyclePanel({
   mode,
   detailOnly = false,
@@ -142,7 +165,8 @@ function SubscriptionLifecyclePanel({
   const [selectedSubscriptionId, setSelectedSubscriptionId] = useState(
     initialSubscriptionId ?? "",
   );
-  const shouldFetchDetail = detailOnly && Boolean(selectedSubscriptionId);
+  const shouldFetchDetail =
+    !isAdmin && detailOnly && Boolean(selectedSubscriptionId);
   const shouldFetchOwnerPanels = !isAdmin && Boolean(selectedSubscriptionId);
 
   const [entitlementQuery, setEntitlementQuery] =
@@ -161,6 +185,26 @@ function SubscriptionLifecyclePanel({
 
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = useState(false);
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState("");
+  const [invoiceQuery] = useState<ListInvoicesQueryType>({
+    page: 1,
+    limit: 20,
+    search: undefined,
+    status: undefined,
+    referenceType: "SUBSCRIPTION",
+    referenceId: undefined,
+  });
+  const [servicePackageQuery] = useState<ListServicePackagesQueryType>({
+    page: 1,
+    limit: 20,
+    search: undefined,
+  });
+  const [creditHistoryQuery] = useState<CreditHistoryQueryType>({
+    page: 1,
+    limit: 10,
+    search: undefined,
+    creditType: undefined,
+  });
 
   const ownerMySubscription = useOwnerMySubscription(
     shouldFetchOwnerSubscription,
@@ -251,6 +295,22 @@ function SubscriptionLifecyclePanel({
   const cancelSubscriptionMutation = useSubscriptionCancel();
   const toggleAutoRenewMutation = useOwnerToggleAutoRenew();
   const forceUpgradeMutation = useAdminForceUpgradePlanVersion();
+  const invoicesQuery = useOwnerInvoices(
+    {
+      ...invoiceQuery,
+      referenceId: selectedSubscriptionId || undefined,
+    },
+    !isAdmin && Boolean(selectedSubscriptionId),
+  );
+  const invoiceCheckoutMutation = useInvoiceCheckout();
+  const paymentStatusQuery = useSubscriptionPaymentStatus(
+    selectedSubscriptionId,
+    !isAdmin && Boolean(selectedSubscriptionId),
+  );
+  const ownerCreditsQuery = useOwnerCredits(!isAdmin);
+  const ownerCreditHistoryQuery = useOwnerCreditHistory(creditHistoryQuery, !isAdmin);
+  const servicePackagesQuery = useServicePackages(servicePackageQuery, !isAdmin);
+  const purchaseServicePackageMutation = usePurchaseServicePackage();
 
   const cancelForm = useForm({
     resolver: zodResolver(CancelSubscriptionBodySchema),
@@ -277,22 +337,40 @@ function SubscriptionLifecyclePanel({
   useClearServerFieldErrors(toggleAutoRenewForm);
   useClearServerFieldErrors(upgradeForm);
 
+  const selectedSubscriptionFromList = subscriptions.find(
+    (item) => item.id === selectedSubscriptionId,
+  );
+  const ownerDetailResponse = selectedSubscriptionDetail.data?.data;
   const detail =
     !isAdmin && !detailOnly
       ? ownerMySubscription.data?.data
-      : selectedSubscriptionDetail.data?.data;
+      : !isAdmin
+        ? ownerDetailResponse?.subscription
+        : selectedSubscriptionFromList;
   const isDetailLoading =
     !isAdmin && !detailOnly
       ? ownerMySubscription.isLoading
       : selectedSubscriptionDetail.isLoading;
   const entitlementData = entitlementsQuery.data?.data;
   const usageData = usageLedgerQuery.data?.data;
+  const invoices = invoicesQuery.data?.data?.data ?? [];
+  const selectedInvoice =
+    invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? invoices[0];
+  const ownerCredits = ownerCreditsQuery.data?.data?.data ?? [];
+  const ownerCreditHistory = ownerCreditHistoryQuery.data?.data?.data ?? [];
+  const servicePackages = servicePackagesQuery.data?.data?.data ?? [];
 
   useEffect(() => {
     if (detail) {
       toggleAutoRenewForm.reset({ autoRenew: detail.autoRenew });
     }
   }, [detail, toggleAutoRenewForm]);
+
+  useEffect(() => {
+    if (!selectedInvoiceId && invoices[0]?.id) {
+      setSelectedInvoiceId(invoices[0].id);
+    }
+  }, [invoices, selectedInvoiceId]);
 
   const handleOwnerIdFilter = () => {
     const ownerId = ownerIdInput.trim();
@@ -307,8 +385,12 @@ function SubscriptionLifecyclePanel({
     if (!selectedSubscriptionId) return;
 
     try {
-      await renewSubscriptionMutation.mutateAsync(selectedSubscriptionId);
-      toast.success("Yêu cầu gia hạn đã được ghi nhận.");
+      const renewResult =
+        await renewSubscriptionMutation.mutateAsync(selectedSubscriptionId);
+      toast.success(
+        `Đã tạo hóa đơn gia hạn ${renewResult.data.invoiceNumber}. Vui lòng thanh toán để kích hoạt.`,
+      );
+      invoicesQuery.refetch();
     } catch (error) {
       toast.error(getApiErrorMessageVi(error, "Gia hạn đăng ký thất bại."));
     }
@@ -387,6 +469,33 @@ function SubscriptionLifecyclePanel({
         return;
       }
       toast.error(getApiErrorMessageVi(error, "Nâng cấp gói thất bại."));
+    }
+  };
+
+  const handleCheckoutInvoice = async () => {
+    if (!selectedInvoice) {
+      toast.error("Không tìm thấy hóa đơn để thanh toán.");
+      return;
+    }
+
+    try {
+      const result = await invoiceCheckoutMutation.mutateAsync({
+        id: selectedInvoice.id,
+        data: { gateway: "PAYOS" },
+      });
+      window.open(result.data.paymentUrl, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      toast.error(getApiErrorMessageVi(error, "Không thể tạo phiên thanh toán."));
+    }
+  };
+
+  const handlePurchaseServicePackage = async (packageId: string) => {
+    try {
+      await purchaseServicePackageMutation.mutateAsync(packageId);
+      toast.success("Đã tạo hóa đơn mua gói. Tiếp tục thanh toán trong mục hóa đơn.");
+      invoicesQuery.refetch();
+    } catch (error) {
+      toast.error(getApiErrorMessageVi(error, "Mua gói bổ trợ thất bại."));
     }
   };
 
@@ -892,6 +1001,160 @@ function SubscriptionLifecyclePanel({
                     </TableBody>
                   </Table>
                 </div>
+
+                {!isAdmin && (
+                  <div className="space-y-3 rounded-lg border p-4">
+                    <h4 className="text-sm font-semibold">Hóa đơn & thanh toán</h4>
+                    {invoicesQuery.isLoading && (
+                      <p className="text-sm text-muted-foreground">
+                        Đang tải danh sách hóa đơn...
+                      </p>
+                    )}
+                    {!invoicesQuery.isLoading && invoices.length === 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        Chưa có hóa đơn cho subscription này.
+                      </p>
+                    )}
+                    {invoices.length > 0 && (
+                      <div className="space-y-3">
+                        <Select
+                          value={selectedInvoice?.id ?? ""}
+                          onValueChange={setSelectedInvoiceId}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Chọn hóa đơn" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {invoices.map((invoice) => (
+                              <SelectItem key={invoice.id} value={invoice.id}>
+                                {invoice.invoiceNumber} - {invoice.status}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {selectedInvoice && (
+                          <div className="space-y-1 rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+                            <p>
+                              Tổng tiền:{" "}
+                              <span className="font-medium text-foreground">
+                                {formatCurrency(selectedInvoice.totalAmount)}
+                              </span>
+                            </p>
+                            <p>
+                              Hạn thanh toán:{" "}
+                              <span className="font-medium text-foreground">
+                                {formatDateTime(selectedInvoice.dueDate)}
+                              </span>
+                            </p>
+                            <p>
+                              Trạng thái hóa đơn:{" "}
+                              <span className="font-medium text-foreground">
+                                {selectedInvoice.status}
+                              </span>
+                            </p>
+                          </div>
+                        )}
+                        {selectedInvoice &&
+                          ["OPEN", "DRAFT"].includes(selectedInvoice.status) && (
+                            <Button
+                              className="w-full"
+                              onClick={handleCheckoutInvoice}
+                              disabled={invoiceCheckoutMutation.isPending}
+                            >
+                              {invoiceCheckoutMutation.isPending
+                                ? "Đang tạo link thanh toán..."
+                                : "Thanh toán bằng PayOS"}
+                            </Button>
+                          )}
+                        <div className="space-y-1 rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+                          <p>
+                            Trạng thái subscription realtime:{" "}
+                            <span className="font-medium text-foreground">
+                              {paymentStatusQuery.data?.data?.subscriptionStatus ??
+                                detail?.status ??
+                                "-"}
+                            </span>
+                          </p>
+                          <p>
+                            Giao dịch gần nhất:{" "}
+                            <span className="font-medium text-foreground">
+                              {paymentStatusQuery.data?.data?.latestTransaction
+                                ?.status ?? "-"}
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {!isAdmin && (
+                  <div className="space-y-3 rounded-lg border p-4">
+                    <h4 className="text-sm font-semibold">Credit & gói bổ trợ</h4>
+                    <div className="grid gap-2 md:grid-cols-2">
+                      {ownerCredits.map((credit) => (
+                        <div key={credit.id} className="rounded-md border p-3">
+                          <p className="text-xs text-muted-foreground">
+                            {credit.creditType}
+                          </p>
+                          <p className="text-base font-semibold">{credit.balance}</p>
+                        </div>
+                      ))}
+                      {!ownerCredits.length && (
+                        <p className="text-sm text-muted-foreground">
+                          Chưa có số dư credit.
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        Gói bổ trợ khả dụng
+                      </p>
+                      {servicePackages.map((pkg) => (
+                        <div
+                          key={pkg.id}
+                          className="flex items-center justify-between rounded-md border p-3"
+                        >
+                          <div>
+                            <p className="text-sm font-medium">{pkg.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              +{pkg.creditAmount} {pkg.creditType} -{" "}
+                              {formatCurrency(pkg.price)}
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={purchaseServicePackageMutation.isPending}
+                            onClick={() => handlePurchaseServicePackage(pkg.id)}
+                          >
+                            Mua
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        Lịch sử credit gần đây
+                      </p>
+                      {ownerCreditHistory.slice(0, 5).map((item) => (
+                        <div
+                          key={item.id}
+                          className="grid grid-cols-3 gap-2 rounded-md border p-2 text-xs"
+                        >
+                          <span>{item.transactionType}</span>
+                          <span>{item.amount}</span>
+                          <span>{item.creditType}</span>
+                        </div>
+                      ))}
+                      {!ownerCreditHistory.length && (
+                        <p className="text-xs text-muted-foreground">
+                          Chưa có lịch sử biến động.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

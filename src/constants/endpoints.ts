@@ -28,6 +28,7 @@ export const API_ENDPOINTS = {
   SUBSCRIPTIONS: {
     BASE: "/subscriptions",
     MY: "/subscriptions/my",
+    MY_HISTORY: "/subscriptions/my/history",
     BY_ID: (id: string) => `/subscriptions/${id}`,
     RENEW: (id: string) => `/subscriptions/${id}/renew`,
     CANCEL: (id: string) => `/subscriptions/${id}/cancel`,
@@ -35,6 +36,30 @@ export const API_ENDPOINTS = {
     PLAN_VERSION: (id: string) => `/subscriptions/${id}/plan-version`,
     ENTITLEMENTS: (id: string) => `/subscriptions/${id}/entitlements`,
     USAGE: (id: string) => `/subscriptions/${id}/usage`,
+    PAYMENT_STATUS: (id: string) => `/subscriptions/${id}/payment-status`,
+  },
+  INVOICES: {
+    BASE: "/invoices",
+    MY: "/invoices/my",
+    BY_ID: (id: string) => `/invoices/${id}`,
+    CHECKOUT: (id: string) => `/invoices/${id}/checkout`,
+    VOID: (id: string) => `/invoices/${id}/void`,
+  },
+  TRANSACTIONS: {
+    BY_ID: (id: string) => `/transactions/${id}`,
+  },
+  CREDITS: {
+    MY: "/credits/my",
+    MY_HISTORY: "/credits/my/history",
+    BASE: "/credits",
+  },
+  SERVICE_PACKAGES: {
+    BASE: "/service-packages",
+    BY_ID: (id: string) => `/service-packages/${id}`,
+    ARCHIVE: (id: string) => `/service-packages/${id}/archive`,
+    UNARCHIVE: (id: string) => `/service-packages/${id}/unarchive`,
+    PURCHASE: (id: string) => `/service-packages/${id}/purchase`,
+    PAYMENT_STATUS: (id: string) => `/service-packages/${id}/payment-status`,
   },
   FEATURES: {
     BASE: "/features",
@@ -454,6 +479,11 @@ export const QUERY_KEYS = {
       ...(query !== undefined ? [query] : []),
     ],
     my: () => ["subscriptions", "my"],
+    myHistory: (query?: Record<string, unknown>) => [
+      "subscriptions",
+      "my-history",
+      ...(query !== undefined ? [query] : []),
+    ],
     detail: (id: string) => ["subscriptions", id],
     entitlements: (id: string, query?: Record<string, unknown>) => [
       "subscriptions",
@@ -467,6 +497,36 @@ export const QUERY_KEYS = {
       "usage",
       ...(query !== undefined ? [query] : []),
     ],
+    paymentStatus: (id: string) => ["subscriptions", id, "payment-status"],
+  },
+  invoices: {
+    all: ["invoices"],
+    listMy: (query?: Record<string, unknown>) => [
+      "invoices",
+      "my",
+      ...(query !== undefined ? [query] : []),
+    ],
+    detail: (id: string) => ["invoices", id],
+    transaction: (id: string) => ["transactions", id],
+  },
+  credits: {
+    all: ["credits"],
+    my: () => ["credits", "my"],
+    myHistory: (query?: Record<string, unknown>) => [
+      "credits",
+      "my-history",
+      ...(query !== undefined ? [query] : []),
+    ],
+  },
+  servicePackages: {
+    all: ["service-packages"],
+    list: (query?: Record<string, unknown>) => [
+      "service-packages",
+      "list",
+      ...(query !== undefined ? [query] : []),
+    ],
+    detail: (id: string) => ["service-packages", id],
+    paymentStatus: (id: string) => ["service-packages", id, "payment-status"],
   },
   features: {
     all: ["features"],

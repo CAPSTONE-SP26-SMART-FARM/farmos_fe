@@ -59,6 +59,7 @@ import {
   useAdminUpdateSubscriptionPlan,
   useListSubscriptionPlans,
   useListSubscriptionPlanVersions,
+  useResolveActivePlanVersion,
   useSubscriptionPlanDetail,
 } from "@/queries/useSubscriptionPlan";
 import {
@@ -220,11 +221,10 @@ function SubscriptionPlanManagementPage({ mode }: Props) {
   const createVersionMutation = useAdminCreateSubscriptionPlanVersion();
   const ownerMySubscription = useOwnerMySubscription(!isAdmin);
   const ownerCreateSubscriptionMutation = useOwnerCreateSubscription();
+  const resolveActivePlanVersionMutation = useResolveActivePlanVersion();
 
   const mySubscription = ownerMySubscription.data?.data;
-  const myPlanCode = mySubscription?.plan?.code?.toUpperCase();
-  const canOwnerSubscribe =
-    !isAdmin && (!mySubscription || myPlanCode === "BASE");
+  const canOwnerSubscribe = !isAdmin && !mySubscription;
 
   const ownerPricingPlans = useMemo(
     () =>
@@ -388,11 +388,16 @@ function SubscriptionPlanManagementPage({ mode }: Props) {
     }
 
     try {
-      await ownerCreateSubscriptionMutation.mutateAsync({
-        planId,
+      const activeVersion =
+        await resolveActivePlanVersionMutation.mutateAsync(planId);
+
+      const checkout = await ownerCreateSubscriptionMutation.mutateAsync({
+        planVersionId: activeVersion.id,
       });
       setSelectedPlanId(planId);
-      toast.success("Đăng ký gói thành công.");
+      toast.success(
+        `Tạo đăng ký thành công. Mã hóa đơn: ${checkout.data.invoiceNumber}`,
+      );
     } catch (error) {
       toast.error(getApiErrorMessageVi(error, "Đăng ký gói thất bại."));
     }
@@ -508,9 +513,13 @@ function SubscriptionPlanManagementPage({ mode }: Props) {
                     <Button
                       className="w-full"
                       onClick={() => handleOwnerSubscribePlan(plan.id)}
-                      disabled={ownerCreateSubscriptionMutation.isPending}
+                      disabled={
+                        ownerCreateSubscriptionMutation.isPending ||
+                        resolveActivePlanVersionMutation.isPending
+                      }
                     >
-                      {ownerCreateSubscriptionMutation.isPending
+                      {ownerCreateSubscriptionMutation.isPending ||
+                      resolveActivePlanVersionMutation.isPending
                         ? "Đang đăng ký..."
                         : "Đăng ký gói này"}
                     </Button>
@@ -524,8 +533,8 @@ function SubscriptionPlanManagementPage({ mode }: Props) {
 
                   {!canOwnerSubscribe && !isCurrentPlan && (
                     <p className="text-xs text-muted-foreground">
-                      Bạn đang có gói hiện hành, chỉ có thể đăng ký mới khi chưa
-                      có gói hoặc đang ở gói BASE.
+                      Bạn đang có đăng ký đang hoạt động hoặc chờ xử lý, không
+                      thể tạo đăng ký mới.
                     </p>
                   )}
                 </CardContent>

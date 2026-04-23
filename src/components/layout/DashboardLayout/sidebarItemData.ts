@@ -1,5 +1,6 @@
 import {
   Activity,
+  ReceiptText,
   Cpu,
   Shield,
   LayoutDashboard,
@@ -41,6 +42,11 @@ export const sidebarData: SidebarData = {
       title: "Vòng Đời Đăng Ký",
       url: "/dashboard/admin/subscriptions",
       icon: Package,
+    },
+    {
+      title: "Hóa Đơn",
+      url: "/dashboard/admin/invoices",
+      icon: ReceiptText,
     },
     // {
     //   title: "Đơn Xin Làm Bác Sĩ",
@@ -107,6 +113,16 @@ export const sidebarData: SidebarData = {
       title: "Gói Đăng Ký Của Tôi",
       url: "/dashboard/owner/subscriptions",
       icon: Package,
+    },
+    {
+      title: "Lịch Sử Đăng Ký",
+      url: "/dashboard/owner/subscriptions/history",
+      icon: Package,
+    },
+    {
+      title: "Thanh Toán",
+      url: "/dashboard/owner/payments",
+      icon: ReceiptText,
     },
     // {
     //   title: "Đăng Ký Dịch Vụ",

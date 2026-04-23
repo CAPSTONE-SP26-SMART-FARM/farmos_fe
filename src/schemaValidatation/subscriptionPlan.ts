@@ -103,9 +103,9 @@ export const ListPlansQuerySchema = PagingRequestSchema.extend({
   status: PlanStatusEnum.optional(),
 }).strict();
 
-export const ListPlanVersionsQuerySchema = PagingRequestSchema.extend(
-  {},
-).strict();
+export const ListPlanVersionsQuerySchema = PagingRequestSchema.extend({
+  search: z.string().optional(),
+}).strict();
 
 // ============================================================
 // Response schemas

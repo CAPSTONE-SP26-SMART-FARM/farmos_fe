@@ -4,6 +4,7 @@ import type {
   CreatePlanVersionBodyType,
   ListPlansQueryType,
   ListPlanVersionsQueryType,
+  PlanVersionWithFeaturesResType,
   UpdatePlanBodyType,
 } from "@/schemaValidatation/subscriptionPlan";
 import subscriptionPlanService from "@/services/subscriptionPlanService";
@@ -101,6 +102,30 @@ export const useAdminCreateSubscriptionPlanVersion = () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.subscriptionPlans.detail(variables.planId),
       });
+    },
+  });
+};
+
+export const useResolveActivePlanVersion = () => {
+  return useMutation({
+    mutationFn: async (
+      planId: string,
+    ): Promise<PlanVersionWithFeaturesResType> => {
+      const response = await subscriptionPlanService.listPlanVersions(planId, {
+        page: 1,
+        limit: 100,
+        search: undefined,
+      });
+
+      const activeVersion = response.data.data.find(
+        (version) => version.isActive,
+      );
+
+      if (!activeVersion) {
+        throw new Error("Error.PlanHasNoActiveVersion");
+      }
+
+      return activeVersion;
     },
   });
 };

@@ -43,6 +43,17 @@ export const useOwnerMySubscription = (enabled = true) => {
   });
 };
 
+export const useOwnerSubscriptionHistory = (
+  query: ListSubscriptionsQueryType,
+  enabled = true,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.subscriptions.myHistory(query),
+    queryFn: () => subscriptionService.getMySubscriptionHistory(query),
+    enabled,
+  });
+};
+
 export const useSubscriptionDetail = (id: string, enabled: boolean) => {
   return useQuery({
     queryKey: QUERY_KEYS.subscriptions.detail(id),
@@ -85,6 +96,12 @@ export const useOwnerCreateSubscription = () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.subscriptions.all,
       });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.subscriptions.my(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.invoices.all,
+      });
     },
   });
 };
@@ -97,6 +114,12 @@ export const useOwnerRenewSubscription = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.subscriptions.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.subscriptions.my(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.invoices.all,
       });
     },
   });
@@ -150,6 +173,9 @@ export const useOwnerToggleAutoRenew = () => {
       });
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.subscriptions.detail(variables.id),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.subscriptions.my(),
       });
     },
   });

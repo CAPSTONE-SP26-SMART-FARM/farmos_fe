@@ -6,6 +6,8 @@ import AdminDoctorAssignmentPage from "@/pages/AdminPage/DoctorAssignment/AdminD
 import AdminDoctorPerformancePage from "@/pages/AdminPage/DoctorPerformance/AdminDoctorPerformancePage";
 import AdminFarmsPage from "@/pages/AdminPage/Farms/AdminFarmsPage";
 import AdminIotTemplatesPage from "@/pages/AdminPage/IotTemplates/AdminIotTemplatesPage";
+import AdminInvoiceDetailPage from "@/pages/AdminPage/Invoices/AdminInvoiceDetailPage";
+import AdminInvoicesPage from "@/pages/AdminPage/Invoices/AdminInvoicesPage";
 import AdminIotDevicesPage from "@/pages/AdminPage/IotDevices/AdminIotDevicesPage";
 import AdminCreateIotDevicesPage from "@/pages/AdminPage/IotDevices/AdminCreateIotDevicesPage";
 import AdminIotDeviceDetailPage from "@/pages/AdminPage/IotDevices/AdminIotDeviceDetailPage";
@@ -38,9 +40,12 @@ import OwnerEmployeeTaskTemplatesPage from "@/pages/OwnerPage/EmployeeTaskTempla
 import OwnerIotDevicesPage from "@/pages/OwnerPage/IotDevices/OwnerIotDevicesPage";
 import OwnerSensorReadingPage from "@/pages/OwnerPage/SensorReadings/OwnerSensorReadingPage";
 import OwnerSensorDashboardPage from "@/pages/OwnerPage/SensorDashboard/OwnerSensorDashboardPage";
+import OwnerPaymentsPage from "@/pages/OwnerPage/Payments/OwnerPaymentsPage";
+import OwnerPaymentDetailPage from "@/pages/OwnerPage/Payments/OwnerPaymentDetailPage";
 import OwnerSubscriptionPlansPage from "@/pages/OwnerPage/SubscriptionPlans/OwnerSubscriptionPlansPage";
 import OwnerSubscriptionsPage from "@/pages/OwnerPage/Subscriptions/OwnerSubscriptionsPage";
 import OwnerSubscriptionDetailPage from "@/pages/OwnerPage/Subscriptions/OwnerSubscriptionDetailPage";
+import OwnerSubscriptionHistoryPage from "@/pages/OwnerPage/Subscriptions/OwnerSubscriptionHistoryPage";
 import OwnerPage from "@/pages/OwnerPage/OwnerPage";
 import RegisterPage from "@/pages/RegisterPage/RegisterPage";
 import type { AppRoutes } from "./types";
@@ -102,6 +107,16 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/admin/subscriptions/:subscriptionId",
         component: AdminSubscriptionDetailPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/invoices",
+        component: AdminInvoicesPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/invoices/:invoiceId",
+        component: AdminInvoiceDetailPage,
         allowedRoles: [RoleName.Admin],
       },
       {
@@ -201,8 +216,23 @@ const routes: AppRoutes = [
         allowedRoles: [RoleName.Owner],
       },
       {
+        path: "/dashboard/owner/subscriptions/history",
+        component: OwnerSubscriptionHistoryPage,
+        allowedRoles: [RoleName.Owner],
+      },
+      {
         path: "/dashboard/owner/subscriptions/:subscriptionId",
         component: OwnerSubscriptionDetailPage,
+        allowedRoles: [RoleName.Owner],
+      },
+      {
+        path: "/dashboard/owner/payments",
+        component: OwnerPaymentsPage,
+        allowedRoles: [RoleName.Owner],
+      },
+      {
+        path: "/dashboard/owner/payments/:invoiceId",
+        component: OwnerPaymentDetailPage,
         allowedRoles: [RoleName.Owner],
       },
       {

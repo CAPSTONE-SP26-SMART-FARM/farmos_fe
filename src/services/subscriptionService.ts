@@ -7,8 +7,10 @@ import type {
   ListEntitlementsResType,
   ListSubscriptionsQueryType,
   ListSubscriptionsResType,
+  SubscriptionCheckoutResType,
   ListUsageLedgerResType,
   SubscriptionResType,
+  SubscriptionDetailResType,
   ToggleAutoRenewBodyType,
   UpgradePlanVersionBodyType,
   UsageLedgerQueryType,
@@ -23,19 +25,24 @@ const subscriptionService = {
       `${SUBSCRIPTIONS.BASE}?${queryString.stringify({ ...query })}`,
     ),
 
+  getMySubscriptionHistory: (query: ListSubscriptionsQueryType) =>
+    api.get<ListSubscriptionsResType>(
+      `${SUBSCRIPTIONS.MY_HISTORY}?${queryString.stringify({ ...query })}`,
+    ),
+
   getMySubscription: () => api.get<SubscriptionResType>(SUBSCRIPTIONS.MY),
 
   getSubscriptionDetail: (id: string) =>
-    api.get<SubscriptionResType>(SUBSCRIPTIONS.BY_ID(id)),
+    api.get<SubscriptionDetailResType>(SUBSCRIPTIONS.BY_ID(id)),
 
   createSubscription: (data: CreateSubscriptionBodyType) =>
-    api.post<SubscriptionResType, CreateSubscriptionBodyType>(
+    api.post<SubscriptionCheckoutResType, CreateSubscriptionBodyType>(
       SUBSCRIPTIONS.BASE,
       data,
     ),
 
   renewSubscription: (id: string) =>
-    api.post<SubscriptionResType>(SUBSCRIPTIONS.RENEW(id)),
+    api.post<SubscriptionCheckoutResType>(SUBSCRIPTIONS.RENEW(id)),
 
   cancelSubscription: (id: string, data: CancelSubscriptionBodyType) =>
     api.patch<SubscriptionResType, CancelSubscriptionBodyType>(

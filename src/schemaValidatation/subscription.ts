@@ -1,5 +1,6 @@
 import { PagingRequestSchema, PagingResponseSchema } from "@/types/api";
 import { z } from "zod";
+import { PlanVersionWithFeaturesResSchema } from "./subscriptionPlan";
 
 export const SubscriptionStatusEnum = z.enum([
   "PENDING",
@@ -52,9 +53,31 @@ export const SubscriptionUsageLedgerSchema = z.object({
   createdAt: z.string(),
 });
 
+export const InvoiceStatusEnum = z.enum([
+  "DRAFT",
+  "OPEN",
+  "PAID",
+  "VOID",
+  "UNCOLLECTIBLE",
+]);
+
+export const SubscriptionCheckoutResSchema = z.object({
+  subscription: SubscriptionSchema,
+  invoiceId: z.string().uuid(),
+  invoiceNumber: z.string(),
+  totalAmount: z.number(),
+  invoiceStatus: InvoiceStatusEnum,
+  checkoutRequired: z.boolean(),
+});
+
+export const SubscriptionDetailResSchema = z.object({
+  subscription: SubscriptionSchema,
+  currentPlanVersion: PlanVersionWithFeaturesResSchema,
+});
+
 export const CreateSubscriptionBodySchema = z
   .object({
-    planId: z.string().uuid("PlanId không đúng định dạng UUID"),
+    planVersionId: z.string().uuid("PlanVersionId không đúng định dạng UUID"),
   })
   .strict();
 
@@ -102,6 +125,7 @@ export const ListUsageLedgerResSchema = PagingResponseSchema(
 );
 
 export type SubscriptionStatusType = z.infer<typeof SubscriptionStatusEnum>;
+export type InvoiceStatusType = z.infer<typeof InvoiceStatusEnum>;
 
 export type SubscriptionType = z.infer<typeof SubscriptionSchema>;
 export type SubscriptionResType = z.infer<typeof SubscriptionResSchema>;
@@ -114,6 +138,12 @@ export type SubscriptionUsageLedgerType = z.infer<
 
 export type CreateSubscriptionBodyType = z.infer<
   typeof CreateSubscriptionBodySchema
+>;
+export type SubscriptionCheckoutResType = z.infer<
+  typeof SubscriptionCheckoutResSchema
+>;
+export type SubscriptionDetailResType = z.infer<
+  typeof SubscriptionDetailResSchema
 >;
 export type CancelSubscriptionBodyType = z.infer<
   typeof CancelSubscriptionBodySchema

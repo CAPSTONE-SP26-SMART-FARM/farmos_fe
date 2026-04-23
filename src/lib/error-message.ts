@@ -292,6 +292,21 @@ const BACKEND_ERROR_MAP: Record<string, string> = {
   "subscription plan not found.": "Không tìm thấy gói đăng ký.",
   "plan code already exists.": "Mã gói đăng ký đã tồn tại.",
   "plan version not found.": "Không tìm thấy phiên bản gói.",
+  "error.subscriptionnotfound": "Không tìm thấy đăng ký.",
+  "error.owneralreadyhasactivesubscription":
+    "Chủ trang trại đã có đăng ký đang hoạt động.",
+  "error.planhasnoactiveversion":
+    "Gói đăng ký chưa có phiên bản nào được kích hoạt.",
+  "error.planversionnotactive": "Phiên bản gói chưa được kích hoạt.",
+  "error.subscriptionnotactive":
+    "Đăng ký không hoạt động, không thể thực hiện hành động này.",
+  "error.subscriptionaccessdenied": "Bạn không có quyền truy cập đăng ký này.",
+  "error.subscriptioncannotrenew":
+    "Đăng ký không thể gia hạn với trạng thái hiện tại.",
+  "error.plannotfound": "Không tìm thấy gói đăng ký.",
+  "error.plancodealreadyexists": "Mã gói đăng ký đã tồn tại.",
+  "error.planversionnotfound": "Không tìm thấy phiên bản gói.",
+  "error.invalidfeaturecode": "Mã tính năng không tồn tại trong hệ thống.",
 
   // ── Raw Error.* keys (missing i18n, sent as-is) ──────────────────────
   tasktitleduplicate: "Tiêu đề công việc đã tồn tại trong mốc sản xuất này.",
