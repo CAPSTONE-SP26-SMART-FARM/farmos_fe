@@ -181,13 +181,13 @@ export default function IotDeviceDetail({
 
         {actor === "admin" && (
           <div className="ml-auto flex items-center gap-2">
-            {device.isAssigned ? (
+            {device.owner ? (
               <>
                 <Badge
                   variant="outline"
                   className="gap-1 border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
                 >
-                  Đã gán owner
+                  Đã gán: {device.owner.name}
                   {device.farm ? ` · ${device.farm.name}` : ""}
                 </Badge>
                 <Button
@@ -299,6 +299,18 @@ export default function IotDeviceDetail({
               }
             />
             <InfoRow
+              label="Chủ sở hữu"
+              value={
+                device.owner ? (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                    {device.owner.name}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">Chưa gán owner</span>
+                )
+              }
+            />
+            <InfoRow
               label="Nông trại"
               value={
                 device.farm
@@ -397,25 +409,80 @@ function SubDeviceCard({
     () => DEVICE_TYPE_ICON[device.deviceType] ?? Cpu,
     [device.deviceType],
   );
+  const sMeta = STATUS_META[device.status] ?? STATUS_META.inactive;
+  const SIcon = sMeta.icon;
 
   return (
-    <div className="rounded-lg border p-3">
-      <div className="flex items-center justify-between gap-2">
+    <div className="space-y-3 rounded-lg border bg-background p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <DIcon className="h-4 w-4 text-primary" />
           <span className="font-medium">{device.deviceName}</span>
         </div>
-        <Badge variant="outline">
-          {DEVICE_TYPE_LABEL[device.deviceType] ?? device.deviceType}
-        </Badge>
+        <div className="flex flex-wrap items-center gap-1">
+          <Badge variant="outline">
+            {DEVICE_TYPE_LABEL[device.deviceType] ?? device.deviceType}
+          </Badge>
+          <span
+            className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium ${sMeta.className}`}
+          >
+            <SIcon className="h-3 w-3" />
+            {sMeta.label}
+          </span>
+        </div>
       </div>
-      <div className="mt-2 text-xs text-muted-foreground">
-        {device.macAddress ? (
-          <p className="font-mono">{device.macAddress}</p>
-        ) : (
-          <p>Không có MAC</p>
-        )}
+
+      <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+        <div>
+          <span className="font-medium text-foreground">MAC: </span>
+          {device.macAddress ? (
+            <span className="font-mono">{device.macAddress}</span>
+          ) : (
+            "—"
+          )}
+        </div>
+        <div>
+          <span className="font-medium text-foreground">Cài đặt: </span>
+          {new Date(device.installedAt).toLocaleDateString("vi-VN")}
+        </div>
+        <div>
+          <span className="font-medium text-foreground">Owner: </span>
+          {device.owner ? (
+            <span className="text-emerald-700 dark:text-emerald-300">
+              {device.owner.name}
+            </span>
+          ) : (
+            "Chưa gán"
+          )}
+        </div>
+        <div>
+          <span className="font-medium text-foreground">Nông trại: </span>
+          {device.farm ? `${device.farm.name} (${device.farm.code})` : "—"}
+        </div>
       </div>
+
+      {device.sensors.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Cảm biến ({device.sensors.length})
+          </p>
+          <div className="flex flex-wrap gap-1">
+            {device.sensors.map((s) => (
+              <Badge
+                key={s.id}
+                variant="outline"
+                className="gap-1 text-[10px]"
+                title={`${s.minValue} – ${s.maxValue}`}
+              >
+                {SENSOR_TYPE_LABEL[s.sensorType] ?? s.sensorType}
+                <span className="text-muted-foreground">
+                  · {SENSOR_STATUS_LABEL[s.status] ?? s.status}
+                </span>
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -215,9 +215,12 @@ export default function AdminIotDevicesPage() {
                       <Badge variant="secondary">
                         {DEVICE_STATUS_LABEL[device.status] ?? device.status}
                       </Badge>
-                      {device.isAssigned ? (
-                        <Badge className="border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                          Đã gán owner
+                      {device.owner ? (
+                        <Badge
+                          className="max-w-55 truncate border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                          title={device.owner.name}
+                        >
+                          Đã gán: {device.owner.name}
                         </Badge>
                       ) : (
                         <Badge
@@ -241,7 +244,7 @@ export default function AdminIotDevicesPage() {
                       >
                         Chi tiết
                       </Button>
-                      {device.isAssigned ? (
+                      {device.owner ? (
                         <Button
                           size="sm"
                           variant="outline"

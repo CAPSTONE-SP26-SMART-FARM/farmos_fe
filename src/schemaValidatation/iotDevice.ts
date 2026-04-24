@@ -162,6 +162,11 @@ export const IotDeviceLatestLogSchema = z.object({
   createdAt: z.string(),
 });
 
+export const ProvisionAssignedOwnerSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+});
+
 export const IotDeviceResSchema = z.object({
   id: z.string().uuid(),
   deviceName: z.string(),
@@ -171,7 +176,7 @@ export const IotDeviceResSchema = z.object({
   installedAt: z.string(),
   iotDeviceBoardId: z.string().uuid().nullable(),
   sensorsLockedAt: z.string().nullable().optional(),
-  isAssigned: z.boolean().optional(),
+  owner: ProvisionAssignedOwnerSchema.nullable().optional(),
   latestLog: IotDeviceLatestLogSchema.nullable(),
 });
 

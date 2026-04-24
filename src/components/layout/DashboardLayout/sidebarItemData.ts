@@ -102,16 +102,16 @@ export const sidebarData: SidebarData = {
         },
       ],
     },
-    {
-      label: "Phân tích",
-      items: [
-        {
-          title: "Phân Tích Ticket",
-          url: "/dashboard/admin/ticket-analytics",
-          icon: Ticket,
-        },
-      ],
-    },
+    // {
+    //   label: "Phân tích",
+    //   items: [
+    //     {
+    //       title: "Phân Tích Ticket",
+    //       url: "/dashboard/admin/ticket-analytics",
+    //       icon: Ticket,
+    //     },
+    //   ],
+    // },
     // Legacy doctor-ops items — uncomment if those features return:
     {
       label: "Bác sĩ",
