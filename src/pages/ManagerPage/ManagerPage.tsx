@@ -36,6 +36,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router";
 import type { ZoneType } from "@/types/zone";
 import { format } from "date-fns";
 import { Milestone, MoreVertical, Sprout } from "lucide-react";
+import ManagerDashboardSection from "./Dashboard/ManagerDashboardSection";
 
 type ManagerView = {
   title: string;
@@ -485,6 +486,7 @@ function ManagerPage() {
   const section = getManagerSection(pathname);
   const view = managerViews[section] ?? managerViews.dashboard;
   const isZonesSection = section === "zones";
+  const isDashboardSection = section === "dashboard";
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -505,7 +507,7 @@ function ManagerPage() {
           <h1 className="text-2xl font-bold">{view.title}</h1>
           <p className="text-muted-foreground">{view.description}</p>
         </div>
-        {!isZonesSection && (
+        {!isZonesSection && !isDashboardSection && (
           <div className="flex gap-2">
             <Button variant="outline">Lọc</Button>
             <Button>Tạo mới</Button>
@@ -513,7 +515,9 @@ function ManagerPage() {
         )}
       </div>
 
-      {isZonesSection ? (
+      {isDashboardSection ? (
+        <ManagerDashboardSection />
+      ) : isZonesSection ? (
         <AssignedZonesSection />
       ) : (
         <>

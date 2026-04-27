@@ -415,6 +415,11 @@ export const API_ENDPOINTS = {
         `/ticket/${ticketId}/prescriptions/${prescriptionId}`,
     },
   },
+  DAILY_LOG: {
+    TASKS: "/daily-log/tasks",
+    OWNER_BY_FARM: (farmId: string) => `/daily-log/owner/farm/${farmId}`,
+    MANAGER_BY_ZONE: (zoneId: string) => `/daily-log/manager/zone/${zoneId}`,
+  },
   CROP_SEASON: {
     MANAGER: {
       CREATE: "/crop-seasons",
@@ -971,6 +976,28 @@ export const QUERY_KEYS = {
     list: (query?: Record<string, unknown>) => [
       "alerts",
       "list",
+      ...(query !== undefined ? [query] : []),
+    ],
+  },
+  dailyLogs: {
+    all: ["daily-logs"],
+    tasks: (query?: Record<string, unknown>) => [
+      "daily-logs",
+      "tasks",
+      ...(query !== undefined ? [query] : []),
+    ],
+    ownerByFarm: (farmId: string, query?: Record<string, unknown>) => [
+      "daily-logs",
+      "owner",
+      "farm",
+      farmId,
+      ...(query !== undefined ? [query] : []),
+    ],
+    managerByZone: (zoneId: string, query?: Record<string, unknown>) => [
+      "daily-logs",
+      "manager",
+      "zone",
+      zoneId,
       ...(query !== undefined ? [query] : []),
     ],
   },

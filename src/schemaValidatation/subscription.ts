@@ -16,6 +16,14 @@ export const SubscriptionPlanLiteSchema = z.object({
   name: z.string(),
 });
 
+export const SubscriptionOwnerLiteSchema = z.object({
+  id: z.string().uuid(),
+  fullName: z.string(),
+  email: z.string(),
+  phone: z.string().nullable(),
+  avatarUrl: z.string().nullable(),
+});
+
 export const SubscriptionSchema = z.object({
   id: z.string().uuid(),
   ownerId: z.string().uuid(),
@@ -30,6 +38,7 @@ export const SubscriptionSchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
   plan: SubscriptionPlanLiteSchema.optional(),
+  owner: SubscriptionOwnerLiteSchema.optional(),
 });
 
 export const SubscriptionEntitlementSchema = z.object({

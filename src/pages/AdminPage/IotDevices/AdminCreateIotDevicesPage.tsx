@@ -22,7 +22,7 @@ export default function AdminCreateIotDevicesPage() {
           </p>
         </div>
       </section>
-
+      {/* 
       <Card>
         <CardHeader>
           <CardTitle>Nông trại (không bắt buộc)</CardTitle>
@@ -34,7 +34,7 @@ export default function AdminCreateIotDevicesPage() {
             onChange={(e) => setFarmId(e.target.value)}
           />
         </CardContent>
-      </Card>
+      </Card> */}
 
       <IotDeviceForm
         farmId={farmId}

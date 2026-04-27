@@ -257,7 +257,6 @@ function AdminSubscriptionPlansListPage() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
       <section className="relative overflow-hidden rounded-2xl border bg-card p-5 shadow-sm md:p-6">
-        <div className="pointer-events-none absolute inset-0 bg-primary/5" />
         <div className="relative flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <Badge className="mb-2 flex w-fit items-center gap-1">

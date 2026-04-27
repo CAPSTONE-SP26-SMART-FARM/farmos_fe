@@ -34,11 +34,13 @@ import ManagerMilestoneOverviewPage from "@/pages/ManagerPage/CropSeasons/Manage
 import ManagerProductionMilestonesPage from "@/pages/ManagerPage/CropSeasons/ManagerProductionMilestonesPage";
 import ManagerEmployeeTaskTemplatesPage from "@/pages/ManagerPage/EmployeeTaskTemplates/ManagerEmployeeTaskTemplatesPage";
 import ManagerIotDevicesPage from "@/pages/ManagerPage/IotDevices/ManagerIotDevicesPage";
+import ManagerDailyLogsPage from "@/pages/ManagerPage/DailyLogs/ManagerDailyLogsPage";
 import ManagerSensorReadingPage from "@/pages/ManagerPage/SensorReadings/ManagerSensorReadingPage";
 import ManagerSensorDashboardPage from "@/pages/ManagerPage/SensorDashboard/ManagerSensorDashboardPage";
 import OwnerCropSeasonsPage from "@/pages/OwnerPage/CropSeasons/OwnerCropSeasonsPage";
 import OwnerEmployeeTaskTemplatesPage from "@/pages/OwnerPage/EmployeeTaskTemplates/OwnerEmployeeTaskTemplatesPage";
 import OwnerIotDevicesPage from "@/pages/OwnerPage/IotDevices/OwnerIotDevicesPage";
+import OwnerDailyLogsPage from "@/pages/OwnerPage/DailyLogs/OwnerDailyLogsPage";
 import OwnerSensorReadingPage from "@/pages/OwnerPage/SensorReadings/OwnerSensorReadingPage";
 import OwnerSensorDashboardPage from "@/pages/OwnerPage/SensorDashboard/OwnerSensorDashboardPage";
 import OwnerPaymentsPage from "@/pages/OwnerPage/Payments/OwnerPaymentsPage";
@@ -289,6 +291,11 @@ const routes: AppRoutes = [
         allowedRoles: [RoleName.Owner],
       },
       {
+        path: "/dashboard/owner/daily-logs",
+        component: OwnerDailyLogsPage,
+        allowedRoles: [RoleName.Owner],
+      },
+      {
         path: "/dashboard/owner/*",
         component: OwnerPage,
         allowedRoles: [RoleName.Owner],
@@ -357,6 +364,11 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/manager/tickets",
         component: ManagerTicketsPage,
+        allowedRoles: [RoleName.Manager],
+      },
+      {
+        path: "/dashboard/manager/daily-logs",
+        component: ManagerDailyLogsPage,
         allowedRoles: [RoleName.Manager],
       },
       {

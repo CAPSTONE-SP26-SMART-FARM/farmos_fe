@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Map,
   Milestone,
+  NotebookPen,
   Package,
   ReceiptText,
   Settings,
@@ -102,16 +103,16 @@ export const sidebarData: SidebarData = {
         },
       ],
     },
-    // {
-    //   label: "Phân tích",
-    //   items: [
-    //     {
-    //       title: "Phân Tích Ticket",
-    //       url: "/dashboard/admin/ticket-analytics",
-    //       icon: Ticket,
-    //     },
-    //   ],
-    // },
+    {
+      label: "Phân tích",
+      items: [
+        {
+          title: "Phân Tích Ticket",
+          url: "/dashboard/admin/ticket-analytics",
+          icon: Ticket,
+        },
+      ],
+    },
     // Legacy doctor-ops items — uncomment if those features return:
     {
       label: "Bác sĩ",
@@ -214,6 +215,11 @@ export const sidebarData: SidebarData = {
           icon: ClipboardList,
         },
         {
+          title: "Nhật Ký Công Việc",
+          url: "/dashboard/owner/daily-logs",
+          icon: NotebookPen,
+        },
+        {
           title: "Thiết Bị IoT",
           url: "/dashboard/owner/iot-devices",
           icon: Cpu,
@@ -269,6 +275,11 @@ export const sidebarData: SidebarData = {
           title: "Cột Mốc Sản Xuất",
           url: "/dashboard/manager/milestones",
           icon: Milestone,
+        },
+        {
+          title: "Nhật Ký Công Việc",
+          url: "/dashboard/manager/daily-logs",
+          icon: NotebookPen,
         },
       ],
     },

@@ -21,9 +21,9 @@ import ZoneDetailPanel from "./components/ZoneDetailPanel";
 import ZoneListSection from "./components/ZoneListSection";
 
 const ZONE_SUMMARY_CARDS = [
-  { title: "Tổng khu vực", value: "--", icon: Layers },
-  { title: "Canh tác", value: "--", icon: Sprout },
-  { title: "Tổng diện tích", value: "--", icon: MapPin },
+  // { title: "Tổng khu vực", value: "--", icon: Layers },
+  // { title: "Canh tác", value: "--", icon: Sprout },
+  // { title: "Tổng diện tích", value: "--", icon: MapPin },
 ] as const;
 
 function OwnerZonePage() {
@@ -132,7 +132,7 @@ function OwnerZonePage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {/* <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {ZONE_SUMMARY_CARDS.map((card) => (
           <Card key={card.title}>
             <CardHeader className="pb-2">
@@ -149,7 +149,7 @@ function OwnerZonePage() {
             </CardContent>
           </Card>
         ))}
-      </div>
+      </div> */}
 
       {isLoading ? (
         <Card>

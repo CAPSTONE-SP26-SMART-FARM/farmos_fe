@@ -102,12 +102,19 @@ function toFormState(feature: FeatureMenuType): FormState {
 }
 
 export default function AdminFeaturesPage() {
-  const [query, setQuery] = useState<ListFeaturesQueryType>({ page: 1, limit: 10 });
+  const [query, setQuery] = useState<ListFeaturesQueryType>({
+    page: 1,
+    limit: 10,
+  });
   const [search, setSearch] = useState("");
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
-  const [editingFeatureCode, setEditingFeatureCode] = useState<string | null>(null);
+  const [editingFeatureCode, setEditingFeatureCode] = useState<string | null>(
+    null,
+  );
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [deletingFeatureCode, setDeletingFeatureCode] = useState<string | null>(null);
+  const [deletingFeatureCode, setDeletingFeatureCode] = useState<string | null>(
+    null,
+  );
 
   const debouncedSearch = useDebounce(search, 500);
 
@@ -205,9 +212,12 @@ export default function AdminFeaturesPage() {
           <div className="relative flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <Badge className="mb-2">Cổng quản trị</Badge>
-              <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Feature Menu</h1>
+              <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+                Feature Menu
+              </h1>
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
-                Quản lý danh mục feature dùng để cấu hình quyền lợi theo gói dịch vụ.
+                Quản lý danh mục feature dùng để cấu hình quyền lợi theo gói
+                dịch vụ.
               </p>
             </div>
             <Badge variant="secondary">Tổng: {meta?.totalItems ?? 0}</Badge>
@@ -219,12 +229,14 @@ export default function AdminFeaturesPage() {
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <CardTitle>Danh sách feature</CardTitle>
-                <CardDescription>Quản lý feature theo đúng CRUD của admin.</CardDescription>
+                <CardDescription>
+                  Quản lý feature theo đúng CRUD của admin.
+                </CardDescription>
               </div>
-              <Button onClick={onCreate}>
+              {/* <Button onClick={onCreate}>
                 <Plus className="mr-2 h-4 w-4" />
                 Tạo feature
-              </Button>
+              </Button> */}
             </div>
             <div className="grid gap-3 md:grid-cols-[1fr_140px]">
               <div className="relative">
@@ -242,7 +254,11 @@ export default function AdminFeaturesPage() {
               <Select
                 value={String(query.limit ?? 10)}
                 onValueChange={(value) =>
-                  setQuery((prev) => ({ ...prev, page: 1, limit: Number(value) }))
+                  setQuery((prev) => ({
+                    ...prev,
+                    page: 1,
+                    limit: Number(value),
+                  }))
                 }
               >
                 <SelectTrigger className="w-full">
@@ -271,21 +287,29 @@ export default function AdminFeaturesPage() {
               <TableBody>
                 {listQuery.isLoading && (
                   <TableRow>
-                    <TableCell colSpan={6} className="py-6 text-center text-muted-foreground">
+                    <TableCell
+                      colSpan={6}
+                      className="py-6 text-center text-muted-foreground"
+                    >
                       Đang tải dữ liệu...
                     </TableCell>
                   </TableRow>
                 )}
                 {!listQuery.isLoading && features.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="py-6 text-center text-muted-foreground">
+                    <TableCell
+                      colSpan={6}
+                      className="py-6 text-center text-muted-foreground"
+                    >
                       Không có feature phù hợp bộ lọc.
                     </TableCell>
                   </TableRow>
                 )}
                 {features.map((feature) => (
                   <TableRow key={feature.code}>
-                    <TableCell className="font-medium">{feature.code}</TableCell>
+                    <TableCell className="font-medium">
+                      {feature.code}
+                    </TableCell>
                     <TableCell>
                       <p className="font-medium">{feature.name}</p>
                       <p className="text-xs text-muted-foreground">
@@ -299,17 +323,21 @@ export default function AdminFeaturesPage() {
                     <TableCell>{feature.unit ?? "-"}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button size="sm" variant="outline" onClick={() => onEdit(feature)}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onEdit(feature)}
+                        >
                           Sửa
                         </Button>
-                        <Button
+                        {/* <Button
                           size="sm"
                           variant="destructive"
                           onClick={() => setDeletingFeatureCode(feature.code)}
                         >
                           <Trash2 className="mr-1.5 h-3.5 w-3.5" />
                           Xóa
-                        </Button>
+                        </Button> */}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -326,7 +354,10 @@ export default function AdminFeaturesPage() {
                   size="sm"
                   disabled={!meta?.hasPreviousPage || listQuery.isFetching}
                   onClick={() =>
-                    setQuery((prev) => ({ ...prev, page: Math.max((prev.page ?? 1) - 1, 1) }))
+                    setQuery((prev) => ({
+                      ...prev,
+                      page: Math.max((prev.page ?? 1) - 1, 1),
+                    }))
                   }
                 >
                   Trang trước
@@ -335,7 +366,12 @@ export default function AdminFeaturesPage() {
                   variant="outline"
                   size="sm"
                   disabled={!meta?.hasNextPage || listQuery.isFetching}
-                  onClick={() => setQuery((prev) => ({ ...prev, page: (prev.page ?? 1) + 1 }))}
+                  onClick={() =>
+                    setQuery((prev) => ({
+                      ...prev,
+                      page: (prev.page ?? 1) + 1,
+                    }))
+                  }
                 >
                   Trang sau
                 </Button>
@@ -362,7 +398,9 @@ export default function AdminFeaturesPage() {
               {editingFeatureCode ? "Cập nhật feature" : "Tạo feature mới"}
             </DialogTitle>
             <DialogDescription>
-              {editingFeatureCode ? "PATCH /features/{featureCode}" : "POST /features"}
+              {editingFeatureCode
+                ? "PATCH /features/{featureCode}"
+                : "POST /features"}
             </DialogDescription>
           </DialogHeader>
 
@@ -373,7 +411,9 @@ export default function AdminFeaturesPage() {
                 id="feature-code"
                 value={form.code}
                 disabled={Boolean(editingFeatureCode)}
-                onChange={(event) => setForm((prev) => ({ ...prev, code: event.target.value }))}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, code: event.target.value }))
+                }
                 placeholder="VD: max_farm_count"
               />
             </div>
@@ -382,7 +422,9 @@ export default function AdminFeaturesPage() {
               <Input
                 id="feature-name"
                 value={form.name}
-                onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, name: event.target.value }))
+                }
                 placeholder="VD: Số trang trại tối đa"
               />
             </div>
@@ -416,7 +458,10 @@ export default function AdminFeaturesPage() {
                 id="feature-default"
                 value={form.defaultValue}
                 onChange={(event) =>
-                  setForm((prev) => ({ ...prev, defaultValue: event.target.value }))
+                  setForm((prev) => ({
+                    ...prev,
+                    defaultValue: event.target.value,
+                  }))
                 }
                 placeholder="VD: 10"
               />
@@ -426,7 +471,9 @@ export default function AdminFeaturesPage() {
               <Input
                 id="feature-unit"
                 value={form.unit}
-                onChange={(event) => setForm((prev) => ({ ...prev, unit: event.target.value }))}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, unit: event.target.value }))
+                }
                 placeholder="VD: farm"
               />
             </div>
@@ -436,7 +483,10 @@ export default function AdminFeaturesPage() {
                 id="feature-description"
                 value={form.description}
                 onChange={(event) =>
-                  setForm((prev) => ({ ...prev, description: event.target.value }))
+                  setForm((prev) => ({
+                    ...prev,
+                    description: event.target.value,
+                  }))
                 }
                 rows={3}
               />
@@ -454,8 +504,13 @@ export default function AdminFeaturesPage() {
             >
               Hủy
             </Button>
-            <Button onClick={onSubmit} disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button
+              onClick={onSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
               {editingFeatureCode ? "Lưu thay đổi" : "Tạo feature"}
             </Button>
           </DialogFooter>

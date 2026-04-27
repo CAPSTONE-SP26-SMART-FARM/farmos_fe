@@ -141,7 +141,7 @@ const FarmDetailPanel = ({ id, onBack }: FarmDetailPanelProps) => {
 
                 <Separator />
 
-                <div className="grid grid-cols-2 gap-3">
+                {/* <div className="grid grid-cols-2 gap-3">
                   <InfoRow
                     label="Vĩ độ"
                     value={farm.latitude}
@@ -150,7 +150,7 @@ const FarmDetailPanel = ({ id, onBack }: FarmDetailPanelProps) => {
                     label="Kinh độ"
                     value={farm.longitude}
                   />
-                </div>
+                </div> */}
 
                 <div className="grid grid-cols-2 gap-3">
                   <InfoRow

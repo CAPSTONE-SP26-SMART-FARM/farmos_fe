@@ -86,7 +86,6 @@ function AdminSubscriptionsWorkspace() {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       <section className="relative overflow-hidden rounded-2xl border bg-card p-5 shadow-sm md:p-6">
-        <div className="pointer-events-none absolute inset-0 bg-primary/5" />
         <div className="relative flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
             <Badge className="mb-2 flex w-fit items-center gap-1">
@@ -213,8 +212,21 @@ function AdminSubscriptionsWorkspace() {
                         <TableCell className="font-mono text-xs">
                           {sub.id.slice(0, 8)}…
                         </TableCell>
-                        <TableCell className="font-mono text-xs">
-                          {sub.ownerId.slice(0, 8)}…
+                        <TableCell>
+                          {sub.owner ? (
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium">
+                                {sub.owner.fullName}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {sub.owner.email}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="font-mono text-xs">
+                              {sub.ownerId.slice(0, 8)}…
+                            </span>
+                          )}
                         </TableCell>
                         <TableCell>
                           {sub.plan?.name ?? sub.planId.slice(0, 8)}
@@ -226,7 +238,9 @@ function AdminSubscriptionsWorkspace() {
                           {formatDateVi(sub.expiresAt)}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={sub.autoRenew ? "default" : "outline"}>
+                          <Badge
+                            variant={sub.autoRenew ? "default" : "outline"}
+                          >
                             {sub.autoRenew ? "Bật" : "Tắt"}
                           </Badge>
                         </TableCell>

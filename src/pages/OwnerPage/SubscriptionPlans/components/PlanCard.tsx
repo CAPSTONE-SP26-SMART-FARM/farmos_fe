@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -54,7 +55,10 @@ function PlanCard({
   const activeVersion = versionsQuery.data?.data?.data?.find((v) => v.isActive);
   const features = activeVersion?.features ?? [];
   const previewFeatures = features.slice(0, FEATURE_PREVIEW_LIMIT);
-  const extraFeatureCount = Math.max(0, features.length - previewFeatures.length);
+  const extraFeatureCount = Math.max(
+    0,
+    features.length - previewFeatures.length,
+  );
 
   return (
     <Card
@@ -93,10 +97,9 @@ function PlanCard({
           </p>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 flex-1">
         <p className="min-h-12 text-sm text-muted-foreground">
-          {plan.description ||
-            "Gói tiêu chuẩn cho nhu cầu vận hành nông trại."}
+          {plan.description || "Gói tiêu chuẩn cho nhu cầu vận hành nông trại."}
         </p>
 
         <div className="space-y-2 border-t pt-3">
@@ -136,7 +139,9 @@ function PlanCard({
             </ul>
           )}
         </div>
+      </CardContent>
 
+      <CardFooter>
         {isCurrent ? (
           <p className="text-xs font-medium text-primary">
             Đây là gói bạn đang sử dụng.
@@ -156,14 +161,14 @@ function PlanCard({
           </div>
         ) : (
           <Button
-            className="w-full"
+            className="w-full justify-self-end"
             onClick={() => onSubscribe?.(plan)}
             disabled={subscribePending}
           >
             {subscribePending ? "Đang xử lý..." : ctaLabel}
           </Button>
         )}
-      </CardContent>
+      </CardFooter>
     </Card>
   );
 }

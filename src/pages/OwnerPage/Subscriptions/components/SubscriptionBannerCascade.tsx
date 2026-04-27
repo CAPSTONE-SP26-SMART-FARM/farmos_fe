@@ -46,7 +46,10 @@ function SubscriptionBannerCascade({
   if (subscription.status === "EXPIRED") {
     const daysAgo = subscription.expiresAt
       ? Math.abs(
-          differenceInCalendarDays(new Date(subscription.expiresAt), new Date()),
+          differenceInCalendarDays(
+            new Date(subscription.expiresAt),
+            new Date(),
+          ),
         )
       : 0;
     return (

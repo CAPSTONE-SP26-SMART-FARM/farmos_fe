@@ -12,9 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import useDebounce from "@/hooks/useDebounce";
 import { getApiErrorMessageVi } from "@/lib/error-message";
-import {
-  useListSubscriptionPlans,
-} from "@/queries/useSubscriptionPlan";
+import { useListSubscriptionPlans } from "@/queries/useSubscriptionPlan";
 import { useOwnerMySubscription } from "@/queries/useSubscription";
 import type {
   ListPlansQueryType,
@@ -65,7 +63,6 @@ function OwnerSubscriptionPlansPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       <section className="relative overflow-hidden rounded-2xl border bg-card p-5 shadow-sm md:p-6">
-        <div className="pointer-events-none absolute inset-0 bg-primary/5" />
         <div className="relative flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <Badge className="mb-2 flex w-fit items-center gap-1">
@@ -163,8 +160,7 @@ function OwnerSubscriptionPlansPage() {
         <Card>
           <CardContent className="flex flex-col items-start gap-2 py-4 text-sm md:flex-row md:items-center md:justify-between">
             <p className="text-muted-foreground">
-              Bạn đang có gói đăng ký. Muốn đổi gói? Hãy huỷ gói hiện tại
-              trước.
+              Bạn đang có gói đăng ký. Muốn đổi gói? Hãy huỷ gói hiện tại trước.
             </p>
             <button
               type="button"

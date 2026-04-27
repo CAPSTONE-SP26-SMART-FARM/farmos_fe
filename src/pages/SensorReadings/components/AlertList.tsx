@@ -246,7 +246,7 @@ export default memo(function AlertList() {
   const [selected, setSelected] = useState<AlertResType | null>(null);
 
   const { data, isLoading, isFetching } = useListAlerts({ page: 1, limit: 8 });
-  const alerts = data?.data ?? [];
+  const alerts = useMemo<AlertResType[]>(() => data?.data ?? [], [data]);
 
   // Toast on new unresolved alerts (compare IDs between refetches). Skip the
   // very first load so we do not spam the user with backlog notifications on
@@ -301,16 +301,30 @@ export default memo(function AlertList() {
         counts[a.severity] += 1;
       }
     }
-    active.sort((a, b) => {
-      const ra = SEVERITY_META[a.severity].rank;
-      const rb = SEVERITY_META[b.severity].rank;
-      if (rb !== ra) return rb - ra;
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
+    // Sort chronologically (oldest first) so existing cards keep their
+    // position when a new alert arrives — new ones append at the bottom
+    // instead of jumping to the top and shifting everything else down.
+    active.sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
     return { activeAlerts: active, severityCounts: counts };
   }, [alerts]);
 
-  const visibleAlerts = filter === "active" ? activeAlerts : alerts;
+  // For the "all" tab, also sort chronologically ascending so the position
+  // of existing cards is preserved when a new alert (resolved or not)
+  // arrives. Active tab already uses the chronologically-sorted memo above.
+  const allAlertsChronological = useMemo(
+    () =>
+      [...alerts].sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      ),
+    [alerts],
+  );
+
+  const visibleAlerts =
+    filter === "active" ? activeAlerts : allAlertsChronological;
   const activeCount = activeAlerts.length;
   const hasCritical = severityCounts.critical > 0;
 

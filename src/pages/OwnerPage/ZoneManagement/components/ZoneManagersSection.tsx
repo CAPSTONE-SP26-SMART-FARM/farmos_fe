@@ -171,7 +171,6 @@ export default function ZoneManagersSection({
               <TableRow>
                 <TableHead>Quản lý</TableHead>
                 <TableHead>Trạng thái</TableHead>
-                <TableHead>Vai trò</TableHead>
                 <TableHead>Ngày phân công</TableHead>
                 <TableHead className="w-12.5"></TableHead>
               </TableRow>
@@ -220,7 +219,6 @@ export default function ZoneManagersSection({
                 <TableRow>
                   <TableHead>Quản lý</TableHead>
                   <TableHead>Trạng thái</TableHead>
-                  <TableHead>Vai trò</TableHead>
                   <TableHead>Ngày phân công</TableHead>
                   <TableHead className="w-12.5"></TableHead>
                 </TableRow>
@@ -230,9 +228,6 @@ export default function ZoneManagersSection({
                   <TableRow key={m.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {m.isPrimary && (
-                          <Crown className="h-4 w-4 text-yellow-500" />
-                        )}
                         <div>
                           <p className="font-medium">{m.user.fullName}</p>
                           <p className="text-xs text-muted-foreground">
@@ -251,18 +246,6 @@ export default function ZoneManagersSection({
                         {USER_STATUS_LABELS[m.user.status.toLowerCase()] ??
                           m.user.status.toLowerCase()}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1.5">
-                        {m.isPrimary ? (
-                          <Badge className="gap-1">
-                            <Crown className="h-3 w-3" />
-                            Chính
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary">Thành viên</Badge>
-                        )}
-                      </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {format(new Date(m.assignedAt), "dd/MM/yyyy")}

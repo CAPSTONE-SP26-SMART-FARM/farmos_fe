@@ -12,6 +12,7 @@ import FarmManagement from "./FarmManagement/FarmManagement";
 import OwnerCropSeasonsPage from "./CropSeasons/OwnerCropSeasonsPage";
 import OwnerFarmMemberPage from "./FarmMember/OwnerFarmMemberPage";
 import OwnerZonePage from "./ZoneManagement/OwnerZonePage";
+import OwnerDashboardSection from "./Dashboard/OwnerDashboardSection";
 
 type OwnerView = {
   title: string;
@@ -136,6 +137,7 @@ function OwnerPage() {
   }
 
   const view = ownerViews[section] ?? ownerViews.dashboard;
+  const isDashboardSection = section === "dashboard";
 
   return (
     <div className="space-y-6">
@@ -145,40 +147,48 @@ function OwnerPage() {
           <h1 className="text-2xl font-bold">{view.title}</h1>
           <p className="text-muted-foreground">{view.description}</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline">Xuất báo cáo</Button>
-          <Button>Tạo mới</Button>
-        </div>
+        {!isDashboardSection && (
+          <div className="flex gap-2">
+            <Button variant="outline">Xuất báo cáo</Button>
+            <Button>Tạo mới</Button>
+          </div>
+        )}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {view.highlights.map((item) => (
-          <Card key={item}>
-            <CardHeader className="pb-2">
-              <CardDescription>{item}</CardDescription>
-              <CardTitle className="text-2xl">--</CardTitle>
+      {isDashboardSection ? (
+        <OwnerDashboardSection />
+      ) : (
+        <>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {view.highlights.map((item) => (
+              <Card key={item}>
+                <CardHeader className="pb-2">
+                  <CardDescription>{item}</CardDescription>
+                  <CardTitle className="text-2xl">--</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs text-muted-foreground">
+                    Khối hiển thị tạm cho chỉ số của chủ trang trại.
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Khu vực làm việc</CardTitle>
+              <CardDescription>
+                Màn hình `{section}` đã sẵn route và khung bố cục để nối dữ
+                liệu thật.
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">
-                Khối hiển thị tạm cho chỉ số của chủ trang trại.
-              </p>
+            <CardContent className="text-sm text-muted-foreground">
+              Phần table/chart/filter sẽ bổ sung theo backlog API của Owner.
             </CardContent>
           </Card>
-        ))}
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Khu vực làm việc</CardTitle>
-          <CardDescription>
-            Màn hình `{section}` đã sẵn route và khung bố cục để nối dữ liệu
-            thật.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          Phần table/chart/filter sẽ bổ sung theo backlog API của Owner.
-        </CardContent>
-      </Card>
+        </>
+      )}
     </div>
   );
 }

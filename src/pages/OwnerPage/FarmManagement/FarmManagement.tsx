@@ -21,6 +21,10 @@ import EditZonePanel from "./EditZonePanel";
 import UpdateFarmForm from "./UpdateFarmForm";
 import ZoneListSection from "./ZoneListSection";
 
+const FARM_TYPE_LABELS: Record<FarmResType["farmType"], string> = {
+  cultivation: "Canh tác",
+};
+
 const FarmInfoRow = ({
   label,
   value,
@@ -45,7 +49,7 @@ const FarmDetailCard = ({ farm }: { farm: FarmResType }) => (
           </CardTitle>
           <CardDescription>Mã: {farm.code}</CardDescription>
         </div>
-        <Badge className="capitalize">{farm.farmType}</Badge>
+        <Badge>{FARM_TYPE_LABELS[farm.farmType]}</Badge>
       </div>
     </CardHeader>
     <CardContent className="space-y-4">
@@ -56,7 +60,7 @@ const FarmDetailCard = ({ farm }: { farm: FarmResType }) => (
         />
         <FarmInfoRow
           label="Loại nông trại"
-          value={farm.farmType}
+          value={FARM_TYPE_LABELS[farm.farmType]}
         />
         <FarmInfoRow
           label="Địa chỉ"
@@ -198,8 +202,8 @@ function FarmManagement() {
                   <Building2 className="h-4 w-4" />
                   Loại nông trại
                 </CardDescription>
-                <CardTitle className="text-2xl capitalize">
-                  {farm.farmType}
+                <CardTitle className="text-2xl">
+                  {FARM_TYPE_LABELS[farm.farmType]}
                 </CardTitle>
               </CardHeader>
             </Card>

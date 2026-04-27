@@ -15,10 +15,10 @@ createRoot(document.getElementById("root")!).render(
     storageKey="vite-ui-theme"
   >
     <QueryClientProvider client={queryClient}>
-      <ReactQueryDevtools initialIsOpen={false} />
+      {/* <ReactQueryDevtools initialIsOpen={false} /> */}
       <BrowserRouter>
         <App />
-        <Toaster position="top-right"/>
+        <Toaster position="top-right" />
         <RefreshToken />
       </BrowserRouter>
     </QueryClientProvider>
