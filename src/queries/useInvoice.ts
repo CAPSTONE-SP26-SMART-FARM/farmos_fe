@@ -22,7 +22,7 @@ export const useAdminInvoices = (
   enabled = true,
 ) => {
   return useQuery({
-    queryKey: [...QUERY_KEYS.invoices.listMy(query), "admin"],
+    queryKey: QUERY_KEYS.invoices.listAdmin(query),
     queryFn: () => invoiceService.listAllInvoices(query),
     enabled,
   });

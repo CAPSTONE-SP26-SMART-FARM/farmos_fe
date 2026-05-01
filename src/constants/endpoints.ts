@@ -520,6 +520,11 @@ export const QUERY_KEYS = {
       "my",
       ...(query !== undefined ? [query] : []),
     ],
+    listAdmin: (query?: Record<string, unknown>) => [
+      "invoices",
+      "admin",
+      ...(query !== undefined ? [query] : []),
+    ],
     detail: (id: string) => ["invoices", id],
     transaction: (id: string) => ["transactions", id],
   },

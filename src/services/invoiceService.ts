@@ -4,6 +4,7 @@ import type {
   CheckoutBodyType,
   CheckoutResType,
   InvoiceDetailResType,
+  ListInvoicesAdminResType,
   ListInvoicesQueryType,
   ListInvoicesResType,
   PaymentStatusResType,
@@ -17,13 +18,19 @@ const SUBSCRIPTIONS = API_ENDPOINTS.SUBSCRIPTIONS;
 
 const invoiceService = {
   listAllInvoices: (query: ListInvoicesQueryType) =>
-    api.get<ListInvoicesResType>(
-      `${INVOICES.BASE}?${queryString.stringify({ ...query })}`,
+    api.get<ListInvoicesAdminResType>(
+      `${INVOICES.BASE}?${queryString.stringify(query, {
+        skipNull: true,
+        skipEmptyString: true,
+      })}`,
     ),
 
   listMyInvoices: (query: ListInvoicesQueryType) =>
     api.get<ListInvoicesResType>(
-      `${INVOICES.MY}?${queryString.stringify({ ...query })}`,
+      `${INVOICES.MY}?${queryString.stringify(query, {
+        skipNull: true,
+        skipEmptyString: true,
+      })}`,
     ),
 
   getInvoiceDetail: (id: string) =>
