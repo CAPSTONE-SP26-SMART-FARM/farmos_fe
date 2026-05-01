@@ -63,7 +63,6 @@ import {
   useSubscriptionPaymentStatus,
 } from "@/queries/useInvoice";
 import {
-  useAdminForceUpgradePlanVersion,
   useAdminListSubscriptions,
   useOwnerMySubscription,
   useOwnerRenewSubscription,
@@ -79,7 +78,6 @@ import {
   type ListSubscriptionsQueryType,
   type SubscriptionStatusType,
   ToggleAutoRenewBodySchema,
-  UpgradePlanVersionBodySchema,
   type UsageLedgerQueryType,
 } from "@/schemaValidatation/subscription";
 import type { ListInvoicesQueryType } from "@/schemaValidatation/invoice";
@@ -91,12 +89,20 @@ import {
   ArrowLeft,
   CircleSlash,
   ListChecks,
+  MoreVertical,
   RefreshCw,
-  RotateCcw,
   Shield,
   Sparkle,
   User,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type PageMode = "admin" | "owner";
 
@@ -166,7 +172,7 @@ function SubscriptionLifecyclePanel({
     initialSubscriptionId ?? "",
   );
   const shouldFetchDetail =
-    !isAdmin && detailOnly && Boolean(selectedSubscriptionId);
+    detailOnly && Boolean(selectedSubscriptionId);
   const shouldFetchOwnerPanels = !isAdmin && Boolean(selectedSubscriptionId);
 
   const [entitlementQuery, setEntitlementQuery] =
@@ -184,7 +190,6 @@ function SubscriptionLifecyclePanel({
   });
 
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
-  const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = useState(false);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState("");
   const [invoiceQuery] = useState<ListInvoicesQueryType>({
     page: 1,
@@ -294,7 +299,6 @@ function SubscriptionLifecyclePanel({
   const renewSubscriptionMutation = useOwnerRenewSubscription();
   const cancelSubscriptionMutation = useSubscriptionCancel();
   const toggleAutoRenewMutation = useOwnerToggleAutoRenew();
-  const forceUpgradeMutation = useAdminForceUpgradePlanVersion();
   const invoicesQuery = useOwnerInvoices(
     {
       ...invoiceQuery,
@@ -326,26 +330,18 @@ function SubscriptionLifecyclePanel({
     },
   });
 
-  const upgradeForm = useForm({
-    resolver: zodResolver(UpgradePlanVersionBodySchema),
-    defaultValues: {
-      planVersionId: "",
-    },
-  });
-
   useClearServerFieldErrors(cancelForm);
   useClearServerFieldErrors(toggleAutoRenewForm);
-  useClearServerFieldErrors(upgradeForm);
 
   const selectedSubscriptionFromList = subscriptions.find(
     (item) => item.id === selectedSubscriptionId,
   );
-  const ownerDetailResponse = selectedSubscriptionDetail.data?.data;
+  const subscriptionDetailResponse = selectedSubscriptionDetail.data?.data;
   const detail =
     !isAdmin && !detailOnly
       ? ownerMySubscription.data?.data
-      : !isAdmin
-        ? ownerDetailResponse?.subscription
+      : detailOnly
+        ? subscriptionDetailResponse?.subscription
         : selectedSubscriptionFromList;
   const isDetailLoading =
     !isAdmin && !detailOnly
@@ -445,30 +441,6 @@ function SubscriptionLifecyclePanel({
         return;
       }
       toast.error(getApiErrorMessageVi(error, "Hủy đăng ký thất bại."));
-    }
-  };
-
-  const handleForceUpgrade = async (values: { planVersionId: string }) => {
-    if (!selectedSubscriptionId) return;
-
-    try {
-      await forceUpgradeMutation.mutateAsync({
-        id: selectedSubscriptionId,
-        data: values,
-      });
-      toast.success("Nâng cấp phiên bản gói thành công.");
-      setIsUpgradeDialogOpen(false);
-      upgradeForm.reset({ planVersionId: "" });
-    } catch (error) {
-      if (isApiErrorUnprocessableEntityResponse(error)) {
-        handleApiErrorUnprocessentity(
-          error.response!.data.errors,
-          upgradeForm.setError,
-          { getValues: upgradeForm.getValues },
-        );
-        return;
-      }
-      toast.error(getApiErrorMessageVi(error, "Nâng cấp gói thất bại."));
     }
   };
 
@@ -716,12 +688,41 @@ function SubscriptionLifecyclePanel({
           <div className="grid gap-6 xl:grid-cols-5">
             <Card className="xl:col-span-2">
               <CardHeader>
-                <CardTitle>Chi tiết đăng ký</CardTitle>
-                <CardDescription>
-                  {isAdmin
-                    ? "Quản trị viên có thể hủy hoặc ép nâng cấp phiên bản gói."
-                    : "Chủ trang trại có thể gia hạn, bật/tắt tự động gia hạn và hủy đăng ký."}
-                </CardDescription>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <CardTitle>Chi tiết đăng ký</CardTitle>
+                    <CardDescription>
+                      {isAdmin
+                        ? "Theo dõi vòng đời đăng ký của khách hàng."
+                        : "Chủ trang trại có thể gia hạn, bật/tắt tự động gia hạn và hủy đăng ký."}
+                    </CardDescription>
+                  </div>
+                  {isAdmin && detail && detail.status !== "CANCELLED" && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0"
+                          aria-label="Tùy chọn đăng ký"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuLabel>Hành động</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onSelect={() => setIsCancelDialogOpen(true)}
+                        >
+                          <CircleSlash className="mr-2 h-4 w-4" />
+                          Hủy đăng ký
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </div>
               </CardHeader>
 
               <CardContent className="space-y-4">
@@ -739,17 +740,16 @@ function SubscriptionLifecyclePanel({
 
                 {detail && (
                   <>
-                    <div className="space-y-3 rounded-lg border p-3">
-                      <div>
-                        <p className="text-xs text-muted-foreground">
-                          Mã đăng ký
-                        </p>
-                        <p className="font-medium break-all">{detail.id}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">
-                          Trạng thái
-                        </p>
+                    <div className="space-y-4 rounded-lg border p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-xs text-muted-foreground">
+                            Mã đăng ký
+                          </p>
+                          <p className="font-mono text-sm break-all">
+                            {detail.id}
+                          </p>
+                        </div>
                         <Badge
                           variant={getSubscriptionStatusBadgeVariant(
                             detail.status,
@@ -758,30 +758,91 @@ function SubscriptionLifecyclePanel({
                           {SUBSCRIPTION_STATUS_LABEL[detail.status]}
                         </Badge>
                       </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Gói</p>
-                        <p className="font-medium">
-                          {detail.plan?.name ?? "-"}
-                        </p>
+
+                      {isAdmin && detail.owner && (
+                        <div className="rounded-md bg-muted/50 p-3">
+                          <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                            <User className="h-3.5 w-3.5" />
+                            Chủ trại
+                          </p>
+                          <p className="text-sm font-medium">
+                            {detail.owner.fullName}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {detail.owner.email}
+                          </p>
+                          {detail.owner.phone && (
+                            <p className="text-xs text-muted-foreground">
+                              {detail.owner.phone}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Gói</p>
+                          <p className="text-sm font-medium">
+                            {detail.plan?.name ?? "-"}
+                          </p>
+                          {detail.plan?.code && (
+                            <p className="font-mono text-xs text-muted-foreground">
+                              {detail.plan.code}
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">
+                            Tự động gia hạn
+                          </p>
+                          <Badge
+                            variant={detail.autoRenew ? "default" : "outline"}
+                          >
+                            {detail.autoRenew ? "Bật" : "Tắt"}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">
+                            Ngày đăng ký
+                          </p>
+                          <p className="text-sm">
+                            {formatDateTime(detail.createdAt)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">
+                            Ngày bắt đầu
+                          </p>
+                          <p className="text-sm">
+                            {formatDateTime(detail.startedAt)}
+                          </p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-xs text-muted-foreground">
+                            Ngày hết hạn
+                          </p>
+                          <p className="text-sm">
+                            {formatDateTime(detail.expiresAt)}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">
-                          Ngày bắt đầu
-                        </p>
-                        <p>{formatDateTime(detail.startedAt)}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">
-                          Ngày hết hạn
-                        </p>
-                        <p>{formatDateTime(detail.expiresAt)}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">
-                          Tự động gia hạn
-                        </p>
-                        <p>{detail.autoRenew ? "Bật" : "Tắt"}</p>
-                      </div>
+
+                      {detail.status === "CANCELLED" && (
+                        <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
+                          <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-destructive">
+                            <CircleSlash className="h-3.5 w-3.5" />
+                            Đã hủy
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Thời điểm: {formatDateTime(detail.cancelledAt)}
+                          </p>
+                          {detail.cancelReason && (
+                            <p className="mt-1 text-sm">
+                              Lý do: {detail.cancelReason}
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {!isAdmin && (
@@ -848,26 +909,6 @@ function SubscriptionLifecyclePanel({
                       </div>
                     )}
 
-                    {isAdmin && (
-                      <div className="grid gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => setIsUpgradeDialogOpen(true)}
-                        >
-                          <RotateCcw className="mr-2 h-4 w-4" />
-                          Ép nâng cấp phiên bản gói
-                        </Button>
-                        {detail.status !== "CANCELLED" && (
-                          <Button
-                            variant="destructive"
-                            onClick={() => setIsCancelDialogOpen(true)}
-                          >
-                            <CircleSlash className="mr-2 h-4 w-4" />
-                            Hủy đăng ký
-                          </Button>
-                        )}
-                      </div>
-                    )}
                   </>
                 )}
               </CardContent>
@@ -1216,59 +1257,6 @@ function SubscriptionLifecyclePanel({
         </DialogContent>
       </Dialog>
 
-      <Dialog
-        open={isUpgradeDialogOpen}
-        onOpenChange={setIsUpgradeDialogOpen}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Ép nâng cấp phiên bản gói</DialogTitle>
-            <DialogDescription>
-              Chỉ quản trị viên có quyền cập nhật ID phiên bản gói cho đăng ký.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form
-            className="space-y-4"
-            onSubmit={upgradeForm.handleSubmit(handleForceUpgrade)}
-          >
-            <Controller
-              name="planVersionId"
-              control={upgradeForm.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>ID phiên bản gói</FieldLabel>
-                  <FieldContent>
-                    <Input
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Nhập UUID của phiên bản gói"
-                      aria-invalid={fieldState.invalid}
-                    />
-                    <FieldError errors={[fieldState.error]} />
-                  </FieldContent>
-                </Field>
-              )}
-            />
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsUpgradeDialogOpen(false)}
-              >
-                Hủy
-              </Button>
-              <Button
-                type="submit"
-                disabled={forceUpgradeMutation.isPending}
-              >
-                Xác nhận nâng cấp
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

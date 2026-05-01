@@ -24,6 +24,14 @@ export const useAdminListSubscriptions = (
   });
 };
 
+export const useAdminSubscriptionsSummary = (enabled = true) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.subscriptions.summary(),
+    queryFn: () => subscriptionService.getSubscriptionsSummary(),
+    enabled,
+  });
+};
+
 export const useOwnerMySubscription = (enabled = true) => {
   return useQuery({
     queryKey: QUERY_KEYS.subscriptions.my(),

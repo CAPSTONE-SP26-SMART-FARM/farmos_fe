@@ -4,6 +4,14 @@ import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -34,13 +42,15 @@ import { isApiErrorUnprocessableEntityResponse } from "@/lib/utils";
 import { useListFeatures } from "@/queries/useFeature";
 import {
   useAdminCreateSubscriptionPlanVersion,
+  useResolveActivePlanVersion,
   useSubscriptionPlanDetail,
 } from "@/queries/useSubscriptionPlan";
 import {
   CreatePlanVersionBodySchema,
   type CreatePlanVersionBodyType,
 } from "@/schemaValidatation/subscriptionPlan";
-import { MoveLeft, Plus, Sparkles, Trash2 } from "lucide-react";
+import { SelectSeparator } from "@/components/ui/select";
+import { Copy, Plus, Sparkles, Trash2 } from "lucide-react";
 
 const DEFAULT_VERSION_FORM: CreatePlanVersionBodyType = {
   changelog: "",
@@ -76,10 +86,11 @@ function AdminSubscriptionPlanVersionCreatePage() {
   const { planId = "" } = useParams();
 
   const createVersionMutation = useAdminCreateSubscriptionPlanVersion();
+  const resolveActiveMutation = useResolveActivePlanVersion();
   const planDetailQuery = useSubscriptionPlanDetail(planId, Boolean(planId));
   const featureListQuery = useListFeatures({
     page: 1,
-    limit: 60,
+    limit: 100,
     search: undefined,
   });
 
@@ -101,6 +112,26 @@ function AdminSubscriptionPlanVersionCreatePage() {
     () => new Map(features.map((feature) => [feature.code, feature])),
     [features],
   );
+
+  // Watch all rows to compute which feature codes are already in use
+  const allFeatureValues = form.watch("features");
+
+  const handleCloneFromActive = async () => {
+    try {
+      const active = await resolveActiveMutation.mutateAsync(planId);
+      form.reset({
+        changelog: `Sửa đổi từ v${active.versionNo}: `,
+        features: active.features.map((f) => ({
+          featureCode: f.featureCode,
+          value: f.value,
+          note: f.note ?? "",
+        })),
+      });
+      toast.success("Đã sao chép từ phiên bản đang áp dụng.");
+    } catch {
+      toast.error("Không tìm thấy phiên bản đang áp dụng.");
+    }
+  };
 
   const handleSubmit = async (values: CreatePlanVersionBodyType) => {
     if (!planId) {
@@ -139,26 +170,69 @@ function AdminSubscriptionPlanVersionCreatePage() {
     }
   };
 
+  const planName = planDetailQuery.data?.data?.name;
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button
-          variant="outline"
-          onClick={() =>
-            navigate(`/dashboard/admin/subscription-plans/${planId}`)
-          }
-        >
-          <MoveLeft className="mr-2 h-4 w-4" />
-          Quay lại chi tiết gói
-        </Button>
+      <div className="space-y-3">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                className="cursor-pointer"
+                onClick={() => navigate("/dashboard/admin")}
+              >
+                Admin
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                className="cursor-pointer"
+                onClick={() => navigate("/dashboard/admin/subscription-plans")}
+              >
+                Gói đăng ký
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                className="cursor-pointer"
+                onClick={() =>
+                  navigate(`/dashboard/admin/subscription-plans/${planId}`)
+                }
+              >
+                {planName ?? "Chi tiết gói"}
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Tạo phiên bản mới</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
 
-        <Badge
-          variant="outline"
-          className="gap-1"
-        >
-          <Sparkles className="h-3 w-3" />
-          Tạo phiên bản mới
-        </Badge>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Badge
+            variant="outline"
+            className="gap-1"
+          >
+            <Sparkles className="h-3 w-3" />
+            Tạo phiên bản mới
+          </Badge>
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCloneFromActive}
+            disabled={resolveActiveMutation.isPending}
+          >
+            <Copy className="mr-2 h-4 w-4" />
+            {resolveActiveMutation.isPending
+              ? "Đang tải..."
+              : "Sao chép từ phiên bản đang áp dụng"}
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -221,15 +295,29 @@ function AdminSubscriptionPlanVersionCreatePage() {
               </div>
 
               {fields.map((item, index) => {
-                const selectedFeatureCode = form.watch(
-                  `features.${index}.featureCode`,
-                );
+                const selectedFeatureCode =
+                  allFeatureValues[index]?.featureCode ?? "";
                 const selectedFeature = featureMap.get(selectedFeatureCode);
                 const unitLabel = getFeatureUnitLabelVi(selectedFeature);
                 const isBooleanValueInput =
                   !selectedFeature?.unit &&
                   selectedFeature?.valueType === "BOOLEAN";
                 const isNumericValueInput = Boolean(selectedFeature?.unit);
+
+                // Feature codes selected in OTHER rows (not this row)
+                const usedElsewhere = new Set(
+                  allFeatureValues
+                    .filter((_, i) => i !== index)
+                    .map((f) => f.featureCode)
+                    .filter(Boolean),
+                );
+
+                const availableFeatures = features.filter(
+                  (f) => !usedElsewhere.has(f.code),
+                );
+                const takenFeatures = features.filter((f) =>
+                  usedElsewhere.has(f.code),
+                );
 
                 return (
                   <div
@@ -247,18 +335,31 @@ function AdminSubscriptionPlanVersionCreatePage() {
                               <Select
                                 value={field.value}
                                 onValueChange={(value) => {
-                                  field.onChange(value);
-                                  const feature = featureMap.get(value);
-                                  form.setValue(
+                                  const oldFeatureCode = field.value;
+                                  const oldFeature =
+                                    featureMap.get(oldFeatureCode);
+                                  const currentValue = form.getValues(
                                     `features.${index}.value`,
-                                    feature?.valueType === "BOOLEAN"
-                                      ? "true"
-                                      : (feature?.defaultValue ?? ""),
-                                    {
-                                      shouldDirty: true,
-                                      shouldValidate: true,
-                                    },
                                   );
+                                  field.onChange(value);
+                                  const newFeature = featureMap.get(value);
+                                  const isValueUnmodified =
+                                    currentValue === "" ||
+                                    oldFeatureCode === "" ||
+                                    currentValue ===
+                                      (oldFeature?.defaultValue ?? "");
+                                  if (isValueUnmodified) {
+                                    form.setValue(
+                                      `features.${index}.value`,
+                                      newFeature?.valueType === "BOOLEAN"
+                                        ? "true"
+                                        : (newFeature?.defaultValue ?? ""),
+                                      {
+                                        shouldDirty: true,
+                                        shouldValidate: true,
+                                      },
+                                    );
+                                  }
                                 }}
                                 disabled={featureListQuery.isLoading}
                               >
@@ -274,14 +375,28 @@ function AdminSubscriptionPlanVersionCreatePage() {
                                   />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {features.map((feature) => (
+                                  {availableFeatures.map((feature) => (
                                     <SelectItem
                                       key={feature.code}
                                       value={feature.code}
                                     >
-                                      {feature.code} - {feature.name}
+                                      {feature.code} — {feature.name}
                                     </SelectItem>
                                   ))}
+                                  {takenFeatures.length > 0 && (
+                                    <>
+                                      <SelectSeparator />
+                                      {takenFeatures.map((feature) => (
+                                        <SelectItem
+                                          key={feature.code}
+                                          value={feature.code}
+                                          disabled
+                                        >
+                                          {feature.code} — {feature.name}
+                                        </SelectItem>
+                                      ))}
+                                    </>
+                                  )}
                                 </SelectContent>
                               </Select>
                               <FieldError errors={[fieldState.error]} />
@@ -393,9 +508,15 @@ function AdminSubscriptionPlanVersionCreatePage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() =>
-                  navigate(`/dashboard/admin/subscription-plans/${planId}`)
-                }
+                onClick={() => {
+                  if (form.formState.isDirty) {
+                    if (confirm("Bạn có thay đổi chưa lưu. Tiếp tục huỷ?")) {
+                      navigate(`/dashboard/admin/subscription-plans/${planId}`);
+                    }
+                  } else {
+                    navigate(`/dashboard/admin/subscription-plans/${planId}`);
+                  }
+                }}
               >
                 Hủy
               </Button>

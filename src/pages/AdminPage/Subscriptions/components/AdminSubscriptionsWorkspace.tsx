@@ -22,7 +22,10 @@ import {
 } from "@/components/ui/table";
 import { formatDateVi } from "@/lib/format";
 import { getApiErrorMessageVi } from "@/lib/error-message";
-import { useAdminListSubscriptions } from "@/queries/useSubscription";
+import {
+  useAdminListSubscriptions,
+  useAdminSubscriptionsSummary,
+} from "@/queries/useSubscription";
 import type {
   ListSubscriptionsQueryType,
   SubscriptionStatusType,
@@ -32,26 +35,26 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import StatusFilterPills from "./StatusFilterPills";
 import SubscriptionsKpiStrip, { type KpiCounts } from "./SubscriptionsKpiStrip";
+import SubscriptionsLifecycleInsights from "./SubscriptionsLifecycleInsights";
 
 function AdminSubscriptionsWorkspace() {
   const navigate = useNavigate();
 
   const [status, setStatus] = useState<"ALL" | SubscriptionStatusType>("ALL");
-  const [ownerIdInput, setOwnerIdInput] = useState("");
-  const [appliedOwnerId, setAppliedOwnerId] = useState<string | undefined>(
-    undefined,
-  );
+  const [ownerSearchInput, setOwnerSearchInput] = useState("");
+  const [appliedOwnerSearch, setAppliedOwnerSearch] = useState<
+    string | undefined
+  >(undefined);
   const [page, setPage] = useState(1);
 
   const query = useMemo<ListSubscriptionsQueryType>(
     () => ({
       page,
       limit: 10,
-      search: undefined,
       status: status === "ALL" ? undefined : status,
-      ownerId: appliedOwnerId,
+      ownerSearch: appliedOwnerSearch,
     }),
-    [page, status, appliedOwnerId],
+    [page, status, appliedOwnerSearch],
   );
 
   const listQuery = useAdminListSubscriptions(query, true);
@@ -59,9 +62,22 @@ function AdminSubscriptionsWorkspace() {
   const subscriptions = useMemo(() => listData?.data ?? [], [listData?.data]);
   const meta = listData?.meta;
 
-  // KPI counts: only within current page (client-approx until BE provides aggregate).
-  // Fall back to totalItems for the currently-filtered status if applicable.
+  const summaryQuery = useAdminSubscriptionsSummary(true);
+  const summary = summaryQuery.data?.data;
+
+  // Global counts come from the backend summary endpoint; fall back to current
+  // page totals while the summary is loading so the UI never flashes empty.
   const counts: KpiCounts = useMemo(() => {
+    if (summary) {
+      return {
+        total: summary.statusCounts.total,
+        active: summary.statusCounts.active,
+        pending: summary.statusCounts.pending,
+        suspended: summary.statusCounts.suspended,
+        cancelled: summary.statusCounts.cancelled,
+        expired: summary.statusCounts.expired,
+      };
+    }
     return {
       total: meta?.totalItems ?? subscriptions.length,
       active: subscriptions.filter((s) => s.status === "ACTIVE").length,
@@ -70,16 +86,16 @@ function AdminSubscriptionsWorkspace() {
       cancelled: subscriptions.filter((s) => s.status === "CANCELLED").length,
       expired: subscriptions.filter((s) => s.status === "EXPIRED").length,
     };
-  }, [subscriptions, meta?.totalItems]);
+  }, [summary, subscriptions, meta?.totalItems]);
 
-  const applyOwnerId = () => {
+  const applyOwnerSearch = () => {
     setPage(1);
-    setAppliedOwnerId(ownerIdInput.trim() || undefined);
+    setAppliedOwnerSearch(ownerSearchInput.trim() || undefined);
   };
 
-  const clearOwnerId = () => {
-    setOwnerIdInput("");
-    setAppliedOwnerId(undefined);
+  const clearOwnerSearch = () => {
+    setOwnerSearchInput("");
+    setAppliedOwnerSearch(undefined);
     setPage(1);
   };
 
@@ -105,7 +121,12 @@ function AdminSubscriptionsWorkspace() {
 
       <SubscriptionsKpiStrip
         counts={counts}
-        loading={listQuery.isLoading}
+        loading={summaryQuery.isLoading && listQuery.isLoading}
+      />
+
+      <SubscriptionsLifecycleInsights
+        summary={summary}
+        loading={summaryQuery.isLoading}
       />
 
       <Card>
@@ -125,25 +146,25 @@ function AdminSubscriptionsWorkspace() {
           />
           <div className="grid gap-3 md:grid-cols-[1fr_auto_auto]">
             <Input
-              placeholder="ID chủ trại (UUID)"
-              value={ownerIdInput}
-              onChange={(e) => setOwnerIdInput(e.target.value)}
+              placeholder="Tên hoặc email chủ trại"
+              value={ownerSearchInput}
+              onChange={(e) => setOwnerSearchInput(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") applyOwnerId();
+                if (e.key === "Enter") applyOwnerSearch();
               }}
             />
             <Button
               variant="outline"
-              onClick={applyOwnerId}
-              disabled={!ownerIdInput.trim()}
+              onClick={applyOwnerSearch}
+              disabled={!ownerSearchInput.trim()}
             >
               <Filter className="mr-2 h-4 w-4" />
               Áp dụng
             </Button>
-            {appliedOwnerId && (
+            {appliedOwnerSearch && (
               <Button
                 variant="ghost"
-                onClick={clearOwnerId}
+                onClick={clearOwnerSearch}
               >
                 Xoá bộ lọc
               </Button>
@@ -156,7 +177,7 @@ function AdminSubscriptionsWorkspace() {
         <CardHeader>
           <CardTitle>Danh sách đăng ký</CardTitle>
           <CardDescription>
-            Nhấn “Mở” để xem chi tiết, ép nâng cấp phiên bản hoặc hủy gói.
+            Nhấn “Mở” để xem chi tiết hoặc hủy gói.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -175,17 +196,17 @@ function AdminSubscriptionsWorkspace() {
               icon={Inbox}
               title="Không có đăng ký phù hợp"
               description={
-                status !== "ALL" || appliedOwnerId
+                status !== "ALL" || appliedOwnerSearch
                   ? "Thử xoá bộ lọc để xem tất cả đăng ký."
                   : "Chưa có đăng ký nào trong hệ thống."
               }
               action={
-                status !== "ALL" || appliedOwnerId
+                status !== "ALL" || appliedOwnerSearch
                   ? {
                       label: "Xoá bộ lọc",
                       onClick: () => {
                         setStatus("ALL");
-                        clearOwnerId();
+                        clearOwnerSearch();
                       },
                     }
                   : undefined
@@ -197,11 +218,11 @@ function AdminSubscriptionsWorkspace() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Mã đăng ký</TableHead>
                       <TableHead>Chủ trại</TableHead>
                       <TableHead>Gói</TableHead>
                       <TableHead>Trạng thái</TableHead>
                       <TableHead>Hết hạn</TableHead>
+                      <TableHead>Ngày đăng ký</TableHead>
                       <TableHead>Tự động gia hạn</TableHead>
                       <TableHead className="text-right">Hành động</TableHead>
                     </TableRow>
@@ -209,9 +230,6 @@ function AdminSubscriptionsWorkspace() {
                   <TableBody>
                     {subscriptions.map((sub) => (
                       <TableRow key={sub.id}>
-                        <TableCell className="font-mono text-xs">
-                          {sub.id.slice(0, 8)}…
-                        </TableCell>
                         <TableCell>
                           {sub.owner ? (
                             <div className="flex flex-col">
@@ -236,6 +254,9 @@ function AdminSubscriptionsWorkspace() {
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {formatDateVi(sub.expiresAt)}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {formatDateVi(sub.createdAt)}
                         </TableCell>
                         <TableCell>
                           <Badge

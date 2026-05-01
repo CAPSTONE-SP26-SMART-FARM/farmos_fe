@@ -3,6 +3,7 @@ import { Controller, useForm } from "react-hook-form";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +36,12 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -50,6 +57,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import EmptyState from "@/components/common/EmptyState";
+import TableSkeleton from "@/components/common/TableSkeleton";
 import useDebounce from "@/hooks/useDebounce";
 import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
@@ -62,7 +71,6 @@ import {
 import {
   useAdminArchiveSubscriptionPlan,
   useAdminCreateSubscriptionPlan,
-  useAdminUpdateSubscriptionPlan,
   useListSubscriptionPlans,
 } from "@/queries/useSubscriptionPlan";
 import {
@@ -73,19 +81,17 @@ import {
   type PlanResType,
 } from "@/schemaValidatation/subscriptionPlan";
 import {
+  Archive,
   CircleCheckBig,
   CircleSlash,
   Ellipsis,
   Eye,
-  FilePlus2,
+  Info,
   Package,
-  Pencil,
   Plus,
   Shield,
-  Trash2,
+  X,
 } from "lucide-react";
-
-type PlanDialogMode = "create" | "edit";
 
 const STATUS_OPTIONS: Array<{ value: "ALL" | PlanStatusType; label: string }> =
   [
@@ -98,6 +104,8 @@ const PLAN_STATUS_LABEL: Record<PlanStatusType, string> = {
   ACTIVE: "Đang hoạt động",
   ARCHIVED: "Đã lưu trữ",
 };
+
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 const DEFAULT_PLAN_FORM: CreatePlanBodyType = {
   code: "",
@@ -114,14 +122,6 @@ const formatCurrency = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value);
 
-const toPlanFormValue = (plan: PlanResType): CreatePlanBodyType => ({
-  code: plan.code,
-  name: plan.name,
-  description: plan.description ?? "",
-  durationMonths: plan.durationMonths,
-  listPrice: plan.listPrice,
-});
-
 function AdminSubscriptionPlansListPage() {
   const navigate = useNavigate();
 
@@ -133,9 +133,6 @@ function AdminSubscriptionPlansListPage() {
   });
   const [searchKeyword, setSearchKeyword] = useState("");
   const [activePlan, setActivePlan] = useState<PlanResType | null>(null);
-
-  const [planDialogMode, setPlanDialogMode] =
-    useState<PlanDialogMode>("create");
   const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false);
   const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
 
@@ -155,11 +152,7 @@ function AdminSubscriptionPlansListPage() {
   const plansMeta = plansResult?.meta;
 
   const createPlanMutation = useAdminCreateSubscriptionPlan();
-  const updatePlanMutation = useAdminUpdateSubscriptionPlan();
   const archivePlanMutation = useAdminArchiveSubscriptionPlan();
-
-  const isPlanSubmitting =
-    createPlanMutation.isPending || updatePlanMutation.isPending;
 
   const planForm = useForm<CreatePlanBodyType>({
     resolver: zodResolver(CreatePlanBodySchema),
@@ -173,17 +166,21 @@ function AdminSubscriptionPlansListPage() {
     [plans],
   );
 
-  const openCreatePlanDialog = () => {
-    setPlanDialogMode("create");
-    setActivePlan(null);
-    planForm.reset(DEFAULT_PLAN_FORM);
-    setIsPlanDialogOpen(true);
+  const isFiltered =
+    searchKeyword.trim() !== "" || planQuery.status !== undefined;
+
+  const clearFilters = () => {
+    setSearchKeyword("");
+    setPlanQuery((prev) => ({
+      ...prev,
+      page: 1,
+      search: undefined,
+      status: undefined,
+    }));
   };
 
-  const openEditPlanDialog = (plan: PlanResType) => {
-    setPlanDialogMode("edit");
-    setActivePlan(plan);
-    planForm.reset(toPlanFormValue(plan));
+  const openCreatePlanDialog = () => {
+    planForm.reset(DEFAULT_PLAN_FORM);
     setIsPlanDialogOpen(true);
   };
 
@@ -196,30 +193,11 @@ function AdminSubscriptionPlansListPage() {
     };
 
     try {
-      if (planDialogMode === "create") {
-        const result = await createPlanMutation.mutateAsync(payload);
-        toast.success("Tạo gói đăng ký thành công.");
-        navigate(`/dashboard/admin/subscription-plans/${result.data.id}`);
-      } else {
-        if (!activePlan?.id) {
-          toast.error("Không tìm thấy gói cần cập nhật.");
-          return;
-        }
-
-        await updatePlanMutation.mutateAsync({
-          id: activePlan.id,
-          data: {
-            name: payload.name,
-            description: payload.description,
-            durationMonths: payload.durationMonths,
-            listPrice: payload.listPrice,
-          },
-        });
-        toast.success("Cập nhật gói đăng ký thành công.");
-      }
-
+      const result = await createPlanMutation.mutateAsync(payload);
+      toast.success("Tạo gói đăng ký thành công.");
       setIsPlanDialogOpen(false);
       planForm.reset(DEFAULT_PLAN_FORM);
+      navigate(`/dashboard/admin/subscription-plans/${result.data.id}`);
     } catch (error) {
       if (isApiErrorUnprocessableEntityResponse<CreatePlanBodyType>(error)) {
         handleApiErrorUnprocessentity<CreatePlanBodyType>(
@@ -267,8 +245,8 @@ function AdminSubscriptionPlansListPage() {
               Quản lý gói đăng ký
             </h1>
             <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">
-              Quản lý vòng đời gói, chỉnh sửa nội dung và điều hướng nhanh sang
-              trang chi tiết hoặc tạo phiên bản mới.
+              Quản lý vòng đời gói và điều hướng nhanh sang trang chi tiết hoặc
+              tạo phiên bản mới.
             </p>
           </div>
           <div className="rounded-xl border bg-background/80 px-4 py-3 text-sm backdrop-blur-sm">
@@ -300,11 +278,20 @@ function AdminSubscriptionPlansListPage() {
           </Button>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-2">
-          <Input
-            placeholder="Tìm theo mã hoặc tên gói..."
-            value={searchKeyword}
-            onChange={(event) => setSearchKeyword(event.target.value)}
-          />
+          <InputGroup>
+            <InputGroupInput
+              placeholder="Tìm theo mã hoặc tên gói..."
+              value={searchKeyword}
+              onChange={(event) => setSearchKeyword(event.target.value)}
+            />
+            {searchKeyword.length > 0 && (
+              <InputGroupAddon align="inline-end">
+                <InputGroupButton onClick={() => setSearchKeyword("")}>
+                  <X />
+                </InputGroupButton>
+              </InputGroupAddon>
+            )}
+          </InputGroup>
 
           <Select
             value={planQuery.status ?? "ALL"}
@@ -312,11 +299,12 @@ function AdminSubscriptionPlansListPage() {
               setPlanQuery((prev) => ({
                 ...prev,
                 page: 1,
-                status: value === "ALL" ? undefined : (value as PlanStatusType),
+                status:
+                  value === "ALL" ? undefined : (value as PlanStatusType),
               }))
             }
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full max-w-xs">
               <SelectValue placeholder="Chọn trạng thái" />
             </SelectTrigger>
             <SelectContent>
@@ -337,8 +325,8 @@ function AdminSubscriptionPlansListPage() {
         <CardHeader>
           <CardTitle>Danh sách gói</CardTitle>
           <CardDescription>
-            Mỗi gói có menu hành động để xem chi tiết, chỉnh sửa hoặc tạo phiên
-            bản mới.
+            Mỗi gói có menu hành động để xem chi tiết hoặc lưu trữ. Thay đổi
+            tính năng và giá thực hiện qua tạo phiên bản mới.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -354,141 +342,163 @@ function AdminSubscriptionPlansListPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {listPlansQuery.isLoading && (
+              {listPlansQuery.isLoading ? (
+                <TableSkeleton />
+              ) : plans.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={6}
-                    className="py-6 text-center text-muted-foreground"
+                    className="py-0"
                   >
-                    Đang tải dữ liệu gói đăng ký...
+                    <EmptyState
+                      icon={Package}
+                      title={
+                        isFiltered
+                          ? "Không tìm thấy gói nào phù hợp"
+                          : "Chưa có gói đăng ký nào"
+                      }
+                      description={
+                        isFiltered
+                          ? "Thử xoá bộ lọc để xem tất cả gói."
+                          : "Bắt đầu bằng cách tạo gói đăng ký đầu tiên."
+                      }
+                      action={
+                        isFiltered
+                          ? { label: "Xoá bộ lọc", onClick: clearFilters }
+                          : {
+                              label: "Tạo gói đăng ký",
+                              onClick: openCreatePlanDialog,
+                            }
+                      }
+                    />
                   </TableCell>
                 </TableRow>
-              )}
-
-              {!listPlansQuery.isLoading && plans.length === 0 && (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="py-6 text-center text-muted-foreground"
-                  >
-                    Không có dữ liệu gói đăng ký.
-                  </TableCell>
-                </TableRow>
-              )}
-
-              {plans.map((plan) => (
-                <TableRow key={plan.id}>
-                  <TableCell className="font-medium">{plan.code}</TableCell>
-                  <TableCell>{plan.name}</TableCell>
-                  <TableCell>{plan.durationMonths} tháng</TableCell>
-                  <TableCell>{formatCurrency(plan.listPrice)}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={getSubscriptionPlanStatusBadgeVariant(
-                        plan.status,
-                      )}
-                      className="gap-1"
-                    >
-                      {plan.status === "ACTIVE" ? (
-                        <CircleCheckBig className="h-3 w-3" />
-                      ) : (
-                        <CircleSlash className="h-3 w-3" />
-                      )}
-                      {PLAN_STATUS_LABEL[plan.status]}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label="Mở menu hành động"
-                        >
-                          <Ellipsis className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() =>
-                            navigate(
-                              `/dashboard/admin/subscription-plans/${plan.id}`,
-                            )
-                          }
-                        >
-                          <Eye className="mr-2 h-4 w-4" />
-                          Chi tiết gói
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => openEditPlanDialog(plan)}
-                        >
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Chỉnh sửa gói
-                        </DropdownMenuItem>
-                        {plan.status !== "ARCHIVED" && (
+              ) : (
+                plans.map((plan) => (
+                  <TableRow key={plan.id}>
+                    <TableCell className="font-medium">{plan.code}</TableCell>
+                    <TableCell>{plan.name}</TableCell>
+                    <TableCell>{plan.durationMonths} tháng</TableCell>
+                    <TableCell>{formatCurrency(plan.listPrice)}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={getSubscriptionPlanStatusBadgeVariant(
+                          plan.status,
+                        )}
+                        className="gap-1"
+                      >
+                        {plan.status === "ACTIVE" ? (
+                          <CircleCheckBig className="h-3 w-3" />
+                        ) : (
+                          <CircleSlash className="h-3 w-3" />
+                        )}
+                        {PLAN_STATUS_LABEL[plan.status]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Mở menu hành động"
+                          >
+                            <Ellipsis className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
                           <DropdownMenuItem
                             onClick={() =>
                               navigate(
-                                `/dashboard/admin/subscription-plans/${plan.id}/versions/new`,
+                                `/dashboard/admin/subscription-plans/${plan.id}`,
                               )
                             }
                           >
-                            <FilePlus2 className="mr-2 h-4 w-4" />
-                            Tạo phiên bản mới
+                            <Eye className="mr-2 h-4 w-4" />
+                            Chi tiết gói
                           </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => {
-                            setActivePlan(plan);
-                            setIsArchiveConfirmOpen(true);
-                          }}
-                          disabled={plan.status === "ARCHIVED"}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Lưu trữ gói
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setActivePlan(plan);
+                              setIsArchiveConfirmOpen(true);
+                            }}
+                            disabled={plan.status === "ARCHIVED"}
+                          >
+                            <Archive className="mr-2 h-4 w-4" />
+                            Lưu trữ gói
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
 
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-muted-foreground">
-              Trang {plansMeta?.page ?? 1}/{plansMeta?.totalPages ?? 1}
-            </p>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={!plansMeta?.hasPreviousPage}
-                onClick={() =>
-                  setPlanQuery((prev) => ({
-                    ...prev,
-                    page: Math.max(1, prev.page - 1),
-                  }))
-                }
-              >
-                Trang trước
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={!plansMeta?.hasNextPage}
-                onClick={() =>
-                  setPlanQuery((prev) => ({
-                    ...prev,
-                    page: prev.page + 1,
-                  }))
-                }
-              >
-                Trang sau
-              </Button>
+          {!listPlansQuery.isLoading && plans.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>Tổng {plansMeta?.totalItems ?? 0} gói</span>
+                <span>·</span>
+                <span>
+                  Trang {plansMeta?.page ?? 1}/{plansMeta?.totalPages ?? 1}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Select
+                  value={String(planQuery.limit ?? 10)}
+                  onValueChange={(value) =>
+                    setPlanQuery((prev) => ({
+                      ...prev,
+                      page: 1,
+                      limit: Number(value),
+                    }))
+                  }
+                >
+                  <SelectTrigger className="w-[110px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAGE_SIZE_OPTIONS.map((size) => (
+                      <SelectItem
+                        key={size}
+                        value={String(size)}
+                      >
+                        {size} / trang
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!plansMeta?.hasPreviousPage}
+                  onClick={() =>
+                    setPlanQuery((prev) => ({
+                      ...prev,
+                      page: Math.max(1, prev.page - 1),
+                    }))
+                  }
+                >
+                  Trang trước
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!plansMeta?.hasNextPage}
+                  onClick={() =>
+                    setPlanQuery((prev) => ({
+                      ...prev,
+                      page: prev.page + 1,
+                    }))
+                  }
+                >
+                  Trang sau
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
@@ -498,17 +508,21 @@ function AdminSubscriptionPlansListPage() {
       >
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>
-              {planDialogMode === "create"
-                ? "Tạo gói đăng ký mới"
-                : "Cập nhật gói đăng ký"}
-            </DialogTitle>
+            <DialogTitle>Tạo gói đăng ký mới</DialogTitle>
             <DialogDescription>
-              {planDialogMode === "create"
-                ? "Thiết lập thông tin cơ bản cho gói đăng ký mới."
-                : "Bạn chỉ có thể cập nhật tên, mô tả, thời hạn và giá niêm yết."}
+              Thiết lập thông tin cơ bản cho gói đăng ký mới.
             </DialogDescription>
           </DialogHeader>
+
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertTitle>Thông tin gói không thể chỉnh sửa sau khi tạo</AlertTitle>
+            <AlertDescription>
+              Mã gói, tên, mô tả, thời hạn và giá niêm yết sẽ được cố định. Để
+              thay đổi tính năng hoặc điều chỉnh giá, hãy tạo phiên bản mới cho
+              gói sau khi khởi tạo.
+            </AlertDescription>
+          </Alert>
 
           <form
             className="space-y-4"
@@ -519,15 +533,20 @@ function AdminSubscriptionPlansListPage() {
               control={planForm.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="plan-code">Mã gói</FieldLabel>
+                  <FieldLabel htmlFor="plan-code">
+                    Mã gói <span className="text-destructive">*</span>
+                  </FieldLabel>
                   <FieldContent>
                     <Input
                       {...field}
                       id="plan-code"
                       placeholder="ví dụ: STARTER_12M"
-                      disabled={planDialogMode === "edit"}
+                      aria-required="true"
                       aria-invalid={fieldState.invalid}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Ví dụ: STARTER_12M (in hoa, dấu gạch dưới)
+                    </p>
                     <FieldError errors={[fieldState.error]} />
                   </FieldContent>
                 </Field>
@@ -539,12 +558,15 @@ function AdminSubscriptionPlansListPage() {
               control={planForm.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="plan-name">Tên gói</FieldLabel>
+                  <FieldLabel htmlFor="plan-name">
+                    Tên gói <span className="text-destructive">*</span>
+                  </FieldLabel>
                   <FieldContent>
                     <Input
                       {...field}
                       id="plan-name"
                       placeholder="ví dụ: Khởi động 12 tháng"
+                      aria-required="true"
                       aria-invalid={fieldState.invalid}
                     />
                     <FieldError errors={[fieldState.error]} />
@@ -567,6 +589,9 @@ function AdminSubscriptionPlansListPage() {
                       onChange={field.onChange}
                       aria-invalid={fieldState.invalid}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      {field.value?.length ?? 0}/1000
+                    </p>
                     <FieldError errors={[fieldState.error]} />
                   </FieldContent>
                 </Field>
@@ -580,7 +605,8 @@ function AdminSubscriptionPlansListPage() {
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="duration-months">
-                      Thời hạn (tháng)
+                      Thời hạn (tháng){" "}
+                      <span className="text-destructive">*</span>
                     </FieldLabel>
                     <FieldContent>
                       <Input
@@ -591,6 +617,7 @@ function AdminSubscriptionPlansListPage() {
                         onChange={(event) =>
                           field.onChange(Number(event.target.value))
                         }
+                        aria-required="true"
                         aria-invalid={fieldState.invalid}
                       />
                       <FieldError errors={[fieldState.error]} />
@@ -605,7 +632,8 @@ function AdminSubscriptionPlansListPage() {
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="list-price">
-                      Giá niêm yết (VND)
+                      Giá niêm yết (VND){" "}
+                      <span className="text-destructive">*</span>
                     </FieldLabel>
                     <FieldContent>
                       <Input
@@ -616,8 +644,15 @@ function AdminSubscriptionPlansListPage() {
                         onChange={(event) =>
                           field.onChange(Number(event.target.value))
                         }
+                        aria-required="true"
                         aria-invalid={fieldState.invalid}
                       />
+                      <p className="text-xs text-muted-foreground">
+                        Đơn vị: VND, đã bao gồm VAT
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Hiển thị: {formatCurrency(field.value || 0)}
+                      </p>
                       <FieldError errors={[fieldState.error]} />
                     </FieldContent>
                   </Field>
@@ -631,17 +666,13 @@ function AdminSubscriptionPlansListPage() {
                 variant="outline"
                 onClick={() => setIsPlanDialogOpen(false)}
               >
-                Hủy
+                Đóng
               </Button>
               <Button
                 type="submit"
-                disabled={isPlanSubmitting}
+                disabled={createPlanMutation.isPending}
               >
-                {isPlanSubmitting
-                  ? "Đang lưu..."
-                  : planDialogMode === "create"
-                    ? "Tạo gói"
-                    : "Lưu cập nhật"}
+                {createPlanMutation.isPending ? "Đang tạo..." : "Tạo gói"}
               </Button>
             </DialogFooter>
           </form>
@@ -651,7 +682,7 @@ function AdminSubscriptionPlansListPage() {
       <ConfirmDialog
         open={isArchiveConfirmOpen}
         title="Lưu trữ gói đăng ký"
-        description="Sau khi lưu trữ, gói sẽ chuyển sang trạng thái ARCHIVED và không còn dùng cho luồng kích hoạt mới."
+        description="Sau khi lưu trữ, gói sẽ chuyển sang trạng thái Đã lưu trữ và không còn dùng cho luồng kích hoạt mới."
         confirmLabel="Xác nhận lưu trữ"
         cancelLabel="Hủy"
         variant="destructive"

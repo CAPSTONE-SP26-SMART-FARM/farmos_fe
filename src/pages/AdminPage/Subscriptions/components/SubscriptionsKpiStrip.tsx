@@ -31,12 +31,14 @@ function KpiTile({
   icon: Icon,
   label,
   value,
+  hint,
   loading,
   accent,
 }: {
   icon: LucideIcon;
   label: string;
   value: number;
+  hint?: string;
   loading?: boolean;
   accent?: string;
 }) {
@@ -52,12 +54,19 @@ function KpiTile({
         <p className="text-3xl font-bold">
           {loading ? "…" : value.toLocaleString("vi-VN")}
         </p>
+        {hint && (
+          <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
+        )}
       </CardContent>
     </Card>
   );
 }
 
 function SubscriptionsKpiStrip({ counts, loading }: SubscriptionsKpiStripProps) {
+  const closedCount = counts.cancelled + counts.expired;
+  const activeShare =
+    counts.total > 0 ? Math.round((counts.active / counts.total) * 100) : 0;
+
   return (
     <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-5">
       <KpiTile
@@ -70,6 +79,7 @@ function SubscriptionsKpiStrip({ counts, loading }: SubscriptionsKpiStripProps) 
         icon={CheckCircle2}
         label="Đang hoạt động"
         value={counts.active}
+        hint={counts.total > 0 ? `${activeShare}% tổng đăng ký` : undefined}
         loading={loading}
         accent="text-emerald-600"
       />
@@ -90,7 +100,8 @@ function SubscriptionsKpiStrip({ counts, loading }: SubscriptionsKpiStripProps) 
       <KpiTile
         icon={XCircle}
         label="Đã hủy / hết hạn"
-        value={counts.cancelled + counts.expired}
+        value={closedCount}
+        hint={`${counts.cancelled.toLocaleString("vi-VN")} hủy · ${counts.expired.toLocaleString("vi-VN")} hết hạn`}
         loading={loading}
         accent="text-muted-foreground"
       />

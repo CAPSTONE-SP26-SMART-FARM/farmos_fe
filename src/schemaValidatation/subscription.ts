@@ -110,7 +110,7 @@ export const UpgradePlanVersionBodySchema = z
 
 export const ListSubscriptionsQuerySchema = PagingRequestSchema.extend({
   status: SubscriptionStatusEnum.optional(),
-  ownerId: z.string().uuid().optional(),
+  ownerSearch: z.string().optional(),
 }).strict();
 
 export const EntitlementsQuerySchema = PagingRequestSchema.extend({}).strict();
@@ -120,6 +120,28 @@ export const UsageLedgerQuerySchema = PagingRequestSchema.extend({
 }).strict();
 
 export const SubscriptionResSchema = SubscriptionSchema;
+
+export const SubscriptionSummaryResSchema = z.object({
+  statusCounts: z.object({
+    total: z.number(),
+    pending: z.number(),
+    active: z.number(),
+    suspended: z.number(),
+    cancelled: z.number(),
+    expired: z.number(),
+  }),
+  newLast30Days: z.number(),
+  expiringNext7Days: z.number(),
+  autoRenewEnabled: z.number(),
+  topPlans: z.array(
+    z.object({
+      planId: z.string().uuid(),
+      planName: z.string(),
+      planCode: z.string(),
+      activeCount: z.number(),
+    }),
+  ),
+});
 
 export const ListSubscriptionsResSchema = PagingResponseSchema(
   SubscriptionResSchema,
@@ -170,6 +192,9 @@ export type UsageLedgerQueryType = z.infer<typeof UsageLedgerQuerySchema>;
 
 export type ListSubscriptionsResType = z.infer<
   typeof ListSubscriptionsResSchema
+>;
+export type SubscriptionSummaryResType = z.infer<
+  typeof SubscriptionSummaryResSchema
 >;
 export type ListEntitlementsResType = z.infer<typeof ListEntitlementsResSchema>;
 export type ListUsageLedgerResType = z.infer<typeof ListUsageLedgerResSchema>;

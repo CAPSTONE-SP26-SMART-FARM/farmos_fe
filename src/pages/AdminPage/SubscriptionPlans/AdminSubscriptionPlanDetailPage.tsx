@@ -1,7 +1,16 @@
 import { format } from "date-fns";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,6 +19,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -18,6 +40,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import useDebounce from "@/hooks/useDebounce";
 import { getSubscriptionPlanStatusBadgeVariant } from "@/lib/utils";
 import {
   useListSubscriptionPlanVersions,
@@ -25,17 +48,21 @@ import {
 } from "@/queries/useSubscriptionPlan";
 import type { ListPlanVersionsQueryType } from "@/schemaValidatation/subscriptionPlan";
 import {
+  ChevronDown,
   CircleCheckBig,
   CircleSlash,
   FilePlus2,
   List,
   MoveLeft,
+  Sparkles,
 } from "lucide-react";
 
 const PLAN_STATUS_LABEL: Record<"ACTIVE" | "ARCHIVED", string> = {
   ACTIVE: "Đang hoạt động",
   ARCHIVED: "Đã lưu trữ",
 };
+
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("vi-VN", {
@@ -56,11 +83,22 @@ function AdminSubscriptionPlanDetailPage() {
   const navigate = useNavigate();
   const { planId = "" } = useParams();
 
+  const [versionSearchKeyword, setVersionSearchKeyword] = useState("");
+  const debouncedVersionSearch = useDebounce(versionSearchKeyword, 400);
+
   const [versionQuery, setVersionQuery] = useState<ListPlanVersionsQueryType>({
     page: 1,
     limit: 5,
     search: undefined,
   });
+
+  useEffect(() => {
+    setVersionQuery((prev) => ({
+      ...prev,
+      page: 1,
+      search: debouncedVersionSearch.trim() || undefined,
+    }));
+  }, [debouncedVersionSearch]);
 
   const planDetailQuery = useSubscriptionPlanDetail(planId, Boolean(planId));
   const plan = planDetailQuery.data?.data;
@@ -77,28 +115,60 @@ function AdminSubscriptionPlanDetailPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button
-          variant="outline"
-          onClick={() => navigate("/dashboard/admin/subscription-plans")}
-        >
-          <MoveLeft className="mr-2 h-4 w-4" />
-          Quay lại danh sách
-        </Button>
+      <div className="space-y-3">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                className="cursor-pointer"
+                onClick={() => navigate("/dashboard/admin")}
+              >
+                Admin
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                className="cursor-pointer"
+                onClick={() =>
+                  navigate("/dashboard/admin/subscription-plans")
+                }
+              >
+                Gói đăng ký
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>
+                {plan?.name ?? "Chi tiết gói"}
+              </BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
 
-        {plan?.status !== "ARCHIVED" && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <Button
-            onClick={() =>
-              navigate(
-                `/dashboard/admin/subscription-plans/${planId}/versions/new`,
-              )
-            }
-            disabled={!planId}
+            variant="outline"
+            onClick={() => navigate("/dashboard/admin/subscription-plans")}
           >
-            <FilePlus2 className="mr-2 h-4 w-4" />
-            Tạo phiên bản mới
+            <MoveLeft className="mr-2 h-4 w-4" />
+            Quay lại danh sách
           </Button>
-        )}
+
+          {plan?.status !== "ARCHIVED" && (
+            <Button
+              onClick={() =>
+                navigate(
+                  `/dashboard/admin/subscription-plans/${planId}/versions/new`,
+                )
+              }
+              disabled={!planId}
+            >
+              <FilePlus2 className="mr-2 h-4 w-4" />
+              Tạo phiên bản mới
+            </Button>
+          )}
+        </div>
       </div>
 
       <Card>
@@ -175,6 +245,31 @@ function AdminSubscriptionPlanDetailPage() {
         </CardContent>
       </Card>
 
+      {!planVersionsQuery.isLoading &&
+        versions.length === 0 &&
+        plan?.status !== "ARCHIVED" && (
+          <Alert>
+            <Sparkles className="h-4 w-4" />
+            <AlertTitle>Gói chưa có phiên bản nào</AlertTitle>
+            <AlertDescription>
+              Tạo phiên bản đầu tiên để cấu hình tính năng và giá áp dụng cho
+              gói này.
+            </AlertDescription>
+            <div className="mt-3">
+              <Button
+                size="sm"
+                onClick={() =>
+                  navigate(
+                    `/dashboard/admin/subscription-plans/${planId}/versions/new`,
+                  )
+                }
+              >
+                Tạo phiên bản đầu tiên
+              </Button>
+            </div>
+          </Alert>
+        )}
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-3">
           <div>
@@ -192,6 +287,13 @@ function AdminSubscriptionPlanDetailPage() {
           </Badge>
         </CardHeader>
         <CardContent className="space-y-4">
+          <Input
+            placeholder="Tìm kiếm phiên bản..."
+            value={versionSearchKeyword}
+            onChange={(e) => setVersionSearchKeyword(e.target.value)}
+            className="max-w-xs"
+          />
+
           <Table>
             <TableHeader>
               <TableRow>
@@ -238,46 +340,118 @@ function AdminSubscriptionPlanDetailPage() {
                       {version.isActive ? "Đang áp dụng" : "Không áp dụng"}
                     </Badge>
                   </TableCell>
-                  <TableCell>{version.features.length}</TableCell>
+                  <TableCell>
+                    {version.features.length === 0 ? (
+                      <span className="text-muted-foreground">0 tính năng</span>
+                    ) : (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="h-auto p-0"
+                          >
+                            {version.features.length} tính năng
+                            <ChevronDown className="ml-1 h-3 w-3" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[420px] max-h-[400px] overflow-auto p-0">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Mã tính năng</TableHead>
+                                <TableHead>Giá trị</TableHead>
+                                <TableHead>Ghi chú</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {version.features.map((feature) => (
+                                <TableRow key={feature.id}>
+                                  <TableCell className="font-mono text-xs">
+                                    {feature.featureCode}
+                                  </TableCell>
+                                  <TableCell>{feature.value}</TableCell>
+                                  <TableCell>
+                                    {feature.note || "-"}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  </TableCell>
                   <TableCell>{version.changelog || "-"}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
 
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-muted-foreground">
-              Trang {versionsMeta?.page ?? 1}/{versionsMeta?.totalPages ?? 1}
-            </p>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={!versionsMeta?.hasPreviousPage}
-                onClick={() =>
-                  setVersionQuery((prev) => ({
-                    ...prev,
-                    page: Math.max(1, prev.page - 1),
-                  }))
-                }
-              >
-                Trang trước
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={!versionsMeta?.hasNextPage}
-                onClick={() =>
-                  setVersionQuery((prev) => ({
-                    ...prev,
-                    page: prev.page + 1,
-                  }))
-                }
-              >
-                Trang sau
-              </Button>
+          {!planVersionsQuery.isLoading && versions.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>Tổng {versionsMeta?.totalItems ?? 0} phiên bản</span>
+                <span>·</span>
+                <span>
+                  Trang {versionsMeta?.page ?? 1}/
+                  {versionsMeta?.totalPages ?? 1}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Select
+                  value={String(versionQuery.limit ?? 5)}
+                  onValueChange={(value) =>
+                    setVersionQuery((prev) => ({
+                      ...prev,
+                      page: 1,
+                      limit: Number(value),
+                    }))
+                  }
+                >
+                  <SelectTrigger className="w-[110px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAGE_SIZE_OPTIONS.map((size) => (
+                      <SelectItem
+                        key={size}
+                        value={String(size)}
+                      >
+                        {size} / trang
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!versionsMeta?.hasPreviousPage}
+                  onClick={() =>
+                    setVersionQuery((prev) => ({
+                      ...prev,
+                      page: Math.max(1, prev.page - 1),
+                    }))
+                  }
+                >
+                  Trang trước
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!versionsMeta?.hasNextPage}
+                  onClick={() =>
+                    setVersionQuery((prev) => ({
+                      ...prev,
+                      page: prev.page + 1,
+                    }))
+                  }
+                >
+                  Trang sau
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>

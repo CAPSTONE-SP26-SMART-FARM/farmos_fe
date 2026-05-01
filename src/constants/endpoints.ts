@@ -27,6 +27,7 @@ export const API_ENDPOINTS = {
   },
   SUBSCRIPTIONS: {
     BASE: "/subscriptions",
+    SUMMARY: "/subscriptions/summary",
     MY: "/subscriptions/my",
     MY_HISTORY: "/subscriptions/my/history",
     BY_ID: (id: string) => `/subscriptions/${id}`,
@@ -485,6 +486,7 @@ export const QUERY_KEYS = {
   },
   subscriptions: {
     all: ["subscriptions"],
+    summary: () => ["subscriptions", "summary"],
     list: (query?: Record<string, unknown>) => [
       "subscriptions",
       "list",

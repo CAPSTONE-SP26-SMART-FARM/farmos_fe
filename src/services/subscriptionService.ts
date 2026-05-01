@@ -11,6 +11,7 @@ import type {
   ListUsageLedgerResType,
   SubscriptionResType,
   SubscriptionDetailResType,
+  SubscriptionSummaryResType,
   ToggleAutoRenewBodyType,
   UpgradePlanVersionBodyType,
   UsageLedgerQueryType,
@@ -31,6 +32,9 @@ const subscriptionService = {
     ),
 
   getMySubscription: () => api.get<SubscriptionResType>(SUBSCRIPTIONS.MY),
+
+  getSubscriptionsSummary: () =>
+    api.get<SubscriptionSummaryResType>(SUBSCRIPTIONS.SUMMARY),
 
   getSubscriptionDetail: (id: string) =>
     api.get<SubscriptionDetailResType>(SUBSCRIPTIONS.BY_ID(id)),

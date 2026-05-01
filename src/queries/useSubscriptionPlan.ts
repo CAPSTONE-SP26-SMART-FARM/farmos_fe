@@ -47,6 +47,9 @@ export const useAdminCreateSubscriptionPlan = () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.subscriptionPlans.all,
       });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.subscriptions.summary(),
+      });
     },
   });
 };
@@ -64,6 +67,9 @@ export const useAdminUpdateSubscriptionPlan = () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.subscriptionPlans.detail(variables.id),
       });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.subscriptions.summary(),
+      });
     },
   });
 };
@@ -79,6 +85,9 @@ export const useAdminArchiveSubscriptionPlan = () => {
       });
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.subscriptionPlans.detail(id),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.subscriptions.summary(),
       });
     },
   });
@@ -101,6 +110,9 @@ export const useAdminCreateSubscriptionPlanVersion = () => {
       });
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.subscriptionPlans.detail(variables.planId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.subscriptions.summary(),
       });
     },
   });

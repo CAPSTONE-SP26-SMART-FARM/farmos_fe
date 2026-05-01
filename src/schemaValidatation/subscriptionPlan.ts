@@ -93,7 +93,16 @@ export const CreatePlanVersionBodySchema = z
       .array(CreatePlanVersionFeatureBodySchema)
       .min(1, "Cần ít nhất một tính năng"),
   })
-  .strict();
+  .strict()
+  .refine(
+    (data) =>
+      new Set(data.features.map((f) => f.featureCode)).size ===
+      data.features.length,
+    {
+      message: "Mỗi mã tính năng chỉ được khai báo một lần",
+      path: ["features"],
+    },
+  );
 
 // ============================================================
 // Query schemas
