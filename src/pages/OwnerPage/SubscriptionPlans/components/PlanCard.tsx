@@ -12,7 +12,7 @@ import { formatCurrencyVnd } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useListSubscriptionPlanVersions } from "@/queries/useSubscriptionPlan";
 import type { PlanResType } from "@/schemaValidatation/subscriptionPlan";
-import { Check, Sparkle } from "lucide-react";
+import { ArrowRight, Check, Sparkle } from "lucide-react";
 
 interface PlanCardProps {
   plan: PlanResType;
@@ -21,6 +21,7 @@ interface PlanCardProps {
   disabledHint?: string;
   ctaLabel?: string;
   onSubscribe?: (plan: PlanResType) => void;
+  onViewDetail?: (plan: PlanResType) => void;
   recommended?: boolean;
   subscribePending?: boolean;
 }
@@ -43,6 +44,7 @@ function PlanCard({
   disabledHint,
   ctaLabel = "Đăng ký gói này",
   onSubscribe,
+  onViewDetail,
   recommended,
   subscribePending,
 }: PlanCardProps) {
@@ -115,22 +117,31 @@ function PlanCard({
             </p>
           ) : (
             <ul className="space-y-1.5">
-              {previewFeatures.map((f) => (
-                <li
-                  key={f.id}
-                  className="flex items-start gap-2 text-sm"
-                >
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  <span>
-                    <span className="font-medium">
-                      {formatFeatureValue(f.value)}
-                    </span>{" "}
-                    <span className="text-muted-foreground">
-                      {f.featureCode}
+              {previewFeatures.map((f) => {
+                const label = f.featureName ?? f.featureCode;
+                const unit = f.featureUnit;
+                const formattedValue = formatFeatureValue(f.value);
+                const isBoolean =
+                  formattedValue === "Có" || formattedValue === "Không";
+                return (
+                  <li
+                    key={f.id}
+                    className="flex items-start gap-2 text-sm"
+                  >
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <span>
+                      <span className="font-medium">
+                        {isBoolean
+                          ? label
+                          : `${formattedValue}${unit ? ` ${unit}` : ""}`}
+                      </span>
+                      {!isBoolean && (
+                        <span className="text-muted-foreground"> {label}</span>
+                      )}
                     </span>
-                  </span>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
               {extraFeatureCount > 0 && (
                 <li className="text-xs text-muted-foreground">
                   +{extraFeatureCount} tính năng khác
@@ -141,19 +152,19 @@ function PlanCard({
         </div>
       </CardContent>
 
-      <CardFooter>
+      <CardFooter className="flex-col gap-2">
         {isCurrent ? (
-          <p className="text-xs font-medium text-primary">
+          <p className="w-full text-center text-xs font-medium text-primary">
             Đây là gói bạn đang sử dụng.
           </p>
         ) : disableSubscribe ? (
-          <div className="space-y-2">
+          <div className="w-full space-y-1">
             <Button
               className="w-full"
-              variant="outline"
+              variant="secondary"
               disabled
             >
-              Không khả dụng
+              Không thể đăng ký
             </Button>
             {disabledHint && (
               <p className="text-xs text-muted-foreground">{disabledHint}</p>
@@ -161,7 +172,7 @@ function PlanCard({
           </div>
         ) : (
           <Button
-            className="w-full justify-self-end"
+            className="w-full"
             onClick={() => onSubscribe?.(plan)}
             disabled={subscribePending}
           >

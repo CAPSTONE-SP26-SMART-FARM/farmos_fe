@@ -22,15 +22,11 @@ import { Eye, Package } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import PlanCard from "./components/PlanCard";
-import SubscribeReviewSheet from "./components/SubscribeReviewSheet";
 
 function OwnerSubscriptionPlansPage() {
   const navigate = useNavigate();
   const [searchKeyword, setSearchKeyword] = useState("");
   const debounced = useDebounce(searchKeyword, 400);
-
-  const [selectedPlan, setSelectedPlan] = useState<PlanResType | null>(null);
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const query = useMemo<ListPlansQueryType>(
     () => ({
@@ -55,9 +51,8 @@ function OwnerSubscriptionPlansPage() {
       .sort((a, b) => a.listPrice - b.listPrice);
   }, [plansQuery.data?.data?.data]);
 
-  const handleSubscribeClick = (plan: PlanResType) => {
-    setSelectedPlan(plan);
-    setIsSheetOpen(true);
+  const handleViewDetail = (plan: PlanResType) => {
+    navigate(`/dashboard/owner/subscription-plans/${plan.id}`);
   };
 
   return (
@@ -149,7 +144,9 @@ function OwnerSubscriptionPlansPage() {
                     : undefined
                 }
                 recommended={recommended}
-                onSubscribe={handleSubscribeClick}
+                onSubscribe={handleViewDetail}
+                onViewDetail={handleViewDetail}
+                ctaLabel="Đăng ký gói này"
               />
             );
           })}
@@ -173,11 +170,6 @@ function OwnerSubscriptionPlansPage() {
         </Card>
       )}
 
-      <SubscribeReviewSheet
-        open={isSheetOpen}
-        onOpenChange={setIsSheetOpen}
-        plan={selectedPlan}
-      />
     </div>
   );
 }

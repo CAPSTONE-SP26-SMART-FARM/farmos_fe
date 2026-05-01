@@ -23,6 +23,10 @@ export const PlanVersionFeatureSchema = z.object({
   id: z.string().uuid(),
   planVersionId: z.string().uuid(),
   featureCode: z.string().min(1).max(64),
+  featureName: z.string().optional(),
+  featureDescription: z.string().nullable().optional(),
+  featureUnit: z.string().nullable().optional(),
+  featureValueType: z.string().optional(),
   value: z.string(),
   note: z.string().nullable(),
 });
