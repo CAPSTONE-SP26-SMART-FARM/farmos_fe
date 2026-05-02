@@ -6,6 +6,7 @@ import AdminDoctorAssignmentPage from "@/pages/AdminPage/DoctorAssignment/AdminD
 import AdminDoctorPerformancePage from "@/pages/AdminPage/DoctorPerformance/AdminDoctorPerformancePage";
 import AdminFarmsPage from "@/pages/AdminPage/Farms/AdminFarmsPage";
 import AdminFeaturesPage from "@/pages/AdminPage/Features/AdminFeaturesPage";
+import AdminIotKitsPage from "@/pages/AdminPage/IotKits/AdminIotKitsPage";
 import AdminIotTemplatesPage from "@/pages/AdminPage/IotTemplates/AdminIotTemplatesPage";
 import AdminInvoiceDetailPage from "@/pages/AdminPage/Invoices/AdminInvoiceDetailPage";
 import AdminInvoicesPage from "@/pages/AdminPage/Invoices/AdminInvoicesPage";
@@ -40,6 +41,9 @@ import ManagerSensorDashboardPage from "@/pages/ManagerPage/SensorDashboard/Mana
 import OwnerCropSeasonsPage from "@/pages/OwnerPage/CropSeasons/OwnerCropSeasonsPage";
 import OwnerEmployeeTaskTemplatesPage from "@/pages/OwnerPage/EmployeeTaskTemplates/OwnerEmployeeTaskTemplatesPage";
 import OwnerIotDevicesPage from "@/pages/OwnerPage/IotDevices/OwnerIotDevicesPage";
+import OwnerIotKitsPage from "@/pages/OwnerPage/IotKits/OwnerIotKitsPage";
+import OwnerIotKitDetailPage from "@/pages/OwnerPage/IotKits/OwnerIotKitDetailPage";
+import OwnerIotKitOrderStatusPage from "@/pages/OwnerPage/IotKits/OwnerIotKitOrderStatusPage";
 import OwnerDailyLogsPage from "@/pages/OwnerPage/DailyLogs/OwnerDailyLogsPage";
 import OwnerSensorReadingPage from "@/pages/OwnerPage/SensorReadings/OwnerSensorReadingPage";
 import OwnerSensorDashboardPage from "@/pages/OwnerPage/SensorDashboard/OwnerSensorDashboardPage";
@@ -161,6 +165,11 @@ const routes: AppRoutes = [
         allowedRoles: [RoleName.Admin],
       },
       {
+        path: "/dashboard/admin/iot-kits",
+        component: AdminIotKitsPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
         path: "/dashboard/admin/iot-devices/create",
         component: AdminCreateIotDevicesPage,
         allowedRoles: [RoleName.Admin],
@@ -279,6 +288,21 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/owner/iot-devices",
         component: OwnerIotDevicesPage,
+        allowedRoles: [RoleName.Owner],
+      },
+      {
+        path: "/dashboard/owner/iot-kits",
+        component: OwnerIotKitsPage,
+        allowedRoles: [RoleName.Owner],
+      },
+      {
+        path: "/dashboard/owner/iot-kits/orders/:orderId",
+        component: OwnerIotKitOrderStatusPage,
+        allowedRoles: [RoleName.Owner],
+      },
+      {
+        path: "/dashboard/owner/iot-kits/:kitId",
+        component: OwnerIotKitDetailPage,
         allowedRoles: [RoleName.Owner],
       },
       {

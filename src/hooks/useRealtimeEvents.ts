@@ -14,6 +14,8 @@ import {
   IncidentTicketEndedPayloadSchema,
   InvoiceCheckoutPayloadSchema,
   InvoicePaidPayloadSchema,
+  IotKitOrderCancelledPayloadSchema,
+  IotKitOrderPaidPayloadSchema,
   MilestoneStartReminderPayloadSchema,
   NotificationCreatedPayloadSchema,
   SensorAlertRecoveredPayloadSchema,
@@ -54,6 +56,8 @@ const EVENT_SCHEMAS: Partial<Record<RealtimeEventName, ZodSchema>> = {
   [RealtimeEvents.SubscriptionActivated]: SubscriptionActivatedPayloadSchema,
   [RealtimeEvents.InvoiceCheckoutCreated]: InvoiceCheckoutPayloadSchema,
   [RealtimeEvents.InvoicePaid]: InvoicePaidPayloadSchema,
+  [RealtimeEvents.IotKitOrderPaid]: IotKitOrderPaidPayloadSchema,
+  [RealtimeEvents.IotKitOrderCancelled]: IotKitOrderCancelledPayloadSchema,
 };
 
 /** Những event muốn surface lên bell / toast. `TicketMessageCreated` không
@@ -72,6 +76,8 @@ const NOTIFY_EVENTS: RealtimeEventName[] = [
   RealtimeEvents.SubscriptionActivated,
   RealtimeEvents.InvoiceCheckoutCreated,
   RealtimeEvents.InvoicePaid,
+  RealtimeEvents.IotKitOrderPaid,
+  RealtimeEvents.IotKitOrderCancelled,
 ];
 
 function toastBySeverity(
@@ -129,6 +135,11 @@ function invalidateByEvent(
       return;
     case RealtimeEvents.InvoiceCheckoutCreated:
     case RealtimeEvents.InvoicePaid:
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      return;
+    case RealtimeEvents.IotKitOrderPaid:
+    case RealtimeEvents.IotKitOrderCancelled:
+      queryClient.invalidateQueries({ queryKey: ["iot-kits"] });
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
       return;
     case RealtimeEvents.MilestoneStartReminder:
@@ -243,5 +254,6 @@ export function useRealtimeEvents(): void {
     queryClient.invalidateQueries({ queryKey: ["alerts"] });
     queryClient.invalidateQueries({ queryKey: ["invoices"] });
     queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+    queryClient.invalidateQueries({ queryKey: ["iot-kits"] });
   }, [reconnectCount, queryClient]);
 }

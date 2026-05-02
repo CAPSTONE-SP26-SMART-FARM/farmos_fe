@@ -168,3 +168,24 @@ export const InvoicePaidPayloadSchema = z
   })
   .passthrough();
 export type InvoicePaidPayloadType = z.infer<typeof InvoicePaidPayloadSchema>;
+
+export const IotKitOrderPaidPayloadSchema = z
+  .object({
+    orderId: z.string(),
+    orderNumber: z.string(),
+    totalAmount: z.number(),
+  })
+  .passthrough();
+export type IotKitOrderPaidPayloadType = z.infer<
+  typeof IotKitOrderPaidPayloadSchema
+>;
+
+export const IotKitOrderCancelledPayloadSchema = z
+  .object({
+    orderId: z.string(),
+    cancelReason: z.string().nullable().optional(),
+  })
+  .passthrough();
+export type IotKitOrderCancelledPayloadType = z.infer<
+  typeof IotKitOrderCancelledPayloadSchema
+>;

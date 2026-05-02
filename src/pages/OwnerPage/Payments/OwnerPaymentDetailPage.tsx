@@ -4,9 +4,15 @@ import { toast } from "sonner";
 import InvoiceStatusBadge, {
   type InvoiceStatus,
 } from "@/components/common/InvoiceStatusBadge";
+import IotKitOrderStatusBadge from "@/components/common/IotKitOrderStatusBadge";
 import TransactionStatusBadge, {
   type TransactionStatus,
 } from "@/components/common/TransactionStatusBadge";
+import {
+  IotKitOrderInvoiceSummarySchema,
+  type IotKitOrderStatus,
+} from "@/schemaValidatation/iotKit";
+import { PackageSearch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -113,7 +119,16 @@ function OwnerPaymentDetailPage() {
                   status={invoice.status as InvoiceStatus}
                 />
               </p>
-              <p>Loại hóa đơn: {invoice.referenceType}</p>
+              <p>
+                Loại hóa đơn:{" "}
+                {invoice.referenceType === "SUBSCRIPTION"
+                  ? "Gói đăng ký"
+                  : invoice.referenceType === "SERVICE_PACKAGE"
+                    ? "Gói dịch vụ"
+                    : invoice.referenceType === "IOT_KIT_ORDER"
+                      ? "Đơn Bộ Kit IoT"
+                      : invoice.referenceType}
+              </p>
               <p>Tổng tiền: {formatCurrency(invoice.totalAmount)}</p>
               <p>Ngày phát hành: {formatDateTime(invoice.issueDate)}</p>
               <p>Hạn thanh toán: {formatDateTime(invoice.dueDate)}</p>
@@ -135,6 +150,54 @@ function OwnerPaymentDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {invoice?.referenceType === "IOT_KIT_ORDER" &&
+        (() => {
+          const parsed = IotKitOrderInvoiceSummarySchema.safeParse(
+            invoice.reference?.summary,
+          );
+          const summary = parsed.success ? parsed.data : null;
+          return (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Đơn Bộ Kit IoT</CardTitle>
+                <CardDescription>
+                  Hoá đơn này thanh toán cho 1 đơn mua bộ Kit IoT.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-wrap items-center gap-3">
+                {summary?.orderNumber && (
+                  <span className="font-medium">
+                    Mã đơn: {summary.orderNumber}
+                  </span>
+                )}
+                {summary?.kitName && (
+                  <span className="text-sm text-muted-foreground">
+                    · {summary.kitName}
+                  </span>
+                )}
+                {summary?.status && (
+                  <IotKitOrderStatusBadge
+                    status={summary.status as IotKitOrderStatus}
+                  />
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="ml-auto"
+                  onClick={() =>
+                    navigate(
+                      `/dashboard/owner/iot-kits/orders/${invoice.referenceId}`,
+                    )
+                  }
+                >
+                  <PackageSearch className="mr-2 h-4 w-4" />
+                  Theo dõi đơn
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })()}
 
       <Card>
         <CardHeader>
