@@ -9,6 +9,7 @@ import type {
   ListSubscriptionsResType,
   SubscriptionCheckoutResType,
   ListUsageLedgerResType,
+  MyQuotaResType,
   SubscriptionResType,
   SubscriptionDetailResType,
   SubscriptionSummaryResType,
@@ -32,6 +33,8 @@ const subscriptionService = {
     ),
 
   getMySubscription: () => api.get<SubscriptionResType>(SUBSCRIPTIONS.MY),
+
+  getMyQuota: () => api.get<MyQuotaResType>(SUBSCRIPTIONS.MY_QUOTA),
 
   getSubscriptionsSummary: () =>
     api.get<SubscriptionSummaryResType>(SUBSCRIPTIONS.SUMMARY),

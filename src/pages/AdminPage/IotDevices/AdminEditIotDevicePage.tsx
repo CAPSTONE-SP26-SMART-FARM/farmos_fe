@@ -8,6 +8,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import IotDeviceForm from "@/pages/OwnerPage/IotDevices/IotDeviceForm";
 import { useAdminIotDeviceDetail } from "@/queries/useIotDevice";
+import { useDynamicBreadcrumb } from "@/stores/breadcrumbStore";
 
 export default function AdminEditIotDevicePage() {
   const navigate = useNavigate();
@@ -15,6 +16,15 @@ export default function AdminEditIotDevicePage() {
 
   const detailQuery = useAdminIotDeviceDetail(deviceId, !!deviceId);
   const device = detailQuery.data?.data;
+
+  useDynamicBreadcrumb(
+    `/dashboard/admin/iot-devices/${deviceId}/edit`,
+    device?.deviceName ? `Sửa ${device.deviceName}` : undefined,
+  );
+  useDynamicBreadcrumb(
+    `/dashboard/admin/iot-devices/${deviceId}`,
+    device?.deviceName,
+  );
 
   if (detailQuery.isLoading) {
     return (

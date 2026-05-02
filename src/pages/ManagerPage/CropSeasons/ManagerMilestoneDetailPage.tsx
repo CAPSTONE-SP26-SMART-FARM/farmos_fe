@@ -84,6 +84,7 @@ import {
   useManagerUpsertSensorThreshold,
 } from "@/queries/useProductionMilestone";
 import { useManagerCropSeasonDetail } from "@/queries/useCropSeason";
+import { useDynamicBreadcrumb } from "@/stores/breadcrumbStore";
 import ManagerMilestoneTasksSection, {
   ManagerMilestoneTaskAssignmentScreen,
 } from "@/pages/ManagerPage/EmployeeTasks/ManagerMilestoneTasksSection";
@@ -1255,6 +1256,15 @@ const ManagerMilestoneDetailPage = () => {
   });
   const milestones = listQuery.data?.data.data ?? [];
   const milestone = milestones.find((m) => m.id === msId);
+
+  useDynamicBreadcrumb(
+    `/dashboard/manager/crop-seasons/${csId}`,
+    cropSeason?.cropName,
+  );
+  useDynamicBreadcrumb(
+    `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}`,
+    milestone?.stageName,
+  );
 
   const isPlanningCropSeason =
     cropSeason?.status === ProductionStatusName.Planning;

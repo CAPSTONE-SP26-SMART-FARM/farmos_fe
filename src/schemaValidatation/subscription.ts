@@ -197,4 +197,49 @@ export type SubscriptionSummaryResType = z.infer<
   typeof SubscriptionSummaryResSchema
 >;
 export type ListEntitlementsResType = z.infer<typeof ListEntitlementsResSchema>;
+
+// ============================================================
+// MyQuota — aggregated quota for the current owner
+// ============================================================
+export type MyQuotaFeatureType =
+  | { featureCode: string; kind: "numeric"; limit: number; used: number; remaining: number }
+  | {
+      featureCode: string;
+      kind: "numeric_per_farm";
+      limit: number;
+      perFarm: { farmId: string; farmName: string; used: number; remaining: number }[];
+    }
+  | { featureCode: string; kind: "boolean"; enabled: boolean }
+  | { featureCode: string; kind: "raw"; value: string };
+
+export type MyQuotaResType = {
+  subscription: {
+    id: string;
+    planId: string;
+    planVersionId: string;
+    planCode: string;
+    planName: string;
+    status: "PENDING" | "ACTIVE" | "SUSPENDED" | "CANCELLED" | "EXPIRED";
+    startedAt: string | null;
+    expiresAt: string | null;
+  } | null;
+  features: MyQuotaFeatureType[];
+  iotDevices: {
+    subscriptionMax: number;
+    kitBonus: number;
+    used: number;
+    remaining: number;
+    kitOrders: {
+      orderId: string;
+      orderNumber: string;
+      status: "PENDING" | "PAID" | "CANCELLED" | "REFUNDED";
+      statusAssigned: "UNASSIGNED" | "ASSIGNED" | "RETURNED" | null;
+      totalSlots: number;
+      usedSlots: number;
+      remainingSlots: number;
+      createdAt: string;
+    }[];
+  };
+  ticketCredits: { creditType: string; balance: number }[];
+};
 export type ListUsageLedgerResType = z.infer<typeof ListUsageLedgerResSchema>;

@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/table";
 import { getApiErrorMessageVi } from "@/lib/error-message";
 import { useInvoiceCheckout, useInvoiceDetail } from "@/queries/useInvoice";
+import { useDynamicBreadcrumb } from "@/stores/breadcrumbStore";
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("vi-VN", {
@@ -62,6 +63,10 @@ function OwnerPaymentDetailPage() {
   const checkoutMutation = useInvoiceCheckout();
 
   const invoice = invoiceDetailQuery.data?.data;
+  useDynamicBreadcrumb(
+    `/dashboard/owner/payments/${invoiceId}`,
+    invoice?.invoiceNumber,
+  );
 
   const handlePayInvoice = async () => {
     if (!invoiceId) return;

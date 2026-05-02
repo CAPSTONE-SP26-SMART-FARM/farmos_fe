@@ -38,6 +38,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useInvoiceDetail } from "@/queries/useInvoice";
+import { useDynamicBreadcrumb } from "@/stores/breadcrumbStore";
 import {
   formatCurrencyVnd,
   formatDateTimeVi,
@@ -645,6 +646,11 @@ function AdminInvoiceDetailPage() {
   const { invoiceId = "" } = useParams<{ invoiceId: string }>();
   const invoiceDetailQuery = useInvoiceDetail(invoiceId, Boolean(invoiceId));
   const invoice = invoiceDetailQuery.data?.data;
+
+  useDynamicBreadcrumb(
+    `/dashboard/admin/invoices/${invoiceId}`,
+    invoice?.invoiceNumber,
+  );
 
   const handleBack = () => navigate("/dashboard/admin/invoices");
   const handleRefresh = () => invoiceDetailQuery.refetch();

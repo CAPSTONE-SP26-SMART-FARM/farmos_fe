@@ -30,6 +30,7 @@ export const API_ENDPOINTS = {
     SUMMARY: "/subscriptions/summary",
     MY: "/subscriptions/my",
     MY_HISTORY: "/subscriptions/my/history",
+    MY_QUOTA: "/subscriptions/my/quota",
     BY_ID: (id: string) => `/subscriptions/${id}`,
     RENEW: (id: string) => `/subscriptions/${id}/renew`,
     CANCEL: (id: string) => `/subscriptions/${id}/cancel`,
@@ -538,6 +539,7 @@ export const QUERY_KEYS = {
       ...(query !== undefined ? [query] : []),
     ],
     my: () => ["subscriptions", "my"],
+    myQuota: () => ["subscriptions", "my", "quota"],
     myHistory: (query?: Record<string, unknown>) => [
       "subscriptions",
       "my-history",

@@ -8,17 +8,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { getApiErrorMessageVi } from "@/lib/error-message";
-import { cn } from "@/lib/utils";
 import type { SubscriptionEntitlementType } from "@/schemaValidatation/subscription";
 import { useSubscriptionEntitlements } from "@/queries/useSubscription";
+import { formatFeatureLabel } from "@/constants/featureLabel";
 import { CheckCircle2, Package, XCircle } from "lucide-react";
 
 interface OverviewTabProps {
   subscriptionId: string;
   enabled: boolean;
-  usageByFeature: Record<string, number>;
 }
 
 interface ParsedLimit {
@@ -50,13 +48,10 @@ function parseEntitlementValue(value: string): ParsedLimit {
 
 function EntitlementCard({
   entitlement,
-  usedRaw,
 }: {
   entitlement: SubscriptionEntitlementType;
-  usedRaw: number;
 }) {
   const parsed = parseEntitlementValue(entitlement.value);
-  const used = Math.max(0, usedRaw);
 
   if (parsed.kind === "boolean") {
     return (
@@ -68,7 +63,7 @@ function EntitlementCard({
             <XCircle className="h-5 w-5 text-muted-foreground" />
           )}
           <div className="flex-1">
-            <p className="font-medium">{entitlement.featureCode}</p>
+            <p className="font-medium">{formatFeatureLabel(entitlement.featureCode)}</p>
             <p className="text-xs text-muted-foreground">
               {parsed.booleanValue ? "Đã bật" : "Không áp dụng"}
             </p>
@@ -82,52 +77,24 @@ function EntitlementCard({
     return (
       <Card>
         <CardContent className="pt-6">
-          <p className="font-medium">{entitlement.featureCode}</p>
+          <p className="font-medium">{formatFeatureLabel(entitlement.featureCode)}</p>
           <div className="mt-1 flex items-baseline gap-2">
             <span className="text-2xl font-semibold text-primary">∞</span>
             <span className="text-xs text-muted-foreground">Không giới hạn</span>
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Đã dùng: {used.toLocaleString("vi-VN")}
-          </p>
         </CardContent>
       </Card>
     );
   }
 
   if (parsed.kind === "numeric" && parsed.numeric !== undefined) {
-    const limit = parsed.numeric;
-    const pct = limit > 0 ? Math.min(100, (used / limit) * 100) : 0;
-    const near = pct >= 80 && pct < 100;
-    const full = pct >= 100;
     return (
       <Card>
-        <CardContent className="space-y-2 pt-6">
-          <p className="font-medium">{entitlement.featureCode}</p>
-          <div className="flex items-baseline justify-between">
-            <span className="text-xl font-semibold">
-              {used.toLocaleString("vi-VN")} / {limit.toLocaleString("vi-VN")}
-            </span>
-            <span
-              className={cn(
-                "text-xs font-medium",
-                full
-                  ? "text-red-600"
-                  : near
-                    ? "text-amber-600"
-                    : "text-muted-foreground",
-              )}
-            >
-              {Math.round(pct)}%
-            </span>
-          </div>
-          <Progress
-            value={pct}
-            className={cn(
-              full && "[&>div]:bg-red-500",
-              near && !full && "[&>div]:bg-amber-500",
-            )}
-          />
+        <CardContent className="pt-6">
+          <p className="font-medium">{formatFeatureLabel(entitlement.featureCode)}</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums">
+            {parsed.numeric.toLocaleString("vi-VN")}
+          </p>
         </CardContent>
       </Card>
     );
@@ -136,18 +103,14 @@ function EntitlementCard({
   return (
     <Card>
       <CardContent className="pt-6">
-        <p className="font-medium">{entitlement.featureCode}</p>
+        <p className="font-medium">{formatFeatureLabel(entitlement.featureCode)}</p>
         <p className="text-sm text-muted-foreground">{parsed.raw}</p>
       </CardContent>
     </Card>
   );
 }
 
-function OverviewTab({
-  subscriptionId,
-  enabled,
-  usageByFeature,
-}: OverviewTabProps) {
+function OverviewTab({ subscriptionId, enabled }: OverviewTabProps) {
   const entitlementsQuery = useSubscriptionEntitlements(
     subscriptionId,
     { page: 1, limit: 50, search: undefined },
@@ -196,7 +159,7 @@ function OverviewTab({
       <CardHeader>
         <CardTitle>Quyền lợi của gói</CardTitle>
         <CardDescription>
-          Dung lượng đã dùng / tổng hạn mức theo từng tính năng.
+          Hạn mức tối đa cho từng tính năng.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -205,7 +168,6 @@ function OverviewTab({
             <EntitlementCard
               key={e.id}
               entitlement={e}
-              usedRaw={usageByFeature[e.featureCode] ?? 0}
             />
           ))}
         </div>
