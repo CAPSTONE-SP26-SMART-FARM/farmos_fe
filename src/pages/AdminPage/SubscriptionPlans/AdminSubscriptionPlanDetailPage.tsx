@@ -46,6 +46,7 @@ import {
   useListSubscriptionPlanVersions,
   useSubscriptionPlanDetail,
 } from "@/queries/useSubscriptionPlan";
+import { useDynamicBreadcrumb } from "@/stores/breadcrumbStore";
 import type { ListPlanVersionsQueryType } from "@/schemaValidatation/subscriptionPlan";
 import {
   ChevronDown,
@@ -102,6 +103,11 @@ function AdminSubscriptionPlanDetailPage() {
 
   const planDetailQuery = useSubscriptionPlanDetail(planId, Boolean(planId));
   const plan = planDetailQuery.data?.data;
+
+  useDynamicBreadcrumb(
+    `/dashboard/admin/subscription-plans/${planId}`,
+    plan?.name,
+  );
 
   const planVersionsQuery = useListSubscriptionPlanVersions(
     planId,

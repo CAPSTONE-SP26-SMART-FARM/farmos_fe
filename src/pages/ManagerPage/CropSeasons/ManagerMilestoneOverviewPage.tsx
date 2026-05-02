@@ -32,6 +32,7 @@ import {
   useManagerMilestoneAssignment,
 } from "@/queries/useProductionMilestone";
 import { useManagerCropSeasonDetail } from "@/queries/useCropSeason";
+import { useDynamicBreadcrumb } from "@/stores/breadcrumbStore";
 import ManagerMilestoneTasksSection from "@/pages/ManagerPage/EmployeeTasks/ManagerMilestoneTasksSection";
 import type {
   ProductionMilestoneResType,
@@ -319,6 +320,15 @@ export default function ManagerMilestoneOverviewPage() {
   const milestones = listQuery.data?.data.data ?? [];
   const milestone = milestones.find(
     (m: ProductionMilestoneResType) => m.id === msId,
+  );
+
+  useDynamicBreadcrumb(
+    `/dashboard/manager/crop-seasons/${csId}`,
+    cropSeason?.cropName,
+  );
+  useDynamicBreadcrumb(
+    `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}/overview`,
+    milestone?.stageName,
   );
 
   const assignmentQuery = useManagerMilestoneAssignment(msId, !!msId);

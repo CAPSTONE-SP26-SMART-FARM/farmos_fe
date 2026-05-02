@@ -32,6 +32,14 @@ export const useAdminSubscriptionsSummary = (enabled = true) => {
   });
 };
 
+export const useOwnerMyQuota = (enabled = true) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.subscriptions.myQuota(),
+    queryFn: () => subscriptionService.getMyQuota(),
+    enabled,
+  });
+};
+
 export const useOwnerMySubscription = (enabled = true) => {
   return useQuery({
     queryKey: QUERY_KEYS.subscriptions.my(),

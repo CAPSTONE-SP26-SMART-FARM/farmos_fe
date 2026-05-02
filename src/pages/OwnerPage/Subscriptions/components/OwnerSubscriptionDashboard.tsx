@@ -19,7 +19,6 @@ import {
   useOwnerToggleAutoRenew,
   useSubscriptionDetail,
   useSubscriptionEntitlements,
-  useSubscriptionUsageLedger,
 } from "@/queries/useSubscription";
 import { useOwnerInvoices, useSubscriptionPaymentStatus } from "@/queries/useInvoice";
 import type { SubscriptionResType } from "@/schemaValidatation/subscription";
@@ -93,12 +92,6 @@ function OwnerSubscriptionDashboard({
     { page: 1, limit: 50, search: undefined },
     Boolean(subscriptionId),
   );
-  const usageLedgerForAggregationQuery = useSubscriptionUsageLedger(
-    subscriptionId,
-    { page: 1, limit: 10, search: undefined, featureCode: undefined },
-    Boolean(subscriptionId),
-  );
-
   const invoicesQuery = useOwnerInvoices(
     {
       page: 1,
@@ -124,15 +117,6 @@ function OwnerSubscriptionDashboard({
       invoicesQuery.data?.data?.data?.find((inv) => inv.status === "OPEN"),
     [invoicesQuery.data?.data?.data],
   );
-
-  const usageByFeature = useMemo(() => {
-    const rows = usageLedgerForAggregationQuery.data?.data?.data ?? [];
-    const out: Record<string, number> = {};
-    for (const row of rows) {
-      out[row.featureCode] = (out[row.featureCode] ?? 0) + Math.abs(row.delta);
-    }
-    return out;
-  }, [usageLedgerForAggregationQuery.data?.data?.data]);
 
   const featureCodes = useMemo(() => {
     const set = new Set<string>();
@@ -347,7 +331,6 @@ function OwnerSubscriptionDashboard({
           <OverviewTab
             subscriptionId={subscriptionId}
             enabled={Boolean(subscriptionId)}
-            usageByFeature={usageByFeature}
           />
         </TabsContent>
 

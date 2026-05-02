@@ -68,6 +68,7 @@ import {
 } from "@/queries/useProductionMilestone";
 import { useManagerListMilestoneTemplates } from "@/queries/useMilestoneTemplate";
 import { useManagerCropSeasonDetail } from "@/queries/useCropSeason";
+import { useDynamicBreadcrumb } from "@/stores/breadcrumbStore";
 import type {
   ProductionMilestoneResType,
   ProductionMilestoneStatusType,
@@ -1122,6 +1123,11 @@ const ManagerMilestonesPage = () => {
   const cropSeasonQuery = useManagerCropSeasonDetail(id);
   const cropSeason = cropSeasonQuery.data?.data;
   const cropSeasonLabel = cropSeason?.cropName ?? cropSeasonId ?? "Mùa vụ";
+
+  useDynamicBreadcrumb(
+    `/dashboard/manager/crop-seasons/${id}`,
+    cropSeason?.cropName,
+  );
 
   const listQuery = useManagerListProductionMilestones(id, {
     page,
