@@ -308,6 +308,23 @@ const BACKEND_ERROR_MAP: Record<string, string> = {
   "error.planversionnotfound": "Không tìm thấy phiên bản gói.",
   "error.invalidfeaturecode": "Mã tính năng không tồn tại trong hệ thống.",
 
+  // ── IoT Kit Add-on ──────────────────────────────────────────────────
+  "error.iotkitnotfound": "Không tìm thấy bộ Kit IoT.",
+  "error.iotkitcodealreadyexists": "Mã bộ Kit IoT đã tồn tại.",
+  "error.iotkitnotactive":
+    "Bộ Kit IoT đã ngừng bán. Vui lòng tải lại danh sách.",
+  "error.iotkitalreadyarchived": "Bộ Kit IoT đã được lưu trữ.",
+  "error.iotkitalreadyactive": "Bộ Kit IoT đang hoạt động.",
+  "error.iotkitimmutablefields":
+    "Không thể đổi số bộ / loại board khi đã có đơn đã thanh toán.",
+  "error.iotkitpurchasequantityinvalid": "Số lượng mua không hợp lệ.",
+  "error.iotkitordernotfound": "Không tìm thấy đơn mua bộ Kit IoT.",
+  "error.iotkitorderaccessdenied": "Bạn không có quyền truy cập đơn này.",
+  "error.iotkitordernumbergeneration":
+    "Không tạo được mã đơn. Vui lòng thử lại.",
+  "error.ownernoactivesubscription":
+    "Bạn cần có gói đăng ký đang hoạt động để xem hạn mức bộ Kit IoT.",
+
   // ── Raw Error.* keys (missing i18n, sent as-is) ──────────────────────
   tasktitleduplicate: "Tiêu đề công việc đã tồn tại trong mốc sản xuất này.",
   macaddressrequiredforwifimodule:

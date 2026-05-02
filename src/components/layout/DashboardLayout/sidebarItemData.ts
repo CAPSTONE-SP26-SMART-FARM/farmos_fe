@@ -10,6 +10,7 @@ import {
   Milestone,
   NotebookPen,
   Package,
+  PackagePlus,
   ReceiptText,
   Settings,
   Shield,
@@ -90,6 +91,11 @@ export const sidebarData: SidebarData = {
           title: "Thiết Bị IoT",
           url: "/dashboard/admin/iot-devices",
           icon: Cpu,
+        },
+        {
+          title: "Bộ Kit IoT",
+          url: "/dashboard/admin/iot-kits",
+          icon: PackagePlus,
         },
         {
           title: "Mẫu Cột Mốc",
@@ -223,6 +229,11 @@ export const sidebarData: SidebarData = {
           title: "Thiết Bị IoT",
           url: "/dashboard/owner/iot-devices",
           icon: Cpu,
+        },
+        {
+          title: "Mua Bộ Kit IoT",
+          url: "/dashboard/owner/iot-kits",
+          icon: PackagePlus,
         },
         {
           title: "Tổng Quan Cảm Biến",

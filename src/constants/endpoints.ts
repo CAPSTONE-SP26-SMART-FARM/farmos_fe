@@ -422,6 +422,23 @@ export const API_ENDPOINTS = {
     OWNER_BY_FARM: (farmId: string) => `/daily-log/owner/farm/${farmId}`,
     MANAGER_BY_ZONE: (zoneId: string) => `/daily-log/manager/zone/${zoneId}`,
   },
+  IOT_KITS: {
+    // Admin
+    ADMIN_LIST: "/admin/iot-kits",
+    ADMIN_CREATE: "/admin/iot-kits",
+    ADMIN_DETAIL: (id: string) => `/admin/iot-kits/${id}`,
+    ADMIN_UPDATE: (id: string) => `/admin/iot-kits/${id}`,
+    ADMIN_ARCHIVE: (id: string) => `/admin/iot-kits/${id}/archive`,
+    ADMIN_UNARCHIVE: (id: string) => `/admin/iot-kits/${id}/unarchive`,
+    ADMIN_AVAILABLE_SLOTS: "/admin/iot-kit-orders/available-slots",
+    // Owner
+    OWNER_LIST: "/owner/iot-kits",
+    OWNER_DETAIL: (id: string) => `/owner/iot-kits/${id}`,
+    OWNER_PURCHASE: (id: string) => `/owner/iot-kits/${id}/purchase`,
+    OWNER_PAYMENT_STATUS: (orderId: string) =>
+      `/owner/iot-kits/orders/${orderId}/payment-status`,
+    OWNER_MY_QUOTA: "/owner/my/iot-quota",
+  },
   CROP_SEASON: {
     MANAGER: {
       CREATE: "/crop-seasons",
@@ -1026,6 +1043,36 @@ export const QUERY_KEYS = {
       filters,
     ],
     requestDetail: (requestId: string) => ["production-requests", requestId],
+  },
+  iotKits: {
+    all: ["iot-kits"] as const,
+    adminList: (query?: Record<string, unknown>) => [
+      "iot-kits",
+      "admin",
+      "list",
+      ...(query !== undefined ? [query] : []),
+    ],
+    adminDetail: (id: string) => ["iot-kits", "admin", id],
+    ownerList: (query?: Record<string, unknown>) => [
+      "iot-kits",
+      "owner",
+      "list",
+      ...(query !== undefined ? [query] : []),
+    ],
+    ownerDetail: (id: string) => ["iot-kits", "owner", id],
+    paymentStatus: (orderId: string) => [
+      "iot-kits",
+      "orders",
+      orderId,
+      "payment-status",
+    ],
+    myQuota: () => ["iot-kits", "owner", "my-quota"],
+    availableSlots: (ownerId: string) => [
+      "iot-kits",
+      "admin",
+      "available-slots",
+      ownerId,
+    ],
   },
   tickets: {
     all: ["tickets"],

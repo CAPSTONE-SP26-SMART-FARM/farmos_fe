@@ -215,6 +215,34 @@ const META: Partial<Record<RealtimeEventName, EventMeta>> = {
     buildDedupId: (event, p) =>
       strField(p, "invoiceId") ?? fallbackId(event, p),
   },
+  [RealtimeEvents.IotKitOrderPaid]: {
+    kind: NotificationKind.IotKitOrderPaid,
+    severity: "success",
+    title: "Đơn Bộ Kit IoT đã thanh toán",
+    shouldToast: true,
+    buildHref: (p) => {
+      const orderId = strField(p, "orderId");
+      return orderId
+        ? `/dashboard/owner/iot-kits/orders/${orderId}`
+        : "/dashboard/owner/iot-kits";
+    },
+    buildDedupId: (_event, p) =>
+      `iot_kit_order_paid:${strField(p, "orderId") ?? "unknown"}`,
+  },
+  [RealtimeEvents.IotKitOrderCancelled]: {
+    kind: NotificationKind.IotKitOrderCancelled,
+    severity: "warning",
+    title: "Đơn Bộ Kit IoT đã huỷ",
+    shouldToast: true,
+    buildHref: (p) => {
+      const orderId = strField(p, "orderId");
+      return orderId
+        ? `/dashboard/owner/iot-kits/orders/${orderId}`
+        : "/dashboard/owner/iot-kits";
+    },
+    buildDedupId: (_event, p) =>
+      `iot_kit_order_cancelled:${strField(p, "orderId") ?? "unknown"}`,
+  },
 };
 
 function fallbackId(

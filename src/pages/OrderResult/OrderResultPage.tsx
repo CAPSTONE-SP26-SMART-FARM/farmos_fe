@@ -10,11 +10,13 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { QUERY_KEYS } from "@/constants";
 import { useAuthStore } from "@/stores/authStore";
+import { useInvoiceDetail } from "@/queries/useInvoice";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRight,
   CheckCircle2,
   Home,
+  PackageSearch,
   Receipt,
   RotateCcw,
   Wallet,
@@ -68,6 +70,12 @@ function OrderResultPage({ variant }: OrderResultPageProps) {
   const ownerBase = "/dashboard/owner";
   const isOwner = isAuthenticated && user?.role === "owner";
 
+  // Peek invoice reference to surface IoT Kit order tracking shortcut.
+  const invoiceDetailQuery = useInvoiceDetail(invoiceId ?? "", !!invoiceId);
+  const invoice = invoiceDetailQuery.data?.data;
+  const isIotKitOrder = invoice?.referenceType === "IOT_KIT_ORDER";
+  const iotKitOrderId = isIotKitOrder ? invoice?.referenceId : undefined;
+
   const primaryCta = isSuccess
     ? isOwner
       ? {
@@ -105,11 +113,17 @@ function OrderResultPage({ variant }: OrderResultPageProps) {
             )}
           </div>
           <CardTitle className="text-2xl">
-            {isSuccess
-              ? "Thanh toán thành công"
-              : cancel
-                ? "Bạn đã huỷ thanh toán"
-                : "Thanh toán không thành công"}
+            {isIotKitOrder
+              ? isSuccess
+                ? "Đơn Bộ Kit IoT đã thanh toán"
+                : cancel
+                  ? "Bạn đã huỷ thanh toán đơn Bộ Kit IoT"
+                  : "Thanh toán đơn Bộ Kit IoT chưa hoàn tất"
+              : isSuccess
+                ? "Thanh toán thành công"
+                : cancel
+                  ? "Bạn đã huỷ thanh toán"
+                  : "Thanh toán không thành công"}
           </CardTitle>
           <CardDescription className="max-w-md">
             {isSuccess
@@ -204,6 +218,19 @@ function OrderResultPage({ variant }: OrderResultPageProps) {
               >
                 <RotateCcw className="mr-2 h-4 w-4" />
                 Thử lại
+              </Button>
+            )}
+            {isOwner && isIotKitOrder && iotKitOrderId && (
+              <Button
+                variant="outline"
+                onClick={() =>
+                  navigate(
+                    `${ownerBase}/iot-kits/orders/${iotKitOrderId}`,
+                  )
+                }
+              >
+                <PackageSearch className="mr-2 h-4 w-4" />
+                Theo dõi đơn
               </Button>
             )}
             {!isOwner && (

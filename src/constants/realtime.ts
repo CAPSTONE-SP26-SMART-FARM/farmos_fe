@@ -18,6 +18,8 @@ export const RealtimeEvents = {
   SubscriptionActivated: "subscription.activated",
   InvoiceCheckoutCreated: "invoice.checkout.created",
   InvoicePaid: "invoice.paid",
+  IotKitOrderPaid: "iot_kit_order.paid",
+  IotKitOrderCancelled: "iot_kit_order.cancelled",
 } as const;
 export type RealtimeEventName =
   (typeof RealtimeEvents)[keyof typeof RealtimeEvents];
@@ -33,6 +35,8 @@ export const NotificationKind = {
   Milestone: "milestone",
   BillingCheckout: "billing_checkout",
   BillingPaid: "billing_paid",
+  IotKitOrderPaid: "iot_kit_order_paid",
+  IotKitOrderCancelled: "iot_kit_order_cancelled",
   Generic: "notification",
 } as const;
 export type NotificationKindType =

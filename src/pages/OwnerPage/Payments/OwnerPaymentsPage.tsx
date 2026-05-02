@@ -59,6 +59,12 @@ const TX_STATUS_LABEL: Record<string, string> = {
   FAILED: "Thất bại",
 };
 
+const REFERENCE_TYPE_LABEL: Record<string, string> = {
+  SUBSCRIPTION: "Gói đăng ký",
+  SERVICE_PACKAGE: "Gói dịch vụ",
+  IOT_KIT_ORDER: "Đơn Bộ Kit IoT",
+};
+
 function OwnerPaymentsPage() {
   const navigate = useNavigate();
 
@@ -208,6 +214,7 @@ function OwnerPaymentsPage() {
               <SelectItem value="ALL">Tất cả loại</SelectItem>
               <SelectItem value="SUBSCRIPTION">Gói đăng ký</SelectItem>
               <SelectItem value="SERVICE_PACKAGE">Gói dịch vụ</SelectItem>
+              <SelectItem value="IOT_KIT_ORDER">Đơn Bộ Kit IoT</SelectItem>
             </SelectContent>
           </Select>
         </CardContent>
@@ -255,7 +262,10 @@ function OwnerPaymentsPage() {
                     {invoice.invoiceNumber}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{invoice.referenceType}</Badge>
+                    <Badge variant="outline">
+                      {REFERENCE_TYPE_LABEL[invoice.referenceType] ??
+                        invoice.referenceType}
+                    </Badge>
                   </TableCell>
                   <TableCell>{formatCurrency(invoice.totalAmount)}</TableCell>
                   <TableCell>

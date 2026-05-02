@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { IotDeviceResType } from "@/schemaValidatation/iotDevice";
 import IotDeviceList from "./IotDeviceList";
 import IotDeviceDetail from "./IotDeviceDetail";
+import IotQuotaWidget from "@/components/common/IotQuotaWidget";
 
 // ── Navigation state ───────────────────────────────────────────────────
 
@@ -24,11 +25,14 @@ export default function OwnerIotDevicesPage() {
 
   // Level 1 – device list
   return (
-    <IotDeviceList
-      farmId=""
-      farmName=""
-      actor="owner"
-      onDetail={(device) => setNav({ level: 2, device })}
-    />
+    <div className="space-y-4">
+      <IotQuotaWidget variant="compact" />
+      <IotDeviceList
+        farmId=""
+        farmName=""
+        actor="owner"
+        onDetail={(device) => setNav({ level: 2, device })}
+      />
+    </div>
   );
 }

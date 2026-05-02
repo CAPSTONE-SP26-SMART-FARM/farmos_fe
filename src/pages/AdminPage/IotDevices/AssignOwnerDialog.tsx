@@ -22,10 +22,11 @@ import {
 import { RoleName } from "@/constants/role";
 import { useAdminListUsers } from "@/queries/useAdmin";
 import { useAdminAssignIotOwner } from "@/queries/useIotDevice";
+import { useIotKitAvailableSlots } from "@/queries/useIotKit";
 import useDebounce from "@/hooks/useDebounce";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Loader2, Search, User } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Check, Loader2, PackageSearch, Search, User } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -50,8 +51,26 @@ export default function AssignOwnerDialog({
     defaultValues: {
       iotDeviceId,
       ownerId: "",
+      iotKitOrderId: undefined,
     },
   });
+  const selectedOwnerId = form.watch("ownerId");
+  const slotsQuery = useIotKitAvailableSlots(
+    selectedOwnerId,
+    !!selectedOwnerId,
+  );
+  const slots = slotsQuery.data?.data?.data ?? [];
+
+  // Clear stale `iotKitOrderId` when admin picks a different owner — the
+  // previously selected order belongs to the previous owner and would be
+  // rejected by BE.
+  const prevOwnerIdRef = useRef(selectedOwnerId);
+  useEffect(() => {
+    if (prevOwnerIdRef.current !== selectedOwnerId) {
+      prevOwnerIdRef.current = selectedOwnerId;
+      form.setValue("iotKitOrderId", undefined, { shouldDirty: false });
+    }
+  }, [selectedOwnerId, form]);
 
   const ownersQuery = useAdminListUsers({
     role: RoleName.Owner,
@@ -73,14 +92,18 @@ export default function AssignOwnerDialog({
   const { mutateAsync, isPending } = useAdminAssignIotOwner();
 
   const reset = () => {
-    form.reset({ iotDeviceId, ownerId: "" });
+    form.reset({ iotDeviceId, ownerId: "", iotKitOrderId: undefined });
     setSearch("");
   };
 
   const onSubmit = form.handleSubmit(async (values) => {
     if (isPending) return;
+    // Strip empty optional iotKitOrderId so BE strict body parse passes.
+    const body: AdminAssignOwnerBodyType = values.iotKitOrderId
+      ? values
+      : { iotDeviceId: values.iotDeviceId, ownerId: values.ownerId };
     try {
-      await mutateAsync(values);
+      await mutateAsync(body);
       toast.success("Gán owner cho thiết bị thành công");
       onOpenChange(false);
       reset();
@@ -182,6 +205,95 @@ export default function AssignOwnerDialog({
                   )}
                 </Field>
               )}
+            />
+
+            <Controller
+              name="iotKitOrderId"
+              control={form.control}
+              render={({ field, fieldState }) => {
+                if (!selectedOwnerId) return <></>;
+                if (slotsQuery.isLoading) {
+                  return (
+                    <Field>
+                      <FieldLabel>Liên kết với đơn Bộ Kit IoT</FieldLabel>
+                      <div className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Đang tải đơn còn slot trống...
+                      </div>
+                    </Field>
+                  );
+                }
+                if (slots.length === 0) {
+                  return (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>
+                        Liên kết với đơn Bộ Kit IoT (tuỳ chọn)
+                      </FieldLabel>
+                      <Input
+                        value={field.value ?? ""}
+                        onChange={(e) =>
+                          field.onChange(e.target.value || undefined)
+                        }
+                        placeholder="Mã đơn (UUID) — để trống nếu không gắn"
+                        aria-invalid={fieldState.invalid}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Owner này hiện không có đơn còn slot trống, hoặc tính
+                        năng tự động chưa khả dụng. Bạn có thể nhập UUID đơn
+                        thủ công.
+                      </p>
+                      <FieldError errors={[fieldState.error]} />
+                    </Field>
+                  );
+                }
+                return (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>
+                      Liên kết với đơn Bộ Kit IoT (tuỳ chọn)
+                    </FieldLabel>
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => field.onChange(undefined)}
+                        className={`flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm transition hover:bg-muted ${!field.value ? "border-primary bg-primary/10" : ""}`}
+                      >
+                        <span>Không liên kết với đơn nào</span>
+                        {!field.value && (
+                          <Check className="h-4 w-4 text-primary" />
+                        )}
+                      </button>
+                      {slots.map((slot) => {
+                        const selected = field.value === slot.orderId;
+                        const disabled = slot.remainingSlots <= 0;
+                        return (
+                          <button
+                            key={slot.orderId}
+                            type="button"
+                            disabled={disabled}
+                            onClick={() => field.onChange(slot.orderId)}
+                            className={`flex w-full items-center gap-3 rounded-md border px-3 py-2 text-left text-sm transition ${disabled ? "cursor-not-allowed opacity-50" : "hover:bg-muted"} ${selected ? "border-primary bg-primary/10" : ""}`}
+                          >
+                            <PackageSearch className="h-4 w-4 text-muted-foreground" />
+                            <span className="flex min-w-0 flex-1 flex-col">
+                              <span className="truncate font-medium">
+                                {slot.kitName} · {slot.orderNumber}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {slot.remainingSlots}/{slot.totalSlots} slot
+                                trống
+                              </span>
+                            </span>
+                            {selected && (
+                              <Check className="h-4 w-4 text-primary" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <FieldError errors={[fieldState.error]} />
+                  </Field>
+                );
+              }}
             />
           </FieldGroup>
 
