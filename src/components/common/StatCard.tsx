@@ -34,32 +34,36 @@ function StatCard({
   return (
     <Card className={cn("transition-shadow hover:shadow-sm", className)}>
       <CardContent className="py-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="space-y-1">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1 space-y-1">
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground line-clamp-2">
               {label}
             </p>
             {isLoading ? (
               <Skeleton className="h-8 w-20" />
             ) : (
-              <p className="text-3xl font-semibold tabular-nums">{value}</p>
+              <p className="text-xl font-semibold tabular-nums truncate xl:text-2xl 2xl:text-3xl">
+                {value}
+              </p>
             )}
             {hint &&
               (isLoading ? (
                 <Skeleton className="h-3 w-24" />
               ) : (
-                <p className="text-xs text-muted-foreground">{hint}</p>
+                <p className="text-xs text-muted-foreground line-clamp-2">
+                  {hint}
+                </p>
               ))}
           </div>
           {Icon && (
             <div
               className={cn(
-                "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
+                "flex h-9 w-9 shrink-0 items-center justify-center rounded-full xl:h-10 xl:w-10",
                 TONE_STYLES[tone],
               )}
               aria-hidden="true"
             >
-              <Icon className="h-5 w-5" />
+              <Icon className="h-4 w-4 xl:h-5 xl:w-5" />
             </div>
           )}
         </div>

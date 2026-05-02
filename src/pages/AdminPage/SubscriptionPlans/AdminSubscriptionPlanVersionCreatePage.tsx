@@ -45,6 +45,7 @@ import {
   useResolveActivePlanVersion,
   useSubscriptionPlanDetail,
 } from "@/queries/useSubscriptionPlan";
+import { useDynamicBreadcrumb } from "@/stores/breadcrumbStore";
 import {
   CreatePlanVersionBodySchema,
   type CreatePlanVersionBodyType,
@@ -171,6 +172,11 @@ function AdminSubscriptionPlanVersionCreatePage() {
   };
 
   const planName = planDetailQuery.data?.data?.name;
+
+  useDynamicBreadcrumb(
+    `/dashboard/admin/subscription-plans/${planId}`,
+    planName,
+  );
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">

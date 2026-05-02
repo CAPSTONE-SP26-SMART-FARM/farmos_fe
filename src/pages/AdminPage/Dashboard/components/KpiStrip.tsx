@@ -28,7 +28,7 @@ interface KpiStripProps {
 
 function KpiStrip({ data }: KpiStripProps) {
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
       <StatCard
         label="Tổng người dùng"
         value={data.totalUsers.toLocaleString("vi-VN")}

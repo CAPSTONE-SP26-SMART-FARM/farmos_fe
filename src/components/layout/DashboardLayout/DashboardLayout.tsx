@@ -20,6 +20,15 @@ import { useSocketAuthSync } from "@/hooks/useSocketAuthSync";
 import { useRealtimeEvents } from "@/hooks/useRealtimeEvents";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import { sidebarData } from "./sidebarItemData";
+import { useBreadcrumbStore } from "@/stores/breadcrumbStore";
+
+const UUID_RE =
+  /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i;
+const NUMERIC_ID_RE = /^\d{4,}$/;
+
+function isIdLike(segment: string): boolean {
+  return UUID_RE.test(segment) || NUMERIC_ID_RE.test(segment);
+}
 
 /**
  * Static Vietnamese labels for generic path segments (roles, dashboard root)
@@ -64,6 +73,7 @@ const sidebarUrlMap = buildSidebarUrlMap();
  */
 function useBreadcrumbs() {
   const location = useLocation();
+  const dynamicLabels = useBreadcrumbStore((s) => s.labels);
 
   return useMemo(() => {
     const paths = location.pathname.split("/").filter(Boolean);
@@ -73,9 +83,13 @@ function useBreadcrumbs() {
     paths.forEach((segment, index) => {
       currentPath += `/${segment}`;
       const label =
+        dynamicLabels[currentPath] ??
         SEGMENT_LABELS[segment] ??
         sidebarUrlMap[currentPath] ??
-        segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " ");
+        (isIdLike(segment)
+          ? "Chi tiết"
+          : segment.charAt(0).toUpperCase() +
+            segment.slice(1).replace(/-/g, " "));
       breadcrumbs.push({
         label,
         href: currentPath,
@@ -84,7 +98,7 @@ function useBreadcrumbs() {
     });
 
     return breadcrumbs;
-  }, [location.pathname]);
+  }, [location.pathname, dynamicLabels]);
 }
 
 /**

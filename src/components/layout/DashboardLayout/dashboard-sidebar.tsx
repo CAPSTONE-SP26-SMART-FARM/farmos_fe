@@ -15,6 +15,7 @@ import {
 import { sidebarData } from "./sidebarItemData";
 import { useAuthStore } from "@/stores/authStore";
 import { Link } from "react-router";
+import { Sprout } from "lucide-react";
 import type { NavGroup } from "./types";
 import type { ComponentPropsWithoutRef } from "react";
 import type { RoleNameType } from "@/constants/role";
@@ -59,15 +60,19 @@ export function DashboardSidebar(props: DashboardSidebarProps) {
       {...props}
     >
       <SidebarHeader>
-        <div className="flex justify-between items-center">
-          <Link
-            to="/"
-            className="font-bold text-xl"
-          >
+        <Link
+          to="/"
+          className="flex items-center gap-2 overflow-hidden font-bold text-xl"
+          aria-label="FarmOS"
+        >
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600">
+            <Sprout className="h-5 w-5" />
+          </span>
+          <span className="truncate transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">
             FarmOS
-          </Link>
-          {/* TODO: Add ThemeToggle when theme-provider is set up */}
-        </div>
+          </span>
+        </Link>
+        {/* TODO: Add ThemeToggle when theme-provider is set up */}
       </SidebarHeader>
       <SidebarContent>
         <NavMain

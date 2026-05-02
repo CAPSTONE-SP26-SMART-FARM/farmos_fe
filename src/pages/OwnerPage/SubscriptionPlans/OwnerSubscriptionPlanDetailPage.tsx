@@ -39,6 +39,7 @@ import {
   useOwnerCreateSubscription,
   useOwnerMySubscription,
 } from "@/queries/useSubscription";
+import { useDynamicBreadcrumb } from "@/stores/breadcrumbStore";
 import {
   CalendarClock,
   CheckCircle2,
@@ -76,6 +77,10 @@ function OwnerSubscriptionPlanDetailPage() {
   const createSubscription = useOwnerCreateSubscription();
 
   const plan = planQuery.data?.data;
+  useDynamicBreadcrumb(
+    `/dashboard/owner/subscription-plans/${planId}`,
+    plan?.name,
+  );
   const versions = versionsQuery.data?.data?.data ?? [];
   const activeVersion = versions.find((v) => v.isActive);
   const mySubscription = mySubQuery.data?.data;
