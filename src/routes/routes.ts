@@ -22,6 +22,11 @@ import AdminSubscriptionPlanVersionCreatePage from "@/pages/AdminPage/Subscripti
 import AdminSubscriptionsPage from "@/pages/AdminPage/Subscriptions/AdminSubscriptionsPage";
 import AdminSubscriptionDetailPage from "@/pages/AdminPage/Subscriptions/AdminSubscriptionDetailPage";
 import AdminTicketAnalyticsPage from "@/pages/AdminPage/TicketAnalytics/AdminTicketAnalyticsPage";
+import AdminTicketCategoriesPage from "@/pages/AdminPage/TicketCategories/AdminTicketCategoriesPage";
+import AdminCreateTicketCategoryPage from "@/pages/AdminPage/TicketCategories/AdminCreateTicketCategoryPage";
+import AdminCommissionRulesPage from "@/pages/AdminPage/CommissionRules/AdminCommissionRulesPage";
+import AdminCreateCommissionRulePage from "@/pages/AdminPage/CommissionRules/AdminCreateCommissionRulePage";
+import AdminPackagesPage from "@/pages/AdminPage/Packages/AdminPackagesPage";
 import AdminUsersPage from "@/pages/AdminPage/Users/AdminUsersPage";
 import DoctorPage from "@/pages/DoctorPage/DoctorPage";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage/ForgotPasswordPage";
@@ -212,6 +217,31 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/admin/doctor-requests",
         component: ListRequestAdmin,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/ticket-categories",
+        component: AdminTicketCategoriesPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/ticket-categories/create",
+        component: AdminCreateTicketCategoryPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/commission-rules",
+        component: AdminCommissionRulesPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/commission-rules/create",
+        component: AdminCreateCommissionRulePage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/packages",
+        component: AdminPackagesPage,
         allowedRoles: [RoleName.Admin],
       },
       {

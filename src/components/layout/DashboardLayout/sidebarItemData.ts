@@ -16,6 +16,7 @@ import {
   Shield,
   SlidersHorizontal,
   Sprout,
+  Tag,
   Ticket,
   UserCheck,
   Users,
@@ -116,6 +117,26 @@ export const sidebarData: SidebarData = {
           title: "Phân Tích Ticket",
           url: "/dashboard/admin/ticket-analytics",
           icon: Ticket,
+        },
+      ],
+    },
+    {
+      label: "Cấu hình Ticket",
+      items: [
+        {
+          title: "Danh Mục Ticket",
+          url: "/dashboard/admin/ticket-categories",
+          icon: Tag,
+        },
+        {
+          title: "Quy Tắc Hoa Hồng",
+          url: "/dashboard/admin/commission-rules",
+          icon: ChartColumnIncreasing,
+        },
+        {
+          title: "Gói Ticket",
+          url: "/dashboard/admin/packages",
+          icon: Package,
         },
       ],
     },
