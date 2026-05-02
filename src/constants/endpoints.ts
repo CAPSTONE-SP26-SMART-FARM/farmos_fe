@@ -389,6 +389,34 @@ export const API_ENDPOINTS = {
         `/zones/${zoneId}/managers/${managerId}/primary`,
     },
   },
+  // ── Ticket v2 ─────────────────────────────────────────────────────────
+  TICKET_CATEGORIES: {
+    ADMIN_LIST: "/admin/ticket-categories",
+    ADMIN_CREATE: "/admin/ticket-categories",
+    ADMIN_DETAIL: (id: string) => `/admin/ticket-categories/${id}`,
+    ADMIN_UPDATE: (id: string) => `/admin/ticket-categories/${id}`,
+    ADMIN_TOGGLE: (id: string) => `/admin/ticket-categories/${id}/toggle`,
+    ACTIVE_LIST: "/ticket-categories/active",
+  },
+  COMMISSION_RULES: {
+    ADMIN_LIST: "/admin/commission-rules",
+    ADMIN_CREATE: "/admin/commission-rules",
+    ADMIN_DETAIL: (id: string) => `/admin/commission-rules/${id}`,
+    ADMIN_UPDATE: (id: string) => `/admin/commission-rules/${id}`,
+    ADMIN_DELETE: (id: string) => `/admin/commission-rules/${id}`,
+  },
+  TICKET_V2: {
+    CREATE: "/tickets",
+    LIST: "/tickets",
+    DETAIL: (id: string) => `/tickets/${id}`,
+    CANCEL: (id: string) => `/tickets/${id}/cancel`,
+    OWNER_BALANCE: "/me/ticket-balance",
+    ADMIN_LIST: "/admin/tickets",
+    ADMIN_DETAIL: (id: string) => `/admin/tickets/${id}`,
+    ADMIN_CLAWBACK: (id: string) => `/admin/tickets/${id}/clawback`,
+    ADMIN_REPORT_REVENUE: "/admin/reports/ticket-revenue",
+    ADMIN_REPORT_DOCTOR_COMMISSION: "/admin/reports/doctor-commission",
+  },
   TICKET: {
     INCIDENT: {
       CREATE: "/ticket/incident",
@@ -675,11 +703,7 @@ export const QUERY_KEYS = {
         "list",
         ...(query !== undefined ? [query] : []),
       ],
-      detail: (deviceId: string) => [
-        "manager",
-        "iot-devices",
-        deviceId,
-      ],
+      detail: (deviceId: string) => ["manager", "iot-devices", deviceId],
     },
     iotDeviceTemplates: {
       list: (query?: Record<string, unknown>) => [
@@ -827,11 +851,7 @@ export const QUERY_KEYS = {
         "list",
         ...(query !== undefined ? [query] : []),
       ],
-      detail: (deviceId: string) => [
-        "owner",
-        "iot-devices",
-        deviceId,
-      ],
+      detail: (deviceId: string) => ["owner", "iot-devices", deviceId],
     },
     sensors: {
       list: (iotDeviceId: string, query?: Record<string, unknown>) => [
@@ -1119,5 +1139,61 @@ export const QUERY_KEYS = {
       "prescriptions",
       prescriptionId,
     ],
+  },
+  // ── Ticket v2 (isolated roots — never overlap with legacy "tickets") ──
+  ticketCategories: {
+    root: ["ticket-categories-v2"] as const,
+    adminList: (query?: Record<string, unknown>) =>
+      [
+        "ticket-categories-v2",
+        "admin",
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+    activeList: () => ["ticket-categories-v2", "active"] as const,
+    adminDetail: (id: string) => ["ticket-categories-v2", "admin", id] as const,
+  },
+  commissionRules: {
+    root: ["commission-rules-v2"] as const,
+    list: (query?: Record<string, unknown>) =>
+      [
+        "commission-rules-v2",
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+    detail: (id: string) => ["commission-rules-v2", id] as const,
+  },
+  ticketV2: {
+    root: ["ticket-v2"] as const,
+    list: (query?: Record<string, unknown>) =>
+      ["ticket-v2", "list", ...(query !== undefined ? [query] : [])] as const,
+    detail: (id: string) => ["ticket-v2", id] as const,
+    adminList: (query?: Record<string, unknown>) =>
+      [
+        "ticket-v2",
+        "admin",
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+    adminDetail: (id: string) => ["ticket-v2", "admin", id] as const,
+  },
+  ticketBalance: {
+    root: ["ticket-balance-v2"] as const,
+    owner: () => ["ticket-balance-v2", "owner"] as const,
+  },
+  adminTicketReports: {
+    root: ["admin-ticket-reports-v2"] as const,
+    revenue: (query?: Record<string, unknown>) =>
+      [
+        "admin-ticket-reports-v2",
+        "revenue",
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+    doctorCommission: (query?: Record<string, unknown>) =>
+      [
+        "admin-ticket-reports-v2",
+        "doctor-commission",
+        ...(query !== undefined ? [query] : []),
+      ] as const,
   },
 } as const;
