@@ -46,6 +46,7 @@ import OwnerSensorDashboardPage from "@/pages/OwnerPage/SensorDashboard/OwnerSen
 import OwnerPaymentsPage from "@/pages/OwnerPage/Payments/OwnerPaymentsPage";
 import OwnerPaymentDetailPage from "@/pages/OwnerPage/Payments/OwnerPaymentDetailPage";
 import OwnerSubscriptionPlansPage from "@/pages/OwnerPage/SubscriptionPlans/OwnerSubscriptionPlansPage";
+import OwnerSubscriptionPlanDetailPage from "@/pages/OwnerPage/SubscriptionPlans/OwnerSubscriptionPlanDetailPage";
 import OwnerSubscriptionsPage from "@/pages/OwnerPage/Subscriptions/OwnerSubscriptionsPage";
 import OwnerSubscriptionDetailPage from "@/pages/OwnerPage/Subscriptions/OwnerSubscriptionDetailPage";
 import OwnerSubscriptionHistoryPage from "@/pages/OwnerPage/Subscriptions/OwnerSubscriptionHistoryPage";
@@ -223,6 +224,11 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/owner/subscription-plans",
         component: OwnerSubscriptionPlansPage,
+        allowedRoles: [RoleName.Owner],
+      },
+      {
+        path: "/dashboard/owner/subscription-plans/:planId",
+        component: OwnerSubscriptionPlanDetailPage,
         allowedRoles: [RoleName.Owner],
       },
       {
