@@ -152,6 +152,26 @@ export const useManagerUnassignFarmerFromTask = (milestoneId: string) => {
   });
 };
 
+// ── Complete Task ──────────────────────────────────────────────────────
+
+export const useManagerCompleteEmployeeTask = (milestoneId: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (taskId: string) =>
+      managerEmployeeTaskService.complete(taskId, milestoneId),
+    onSuccess: (_res, taskId) => {
+      toast.success("Đã hoàn thành nhiệm vụ!");
+      qc.invalidateQueries({
+        queryKey: QUERY_KEYS.manager.employeeTasks.list(milestoneId),
+      });
+      qc.invalidateQueries({
+        queryKey: QUERY_KEYS.manager.employeeTasks.detail(taskId, milestoneId),
+      });
+    },
+    onError: (error) => onMutationError(error, "Hoàn thành nhiệm vụ thất bại"),
+  });
+};
+
 // ── Eligible Farmers ───────────────────────────────────────────────────
 
 export const useManagerEligibleFarmers = (
@@ -301,6 +321,26 @@ export const useOwnerUnassignFarmerFromTask = (milestoneId: string) => {
       });
     },
     onError: (error) => onMutationError(error, "Hủy gán nông dân thất bại"),
+  });
+};
+
+// ── Complete Task ──────────────────────────────────────────────────────
+
+export const useOwnerCompleteEmployeeTask = (milestoneId: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (taskId: string) =>
+      ownerEmployeeTaskService.complete(taskId, milestoneId),
+    onSuccess: (_res, taskId) => {
+      toast.success("Đã hoàn thành nhiệm vụ!");
+      qc.invalidateQueries({
+        queryKey: QUERY_KEYS.owner.employeeTasks.list(milestoneId),
+      });
+      qc.invalidateQueries({
+        queryKey: QUERY_KEYS.owner.employeeTasks.detail(taskId, milestoneId),
+      });
+    },
+    onError: (error) => onMutationError(error, "Hoàn thành nhiệm vụ thất bại"),
   });
 };
 

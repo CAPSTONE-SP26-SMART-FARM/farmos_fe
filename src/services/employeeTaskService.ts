@@ -63,6 +63,10 @@ export const managerEmployeeTaskService = {
     api.post<EmployeeTaskResType>(
       MANAGER.EMPLOYEE_TASK.UNASSIGN(taskId, milestoneId),
     ),
+  complete: (taskId: string, milestoneId: string) =>
+    api.post<EmployeeTaskResType>(
+      MANAGER.EMPLOYEE_TASK.COMPLETE(taskId, milestoneId),
+    ),
   eligibleFarmers: (milestoneId: string) =>
     api.get<EligibleFarmerResType[]>(
       MANAGER.EMPLOYEE_TASK.ELIGIBLE_FARMERS(milestoneId),
@@ -113,6 +117,10 @@ export const ownerEmployeeTaskService = {
   unassign: (taskId: string, milestoneId: string) =>
     api.post<EmployeeTaskResType>(
       OWNER.EMPLOYEE_TASK.UNASSIGN(taskId, milestoneId),
+    ),
+  complete: (taskId: string, milestoneId: string) =>
+    api.post<EmployeeTaskResType>(
+      OWNER.EMPLOYEE_TASK.COMPLETE(taskId, milestoneId),
     ),
   eligibleFarmers: (milestoneId: string) =>
     api.get<EligibleFarmerResType[]>(
