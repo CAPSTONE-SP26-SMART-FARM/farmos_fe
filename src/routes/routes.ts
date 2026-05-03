@@ -28,6 +28,12 @@ import AdminTicketCategoriesPage from "@/pages/AdminPage/TicketCategories/AdminT
 import AdminCreateTicketCategoryPage from "@/pages/AdminPage/TicketCategories/AdminCreateTicketCategoryPage";
 import AdminCommissionRulesPage from "@/pages/AdminPage/CommissionRules/AdminCommissionRulesPage";
 import AdminCreateCommissionRulePage from "@/pages/AdminPage/CommissionRules/AdminCreateCommissionRulePage";
+import AdminMedicinesPage from "@/pages/AdminPage/Medicines/AdminMedicinesPage";
+import AdminMedicineFreeTextStatsPage from "@/pages/AdminPage/Medicines/AdminMedicineFreeTextStatsPage";
+import AdminTicketSystemConfigsPage from "@/pages/AdminPage/SystemConfigs/AdminTicketSystemConfigsPage";
+import AdminDqsLeaderboardPage from "@/pages/AdminPage/DQS/AdminDqsLeaderboardPage";
+import AdminDoctorDqsDetailPage from "@/pages/AdminPage/DQS/AdminDoctorDqsDetailPage";
+import AdminTicketDetailPage from "@/pages/AdminPage/Tickets/AdminTicketDetailPage";
 import AdminPackagesPage from "@/pages/AdminPage/Packages/AdminPackagesPage";
 import AdminUsersPage from "@/pages/AdminPage/Users/AdminUsersPage";
 import DoctorPage from "@/pages/DoctorPage/DoctorPage";
@@ -255,6 +261,38 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/admin/packages",
         component: AdminPackagesPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      // ── Module 3 — Admin governance (Wave 2) ──
+      {
+        path: "/dashboard/admin/medicines",
+        component: AdminMedicinesPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/medicines/freetext-stats",
+        component: AdminMedicineFreeTextStatsPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/system-configs/tickets",
+        component: AdminTicketSystemConfigsPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      // ── Module 3 — Admin DQS (Wave 4) ──
+      {
+        path: "/dashboard/admin/dqs/leaderboard",
+        component: AdminDqsLeaderboardPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/doctors/:id/dqs",
+        component: AdminDoctorDqsDetailPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/tickets/:id",
+        component: AdminTicketDetailPage,
         allowedRoles: [RoleName.Admin],
       },
       {

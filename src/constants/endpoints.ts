@@ -88,6 +88,8 @@ export const API_ENDPOINTS = {
       ME: "/doctor-assignment/doctor/my-assignments",
       DETAIL: (id: string) => `/doctor-assignment/doctor/my-assignments/${id}`,
     },
+    // Module 3 — Public profile (B19). KHÔNG trả tier (BR-81).
+    PUBLIC: (id: string) => `/doctors/${id}/public`,
   },
   ADMIN: {
     DOCTOR_PROFILE: {
@@ -445,6 +447,41 @@ export const API_ENDPOINTS = {
       DETAIL: (ticketId: string, prescriptionId: string) =>
         `/ticket/${ticketId}/prescriptions/${prescriptionId}`,
     },
+    // ── Module 3 — Ticket Quality (B-tasks tham chiếu BE module-3 doc) ──
+    RESOLVE: (ticketId: string) => `/tickets/${ticketId}/resolve`, // B2 (mobile Doctor; FE web không gọi)
+    CLOSE: (ticketId: string) => `/tickets/${ticketId}/close`, // B5 (creator: Owner/Manager)
+    REJECT: (ticketId: string) => `/tickets/${ticketId}/reject`, // B1 (mobile Doctor)
+    ADDENDA: (ticketId: string) => `/tickets/${ticketId}/addenda`, // B4 (mobile Doctor)
+    RATING: (ticketId: string) => `/tickets/${ticketId}/rating`, // B6 (creator)
+    ABANDON: (ticketId: string) => `/tickets/${ticketId}/abandon-resolution`, // B7 (creator)
+    FULL: (ticketId: string) => `/tickets/${ticketId}/full`, // B8 (Admin/Owner/Manager)
+  },
+  // ── Module 3 — Admin governance ────────────────────────────────────────
+  ADMIN_TICKETS: {
+    INVALIDATE_RATING: (ticketId: string) =>
+      `/admin/tickets/${ticketId}/invalidate-rating`, // B17
+    // Admin reuse shared `/tickets/:id/full` (B8). BE controller cho phép
+    // mọi role (kể cả admin) qua `GET /tickets/:id/full`. Pending nếu BE
+    // sau này tách riêng admin endpoint với extra fields (vd payout detail).
+    FULL: (ticketId: string) => `/tickets/${ticketId}/full`,
+  },
+  MEDICINES: {
+    ADMIN_LIST: "/admin/medicines", // B11
+    ADMIN_CREATE: "/admin/medicines",
+    ADMIN_DETAIL: (id: string) => `/admin/medicines/${id}`,
+    ADMIN_UPDATE: (id: string) => `/admin/medicines/${id}`,
+    ADMIN_TOGGLE: (id: string) => `/admin/medicines/${id}/toggle`, // B12
+    FREETEXT_STATS: "/admin/medicines/freetext-stats", // B13
+    CATALOG: "/medicines/catalog", // B10 (mobile Doctor; FE web có thể dùng cho picker A8)
+  },
+  SYSTEM_CONFIGS: {
+    LIST: "/admin/system-configs", // B18 GET ?prefix=ticket.
+    UPSERT: (key: string) => `/admin/system-configs/${key}`, // B18 PATCH single-key
+  },
+  DQS: {
+    DOCTOR_DETAIL: (id: string) => `/admin/doctors/${id}/dqs`, // B14
+    DOCTOR_HISTORY: (id: string) => `/admin/doctors/${id}/dqs-history`, // B15
+    LEADERBOARD: "/admin/dqs-leaderboard", // B16
   },
   DAILY_LOG: {
     TASKS: "/daily-log/tasks",
@@ -1205,5 +1242,63 @@ export const QUERY_KEYS = {
         "doctor-commission",
         ...(query !== undefined ? [query] : []),
       ] as const,
+  },
+  // ── Module 3 — Ticket Quality & DQS ─────────────────────────────────────
+  medicines: {
+    root: ["medicines-v2"] as const,
+    adminList: (query?: Record<string, unknown>) =>
+      [
+        "medicines-v2",
+        "admin",
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+    adminDetail: (id: string) => ["medicines-v2", "admin", id] as const,
+    freetextStats: (query?: Record<string, unknown>) =>
+      [
+        "medicines-v2",
+        "freetext-stats",
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+    catalog: (query?: Record<string, unknown>) =>
+      [
+        "medicines-v2",
+        "catalog",
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+  },
+  systemConfigs: {
+    root: ["system-configs-v2"] as const,
+    list: (prefix?: string) =>
+      ["system-configs-v2", "list", prefix ?? "all"] as const,
+  },
+  dqs: {
+    root: ["dqs-v2"] as const,
+    doctorDetail: (id: string) => ["dqs-v2", "doctor", id] as const,
+    doctorHistory: (id: string, query?: Record<string, unknown>) =>
+      [
+        "dqs-v2",
+        "doctor",
+        id,
+        "history",
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+    leaderboard: (query?: Record<string, unknown>) =>
+      [
+        "dqs-v2",
+        "leaderboard",
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+  },
+  doctorPublic: {
+    root: ["doctor-public-v2"] as const,
+    detail: (id: string) => ["doctor-public-v2", id] as const,
+  },
+  // Mở rộng nhóm tickets cũ (B8 full payload) — không đụng QUERY_KEYS.tickets ở trên.
+  ticketsExt: {
+    root: ["tickets", "ext"] as const,
+    full: (id: string) => ["tickets", "ext", "full", id] as const,
+    adminFull: (id: string) =>
+      ["tickets", "ext", "admin", "full", id] as const,
   },
 } as const;

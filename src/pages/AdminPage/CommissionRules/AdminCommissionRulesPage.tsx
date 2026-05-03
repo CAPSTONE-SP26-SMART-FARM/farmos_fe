@@ -23,13 +23,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -395,8 +389,8 @@ export default function AdminCommissionRulesPage() {
             <div>
               <CardTitle>Quy Tắc Hoa Hồng</CardTitle>
               <CardDescription>
-                Cấu hình phần trăm hoa hồng cho bác sĩ theo danh mục, cấp bậc
-                hoặc cá nhân.
+                Mapping % hoa hong theo pham vi ap dung — danh muc, hang bac si
+                hoac bac si cu the.
               </CardDescription>
             </div>
             <Button
@@ -411,30 +405,25 @@ export default function AdminCommissionRulesPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Scope filter */}
-          <div className="flex gap-2">
-            <Select
-              value={scopeFilter}
-              onValueChange={(v) => {
-                setScopeFilter(v as CommissionScopeType | "ALL");
-                setQuery((prev) => ({ ...prev, page: 1 }));
-              }}
-            >
-              <SelectTrigger className="w-56">
-                <SelectValue placeholder="Lọc theo phạm vi..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Tất cả phạm vi</SelectItem>
-                {CommissionScopeSchema.options.map((s) => (
-                  <SelectItem
-                    key={s}
-                    value={s}
-                  >
-                    {SCOPE_LABELS[s]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Tabs
+            value={scopeFilter}
+            onValueChange={(v) => {
+              setScopeFilter(v as CommissionScopeType | "ALL");
+              setQuery((prev) => ({ ...prev, page: 1 }));
+            }}
+          >
+            <TabsList className="flex flex-wrap">
+              <TabsTrigger value="ALL">Tất cả</TabsTrigger>
+              {CommissionScopeSchema.options.map((s) => (
+                <TabsTrigger
+                  key={s}
+                  value={s}
+                >
+                  {SCOPE_LABELS[s]}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
 
           {overlapping.size > 0 && (
             <div className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
@@ -505,7 +494,7 @@ export default function AdminCommissionRulesPage() {
                       <TableCell className="text-xs text-muted-foreground">
                         {formatDateRange(rule.effectiveFrom, rule.effectiveTo)}
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
+                      <TableCell className="text-xs text-muted-foreground max-w-50 truncate">
                         {rule.note ?? "—"}
                       </TableCell>
                       <TableCell className="text-right">

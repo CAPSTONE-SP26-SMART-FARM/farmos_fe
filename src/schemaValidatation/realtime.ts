@@ -189,3 +189,102 @@ export const IotKitOrderCancelledPayloadSchema = z
 export type IotKitOrderCancelledPayloadType = z.infer<
   typeof IotKitOrderCancelledPayloadSchema
 >;
+
+// ── Module 3 — Ticket Quality & DQS realtime payloads ─────────────────────
+// Shape pending decision 9.8 (BE chia sẻ TS type/OpenAPI). Hiện đặt field
+// tối thiểu + .passthrough() để nhận field phụ.
+
+export const TicketAssignedPayloadSchema = z
+  .object({
+    ticketId: z.string(),
+    doctorId: z.string(),
+    farmId: z.string().optional(),
+    zoneId: z.string().optional(),
+    doctor: z
+      .object({
+        id: z.string(),
+        fullName: z.string().optional(),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+export type TicketAssignedPayloadType = z.infer<
+  typeof TicketAssignedPayloadSchema
+>;
+
+export const TicketResolvedPayloadSchema = z
+  .object({
+    ticketId: z.string(),
+    farmId: z.string().optional(),
+    zoneId: z.string().optional(),
+    resolvedAt: z.string().optional(),
+    isAIResolved: z.boolean().optional(),
+  })
+  .passthrough();
+export type TicketResolvedPayloadType = z.infer<
+  typeof TicketResolvedPayloadSchema
+>;
+
+export const TicketClosedPayloadSchema = z
+  .object({
+    ticketId: z.string(),
+    farmId: z.string().optional(),
+    zoneId: z.string().optional(),
+    closedAt: z.string().optional(),
+    closedBy: z.string().optional(),
+    closeReason: z.string().optional(),
+  })
+  .passthrough();
+export type TicketClosedPayloadType = z.infer<typeof TicketClosedPayloadSchema>;
+
+export const TicketFallbackRequiredPayloadSchema = z
+  .object({
+    ticketId: z.string(),
+    farmId: z.string().optional(),
+    zoneId: z.string().optional(),
+    doctorId: z.string().optional(),
+    silenceMinutes: z.number().optional(),
+  })
+  .passthrough();
+export type TicketFallbackRequiredPayloadType = z.infer<
+  typeof TicketFallbackRequiredPayloadSchema
+>;
+
+export const WalletCreditedPayloadSchema = z
+  .object({
+    doctorId: z.string(),
+    amount: z.number(),
+    ticketId: z.string().optional(),
+  })
+  .passthrough();
+export type WalletCreditedPayloadType = z.infer<
+  typeof WalletCreditedPayloadSchema
+>;
+
+export const DqsTierChangedPayloadSchema = z
+  .object({
+    doctorId: z.string(),
+    oldTier: z.string().optional(),
+    newTier: z.string(),
+    snapshotDate: z.string().optional(),
+  })
+  .passthrough();
+export type DqsTierChangedPayloadType = z.infer<
+  typeof DqsTierChangedPayloadSchema
+>;
+
+// BE existing event `prescription.incident.created` — emit khi Doctor tạo/reissue prescription.
+// Listener (TicketDetailPanelV2) dùng để invalidate `tickets.full(id)` lại.
+export const PrescriptionCreatedPayloadSchema = z
+  .object({
+    ticketId: z.string(),
+    prescriptionId: z.string().optional(),
+    farmId: z.string().optional(),
+    zoneId: z.string().optional(),
+  })
+  .passthrough();
+export type PrescriptionCreatedPayloadType = z.infer<
+  typeof PrescriptionCreatedPayloadSchema
+>;

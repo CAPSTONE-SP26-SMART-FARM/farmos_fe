@@ -1,5 +1,6 @@
 import {
   Activity,
+  BarChart3,
   Blocks,
   Building2,
   ChartColumnIncreasing,
@@ -11,13 +12,16 @@ import {
   NotebookPen,
   Package,
   PackagePlus,
+  Pill,
   ReceiptText,
   Settings,
+  Settings2,
   Shield,
   SlidersHorizontal,
   Sprout,
   Tag,
   Ticket,
+  Trophy,
   UserCheck,
   Users,
   Wallet,
@@ -123,6 +127,17 @@ export const sidebarData: SidebarData = {
           url: "/dashboard/admin/ticket-analytics",
           icon: Ticket,
         },
+        // ── Module 3 ──
+        {
+          title: "Bảng Xếp Hạng Bác Sĩ",
+          url: "/dashboard/admin/dqs/leaderboard",
+          icon: Trophy,
+        },
+        {
+          title: "Thống Kê Thuốc Tự Nhập",
+          url: "/dashboard/admin/medicines/freetext-stats",
+          icon: BarChart3,
+        },
       ],
     },
     {
@@ -142,6 +157,17 @@ export const sidebarData: SidebarData = {
           title: "Gói Ticket",
           url: "/dashboard/admin/packages",
           icon: Package,
+        },
+        // ── Module 3 ──
+        {
+          title: "Danh Mục Thuốc",
+          url: "/dashboard/admin/medicines",
+          icon: Pill,
+        },
+        {
+          title: "Cấu Hình Quy Trình Ticket",
+          url: "/dashboard/admin/system-configs/tickets",
+          icon: Settings2,
         },
       ],
     },
