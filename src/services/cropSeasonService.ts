@@ -33,14 +33,22 @@ export const cropSeasonService = {
 
   detail: (id: string) => api.get<CropSeasonType>(CS.MANAGER.DETAIL(id)),
 
-  update: (id: string, body: UpdateCropSeasonBodyType) =>
-    api.put<CropSeasonType, UpdateCropSeasonBodyType>(CS.MANAGER.UPDATE(id), {
-      ...body,
-      ...(body.plantDate && { plantDate: toISO(body.plantDate) }),
-      ...(body.expectedHarvestDate && {
-        expectedHarvestDate: toISO(body.expectedHarvestDate),
-      }),
-    }),
+  update: (id: string, body: UpdateCropSeasonBodyType) => {
+    const { actualHarvestDate, ...rest } = body;
+    return api.put<CropSeasonType, UpdateCropSeasonBodyType>(
+      CS.MANAGER.UPDATE(id),
+      {
+        ...rest,
+        ...(rest.plantDate && { plantDate: toISO(rest.plantDate) }),
+        ...(rest.expectedHarvestDate && {
+          expectedHarvestDate: toISO(rest.expectedHarvestDate),
+        }),
+        ...(actualHarvestDate && {
+          actualHarvestDate: toISO(actualHarvestDate),
+        }),
+      },
+    );
+  },
 
   sendRequest: (cropSeasonId: string, body: SendProductionRequestBodyType) =>
     api.post<ProductionRequestType, SendProductionRequestBodyType>(

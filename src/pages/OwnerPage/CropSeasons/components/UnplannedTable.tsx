@@ -46,7 +46,7 @@ export default function UnplannedTable({ unplanned }: UnplannedTableProps) {
           </TableHeader>
           <TableBody>
             {unplanned.flatMap((section) =>
-              section.entities.map((entity) => (
+              section.entities.map((entity, entityIndex) => (
                 <TableRow key={entity.entityId}>
                   <TableCell>
                     <Badge
@@ -56,8 +56,13 @@ export default function UnplannedTable({ unplanned }: UnplannedTableProps) {
                       {getEntityTypeLabel(section.entityType)}
                     </Badge>
                   </TableCell>
-                  <TableCell className="font-mono text-xs">
-                    {entity.entityId.slice(0, 8)}…
+                  <TableCell className="text-xs">
+                    <p className="font-medium">
+                      {getEntityTypeLabel(section.entityType)} #{entityIndex + 1}
+                    </p>
+                    <p className="font-mono text-muted-foreground">
+                      {entity.entityId.slice(0, 8)}…
+                    </p>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {entity.createdAt

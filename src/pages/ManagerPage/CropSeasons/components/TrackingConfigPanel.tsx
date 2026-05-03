@@ -11,6 +11,7 @@ import { getFieldLabel, getEntityTypeLabel } from "@/lib/tracking-display";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import LoadingCard from "@/components/common/LoadingCard";
 import EmptyState from "@/components/common/EmptyState";
@@ -67,7 +68,7 @@ export default function TrackingConfigPanel({
         TrackingEntityType,
         string,
       ];
-      return { entityType, entityId: null as unknown as string, fieldName };
+      return { entityType, entityId: null, fieldName };
     });
     try {
       await putConfigs({ configs });
@@ -149,9 +150,11 @@ export default function TrackingConfigPanel({
         <div className="flex justify-end gap-2 pt-2">
           <Button
             variant="default"
+            className="cursor-pointer"
             onClick={() => setShowConfirm(true)}
             disabled={isPending}
           >
+            {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Lưu cấu hình
           </Button>
         </div>

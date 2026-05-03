@@ -100,6 +100,7 @@ export const TrackingLogItemSchema = z.object({
   newValueJson: z.unknown().nullable(),
   changedAt: z.string(),
   source: z.string().nullable(),
+  changedBy: z.string().nullable(),
   requestId: z.string().nullable(),
 });
 export type TrackingLogItemType = z.infer<typeof TrackingLogItemSchema>;

@@ -3,6 +3,14 @@ import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import TableSkeleton from "@/components/common/TableSkeleton";
 import { useTrackingLog } from "@/queries/useTracking";
@@ -12,6 +20,7 @@ import {
   formatTrackingValue,
 } from "@/lib/tracking-display";
 import type {
+  TrackingEntityType,
   TrackingLogListResType,
   TrackingLogQueryType,
 } from "@/schemaValidatation/tracking";
@@ -22,6 +31,14 @@ interface TrackingTimelineProps {
   isLoading?: boolean;
 }
 
+const ENTITY_TYPE_OPTIONS: TrackingEntityType[] = [
+  "crop_season",
+  "production_milestone",
+  "employee_task",
+  "harvest_record",
+  "iot_device_assignment",
+];
+
 const PAGE_LIMIT = 20;
 
 export default function TrackingTimeline({
@@ -30,21 +47,118 @@ export default function TrackingTimeline({
   isLoading: initialLoading,
 }: TrackingTimelineProps) {
   const [page, setPage] = useState(1);
-  const query: TrackingLogQueryType = { page, limit: PAGE_LIMIT };
+  const [entityType, setEntityType] = useState<TrackingEntityType | "">("");
+  const [fieldName, setFieldName] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
 
-  const { data, isLoading } = useTrackingLog(cropSeasonId, query, page > 1);
+  const hasFilter = !!entityType || !!fieldName || !!from || !!to;
 
-  // Use initialData for page 1 (already loaded in parent), own query for subsequent pages
-  const activeData = page === 1 ? initialData : data?.data;
-  const loading = page === 1 ? initialLoading : isLoading;
+  const query: TrackingLogQueryType = {
+    page,
+    limit: PAGE_LIMIT,
+    ...(entityType && { entityType }),
+    ...(fieldName.trim() && { fieldName: fieldName.trim() }),
+    ...(from && { from }),
+    ...(to && { to }),
+  };
+
+  const { data, isLoading } = useTrackingLog(
+    cropSeasonId,
+    query,
+    hasFilter || page > 1,
+  );
+
+  // Use initialData only when on page 1 with no filters applied
+  const activeData = hasFilter || page > 1 ? data?.data : (initialData ?? data?.data);
+  const loading = hasFilter || page > 1 ? isLoading : initialLoading;
 
   const items = activeData?.data ?? [];
   const meta = activeData?.meta;
+
+  const handleFilterChange = () => {
+    setPage(1);
+  };
 
   if (loading && items.length === 0) return <TableSkeleton />;
 
   return (
     <div className="space-y-4">
+      {/* Filter bar */}
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+        <Select
+          value={entityType}
+          onValueChange={(v) => {
+            setEntityType(v as TrackingEntityType | "");
+            handleFilterChange();
+          }}
+        >
+          <SelectTrigger className="h-8 text-sm">
+            <SelectValue placeholder="Loại thực thể" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Tất cả loại</SelectItem>
+            {ENTITY_TYPE_OPTIONS.map((t) => (
+              <SelectItem
+                key={t}
+                value={t}
+              >
+                {getEntityTypeLabel(t)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Input
+          className="h-8 text-sm"
+          placeholder="Tên trường..."
+          value={fieldName}
+          onChange={(e) => {
+            setFieldName(e.target.value);
+            handleFilterChange();
+          }}
+        />
+
+        <Input
+          type="date"
+          className="h-8 text-sm"
+          placeholder="Từ ngày"
+          value={from}
+          onChange={(e) => {
+            setFrom(e.target.value);
+            handleFilterChange();
+          }}
+        />
+
+        <Input
+          type="date"
+          className="h-8 text-sm"
+          placeholder="Đến ngày"
+          value={to}
+          onChange={(e) => {
+            setTo(e.target.value);
+            handleFilterChange();
+          }}
+        />
+      </div>
+
+      {hasFilter && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 text-xs"
+          onClick={() => {
+            setEntityType("");
+            setFieldName("");
+            setFrom("");
+            setTo("");
+            setPage(1);
+          }}
+        >
+          Xóa bộ lọc
+        </Button>
+      )}
+
       {items.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-8">
           Chưa có lịch sử thay đổi.
