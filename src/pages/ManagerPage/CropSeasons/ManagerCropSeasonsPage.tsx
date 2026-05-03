@@ -90,6 +90,7 @@ import {
 } from "date-fns";
 import ProPagination from "@/components/common/pro-pagination";
 import { toast } from "sonner";
+import TrackingConfigPanel from "./components/TrackingConfigPanel";
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -210,7 +211,17 @@ function validateCropSeasonFormDates({
   return errors;
 }
 
-const canEdit = (status: string) => status === ProductionStatusName.Planning;
+type CropSeasonEditMode = "all" | "operational" | "none";
+function getCropSeasonEditMode(status: string): CropSeasonEditMode {
+  if (status === ProductionStatusName.Planning) return "all";
+  if (
+    status === ProductionStatusName.Approved ||
+    status === ProductionStatusName.Active
+  )
+    return "operational";
+  return "none";
+}
+const canEdit = (status: string) => getCropSeasonEditMode(status) !== "none";
 const canSend = (status: string) =>
   status === ProductionStatusName.Planning ||
   status === ProductionStatusName.Rejected;
@@ -249,6 +260,7 @@ function DatePickerField({
   onChange,
   minDate,
   helperText,
+  disabled,
 }: {
   label: string;
   value: string;
@@ -257,6 +269,7 @@ function DatePickerField({
   onChange: (value: string) => void;
   minDate?: Date;
   helperText?: string;
+  disabled?: boolean;
 }) {
   const normalizedMinDate = minDate ? startOfDay(minDate) : undefined;
 
@@ -271,6 +284,7 @@ function DatePickerField({
             type="button"
             variant="outline"
             className="w-full justify-between text-left font-normal"
+            disabled={disabled}
           >
             {value ? (
               formatPickerDate(value)
@@ -567,6 +581,9 @@ function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
     ? addMonths(startOfDay(parsedPlantDate), 1)
     : undefined;
 
+  const editMode = getCropSeasonEditMode(season.status);
+  const planOnlyDisabled = editMode !== "all";
+
   if (!canEdit(season.status)) return null;
 
   const onSubmit = async (data: UpdateCropSeasonBodyType) => {
@@ -649,13 +666,25 @@ function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
             <Input
               {...form.register("cropName")}
               autoComplete="off"
+              disabled={planOnlyDisabled}
             />
+            {planOnlyDisabled && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Trường này đã khóa sau khi phê duyệt kế hoạch.
+              </p>
+            )}
           </Field>
           <Field label="Giống / Loại">
             <Input
               {...form.register("variety")}
               autoComplete="off"
+              disabled={planOnlyDisabled}
             />
+            {planOnlyDisabled && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Trường này đã khóa sau khi phê duyệt kế hoạch.
+              </p>
+            )}
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Controller
@@ -670,6 +699,7 @@ function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
                   onChange={field.onChange}
                   minDate={minPlantDate}
                   helperText={`Từ ngày ${format(minPlantDate, "dd/MM/yyyy")}`}
+                  disabled={planOnlyDisabled}
                 />
               )}
             />
@@ -689,6 +719,7 @@ function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
                       ? `Từ ngày ${format(minExpectedHarvestDate, "dd/MM/yyyy")}`
                       : "Chọn ngày trồng trước"
                   }
+                  disabled={planOnlyDisabled}
                 />
               )}
             />
@@ -698,7 +729,13 @@ function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
               type="number"
               {...form.register("plantCount", { valueAsNumber: true })}
               autoComplete="off"
+              disabled={planOnlyDisabled}
             />
+            {planOnlyDisabled && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Trường này đã khóa sau khi phê duyệt kế hoạch.
+              </p>
+            )}
           </Field>
           <Field label="Ghi chú">
             <Textarea
@@ -841,6 +878,7 @@ function CropSeasonDetailContent({ season }: { season: CropSeasonType }) {
     limit: 20,
   });
   const requests = requestsQuery.data?.data.data ?? [];
+  const [showTrackingConfig, setShowTrackingConfig] = useState(false);
 
   return (
     <div className="space-y-5">
@@ -936,6 +974,25 @@ function CropSeasonDetailContent({ season }: { season: CropSeasonType }) {
               </TableBody>
             </Table>
           </div>
+        )}
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="font-semibold text-sm">Cấu hình theo dõi</h4>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setShowTrackingConfig((v) => !v)}
+          >
+            {showTrackingConfig ? "Ẩn" : "Hiển thị"}
+          </Button>
+        </div>
+        {showTrackingConfig && (
+          <TrackingConfigPanel
+            cropSeasonId={season.id}
+            readOnly={season.status !== "planning"}
+          />
         )}
       </div>
     </div>

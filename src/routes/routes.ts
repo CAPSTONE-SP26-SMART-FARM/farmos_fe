@@ -52,6 +52,7 @@ import ManagerDailyLogsPage from "@/pages/ManagerPage/DailyLogs/ManagerDailyLogs
 import ManagerSensorReadingPage from "@/pages/ManagerPage/SensorReadings/ManagerSensorReadingPage";
 import ManagerSensorDashboardPage from "@/pages/ManagerPage/SensorDashboard/ManagerSensorDashboardPage";
 import OwnerCropSeasonsPage from "@/pages/OwnerPage/CropSeasons/OwnerCropSeasonsPage";
+import PlanVsActualPage from "@/pages/OwnerPage/CropSeasons/PlanVsActualPage";
 import OwnerEmployeeTaskTemplatesPage from "@/pages/OwnerPage/EmployeeTaskTemplates/OwnerEmployeeTaskTemplatesPage";
 import OwnerIotDevicesPage from "@/pages/OwnerPage/IotDevices/OwnerIotDevicesPage";
 import OwnerIotKitsPage from "@/pages/OwnerPage/IotKits/OwnerIotKitsPage";
@@ -365,6 +366,11 @@ const routes: AppRoutes = [
         path: "/dashboard/owner/crop-seasons",
         component: OwnerCropSeasonsPage,
         allowedRoles: [RoleName.Owner],
+      },
+      {
+        path: "/dashboard/owner/crop-seasons/:id/plan-vs-actual",
+        component: PlanVsActualPage,
+        allowedRoles: [RoleName.Owner, RoleName.Manager],
       },
       {
         path: "/dashboard/owner/iot-devices",

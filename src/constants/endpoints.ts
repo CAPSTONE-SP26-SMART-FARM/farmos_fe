@@ -167,7 +167,8 @@ export const API_ENDPOINTS = {
       DELETE_SENSOR: (deviceId: string, sensorId: string) =>
         `/iot-device-provisioning/admin/sensor/iot-device/${deviceId}/${sensorId}`,
       ASSIGN_OWNER: "/iot-device-provisioning/admin/provision/assign-owner",
-      ASSIGN_FROM_KIT: "/iot-device-provisioning/admin/provision/assign-from-kit",
+      ASSIGN_FROM_KIT:
+        "/iot-device-provisioning/admin/provision/assign-from-kit",
       UNASSIGN_OWNER: "/iot-device-provisioning/admin/provision/unassign-owner",
     },
   },
@@ -529,6 +530,22 @@ export const API_ENDPOINTS = {
       REPLY_REQUEST: (requestId: string) =>
         `/owner/production-requests/${requestId}/reply`,
     },
+  },
+  TRACKING: {
+    AVAILABLE_FIELDS: (cropSeasonId: string) =>
+      `/crop-seasons/${cropSeasonId}/tracking/available-fields`,
+    CONFIGS: (cropSeasonId: string) =>
+      `/crop-seasons/${cropSeasonId}/tracking/configs`,
+    DIFF: (cropSeasonId: string) =>
+      `/crop-seasons/${cropSeasonId}/tracking/diff`,
+    TRACKING_LOG: (cropSeasonId: string) =>
+      `/crop-seasons/${cropSeasonId}/tracking-log`,
+    FIELD_HISTORY: (cropSeasonId: string) =>
+      `/crop-seasons/${cropSeasonId}/tracking/field-history`,
+    REQUEST_SNAPSHOT: (cropSeasonId: string, requestId: string) =>
+      `/crop-seasons/${cropSeasonId}/production-requests/${requestId}/snapshot`,
+    REQUEST_DIFF: (cropSeasonId: string) =>
+      `/crop-seasons/${cropSeasonId}/production-requests/diff`,
   },
 } as const;
 
@@ -1298,7 +1315,25 @@ export const QUERY_KEYS = {
   ticketsExt: {
     root: ["tickets", "ext"] as const,
     full: (id: string) => ["tickets", "ext", "full", id] as const,
-    adminFull: (id: string) =>
-      ["tickets", "ext", "admin", "full", id] as const,
+    adminFull: (id: string) => ["tickets", "ext", "admin", "full", id] as const,
+  },
+  tracking: {
+    all: (cropSeasonId: string) => ["tracking", cropSeasonId] as const,
+    availableFields: (cropSeasonId: string) =>
+      ["tracking", cropSeasonId, "available-fields"] as const,
+    configs: (cropSeasonId: string) =>
+      ["tracking", cropSeasonId, "configs"] as const,
+    diff: (cropSeasonId: string) => ["tracking", cropSeasonId, "diff"] as const,
+    log: (cropSeasonId: string, query?: Record<string, unknown>) =>
+      [
+        "tracking",
+        cropSeasonId,
+        "log",
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+    fieldHistory: (cropSeasonId: string, query: unknown) =>
+      ["tracking", cropSeasonId, "field-history", query] as const,
+    requestSnapshot: (cropSeasonId: string, requestId: string) =>
+      ["tracking", cropSeasonId, "snapshot", requestId] as const,
   },
 } as const;

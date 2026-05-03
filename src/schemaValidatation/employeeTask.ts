@@ -29,6 +29,7 @@ export const EmployeeTaskResSchema = z.object({
   verifiedBy: z.string().uuid().nullable(),
   verifiedAt: z.string().nullable(),
   createdBy: z.string().uuid(),
+  createdInPlan: z.boolean().nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
   deletedAt: z.string().nullable(),
