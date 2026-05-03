@@ -95,6 +95,11 @@ export const UpdateCropSeasonBodySchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format")
     .optional(),
+  actualHarvestDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format")
+    .nullable()
+    .optional(),
   totalAreaSqm: z.number().positive().optional(),
   plantCount: z.number().int().positive().optional(),
   notes: z.string().optional(),

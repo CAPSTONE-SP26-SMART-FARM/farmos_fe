@@ -1141,7 +1141,10 @@ const ManagerMilestonesPage = () => {
     cropSeason?.status === ProductionStatusName.Planning;
   const isApprovedCropSeason =
     cropSeason?.status === ProductionStatusName.Approved;
-  const canEditMilestone = isPlanningCropSeason || isApprovedCropSeason;
+  const isActiveCropSeason =
+    cropSeason?.status === ProductionStatusName.Active;
+  const canEditMilestone =
+    isPlanningCropSeason || isApprovedCropSeason || isActiveCropSeason;
   const canDeleteMilestone = isPlanningCropSeason;
 
   const findOverlappingMilestone = (
@@ -1225,21 +1228,20 @@ const ManagerMilestonesPage = () => {
       }
     }
 
-    const payload = isApprovedCropSeason
-      ? {
-          actualStartDate: form.actualStartDate || null,
-          actualEndDate: form.actualEndDate || null,
-          status: form.status,
-        }
-      : {
-          stageName: form.stageName,
-          milestoneOrder: form.milestoneOrder,
-          expectedStartDate: form.expectedStartDate || null,
-          expectedEndDate: form.expectedEndDate || null,
-          actualStartDate: form.actualStartDate || null,
-          actualEndDate: form.actualEndDate || null,
-          status: form.status,
-        };
+    const payload =
+      isApprovedCropSeason || isActiveCropSeason
+        ? {
+            actualStartDate: form.actualStartDate || null,
+            actualEndDate: form.actualEndDate || null,
+            status: form.status,
+          }
+        : {
+            stageName: form.stageName,
+            milestoneOrder: form.milestoneOrder,
+            expectedStartDate: form.expectedStartDate || null,
+            expectedEndDate: form.expectedEndDate || null,
+            status: form.status,
+          };
 
     updateMutation.mutate(
       {
@@ -1721,7 +1723,7 @@ const ManagerMilestonesPage = () => {
       {editingMilestone && canEditMilestone && (
         <MilestoneEditDialog
           open={!!editingMilestone}
-          mode={isApprovedCropSeason ? "approved" : "planning"}
+          mode={isApprovedCropSeason || isActiveCropSeason ? "approved" : "planning"}
           initialValues={{
             stageName: editingMilestone.stageName,
             milestoneOrder: editingMilestone.milestoneOrder,

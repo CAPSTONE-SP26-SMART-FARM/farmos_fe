@@ -1,5 +1,5 @@
 // src/pages/OwnerPage/CropSeasons/PlanVsActualPage.tsx
-import { useParams } from "react-router-dom";
+import { useParams } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";

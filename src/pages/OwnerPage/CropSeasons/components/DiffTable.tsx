@@ -90,7 +90,7 @@ export default function DiffTable({ tracked, cropSeasonId }: DiffTableProps) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {section.entities.flatMap((entity) =>
+                  {section.entities.flatMap((entity, entityIndex) =>
                     entity.fields.map((field, fi) => (
                       <TableRow
                         key={`${entity.entityId}-${field.fieldName}`}
@@ -107,9 +107,17 @@ export default function DiffTable({ tracked, cropSeasonId }: DiffTableProps) {
                         {fi === 0 ? (
                           <TableCell
                             rowSpan={entity.fields.length}
-                            className="font-mono text-xs align-top"
+                            className="text-xs align-top"
                           >
-                            {entity.entityId.slice(0, 8)}…
+                            <div>
+                              <p className="font-medium">
+                                {getEntityTypeLabel(section.entityType)} #
+                                {entityIndex + 1}
+                              </p>
+                              <p className="font-mono text-muted-foreground">
+                                {entity.entityId.slice(0, 8)}…
+                              </p>
+                            </div>
                           </TableCell>
                         ) : null}
                         <TableCell className="text-sm">

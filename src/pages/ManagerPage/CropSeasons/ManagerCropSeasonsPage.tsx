@@ -563,12 +563,13 @@ function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
     defaultValues: {
       cropName: season.cropName,
       variety: season.variety ?? "",
-      plantDate: season.plantDate
-        ? `${season.plantDate.slice(0, 10)}T00:00:00.000Z`
-        : undefined,
+      plantDate: season.plantDate ? season.plantDate.slice(0, 10) : undefined,
       expectedHarvestDate: season.expectedHarvestDate
-        ? `${season.expectedHarvestDate.slice(0, 10)}T00:00:00.000Z`
+        ? season.expectedHarvestDate.slice(0, 10)
         : undefined,
+      actualHarvestDate: season.actualHarvestDate
+        ? season.actualHarvestDate.slice(0, 10)
+        : null,
       plantCount: season.plantCount ?? undefined,
       notes: season.notes ?? "",
     },
@@ -588,33 +589,48 @@ function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
 
   const onSubmit = async (data: UpdateCropSeasonBodyType) => {
     form.clearErrors(["plantDate", "expectedHarvestDate"]);
-    const dateErrors = validateCropSeasonFormDates({
-      plantDate: data.plantDate,
-      expectedHarvestDate: data.expectedHarvestDate,
-      requirePlantDate: false,
-      requireExpectedHarvestDate: false,
-    });
 
-    if (dateErrors.plantDate) {
-      form.setError("plantDate", {
-        type: "manual",
-        message: dateErrors.plantDate,
+    // After approval, the BE rejects any plan-only field in the body
+    // (LockedPlanFieldException). Strip them — RHF still emits the disabled
+    // defaults — and only submit the operational fields.
+    const payload: UpdateCropSeasonBodyType = planOnlyDisabled
+      ? {
+          ...(data.actualHarvestDate
+            ? { actualHarvestDate: data.actualHarvestDate }
+            : {}),
+          ...(data.notes !== undefined ? { notes: data.notes } : {}),
+        }
+      : data;
+
+    if (!planOnlyDisabled) {
+      const dateErrors = validateCropSeasonFormDates({
+        plantDate: data.plantDate,
+        expectedHarvestDate: data.expectedHarvestDate,
+        requirePlantDate: false,
+        requireExpectedHarvestDate: false,
       });
-    }
 
-    if (dateErrors.expectedHarvestDate) {
-      form.setError("expectedHarvestDate", {
-        type: "manual",
-        message: dateErrors.expectedHarvestDate,
-      });
-    }
+      if (dateErrors.plantDate) {
+        form.setError("plantDate", {
+          type: "manual",
+          message: dateErrors.plantDate,
+        });
+      }
 
-    if (dateErrors.plantDate || dateErrors.expectedHarvestDate) {
-      return;
+      if (dateErrors.expectedHarvestDate) {
+        form.setError("expectedHarvestDate", {
+          type: "manual",
+          message: dateErrors.expectedHarvestDate,
+        });
+      }
+
+      if (dateErrors.plantDate || dateErrors.expectedHarvestDate) {
+        return;
+      }
     }
 
     try {
-      await mutateAsync(data);
+      await mutateAsync(payload);
       setOpen(false);
     } catch (error) {
       if (
@@ -659,6 +675,12 @@ function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
           onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-4 pt-2"
         >
+          {planOnlyDisabled && (
+            <p className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-md border border-amber-200">
+              Các trường kế hoạch đã khóa sau khi phê duyệt. Chỉ có thể cập
+              nhật ghi chú và ngày thu hoạch thực tế.
+            </p>
+          )}
           <Field
             label="Tên cây trồng"
             error={form.formState.errors.cropName?.message}
@@ -668,11 +690,6 @@ function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
               autoComplete="off"
               disabled={planOnlyDisabled}
             />
-            {planOnlyDisabled && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Trường này đã khóa sau khi phê duyệt kế hoạch.
-              </p>
-            )}
           </Field>
           <Field label="Giống / Loại">
             <Input
@@ -680,11 +697,6 @@ function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
               autoComplete="off"
               disabled={planOnlyDisabled}
             />
-            {planOnlyDisabled && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Trường này đã khóa sau khi phê duyệt kế hoạch.
-              </p>
-            )}
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Controller
@@ -724,6 +736,21 @@ function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
               )}
             />
           </div>
+          {planOnlyDisabled && (
+            <Controller
+              name="actualHarvestDate"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <DatePickerField
+                  label="Ngày thu hoạch thực tế"
+                  value={field.value ?? ""}
+                  error={fieldState.error?.message}
+                  placeholder="Chọn ngày thu hoạch thực tế"
+                  onChange={(v) => field.onChange(v || null)}
+                />
+              )}
+            />
+          )}
           <Field label="Số lượng cây">
             <Input
               type="number"
@@ -731,11 +758,6 @@ function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
               autoComplete="off"
               disabled={planOnlyDisabled}
             />
-            {planOnlyDisabled && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Trường này đã khóa sau khi phê duyệt kế hoạch.
-              </p>
-            )}
           </Field>
           <Field label="Ghi chú">
             <Textarea
@@ -1140,13 +1162,13 @@ export default function ManagerCropSeasonsPage() {
                 </div>
               ) : (
                 <Select
-                  value={zoneId || "all"}
+                  value={zoneId || ""}
                   onValueChange={(value) => {
                     const next = new URLSearchParams(searchParams);
-                    if (value === "all") {
-                      next.delete("zoneId");
-                    } else {
+                    if (value) {
                       next.set("zoneId", value);
+                    } else {
+                      next.delete("zoneId");
                     }
                     next.delete("page");
                     setSearchParams(next);
@@ -1156,7 +1178,6 @@ export default function ManagerCropSeasonsPage() {
                     <SelectValue placeholder="Chọn khu vực" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Chọn khu vực</SelectItem>
                     {assignedZones.map((zone) => (
                       <SelectItem
                         key={zone.id}

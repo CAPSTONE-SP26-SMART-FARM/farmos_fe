@@ -90,6 +90,8 @@ export default function FieldHistoryModal({
                   <TableHead>Giá trị cũ</TableHead>
                   <TableHead>Giá trị mới</TableHead>
                   <TableHead>Loại thay đổi</TableHead>
+                  <TableHead>Nguồn</TableHead>
+                  <TableHead>Người thực hiện</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -111,6 +113,12 @@ export default function FieldHistoryModal({
                       >
                         {item.changeType}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {item.source ?? "—"}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      {item.changedBy ? item.changedBy.slice(0, 8) + "…" : "—"}
                     </TableCell>
                   </TableRow>
                 ))}

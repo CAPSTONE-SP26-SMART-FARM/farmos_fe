@@ -1,5 +1,5 @@
 // src/pages/OwnerPage/CropSeasons/components/KpiSummaryCards.tsx
-import { CheckCircle2, AlertTriangle, Sparkles, Activity } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Sparkles, Activity, TrendingDown } from "lucide-react";
 import KpiCard from "@/components/common/KpiCard";
 import type { TrackingDiffResType } from "@/schemaValidatation/tracking";
 
@@ -10,6 +10,7 @@ interface KpiSummaryCardsProps {
 function computeKpis(diff: TrackingDiffResType) {
   let onTime = 0;
   let late = 0;
+  let early = 0;
   let totalChanges = 0;
 
   for (const section of diff.tracked) {
@@ -19,6 +20,7 @@ function computeKpis(diff: TrackingDiffResType) {
         const dir = field.variance?.direction;
         if (dir === "on-time" || dir === "equal") onTime++;
         else if (dir === "late" || dir === "higher") late++;
+        else if (dir === "early" || dir === "lower") early++;
       }
     }
   }
@@ -28,14 +30,14 @@ function computeKpis(diff: TrackingDiffResType) {
     unplanned += section.entities.length;
   }
 
-  return { onTime, late, unplanned, totalChanges };
+  return { onTime, late, early, unplanned, totalChanges };
 }
 
 export default function KpiSummaryCards({ diff }: KpiSummaryCardsProps) {
-  const { onTime, late, unplanned, totalChanges } = computeKpis(diff);
+  const { onTime, late, early, unplanned, totalChanges } = computeKpis(diff);
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
       <KpiCard
         icon={CheckCircle2}
         label="Đúng kế hoạch"
@@ -49,6 +51,13 @@ export default function KpiSummaryCards({ diff }: KpiSummaryCardsProps) {
         value={late}
         tone={late > 0 ? "danger" : "default"}
         hint="Số trường trễ hoặc vượt kế hoạch"
+      />
+      <KpiCard
+        icon={TrendingDown}
+        label="Sớm / Thấp hơn"
+        value={early}
+        tone={early > 0 ? "warning" : "default"}
+        hint="Số trường hoàn thành sớm hoặc thấp hơn kế hoạch"
       />
       <KpiCard
         icon={Sparkles}

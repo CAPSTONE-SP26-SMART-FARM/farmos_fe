@@ -123,3 +123,13 @@
 		@apply bg-background text-foreground;
 	}
 }
+
+/* ConfirmDialog (custom portal in confirm-dialog.tsx) renders directly under
+ * <body>. When a Radix Dialog/Sheet is open with modal=true, Radix sets
+ * `body { pointer-events: none }`, which propagates to the ConfirmDialog and
+ * blocks its buttons. Re-enable pointer events on the ConfirmDialog overlay so
+ * its buttons remain clickable when nested inside a Sheet/Dialog. */
+body > div.fixed.inset-0.bg-black\/40 {
+	pointer-events: auto;
+}
+
