@@ -35,10 +35,11 @@ import type {
   ListAssignmentsQueryType,
 } from "@/schemaValidatation/doctorAssignment";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router";
 import useDebounce from "@/hooks/useDebounce";
 import { Info, X } from "lucide-react";
 import OwnerDoctorDetailDialog from "./OwnerDoctorDetailDialog";
+import DoctorPublicProfile from "@/components/ticket-quality/DoctorPublicProfile";
 
 const STATUS_LABELS: Record<string, string> = {
   active: "Hoạt động",
@@ -53,12 +54,13 @@ const columns: ColumnDef<AssignmentWithDoctorResType>[] = [
     cell: ({ row }) => {
       const original = row.original;
       return (
-        <div className="min-w-[180px]">
-          <div className="font-medium">{original.doctor?.fullName ?? "—"}</div>
-          <div className="text-xs text-muted-foreground">
-            {original.doctor?.email ?? "—"}
-          </div>
-        </div>
+        <DoctorPublicProfile
+          doctorId={original.doctorId}
+          doctorName={original.doctor?.fullName}
+          doctorEmail={original.doctor?.email}
+          avatarUrl={original.doctor?.avatarUrl}
+          layout="compact"
+        />
       );
     },
   },
@@ -97,8 +99,10 @@ const columns: ColumnDef<AssignmentWithDoctorResType>[] = [
         variant="ghost"
         onClick={() => row.toggleSelected(true)}
         title="Xem chi tiết"
+        aria-label="Xem chi tiết bác sĩ"
       >
         <Info />
+        <span className="sr-only sm:not-sr-only sm:ml-2">Chi tiết</span>
       </Button>
     ),
   },
@@ -208,7 +212,7 @@ const TableOwnerMyDoctors = () => {
           }
           defaultValue="all"
         >
-          <SelectTrigger className="w-[180px] capitalize">
+          <SelectTrigger className="w-45 capitalize">
             <SelectValue
               placeholder="Lọc theo trạng thái"
               className="capitalize"

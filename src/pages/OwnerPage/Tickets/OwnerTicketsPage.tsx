@@ -29,6 +29,8 @@ import {
 } from "@/queries/useTicket";
 import { useRealtimeTicket } from "@/hooks/useRealtimeTicket";
 import { useTicketSubscription } from "@/hooks/useTicketSubscription";
+import { useTicketQualityFlag } from "@/hooks/useTicketQualityFlag";
+import TicketDetailPanelV2 from "@/components/ticket-quality/TicketDetailPanelV2";
 import { RoleName } from "@/constants/role";
 import type { TicketIncidentResType } from "@/schemaValidatation/ticket";
 import { CreateIncidentTicketBodySchema } from "@/schemaValidatation/ticket";
@@ -121,7 +123,38 @@ interface TicketDetailPanelProps {
   onBack: () => void;
 }
 
-function TicketDetailPanel({ ticketId, onBack }: TicketDetailPanelProps) {
+// Module 3 wrapper — gate UI mới qua feature flag. Phải tách thành component
+// riêng để tránh vi phạm rules-of-hooks (early return trước khi gọi hooks
+// của TicketDetailPanelLegacy).
+function TicketDetailPanel(props: TicketDetailPanelProps) {
+  const { enabled: tqEnabled, isLoading: flagLoading } = useTicketQualityFlag();
+  const user = useAuthStore((s) => s.user);
+
+  // Khi flag chưa load xong: render skeleton thay vì lộ panel cũ.
+  if (flagLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-10 w-1/3" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
+
+  if (tqEnabled && user?.id) {
+    return (
+      <TicketDetailPanelV2
+        ticketId={props.ticketId}
+        onBack={props.onBack}
+        viewerRole="owner"
+        viewerUserId={user.id}
+      />
+    );
+  }
+
+  return <TicketDetailPanelLegacy {...props} />;
+}
+
+function TicketDetailPanelLegacy({ ticketId, onBack }: TicketDetailPanelProps) {
   const [show, setShow] = useState(false);
   const [msgPage] = useState(1);
   const [rxPage] = useState(1);

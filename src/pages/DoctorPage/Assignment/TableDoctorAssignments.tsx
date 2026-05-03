@@ -35,7 +35,7 @@ import type {
   ListAssignmentsQueryType,
 } from "@/schemaValidatation/doctorAssignment";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router";
 import useDebounce from "@/hooks/useDebounce";
 import { Info, X } from "lucide-react";
 import DoctorAssignmentDetailDialog from "./DoctorAssignmentDetailDialog";

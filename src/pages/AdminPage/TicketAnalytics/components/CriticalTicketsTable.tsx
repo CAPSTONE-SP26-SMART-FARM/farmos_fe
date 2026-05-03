@@ -20,6 +20,7 @@ import type {
   IncidentSeverity,
   TicketStatus,
 } from "../_mocks/ticketAnalytics.mock";
+import { useNavigate } from "react-router";
 
 const SEVERITY_LABEL: Record<IncidentSeverity, string> = {
   low: "Thấp",
@@ -59,6 +60,7 @@ interface CriticalTicketsTableProps {
 }
 
 function CriticalTicketsTable({ rows, className }: CriticalTicketsTableProps) {
+  const navigate = useNavigate();
   return (
     <Card className={className}>
       <CardHeader>
@@ -83,7 +85,11 @@ function CriticalTicketsTable({ rows, className }: CriticalTicketsTableProps) {
             </TableHeader>
             <TableBody>
               {rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => navigate(`/dashboard/admin/tickets/${row.id}`)}
+                >
                   <TableCell className="font-medium">
                     {row.ticketNumber}
                   </TableCell>
@@ -104,8 +110,15 @@ function CriticalTicketsTable({ rows, className }: CriticalTicketsTableProps) {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {row.assignee ?? (
-                      <span className="text-muted-foreground">Chưa gán</span>
+                    {row.assignee ? (
+                      row.assignee
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className="text-muted-foreground"
+                      >
+                        Chưa gán
+                      </Badge>
                     )}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
