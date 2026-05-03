@@ -147,6 +147,15 @@ export const AdminAssignOwnerBodySchema = z.object({
   iotKitOrderId: z.string().uuid().optional(),
 });
 
+export const AdminAssignFromKitBodySchema = z.object({
+  iotDeviceId: z.string().uuid("Vui lòng chọn thiết bị."),
+  ownerId: z.string().uuid("Vui lòng chọn chủ vườn."),
+  iotKitOrderId: z.string().uuid("Vui lòng chọn đơn kit."),
+});
+export type AdminAssignFromKitBodyType = z.infer<
+  typeof AdminAssignFromKitBodySchema
+>;
+
 export const AdminUnassignOwnerBodySchema = z.object({
   iotDeviceId: z.string().uuid(),
   reason: z.string().max(500).optional(),

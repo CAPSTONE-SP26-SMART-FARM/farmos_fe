@@ -99,6 +99,11 @@ export const sidebarData: SidebarData = {
           icon: PackagePlus,
         },
         {
+          title: "Cấp phát kit",
+          url: "/dashboard/admin/iot-kits/assignments",
+          icon: PackagePlus,
+        },
+        {
           title: "Mẫu Cột Mốc",
           url: "/dashboard/admin/milestone-templates",
           icon: Milestone,
@@ -254,6 +259,11 @@ export const sidebarData: SidebarData = {
         {
           title: "Mua Bộ Kit IoT",
           url: "/dashboard/owner/iot-kits",
+          icon: PackagePlus,
+        },
+        {
+          title: "Theo Dõi Cấp Phát IoT",
+          url: "/dashboard/owner/iot-tracking",
           icon: PackagePlus,
         },
         {

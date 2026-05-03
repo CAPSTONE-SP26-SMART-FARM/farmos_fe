@@ -1,6 +1,7 @@
 import { API_ENDPOINTS } from "@/constants";
 import { api } from "@/lib/axios";
 import type {
+  AdminAssignFromKitBodyType,
   AdminAssignOwnerBodyType,
   AdminCreateIotDeviceBatchBodyType,
   AdminCreateSensorBatchBodyType,
@@ -76,6 +77,12 @@ export const adminIotDeviceService = {
 
   assignOwner: (body: AdminAssignOwnerBodyType) =>
     api.post<MessageResType, AdminAssignOwnerBodyType>(ADMIN_EP.ASSIGN_OWNER, body),
+
+  assignFromKit: (body: AdminAssignFromKitBodyType) =>
+    api.post<MessageResType, AdminAssignFromKitBodyType>(
+      ADMIN_EP.ASSIGN_FROM_KIT,
+      body,
+    ),
 
   unassignOwner: (body: AdminUnassignOwnerBodyType) =>
     api.post<MessageResType, AdminUnassignOwnerBodyType>(

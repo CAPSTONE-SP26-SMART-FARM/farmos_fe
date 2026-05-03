@@ -165,6 +165,7 @@ export const API_ENDPOINTS = {
       DELETE_SENSOR: (deviceId: string, sensorId: string) =>
         `/iot-device-provisioning/admin/sensor/iot-device/${deviceId}/${sensorId}`,
       ASSIGN_OWNER: "/iot-device-provisioning/admin/provision/assign-owner",
+      ASSIGN_FROM_KIT: "/iot-device-provisioning/admin/provision/assign-from-kit",
       UNASSIGN_OWNER: "/iot-device-provisioning/admin/provision/unassign-owner",
     },
   },
@@ -459,6 +460,7 @@ export const API_ENDPOINTS = {
     ADMIN_ARCHIVE: (id: string) => `/admin/iot-kits/${id}/archive`,
     ADMIN_UNARCHIVE: (id: string) => `/admin/iot-kits/${id}/unarchive`,
     ADMIN_AVAILABLE_SLOTS: "/admin/iot-kit-orders/available-slots",
+    ADMIN_AVAILABLE_BY_OWNER: "/admin/iot-kit-orders/available-by-owner",
     // Owner
     OWNER_LIST: "/owner/iot-kits",
     OWNER_DETAIL: (id: string) => `/owner/iot-kits/${id}`,
@@ -466,6 +468,7 @@ export const API_ENDPOINTS = {
     OWNER_PAYMENT_STATUS: (orderId: string) =>
       `/owner/iot-kits/orders/${orderId}/payment-status`,
     OWNER_MY_QUOTA: "/owner/my/iot-quota",
+    OWNER_MY_TRACKING: "/owner/my/iot-tracking",
   },
   CROP_SEASON: {
     MANAGER: {
@@ -1087,11 +1090,18 @@ export const QUERY_KEYS = {
       "payment-status",
     ],
     myQuota: () => ["iot-kits", "owner", "my-quota"],
+    myTracking: () => ["iot-kits", "owner", "my-tracking"],
     availableSlots: (ownerId: string) => [
       "iot-kits",
       "admin",
       "available-slots",
       ownerId,
+    ],
+    availableByOwner: (query?: Record<string, unknown>) => [
+      "iot-kits",
+      "admin",
+      "available-by-owner",
+      ...(query !== undefined ? [query] : []),
     ],
   },
   tickets: {

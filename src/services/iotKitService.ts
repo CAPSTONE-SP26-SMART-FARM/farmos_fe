@@ -8,6 +8,9 @@ import type {
   IotQuotaResType,
   ListIotDeviceKitsResType,
   ListIotKitsQueryType,
+  ListOwnersWithAvailableKitsQueryType,
+  ListOwnersWithAvailableKitsResType,
+  OwnerIotTrackingResType,
   PurchaseIotKitBodyType,
   PurchaseIotKitResType,
   UpdateIotKitBodyType,
@@ -43,10 +46,17 @@ export const adminIotKitService = {
   unarchive: (id: string) =>
     api.patch<IotDeviceKitResType>(E.ADMIN_UNARCHIVE(id)),
 
-  // BE B10 hiện đang comment — gọi sẽ trả 404. Hook xử lý fallback.
   availableSlots: (ownerId: string) =>
     api.get<AvailableSlotsResType>(
       `${E.ADMIN_AVAILABLE_SLOTS}?${queryString.stringify({ ownerId })}`,
+    ),
+
+  availableByOwner: (query: ListOwnersWithAvailableKitsQueryType) =>
+    api.get<ListOwnersWithAvailableKitsResType>(
+      `${E.ADMIN_AVAILABLE_BY_OWNER}?${queryString.stringify(query, {
+        skipNull: true,
+        skipEmptyString: true,
+      })}`,
     ),
 };
 
@@ -72,4 +82,6 @@ export const ownerIotKitService = {
     api.get<IotKitOrderPaymentStatusResType>(E.OWNER_PAYMENT_STATUS(orderId)),
 
   myQuota: () => api.get<IotQuotaResType>(E.OWNER_MY_QUOTA),
+
+  myTracking: () => api.get<OwnerIotTrackingResType>(E.OWNER_MY_TRACKING),
 };

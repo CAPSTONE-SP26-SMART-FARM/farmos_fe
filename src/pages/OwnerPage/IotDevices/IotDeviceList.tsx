@@ -339,7 +339,6 @@ function DeviceCard({
       </div>
 
       <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-        {device.macAddress && <p className="font-mono">{device.macAddress}</p>}
         {device.iotDeviceBoardId && (
           <p>
             Bo mạch:{" "}
