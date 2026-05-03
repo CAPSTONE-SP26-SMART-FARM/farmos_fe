@@ -45,26 +45,6 @@ export const sidebarData: SidebarData = {
       ],
     },
     {
-      label: "Đăng ký & Thanh toán",
-      items: [
-        {
-          title: "Gói Đăng Ký",
-          url: "/dashboard/admin/subscription-plans",
-          icon: Package,
-        },
-        {
-          title: "Vòng Đời Đăng Ký",
-          url: "/dashboard/admin/subscriptions",
-          icon: Package,
-        },
-        {
-          title: "Hóa Đơn",
-          url: "/dashboard/admin/invoices",
-          icon: ReceiptText,
-        },
-      ],
-    },
-    {
       label: "Quản trị hệ thống",
       items: [
         {
@@ -85,7 +65,27 @@ export const sidebarData: SidebarData = {
       ],
     },
     {
-      label: "Mẫu cấu hình",
+      label: "Đăng ký & Thanh toán",
+      items: [
+        {
+          title: "Gói Đăng Ký",
+          url: "/dashboard/admin/subscription-plans",
+          icon: Package,
+        },
+        {
+          title: "Vòng Đời Đăng Ký",
+          url: "/dashboard/admin/subscriptions",
+          icon: Package,
+        },
+        {
+          title: "Hóa Đơn",
+          url: "/dashboard/admin/invoices",
+          icon: ReceiptText,
+        },
+      ],
+    },
+    {
+      label: "IoT & Thiết bị",
       items: [
         {
           title: "Mẫu IoT",
@@ -107,6 +107,11 @@ export const sidebarData: SidebarData = {
           url: "/dashboard/admin/iot-kits/assignments",
           icon: PackagePlus,
         },
+      ],
+    },
+    {
+      label: "Mẫu vận hành",
+      items: [
         {
           title: "Mẫu Cột Mốc",
           url: "/dashboard/admin/milestone-templates",
@@ -120,28 +125,7 @@ export const sidebarData: SidebarData = {
       ],
     },
     {
-      label: "Phân tích",
-      items: [
-        {
-          title: "Phân Tích Ticket",
-          url: "/dashboard/admin/ticket-analytics",
-          icon: Ticket,
-        },
-        // ── Module 3 ──
-        {
-          title: "Bảng Xếp Hạng Bác Sĩ",
-          url: "/dashboard/admin/dqs/leaderboard",
-          icon: Trophy,
-        },
-        {
-          title: "Thống Kê Thuốc Tự Nhập",
-          url: "/dashboard/admin/medicines/freetext-stats",
-          icon: BarChart3,
-        },
-      ],
-    },
-    {
-      label: "Cấu hình Ticket",
+      label: "Ticket",
       items: [
         {
           title: "Danh Mục Ticket",
@@ -149,47 +133,50 @@ export const sidebarData: SidebarData = {
           icon: Tag,
         },
         {
-          title: "Quy Tắc Hoa Hồng",
-          url: "/dashboard/admin/commission-rules",
-          icon: ChartColumnIncreasing,
-        },
-        {
           title: "Gói Ticket",
           url: "/dashboard/admin/packages",
           icon: Package,
         },
-        // ── Module 3 ──
         {
-          title: "Danh Mục Thuốc",
-          url: "/dashboard/admin/medicines",
-          icon: Pill,
+          title: "Quy Tắc Hoa Hồng",
+          url: "/dashboard/admin/commission-rules",
+          icon: ChartColumnIncreasing,
         },
         {
           title: "Cấu Hình Quy Trình Ticket",
           url: "/dashboard/admin/system-configs/tickets",
           icon: Settings2,
         },
+        {
+          title: "Phân Tích Ticket",
+          url: "/dashboard/admin/ticket-analytics",
+          icon: BarChart3,
+        },
       ],
     },
-    // Legacy doctor-ops items — uncomment if those features return:
     {
-      label: "Bác sĩ",
+      label: "Bác sĩ & Thuốc",
       items: [
         {
           title: "Đơn Xin Làm Bác Sĩ",
           url: "/dashboard/admin/doctor-applications",
           icon: UserCheck,
         },
-        // {
-        //   title: "Phân Công Bác Sĩ",
-        //   url: "/dashboard/admin/doctor-assignment",
-        //   icon: Users,
-        // },
-        // {
-        //   title: "Hiệu Suất Bác Sĩ",
-        //   url: "/dashboard/admin/doctor-performance",
-        //   icon: ChartColumnIncreasing,
-        // },
+        {
+          title: "Bảng Xếp Hạng Bác Sĩ",
+          url: "/dashboard/admin/dqs/leaderboard",
+          icon: Trophy,
+        },
+        {
+          title: "Danh Mục Thuốc",
+          url: "/dashboard/admin/medicines",
+          icon: Pill,
+        },
+        {
+          title: "Thống Kê Thuốc Tự Nhập",
+          url: "/dashboard/admin/medicines/freetext-stats",
+          icon: BarChart3,
+        },
       ],
     },
   ],
@@ -277,6 +264,11 @@ export const sidebarData: SidebarData = {
           url: "/dashboard/owner/daily-logs",
           icon: NotebookPen,
         },
+      ],
+    },
+    {
+      label: "IoT & Cảm biến",
+      items: [
         {
           title: "Thiết Bị IoT",
           url: "/dashboard/owner/iot-devices",

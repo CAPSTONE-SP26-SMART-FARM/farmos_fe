@@ -63,7 +63,7 @@ import {
   Sprout,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, Link } from "react-router";
 import { format } from "date-fns";
 import OwnerMilestoneTasksSection from "@/pages/OwnerPage/EmployeeTasks/OwnerMilestoneTasksSection";
 
@@ -489,6 +489,23 @@ export default function CropSeasonDetailPanel({
               )}
             </CardContent>
           </Card>
+
+          {/* ── Plan vs Actual Link ───────────────────────────── */}
+          {season.status !== "planning" && (
+            <div className="flex justify-end">
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+              >
+                <Link
+                  to={`/dashboard/owner/crop-seasons/${season.id}/plan-vs-actual`}
+                >
+                  Kế hoạch vs Thực tế
+                </Link>
+              </Button>
+            </div>
+          )}
 
           {/* ── Production Milestones ────────────────────────── */}
           <Card>

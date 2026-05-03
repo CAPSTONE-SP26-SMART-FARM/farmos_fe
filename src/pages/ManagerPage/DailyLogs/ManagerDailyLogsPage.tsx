@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import DatePickerField from "@/components/common/DatePickerField";
 import {
   Select,
   SelectContent,
@@ -149,22 +149,18 @@ function ManagerDailyLogsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <p className="text-sm font-medium">Từ ngày</p>
-              <Input
-                type="date"
+            <div className="w-44">
+              <DatePickerField
+                label="Từ ngày"
                 value={fromDateInput}
-                onChange={(e) => setFromDateInput(e.target.value)}
-                className="w-44"
+                onChange={setFromDateInput}
               />
             </div>
-            <div className="space-y-1.5">
-              <p className="text-sm font-medium">Đến ngày</p>
-              <Input
-                type="date"
+            <div className="w-44">
+              <DatePickerField
+                label="Đến ngày"
                 value={toDateInput}
-                onChange={(e) => setToDateInput(e.target.value)}
-                className="w-44"
+                onChange={setToDateInput}
               />
             </div>
             <div className="flex gap-2">

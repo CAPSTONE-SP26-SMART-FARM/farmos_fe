@@ -1107,6 +1107,14 @@ export function ManagerMilestoneTaskAssignmentScreen({
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <p className="text-sm font-medium">{task.title}</p>
+                    {task.createdInPlan === false && (
+                      <Badge
+                        variant="secondary"
+                        className="text-xs bg-purple-100 text-purple-700 mt-1"
+                      >
+                        Công việc phát sinh
+                      </Badge>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge
@@ -1504,6 +1512,14 @@ export default function ManagerMilestoneTasksSection({
                       <p className="truncate font-medium text-xs">
                         {task.title}
                       </p>
+                      {task.createdInPlan === false && (
+                        <Badge
+                          variant="secondary"
+                          className="text-[10px] bg-purple-100 text-purple-700"
+                        >
+                          Phát sinh
+                        </Badge>
+                      )}
                       <p className="text-[10px] text-muted-foreground truncate">
                         {getAssigneeLabel(task.assignedTo)}
                       </p>

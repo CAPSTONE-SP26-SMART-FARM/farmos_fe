@@ -385,6 +385,26 @@ const BACKEND_ERROR_MAP: Record<string, string> = {
   "number must be less than or equal to 100":
     "Giá trị phải nhỏ hơn hoặc bằng 100.",
   "expected integer, received float": "Giá trị phải là số nguyên.",
+
+  // ── Module 5 — Tracking / Field-locking ──────────────────────────────
+  "error.cropseasonlockedplanfield":
+    "Trường này đã được khóa sau khi phê duyệt kế hoạch.",
+  "error.cropseasonoperationalupdatenotallowed":
+    "Chỉ chỉnh được trường vận hành khi mùa vụ đã duyệt hoặc đang hoạt động.",
+  "error.productionmilestoneupdateoperationalfieldsonly":
+    "Chỉ có thể cập nhật trường thực tế sau khi kế hoạch được duyệt.",
+  "error.milestoneactualdaterequiresactiveseason":
+    "Ngày thực tế chỉ sửa được khi mùa vụ đang hoạt động (active).",
+  "error.taskplanfieldlocked":
+    "Không thể sửa tiêu đề/mô tả/độ ưu tiên của công việc kế hoạch sau khi phê duyệt.",
+  "error.taskassignee locked":
+    "Không thể đổi người thực hiện khi công việc đã hoàn thành/hủy.",
+  "error.trackingconfiglocked":
+    "Cấu hình theo dõi chỉ có thể thay đổi khi mùa vụ đang ở trạng thái lập kế hoạch.",
+  "error.trackingfieldnotwhitelisted":
+    "Trường này không nằm trong danh sách có thể theo dõi.",
+  "error.trackingforbidden":
+    "Bạn không có quyền xem dữ liệu theo dõi của mùa vụ này.",
 };
 
 const normalizeMessage = (message: string) =>
