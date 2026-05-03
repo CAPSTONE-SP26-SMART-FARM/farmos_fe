@@ -205,13 +205,28 @@ export const IotQuotaResSchema = z.object({
 });
 export type IotQuotaResType = z.infer<typeof IotQuotaResSchema>;
 
+export const IotKitAssignedStatusEnum = z.enum([
+  "UNASSIGNED",
+  "ASSIGNED",
+  "RETURNED",
+]);
+export type IotKitAssignedStatus = z.infer<typeof IotKitAssignedStatusEnum>;
+
 export const AvailableSlotItemSchema = z.object({
   orderId: z.string().uuid(),
   orderNumber: z.string(),
+  kitId: z.string().uuid(),
+  kitCode: z.string(),
   kitName: z.string(),
+  boardType: BoardTypeEnum,
+  includedSensors: z.array(SensorTypeEnum).nullable(),
+  includedModules: z.array(KitModuleNameEnum).nullable(),
+  deviceCount: z.number().int(),
   totalSlots: z.number().int(),
   usedSlots: z.number().int(),
   remainingSlots: z.number().int(),
+  statusAssigned: IotKitAssignedStatusEnum.nullable(),
+  createdAt: z.string(),
 });
 export type AvailableSlotItemType = z.infer<typeof AvailableSlotItemSchema>;
 
@@ -219,6 +234,93 @@ export const AvailableSlotsResSchema = z.object({
   data: z.array(AvailableSlotItemSchema),
 });
 export type AvailableSlotsResType = z.infer<typeof AvailableSlotsResSchema>;
+
+// ============================================================
+// Owners eligible for kit assignment (paginated, BE pre-filtered)
+// ============================================================
+export const OwnerWithAvailableKitsSchema = z.object({
+  owner: z.object({
+    id: z.string().uuid(),
+    fullName: z.string(),
+    email: z.string(),
+    phone: z.string().nullable(),
+    avatarUrl: z.string().nullable(),
+  }),
+  quota: z.object({
+    subscriptionMax: z.number().int(),
+    kitBonus: z.number().int(),
+    used: z.number().int(),
+    effectiveLimit: z.number().int(),
+    remaining: z.number().int(),
+  }),
+  orders: z.array(AvailableSlotItemSchema),
+});
+export type OwnerWithAvailableKitsType = z.infer<
+  typeof OwnerWithAvailableKitsSchema
+>;
+
+export const ListOwnersWithAvailableKitsQuerySchema =
+  PagingRequestSchema.extend({
+    search: z.string().optional(),
+  }).strict();
+export type ListOwnersWithAvailableKitsQueryType = z.infer<
+  typeof ListOwnersWithAvailableKitsQuerySchema
+>;
+
+export const ListOwnersWithAvailableKitsResSchema = PagingResponseSchema(
+  OwnerWithAvailableKitsSchema,
+);
+export type ListOwnersWithAvailableKitsResType = z.infer<
+  typeof ListOwnersWithAvailableKitsResSchema
+>;
+
+// ============================================================
+// Owner — IoT provisioning tracking page
+// ============================================================
+export const ProvisionedDeviceSummarySchema = z.object({
+  id: z.string().uuid(),
+  deviceName: z.string(),
+  deviceType: z.string(),
+  status: z.string(),
+  installedAt: z.string(),
+  provisionedAt: z.string(),
+});
+export type ProvisionedDeviceSummaryType = z.infer<
+  typeof ProvisionedDeviceSummarySchema
+>;
+
+export const OwnerKitOrderTrackingSchema = z.object({
+  orderId: z.string().uuid(),
+  orderNumber: z.string(),
+  status: IotKitOrderStatusEnum,
+  statusAssigned: IotKitAssignedStatusEnum.nullable(),
+  totalAmount: z.number(),
+  createdAt: z.string(),
+  cancelledAt: z.string().nullable(),
+  kit: z.object({
+    id: z.string().uuid(),
+    code: z.string(),
+    name: z.string(),
+    boardType: BoardTypeEnum,
+    includedSensors: z.array(SensorTypeEnum).nullable(),
+    includedModules: z.array(KitModuleNameEnum).nullable(),
+    deviceCount: z.number().int(),
+  }),
+  totalSlots: z.number().int(),
+  usedSlots: z.number().int(),
+  remainingSlots: z.number().int(),
+  devices: z.array(ProvisionedDeviceSummarySchema),
+});
+export type OwnerKitOrderTrackingType = z.infer<
+  typeof OwnerKitOrderTrackingSchema
+>;
+
+export const OwnerIotTrackingResSchema = z.object({
+  quota: IotQuotaResSchema,
+  kitOrders: z.array(OwnerKitOrderTrackingSchema),
+  subscriptionDevices: z.array(ProvisionedDeviceSummarySchema),
+});
+export type OwnerIotTrackingResType = z.infer<typeof OwnerIotTrackingResSchema>;
 
 // ============================================================
 // IoT Kit Order summary embedded inside Invoice referenceData

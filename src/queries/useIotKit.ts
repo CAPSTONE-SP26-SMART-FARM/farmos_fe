@@ -2,6 +2,7 @@ import { QUERY_KEYS } from "@/constants";
 import type {
   CreateIotKitBodyType,
   ListIotKitsQueryType,
+  ListOwnersWithAvailableKitsQueryType,
   PurchaseIotKitBodyType,
   UpdateIotKitBodyType,
 } from "@/schemaValidatation/iotKit";
@@ -84,10 +85,6 @@ export const useAdminUnarchiveIotKit = () => {
   });
 };
 
-/**
- * BE B10 hiện đang comment. Hook tự catch 404 và trả `{ data: { data: [] } }`
- * để UI có thể hiển thị fallback (input UUID thủ công) thay vì crash.
- */
 export const useIotKitAvailableSlots = (ownerId: string, enabled: boolean) => {
   return useQuery({
     queryKey: QUERY_KEYS.iotKits.availableSlots(ownerId),
@@ -105,6 +102,17 @@ export const useIotKitAvailableSlots = (ownerId: string, enabled: boolean) => {
         throw error;
       }
     },
+    enabled,
+  });
+};
+
+export const useAdminOwnersWithAvailableKits = (
+  query: ListOwnersWithAvailableKitsQueryType,
+  enabled = true,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.iotKits.availableByOwner(query),
+    queryFn: () => adminIotKitService.availableByOwner(query),
     enabled,
   });
 };
@@ -169,6 +177,19 @@ export const useMyIotQuota = (enabled = true) => {
   return useQuery({
     queryKey: QUERY_KEYS.iotKits.myQuota(),
     queryFn: () => ownerIotKitService.myQuota(),
+    enabled,
+    retry: false,
+  });
+};
+
+/**
+ * Tracking page — gom quota + tất cả kit orders (kèm device đã gán) +
+ * device cấp trực tiếp qua subscription. Owner không có sub active → 422.
+ */
+export const useMyIotTracking = (enabled = true) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.iotKits.myTracking(),
+    queryFn: () => ownerIotKitService.myTracking(),
     enabled,
     retry: false,
   });

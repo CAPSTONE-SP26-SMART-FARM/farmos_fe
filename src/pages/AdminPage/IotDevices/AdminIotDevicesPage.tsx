@@ -24,8 +24,6 @@ import {
   Plus,
   Search,
   Trash2,
-  UserMinus,
-  UserPlus,
   Wifi,
   Radio,
   CircuitBoard,
@@ -34,8 +32,6 @@ import {
   useAdminDeleteIotDevice,
   useAdminListIotDevices,
 } from "@/queries/useIotDevice";
-import AssignOwnerDialog from "@/pages/AdminPage/IotDevices/AssignOwnerDialog";
-import UnassignOwnerDialog from "@/pages/AdminPage/IotDevices/UnassignOwnerDialog";
 import type {
   DeviceStatusType,
   IotDeviceResType,
@@ -74,12 +70,6 @@ export default function AdminIotDevicesPage() {
   const [deleteTarget, setDeleteTarget] = useState<IotDeviceResType | null>(
     null,
   );
-  const [assignTarget, setAssignTarget] = useState<IotDeviceResType | null>(
-    null,
-  );
-  const [unassignTarget, setUnassignTarget] = useState<IotDeviceResType | null>(
-    null,
-  );
 
   const debouncedSearch = useDebounce(search, 500);
 
@@ -93,7 +83,6 @@ export default function AdminIotDevicesPage() {
   );
 
   const listQuery = useAdminListIotDevices(effectiveQuery);
-
   const deleteMutation = useAdminDeleteIotDevice();
 
   const devices = listQuery.data?.data?.data ?? [];
@@ -106,11 +95,10 @@ export default function AdminIotDevicesPage() {
           <div>
             <Badge className="mb-2">Cổng quản trị</Badge>
             <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-              Quản lý cấp phát thiết bị IoT
+              Quản lý thiết bị IoT
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
-              Quản trị viên là vai trò duy nhất có quyền tạo, cập nhật, xóa và
-              cấu hình vòng đời thiết bị IoT.
+              Tạo, cập nhật, xóa và cấu hình vòng đời thiết bị IoT.
             </p>
           </div>
           <Button
@@ -126,7 +114,7 @@ export default function AdminIotDevicesPage() {
         <CardHeader className="bg-muted/30">
           <CardTitle className="flex items-center gap-2">
             <Cpu className="h-5 w-5 text-primary" />
-            Danh sách bo mạch
+            Danh sách thiết bị
           </CardTitle>
           <CardDescription>
             Dữ liệu lấy từ API cấp phát dành cho quản trị viên.
@@ -141,7 +129,7 @@ export default function AdminIotDevicesPage() {
                   setSearch(e.target.value);
                   setQuery((prev) => ({ ...prev, page: 1 }));
                 }}
-                placeholder="Tìm theo tên bo mạch"
+                placeholder="Tìm theo tên thiết bị"
                 className="pl-9"
               />
             </div>
@@ -231,10 +219,10 @@ export default function AdminIotDevicesPage() {
                         </Badge>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground font-mono">
+                    <p className="font-mono text-xs text-muted-foreground">
                       {device.id}
                     </p>
-                    <div className="mt-auto flex flex-wrap items-center gap-1 border-t pt-3">
+                    <div className="mt-auto flex items-center gap-1 border-t pt-3">
                       <Button
                         size="sm"
                         variant="outline"
@@ -244,25 +232,6 @@ export default function AdminIotDevicesPage() {
                       >
                         Chi tiết
                       </Button>
-                      {device.owner ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setUnassignTarget(device)}
-                          className="border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-950"
-                        >
-                          <UserMinus className="mr-1.5 h-4 w-4" />
-                          Thu hồi
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          onClick={() => setAssignTarget(device)}
-                        >
-                          <UserPlus className="mr-1.5 h-4 w-4" />
-                          Gán owner
-                        </Button>
-                      )}
                       <div className="ml-auto flex items-center gap-1">
                         <Button
                           size="icon"
@@ -327,32 +296,10 @@ export default function AdminIotDevicesPage() {
         </CardContent>
       </Card>
 
-      {assignTarget && (
-        <AssignOwnerDialog
-          open={!!assignTarget}
-          onOpenChange={(next) => {
-            if (!next) setAssignTarget(null);
-          }}
-          iotDeviceId={assignTarget.id}
-          deviceName={assignTarget.deviceName}
-        />
-      )}
-
-      {unassignTarget && (
-        <UnassignOwnerDialog
-          open={!!unassignTarget}
-          onOpenChange={(next) => {
-            if (!next) setUnassignTarget(null);
-          }}
-          iotDeviceId={unassignTarget.id}
-          deviceName={unassignTarget.deviceName}
-        />
-      )}
-
       <ConfirmDialog
         open={!!deleteTarget}
         title="Xóa thiết bị IoT?"
-        description={`Bạn có chắc muốn xóa thiết bị ${deleteTarget?.deviceName ?? ""} khỏi hệ thống cấp phát?`}
+        description={`Bạn có chắc muốn xóa thiết bị "${deleteTarget?.deviceName ?? ""}" khỏi hệ thống?`}
         confirmLabel="Xóa"
         cancelLabel="Hủy"
         variant="destructive"

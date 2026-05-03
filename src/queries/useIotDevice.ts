@@ -5,6 +5,7 @@ import {
   ownerIotDeviceService,
 } from "@/services/iotDeviceService";
 import type {
+  AdminAssignFromKitBodyType,
   AdminAssignOwnerBodyType,
   AdminCreateIotDeviceBatchBodyType,
   AdminCreateSensorBatchBodyType,
@@ -174,6 +175,25 @@ export const useAdminAssignIotOwner = () => {
     },
     onError: (error) =>
       onMutationError(error, "Gán owner cho thiết bị thất bại"),
+  });
+};
+
+export const useAdminAssignIotFromKit = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: AdminAssignFromKitBodyType) =>
+      adminIotDeviceService.assignFromKit(body),
+    onSuccess: (_res, body) => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.admin.iotDevices.list(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.admin.iotDevices.detail(body.iotDeviceId),
+      });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.iotKits.all });
+    },
+    onError: (error) =>
+      onMutationError(error, "Gán thiết bị từ bộ kit thất bại"),
   });
 };
 

@@ -7,6 +7,8 @@ import AdminDoctorPerformancePage from "@/pages/AdminPage/DoctorPerformance/Admi
 import AdminFarmsPage from "@/pages/AdminPage/Farms/AdminFarmsPage";
 import AdminFeaturesPage from "@/pages/AdminPage/Features/AdminFeaturesPage";
 import AdminIotKitsPage from "@/pages/AdminPage/IotKits/AdminIotKitsPage";
+import AdminKitAssignmentsPage from "@/pages/AdminPage/IotKits/AdminKitAssignmentsPage";
+import AdminKitAssignmentDetailPage from "@/pages/AdminPage/IotKits/AdminKitAssignmentDetailPage";
 import AdminIotTemplatesPage from "@/pages/AdminPage/IotTemplates/AdminIotTemplatesPage";
 import AdminInvoiceDetailPage from "@/pages/AdminPage/Invoices/AdminInvoiceDetailPage";
 import AdminInvoicesPage from "@/pages/AdminPage/Invoices/AdminInvoicesPage";
@@ -44,6 +46,7 @@ import OwnerIotDevicesPage from "@/pages/OwnerPage/IotDevices/OwnerIotDevicesPag
 import OwnerIotKitsPage from "@/pages/OwnerPage/IotKits/OwnerIotKitsPage";
 import OwnerIotKitDetailPage from "@/pages/OwnerPage/IotKits/OwnerIotKitDetailPage";
 import OwnerIotKitOrderStatusPage from "@/pages/OwnerPage/IotKits/OwnerIotKitOrderStatusPage";
+import OwnerIotTrackingPage from "@/pages/OwnerPage/IotKits/OwnerIotTrackingPage";
 import OwnerDailyLogsPage from "@/pages/OwnerPage/DailyLogs/OwnerDailyLogsPage";
 import OwnerSensorReadingPage from "@/pages/OwnerPage/SensorReadings/OwnerSensorReadingPage";
 import OwnerSensorDashboardPage from "@/pages/OwnerPage/SensorDashboard/OwnerSensorDashboardPage";
@@ -170,6 +173,16 @@ const routes: AppRoutes = [
         allowedRoles: [RoleName.Admin],
       },
       {
+        path: "/dashboard/admin/iot-kits/assignments",
+        component: AdminKitAssignmentsPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/iot-kits/assignments/:ownerId",
+        component: AdminKitAssignmentDetailPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
         path: "/dashboard/admin/iot-devices/create",
         component: AdminCreateIotDevicesPage,
         allowedRoles: [RoleName.Admin],
@@ -293,6 +306,11 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/owner/iot-kits",
         component: OwnerIotKitsPage,
+        allowedRoles: [RoleName.Owner],
+      },
+      {
+        path: "/dashboard/owner/iot-tracking",
+        component: OwnerIotTrackingPage,
         allowedRoles: [RoleName.Owner],
       },
       {
