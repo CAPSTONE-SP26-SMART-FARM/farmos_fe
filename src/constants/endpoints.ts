@@ -270,6 +270,8 @@ export const API_ENDPOINTS = {
         `/employee-task/${taskId}/manager/production-milestone/${milestoneId}/assign`,
       UNASSIGN: (taskId: string, milestoneId: string) =>
         `/employee-task/${taskId}/manager/production-milestone/${milestoneId}/unassign`,
+      COMPLETE: (taskId: string, milestoneId: string) =>
+        `/employee-task/${taskId}/manager/production-milestone/${milestoneId}/complete`,
       ELIGIBLE_FARMERS: (milestoneId: string) =>
         `/employee-task/manager/production-milestone/${milestoneId}/eligible-farmers`,
     },
@@ -365,6 +367,8 @@ export const API_ENDPOINTS = {
         `/employee-task/${taskId}/owner/production-milestone/${milestoneId}/assign`,
       UNASSIGN: (taskId: string, milestoneId: string) =>
         `/employee-task/${taskId}/owner/production-milestone/${milestoneId}/unassign`,
+      COMPLETE: (taskId: string, milestoneId: string) =>
+        `/employee-task/${taskId}/owner/production-milestone/${milestoneId}/complete`,
       ELIGIBLE_FARMERS: (milestoneId: string) =>
         `/employee-task/owner/production-milestone/${milestoneId}/eligible-farmers`,
     },

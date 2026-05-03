@@ -53,6 +53,7 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
+  CheckCircle2,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useMemo, useState, type FormEvent } from "react";
@@ -63,6 +64,7 @@ import {
   useManagerDeleteEmployeeTask,
   useManagerAssignFarmerToTask,
   useManagerUnassignFarmerFromTask,
+  useManagerCompleteEmployeeTask,
   useManagerEligibleFarmers,
 } from "@/queries/useEmployeeTask";
 import { useManagerListEmployeeTaskTemplates } from "@/queries/useEmployeeTaskTemplate";
@@ -561,6 +563,7 @@ function TaskDetailSheet({
   const updateMutation = useManagerUpdateEmployeeTask(milestoneId);
   const assignMutation = useManagerAssignFarmerToTask(milestoneId);
   const unassignMutation = useManagerUnassignFarmerFromTask(milestoneId);
+  const completeMutation = useManagerCompleteEmployeeTask(milestoneId);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -716,6 +719,22 @@ function TaskDetailSheet({
                       <Pencil className="h-3.5 w-3.5 mr-1" />
                       Chỉnh sửa
                     </Button>
+                    {(task.status === "pending" ||
+                      task.status === "in_progress") && (
+                      <Button
+                        size="sm"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                        disabled={completeMutation.isPending}
+                        onClick={() =>
+                          completeMutation.mutate(task.id, {
+                            onSuccess: () => onClose(),
+                          })
+                        }
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                        Hoàn thành
+                      </Button>
+                    )}
                     {!task.assignedTo ? (
                       <Button
                         size="sm"
@@ -1312,6 +1331,7 @@ export default function ManagerMilestoneTasksSection({
   const deleteMutation = useManagerDeleteEmployeeTask(milestoneId);
   const assignMutation = useManagerAssignFarmerToTask(milestoneId);
   const unassignMutation = useManagerUnassignFarmerFromTask(milestoneId);
+  const completeMutation = useManagerCompleteEmployeeTask(milestoneId);
 
   const farmersQuery = useManagerEligibleFarmers(milestoneId);
   const farmers = useMemo(() => {
@@ -1562,6 +1582,20 @@ export default function ManagerMilestoneTasksSection({
                             <Eye className="h-4 w-4 mr-2" />
                             Xem chi tiết
                           </DropdownMenuItem>
+                          {(task.status === "pending" ||
+                            task.status === "in_progress") && (
+                            <DropdownMenuItem
+                              disabled={completeMutation.isPending}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                completeMutation.mutate(task.id);
+                              }}
+                              className="text-emerald-600 focus:text-emerald-600"
+                            >
+                              <CheckCircle2 className="h-4 w-4 mr-2" />
+                              Hoàn thành
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();

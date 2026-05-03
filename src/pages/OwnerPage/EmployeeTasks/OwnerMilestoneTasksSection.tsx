@@ -53,6 +53,7 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
+  CheckCircle2,
 } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import {
@@ -62,6 +63,7 @@ import {
   useOwnerDeleteEmployeeTask,
   useOwnerAssignFarmerToTask,
   useOwnerUnassignFarmerFromTask,
+  useOwnerCompleteEmployeeTask,
   useOwnerEligibleFarmers,
 } from "@/queries/useEmployeeTask";
 import { useOwnerListEmployeeTaskTemplates } from "@/queries/useEmployeeTaskTemplate";
@@ -470,6 +472,7 @@ function TaskDetailSheet({
   const updateMutation = useOwnerUpdateEmployeeTask(milestoneId);
   const assignMutation = useOwnerAssignFarmerToTask(milestoneId);
   const unassignMutation = useOwnerUnassignFarmerFromTask(milestoneId);
+  const completeMutation = useOwnerCompleteEmployeeTask(milestoneId);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -644,6 +647,22 @@ function TaskDetailSheet({
                       <Pencil className="h-3.5 w-3.5 mr-1" />
                       Chỉnh sửa
                     </Button>
+                    {(task.status === "pending" ||
+                      task.status === "in_progress") && (
+                      <Button
+                        size="sm"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                        disabled={completeMutation.isPending}
+                        onClick={() =>
+                          completeMutation.mutate(task.id, {
+                            onSuccess: () => onClose(),
+                          })
+                        }
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                        Hoàn thành
+                      </Button>
+                    )}
                     {!task.assignedTo ? (
                       <Button
                         size="sm"
@@ -891,6 +910,7 @@ export default function OwnerMilestoneTasksSection({
   const tasks = data?.data?.data ?? [];
   const meta = data?.data?.meta;
   const deleteMutation = useOwnerDeleteEmployeeTask(milestoneId);
+  const completeMutation = useOwnerCompleteEmployeeTask(milestoneId);
 
   const [showCreate, setShowCreate] = useState(false);
   const [selectedTask, setSelectedTask] = useState<EmployeeTaskResType | null>(
@@ -1061,6 +1081,20 @@ export default function OwnerMilestoneTasksSection({
                           <Eye className="h-4 w-4 mr-2" />
                           Xem chi tiết
                         </DropdownMenuItem>
+                        {(task.status === "pending" ||
+                          task.status === "in_progress") && (
+                          <DropdownMenuItem
+                            disabled={completeMutation.isPending}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              completeMutation.mutate(task.id);
+                            }}
+                            className="text-emerald-600 focus:text-emerald-600"
+                          >
+                            <CheckCircle2 className="h-4 w-4 mr-2" />
+                            Hoàn thành
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
