@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useNavigate } from "react-router";
 import { BellOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,19 +8,100 @@ import {
   useNotificationStore,
   type NotificationItem as NotificationItemType,
 } from "@/stores/notificationStore";
+import { NotificationKind, RealtimeEvents } from "@/constants/realtime";
+import { useListNotifications, useMarkNotificationRead } from "@/queries/useNotification";
+import type { NotificationResType, NotificationTypeType } from "@/schemaValidatation/notification";
+import type { NotificationKindType, RealtimeEventName } from "@/constants/realtime";
+import type { NotificationSeverity } from "@/stores/notificationStore";
 import NotificationItem from "./NotificationItem";
 
+const TYPE_TO_KIND: Record<NotificationTypeType, NotificationKindType> = {
+  sensor_alert: NotificationKind.SensorAlert,
+  incident_ticket: NotificationKind.TicketCreated,
+  system_update: NotificationKind.Generic,
+  payment_reminder: NotificationKind.BillingCheckout,
+  new_message: NotificationKind.Generic,
+};
+
+const TYPE_TO_SEVERITY: Record<NotificationTypeType, NotificationSeverity> = {
+  sensor_alert: "warning",
+  incident_ticket: "error",
+  system_update: "info",
+  payment_reminder: "warning",
+  new_message: "info",
+};
+
+const TYPE_TO_EVENT: Record<NotificationTypeType, RealtimeEventName> = {
+  sensor_alert: RealtimeEvents.AlertCreated,
+  incident_ticket: RealtimeEvents.IncidentTicketCreated,
+  system_update: RealtimeEvents.NotificationCreated,
+  payment_reminder: RealtimeEvents.NotificationCreated,
+  new_message: RealtimeEvents.NotificationCreated,
+};
+
+function apiNotifToStoreItem(n: NotificationResType): NotificationItemType {
+  return {
+    id: n.id,
+    kind: TYPE_TO_KIND[n.type],
+    event: TYPE_TO_EVENT[n.type],
+    title: n.title,
+    description: n.content || undefined,
+    href: n.redirectUrl ?? undefined,
+    severity: TYPE_TO_SEVERITY[n.type],
+    createdAt: new Date(n.createdAt).getTime(),
+    read: n.isRead,
+    payload: null,
+  };
+}
+
 export default function NotificationDropdown() {
-  const items = useNotificationStore((s) => s.items);
-  const unread = useNotificationStore(selectUnreadCount);
-  const markRead = useNotificationStore((s) => s.markRead);
-  const markAllRead = useNotificationStore((s) => s.markAllRead);
-  const clear = useNotificationStore((s) => s.clear);
+  const storeItems = useNotificationStore((s) => s.items);
+  const storeUnread = useNotificationStore(selectUnreadCount);
+  const storeMarkRead = useNotificationStore((s) => s.markRead);
+  const storeMarkAllRead = useNotificationStore((s) => s.markAllRead);
+  const storeClear = useNotificationStore((s) => s.clear);
   const navigate = useNavigate();
 
+  const { data: apiData } = useListNotifications({ page: 1, limit: 20 });
+  const { mutate: markReadApi } = useMarkNotificationRead();
+
+  const storeIds = useMemo(
+    () => new Set(storeItems.map((i) => i.id)),
+    [storeItems],
+  );
+
+  const apiMapped = useMemo(
+    () =>
+      (apiData?.data ?? [])
+        .filter((n) => !storeIds.has(n.id))
+        .map(apiNotifToStoreItem),
+    [apiData, storeIds],
+  );
+
+  const merged = useMemo(
+    () =>
+      [...storeItems, ...apiMapped].sort((a, b) => b.createdAt - a.createdAt),
+    [storeItems, apiMapped],
+  );
+
+  const unread = useMemo(
+    () => storeUnread + apiMapped.filter((i) => !i.read).length,
+    [storeUnread, apiMapped],
+  );
+
   const handleClick = (item: NotificationItemType) => {
-    if (!item.read) markRead(item.id);
+    if (!item.read) {
+      storeMarkRead(item.id);
+      markReadApi({ id: item.id, isRead: true });
+    }
     if (item.href) navigate(item.href);
+  };
+
+  const handleMarkAllRead = () => {
+    merged
+      .filter((i) => !i.read)
+      .forEach((i) => markReadApi({ id: i.id, isRead: true }));
+    storeMarkAllRead();
   };
 
   return (
@@ -31,12 +113,12 @@ export default function NotificationDropdown() {
             {unread > 0 ? `${unread} chưa đọc` : "Tất cả đã đọc"}
           </p>
         </div>
-        {items.length > 0 && unread > 0 && (
+        {merged.length > 0 && unread > 0 && (
           <Button
             variant="ghost"
             size="sm"
             className="h-7 px-2 text-xs"
-            onClick={markAllRead}
+            onClick={handleMarkAllRead}
           >
             Đánh dấu đã đọc
           </Button>
@@ -44,17 +126,14 @@ export default function NotificationDropdown() {
       </div>
       <Separator />
 
-      {items.length === 0 ? (
+      {merged.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-2 px-4 py-10 text-muted-foreground">
           <BellOff className="h-8 w-8" />
           <p className="text-sm">Chưa có thông báo</p>
-          <p className="text-xs text-center">
-            Thông báo chỉ hiển thị trong phiên hiện tại.
-          </p>
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto">
-          {items.map((item, idx) => (
+          {merged.map((item, idx) => (
             <div key={item.id}>
               {idx > 0 && <Separator />}
               <NotificationItem item={item} onClick={handleClick} />
@@ -63,7 +142,7 @@ export default function NotificationDropdown() {
         </div>
       )}
 
-      {items.length > 0 && (
+      {merged.length > 0 && (
         <>
           <Separator />
           <div className="flex items-center justify-end px-4 py-2">
@@ -71,7 +150,7 @@ export default function NotificationDropdown() {
               variant="ghost"
               size="sm"
               className="h-7 px-2 text-xs text-muted-foreground"
-              onClick={clear}
+              onClick={storeClear}
             >
               Xoá tất cả
             </Button>

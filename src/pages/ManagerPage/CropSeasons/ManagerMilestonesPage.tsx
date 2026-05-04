@@ -1114,11 +1114,9 @@ const ManagerMilestonesPage = () => {
 
   const id = cropSeasonId ?? "";
   const zoneId = searchParams.get("zoneId")?.trim() ?? "";
-  const zoneLabel =
-    zoneId.length > 16 ? `${zoneId.slice(0, 8)}...${zoneId.slice(-4)}` : zoneId;
   const backTarget = zoneId
-    ? `/dashboard/manager/milestones?zoneId=${encodeURIComponent(zoneId)}`
-    : "/dashboard/manager/milestones";
+    ? `/dashboard/manager/crop-seasons?zoneId=${encodeURIComponent(zoneId)}`
+    : "/dashboard/manager/crop-seasons";
 
   const cropSeasonQuery = useManagerCropSeasonDetail(id);
   const cropSeason = cropSeasonQuery.data?.data;
@@ -1141,8 +1139,11 @@ const ManagerMilestonesPage = () => {
     cropSeason?.status === ProductionStatusName.Planning;
   const isApprovedCropSeason =
     cropSeason?.status === ProductionStatusName.Approved;
+  const isRejectedCropSeason =
+    cropSeason?.status === ProductionStatusName.Rejected;
   const isActiveCropSeason =
     cropSeason?.status === ProductionStatusName.Active;
+  const isWizardState = isPlanningCropSeason || isRejectedCropSeason;
   const canEditMilestone =
     isPlanningCropSeason || isApprovedCropSeason || isActiveCropSeason;
   const canDeleteMilestone = isPlanningCropSeason;
@@ -1463,19 +1464,9 @@ const ManagerMilestonesPage = () => {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link to="/dashboard/manager/milestones">Vùng</Link>
+                <Link to={backTarget}>Quản lý mùa vụ</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
-            {zoneId && (
-              <>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbLink asChild>
-                    <Link to={backTarget}>{zoneLabel}</Link>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-              </>
-            )}
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <span className="text-muted-foreground">{cropSeasonLabel}</span>
@@ -1566,7 +1557,13 @@ const ManagerMilestonesPage = () => {
                     onDragOver={(event) => handleMilestoneDragOver(event, m.id)}
                     onDrop={(event) => void handleMilestoneDrop(event, m.id)}
                     onDragEnd={handleMilestoneDragEnd}
-                    onClick={() => navigate(milestoneDetailUrl(m.id))}
+                    onClick={() =>
+                      navigate(
+                        isWizardState
+                          ? milestoneDetailUrl(m.id)
+                          : milestoneOverviewUrl(m.id),
+                      )
+                    }
                     className={`flex items-start justify-between rounded-md border p-3 transition-colors ${
                       isPlanningCropSeason && !isReordering
                         ? "cursor-grab active:cursor-grabbing"

@@ -35,7 +35,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 import type { ZoneType } from "@/types/zone";
 import { format } from "date-fns";
-import { Milestone, MoreVertical, Sprout } from "lucide-react";
+import { MoreVertical, Sprout } from "lucide-react";
 import ManagerDashboardSection from "./Dashboard/ManagerDashboardSection";
 
 type ManagerView = {
@@ -413,17 +413,6 @@ function AssignedZonesSection() {
                               >
                                 <Sprout className="h-4 w-4 mr-2" />
                                 Mùa vụ
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  navigate({
-                                    pathname: "/dashboard/manager/milestones",
-                                    search: `zoneId=${zone.id}`,
-                                  })
-                                }
-                              >
-                                <Milestone className="h-4 w-4 mr-2" />
-                                Mốc sản xuất
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
