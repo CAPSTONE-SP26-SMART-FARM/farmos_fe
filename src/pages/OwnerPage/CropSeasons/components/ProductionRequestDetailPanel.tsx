@@ -22,7 +22,6 @@ import {
   XCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
@@ -32,71 +31,18 @@ import {
   isApiErrorResponse,
 } from "@/lib/utils";
 import { toast } from "sonner";
+import {
+  SEASON_STATUS_MAP,
+  REQUEST_STATUS_MAP,
+  formatDate,
+  InfoRow,
+  DetailSkeleton,
+} from "./productionRequestHelpers";
 
 interface Props {
   requestId: string;
   onBack: () => void;
 }
-
-const SEASON_STATUS_MAP: Record<
-  string,
-  {
-    label: string;
-    variant: "default" | "secondary" | "destructive" | "outline";
-  }
-> = {
-  planning: { label: "Lên kế hoạch", variant: "secondary" },
-  sent: { label: "Đã gửi", variant: "default" },
-  approved: { label: "Đã duyệt", variant: "default" },
-  rejected: { label: "Bị từ chối", variant: "destructive" },
-  active: { label: "Đang hoạt động", variant: "default" },
-  completed: { label: "Hoàn thành", variant: "outline" },
-  cancelled: { label: "Đã hủy", variant: "destructive" },
-};
-
-const REQUEST_STATUS_MAP: Record<
-  string,
-  { label: string; variant: "default" | "secondary" | "destructive" }
-> = {
-  pending: { label: "Chờ duyệt", variant: "secondary" },
-  approved: { label: "Đã duyệt", variant: "default" },
-  rejected: { label: "Từ chối", variant: "destructive" },
-};
-
-function formatDate(d: string | null | undefined) {
-  if (!d) return "—";
-  try {
-    return format(new Date(d), "dd/MM/yyyy HH:mm");
-  } catch {
-    return d;
-  }
-}
-
-function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <div className="text-sm font-medium">{value ?? "—"}</div>
-    </div>
-  );
-}
-
-const DetailSkeleton = () => (
-  <div className="space-y-4">
-    {[1, 2].map((i) => (
-      <Card key={i}>
-        <CardHeader>
-          <Skeleton className="h-5 w-40" />
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-5/6" />
-          <Skeleton className="h-4 w-2/3" />
-        </CardContent>
-      </Card>
-    ))}
-  </div>
-);
 
 export default function ProductionRequestDetailPanel({
   requestId,
@@ -204,7 +150,6 @@ export default function ProductionRequestDetailPanel({
         show ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
       }`}
     >
-      {/* ── Confirm Dialog ─────────────────────────────────── */}
       <ConfirmDialog
         open={confirmAction !== null}
         title={
@@ -230,7 +175,6 @@ export default function ProductionRequestDetailPanel({
         onCancel={() => setConfirmAction(null)}
       />
 
-      {/* ── Header ─────────────────────────────────────────── */}
       <div>
         <Button
           variant="ghost"
@@ -258,10 +202,7 @@ export default function ProductionRequestDetailPanel({
             </h1>
           </div>
           {reqStatus && (
-            <Badge
-              variant={reqStatus.variant}
-              className="text-sm h-fit"
-            >
+            <Badge variant={reqStatus.variant} className="text-sm h-fit">
               {reqStatus.label}
             </Badge>
           )}
@@ -289,7 +230,6 @@ export default function ProductionRequestDetailPanel({
         </Card>
       ) : (
         <>
-          {/* ── Request Info ─────────────────────────────────── */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
@@ -347,7 +287,6 @@ export default function ProductionRequestDetailPanel({
             </CardContent>
           </Card>
 
-          {/* ── Related Crop Season ───────────────────────────── */}
           {season && (
             <Card>
               <CardHeader>
@@ -358,14 +297,8 @@ export default function ProductionRequestDetailPanel({
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                  <InfoRow
-                    label="Tên cây trồng"
-                    value={season.cropName}
-                  />
-                  <InfoRow
-                    label="Giống"
-                    value={season.variety}
-                  />
+                  <InfoRow label="Tên cây trồng" value={season.cropName} />
+                  <InfoRow label="Giống" value={season.variety} />
                   <InfoRow
                     label="Trạng thái mùa vụ"
                     value={
@@ -402,19 +335,14 @@ export default function ProductionRequestDetailPanel({
             </Card>
           )}
 
-          {/* ── Action Panel — #59 ────────────────────────────── */}
           {isPending && (
             <Card className="border-dashed">
               <CardHeader>
                 <CardTitle className="text-base">Phản hồi yêu cầu</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Reject reason form */}
                 {showRejectForm && (
-                  <form
-                    onSubmit={handleRejectSubmit}
-                    className="space-y-3"
-                  >
+                  <form onSubmit={handleRejectSubmit} className="space-y-3">
                     <div className="flex flex-col gap-1.5">
                       <Label className="text-sm font-medium">
                         Lý do từ chối{" "}
@@ -483,7 +411,6 @@ export default function ProductionRequestDetailPanel({
             </Card>
           )}
 
-          {/* ── Already-replied note ──────────────────────────── */}
           {!isPending && (
             <div className="rounded-md border bg-muted/30 px-4 py-3 text-sm text-muted-foreground flex items-center gap-2">
               {req.status === "approved" ? (

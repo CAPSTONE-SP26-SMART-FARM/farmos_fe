@@ -547,7 +547,7 @@ export const API_ENDPOINTS = {
     DIFF: (cropSeasonId: string) =>
       `/crop-seasons/${cropSeasonId}/tracking/diff`,
     TRACKING_LOG: (cropSeasonId: string) =>
-      `/crop-seasons/${cropSeasonId}/tracking/log`,
+      `/crop-seasons/${cropSeasonId}/tracking-log`,
     FIELD_HISTORY: (cropSeasonId: string) =>
       `/crop-seasons/${cropSeasonId}/tracking/field-history`,
     REQUEST_SNAPSHOT: (cropSeasonId: string, requestId: string) =>
