@@ -45,6 +45,17 @@ export const useManagerListProductionMilestones = (
     enabled: !!cropSeasonId,
   });
 
+export const useManagerGetMilestoneDetail = (
+  milestoneId: string,
+  cropSeasonId: string,
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: QUERY_KEYS.manager.productionMilestones.detail(milestoneId),
+    queryFn: () => productionMilestoneService.detail(milestoneId, cropSeasonId),
+    enabled: !!milestoneId && !!cropSeasonId && enabled,
+  });
+
 export const useOwnerListProductionMilestones = (
   cropSeasonId: string,
   query: ListProductionMilestonesQueryType,
