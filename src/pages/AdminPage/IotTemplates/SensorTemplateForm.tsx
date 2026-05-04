@@ -1,4 +1,4 @@
-﻿import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,111 +23,33 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Activity, ArrowLeft, Plus, Trash2, Loader2 } from "lucide-react";
+import { Activity, ArrowLeft, Plus, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import {
   useAdminCreateSensorTemplate,
   useAdminUpdateSensorTemplate,
 } from "@/queries/useIotTemplate";
 import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
-import {
-  SensorTemplateItemConfigSchema,
-  SensorTemplateTypeSchema,
-  FarmTypeForTemplateSchema,
-  type SensorTemplateResType,
-  type CreateSensorTemplateBodyType,
-  type UpdateSensorTemplateBodyType,
+import type {
+  SensorTemplateResType,
+  CreateSensorTemplateBodyType,
+  UpdateSensorTemplateBodyType,
 } from "@/schemaValidatation/iotTemplate";
 import { isApiErrorUnprocessableEntityResponse } from "@/lib/utils";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
-
-// Item schema with cross-field threshold validation
-const SensorItemFormSchema = SensorTemplateItemConfigSchema.superRefine(
-  (item, ctx) => {
-    if (
-      item.minValue != null &&
-      item.maxValue != null &&
-      item.minValue > item.maxValue
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Giá trị thấp nhất không được lớn hơn giá trị cao nhất",
-        path: ["maxValue"],
-      });
-    }
-    if (
-      item.optimalMin != null &&
-      item.optimalMax != null &&
-      item.optimalMin > item.optimalMax
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message:
-          "Ngưỡng báo động thấp nhất không được lớn hơn ngưỡng báo động cao nhất",
-        path: ["optimalMax"],
-      });
-    }
-    if (
-      item.optimalMin != null &&
-      item.minValue != null &&
-      item.optimalMin < item.minValue
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Ngưỡng báo động phải nằm trong khoảng giá trị đo được",
-        path: ["optimalMin"],
-      });
-    }
-    if (
-      item.optimalMax != null &&
-      item.maxValue != null &&
-      item.optimalMax > item.maxValue
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Ngưỡng báo động phải nằm trong khoảng giá trị đo được",
-        path: ["optimalMax"],
-      });
-    }
-  },
-);
-
-// Standalone form schema — no .default() to avoid z.input / z.output mismatch with zodResolver
-const SensorTemplateFormSchema = z.object({
-  name: z.string().min(1, "Tên template là bắt buộc").max(255),
-  description: z.string().max(5000).nullable().optional(),
-  type: SensorTemplateTypeSchema,
-  farmType: FarmTypeForTemplateSchema,
-  version: z
-    .number({ error: "Phiên bản không hợp lệ" })
-    .int()
-    .positive("Phiên bản phải lớn hơn 0"),
-  isActive: z.boolean(),
-  items: z.array(SensorItemFormSchema),
-});
-
-type SensorTemplateFormType = z.infer<typeof SensorTemplateFormSchema>;
+import {
+  SensorTemplateFormSchema,
+  type SensorTemplateFormType,
+  SENSOR_TYPE_LABEL,
+} from "./sensorTemplateSchemas";
+import { SensorItemCard } from "./components/SensorItemCard";
 
 interface SensorTemplateFormProps {
   template?: SensorTemplateResType;
   onBack: () => void;
 }
-
-const SENSOR_TYPE_LABEL: Record<string, string> = {
-  soil_moisture_sensor: "Độ ẩm đất",
-  light_intensity_sensor: "Cường độ ánh sáng",
-  air_humidity_sensor: "Độ ẩm không khí",
-  air_temperature_sensor: "Nhiệt độ không khí",
-} as const;
-
-const toNum = (v: string): number | null => {
-  if (v === "") return null;
-  const n = Number(v);
-  return Number.isNaN(n) ? null : n;
-};
 
 export default function SensorTemplateForm({
   template,
@@ -251,11 +173,7 @@ export default function SensorTemplateForm({
       className={`transition-all duration-300 ease-out ${show ? "translate-x-0 opacity-100" : "translate-x-4 opacity-0"}`}
     >
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleBack}
-        >
+        <Button variant="ghost" size="icon" onClick={handleBack}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="min-w-0 flex-1">
@@ -269,10 +187,7 @@ export default function SensorTemplateForm({
             biến.
           </p>
         </div>
-        <Badge
-          variant="secondary"
-          className="gap-1"
-        >
+        <Badge variant="secondary" className="gap-1">
           <Activity className="h-3 w-3" />
           {SENSOR_TYPE_LABEL[currentType] ?? currentType}
         </Badge>
@@ -321,10 +236,7 @@ export default function SensorTemplateForm({
                         <SelectContent>
                           {Object.entries(SENSOR_TYPE_LABEL).map(
                             ([val, label]) => (
-                              <SelectItem
-                                key={val}
-                                value={val}
-                              >
+                              <SelectItem key={val} value={val}>
                                 {label}
                               </SelectItem>
                             ),
@@ -354,9 +266,7 @@ export default function SensorTemplateForm({
                           <SelectValue placeholder="Loại trang trại" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="cultivation">
-                            Trồng trọt
-                          </SelectItem>
+                          <SelectItem value="cultivation">Trồng trọt</SelectItem>
                         </SelectContent>
                       </Select>
                       {fieldState.invalid && (
@@ -464,149 +374,22 @@ export default function SensorTemplateForm({
           </CardHeader>
           <CardContent className="space-y-3">
             {fields.map((field, index) => (
-              <div
+              <SensorItemCard
                 key={field.id}
-                className="rounded-lg border border-border/80 p-3"
-              >
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-sm font-medium">Cảm biến #{index + 1}</p>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    disabled={fields.length === 1}
-                    onClick={() => remove(index)}
-                  >
-                    <Trash2 className="mr-1 h-4 w-4" />
-                    Xóa
-                  </Button>
-                </div>
-
-                <FieldGroup>
-                  <div className="grid gap-3 md:grid-cols-1">
-                    <Controller
-                      name={`items.${index}.sensorModelName`}
-                      control={form.control}
-                      render={({ field: itemField, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Tên model cảm biến</FieldLabel>
-                          <Input
-                            {...itemField}
-                            value={itemField.value ?? ""}
-                            placeholder="Ví dụ: Cảm biến độ ẩm đất điện dung V2.0"
-                          />
-                          {fieldState.invalid && (
-                            <FieldError errors={[fieldState.error]} />
-                          )}
-                        </Field>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <Controller
-                      name={`items.${index}.minValue`}
-                      control={form.control}
-                      render={({ field: itemField, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>
-                            Giá trị thấp nhất có thể đo được
-                          </FieldLabel>
-                          <Input
-                            type="number"
-                            placeholder="VD: 0"
-                            value={itemField.value ?? ""}
-                            onChange={(e) =>
-                              itemField.onChange(toNum(e.target.value))
-                            }
-                          />
-                          {fieldState.invalid && (
-                            <FieldError errors={[fieldState.error]} />
-                          )}
-                        </Field>
-                      )}
-                    />
-                    <Controller
-                      name={`items.${index}.maxValue`}
-                      control={form.control}
-                      render={({ field: itemField, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>
-                            Giá trị cao nhất có thể đo được
-                          </FieldLabel>
-                          <Input
-                            type="number"
-                            placeholder="VD: 100"
-                            value={itemField.value ?? ""}
-                            onChange={(e) =>
-                              itemField.onChange(toNum(e.target.value))
-                            }
-                          />
-                          {fieldState.invalid && (
-                            <FieldError errors={[fieldState.error]} />
-                          )}
-                        </Field>
-                      )}
-                    />
-                    <Controller
-                      name={`items.${index}.optimalMin`}
-                      control={form.control}
-                      render={({ field: itemField, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Ngưỡng báo động thấp nhất</FieldLabel>
-                          <Input
-                            type="number"
-                            placeholder="VD: 20"
-                            value={itemField.value ?? ""}
-                            onChange={(e) =>
-                              itemField.onChange(toNum(e.target.value))
-                            }
-                          />
-                          {fieldState.invalid && (
-                            <FieldError errors={[fieldState.error]} />
-                          )}
-                        </Field>
-                      )}
-                    />
-                    <Controller
-                      name={`items.${index}.optimalMax`}
-                      control={form.control}
-                      render={({ field: itemField, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Ngưỡng báo động cao nhất</FieldLabel>
-                          <Input
-                            type="number"
-                            placeholder="VD: 80"
-                            value={itemField.value ?? ""}
-                            onChange={(e) =>
-                              itemField.onChange(toNum(e.target.value))
-                            }
-                          />
-                          {fieldState.invalid && (
-                            <FieldError errors={[fieldState.error]} />
-                          )}
-                        </Field>
-                      )}
-                    />
-                  </div>
-                </FieldGroup>
-              </div>
+                index={index}
+                control={form.control}
+                canRemove={fields.length > 1}
+                onRemove={() => remove(index)}
+              />
             ))}
           </CardContent>
         </Card>
 
         <div className="mt-4 flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleBack}
-          >
+          <Button type="button" variant="outline" onClick={handleBack}>
             Hủy
           </Button>
-          <Button
-            type="submit"
-            disabled={isSaving}
-          >
+          <Button type="submit" disabled={isSaving}>
             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isEdit ? "Cập nhật" : "Tạo mới"}
           </Button>

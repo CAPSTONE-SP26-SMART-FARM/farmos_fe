@@ -88,6 +88,13 @@ export type PutTrackingConfigsBodyType = z.infer<
   typeof PutTrackingConfigsBodySchema
 >;
 
+export const TrackingLogUserSchema = z.object({
+  id: z.string(),
+  fullName: z.string().nullable(),
+  email: z.string().nullable(),
+});
+export type TrackingLogUserType = z.infer<typeof TrackingLogUserSchema>;
+
 export const TrackingLogItemSchema = z.object({
   id: z.string().uuid(),
   cropSeasonId: z.string().uuid(),
@@ -101,6 +108,8 @@ export const TrackingLogItemSchema = z.object({
   changedAt: z.string(),
   source: z.string().nullable(),
   changedBy: z.string().nullable(),
+  changedByName: z.string().nullable(),
+  changedByUser: TrackingLogUserSchema.nullable().optional(),
   requestId: z.string().nullable(),
 });
 export type TrackingLogItemType = z.infer<typeof TrackingLogItemSchema>;
