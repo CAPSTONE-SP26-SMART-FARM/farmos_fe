@@ -376,6 +376,10 @@ export const API_ENDPOINTS = {
   ALERTS: {
     LIST: "/alerts",
   },
+  NOTIFICATIONS: {
+    LIST: "/notifications",
+    MARK_READ: (id: string) => `/notifications/${id}/read`,
+  },
   FARM_MEMBERS: {
     BASE: "/farm-members",
     BY_ID: (id: string) => `/farm-members/${id}`,
@@ -1082,6 +1086,14 @@ export const QUERY_KEYS = {
   alerts: {
     list: (query?: Record<string, unknown>) => [
       "alerts",
+      "list",
+      ...(query !== undefined ? [query] : []),
+    ],
+  },
+  notifications: {
+    all: ["notifications"],
+    list: (query?: Record<string, unknown>) => [
+      "notifications",
       "list",
       ...(query !== undefined ? [query] : []),
     ],

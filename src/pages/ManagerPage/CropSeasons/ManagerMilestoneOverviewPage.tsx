@@ -300,6 +300,9 @@ export default function ManagerMilestoneOverviewPage() {
   const msId = milestoneId ?? "";
   const zoneId = searchParams.get("zoneId")?.trim() ?? "";
 
+  const cropSeasonsUrl = zoneId
+    ? `/dashboard/manager/crop-seasons?zoneId=${encodeURIComponent(zoneId)}`
+    : "/dashboard/manager/crop-seasons";
   const milestonesUrl = zoneId
     ? `/dashboard/manager/crop-seasons/${csId}/milestones?zoneId=${encodeURIComponent(zoneId)}`
     : `/dashboard/manager/crop-seasons/${csId}/milestones`;
@@ -376,7 +379,7 @@ export default function ManagerMilestoneOverviewPage() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to="/dashboard/manager/milestones">Mốc sản xuất</Link>
+              <Link to={cropSeasonsUrl}>Quản lý mùa vụ</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />

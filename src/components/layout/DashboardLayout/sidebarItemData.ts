@@ -332,11 +332,6 @@ export const sidebarData: SidebarData = {
           icon: Sprout,
         },
         {
-          title: "Cột Mốc Sản Xuất",
-          url: "/dashboard/manager/milestones",
-          icon: Milestone,
-        },
-        {
           title: "Nhật Ký Công Việc",
           url: "/dashboard/manager/daily-logs",
           icon: NotebookPen,

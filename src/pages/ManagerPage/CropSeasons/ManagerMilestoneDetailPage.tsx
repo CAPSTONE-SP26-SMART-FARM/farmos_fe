@@ -67,7 +67,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router";
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router";
 import {
   useManagerListProductionMilestones,
   useManagerUpdateProductionMilestone,
@@ -89,6 +89,7 @@ import ManagerMilestoneTasksSection, {
   ManagerMilestoneTaskAssignmentScreen,
 } from "@/pages/ManagerPage/EmployeeTasks/ManagerMilestoneTasksSection";
 import { useManagerListEmployeeTasks } from "@/queries/useEmployeeTask";
+import TrackingConfigPanel from "./components/TrackingConfigPanel";
 import type {
   ProductionMilestoneResType,
   ProductionMilestoneStatusType,
@@ -199,6 +200,7 @@ const STEP_DEFS: StepDefinition[] = [
   { label: "Thiết bị IoT", description: "Gán thiết bị cho mốc" },
   { label: "Cảm biến & Ngưỡng", description: "Liên kết và cấu hình" },
   { label: "Nhiệm vụ & Nông dân", description: "Quản lý công việc" },
+  { label: "Cấu hình theo dõi", description: "Chọn trường theo dõi tự động" },
 ];
 
 // ============================================================
@@ -1241,6 +1243,9 @@ const ManagerMilestoneDetailPage = () => {
   const msId = milestoneId ?? "";
   const zoneId = searchParams.get("zoneId")?.trim() ?? "";
 
+  const cropSeasonsUrl = zoneId
+    ? `/dashboard/manager/crop-seasons?zoneId=${encodeURIComponent(zoneId)}`
+    : "/dashboard/manager/crop-seasons";
   const backTarget = zoneId
     ? `/dashboard/manager/crop-seasons/${csId}/milestones?zoneId=${encodeURIComponent(zoneId)}`
     : `/dashboard/manager/crop-seasons/${csId}/milestones`;
@@ -1270,7 +1275,10 @@ const ManagerMilestoneDetailPage = () => {
     cropSeason?.status === ProductionStatusName.Planning;
   const isApprovedCropSeason =
     cropSeason?.status === ProductionStatusName.Approved;
-  const canEditMilestone = isPlanningCropSeason || isApprovedCropSeason;
+  const isRejectedCropSeason =
+    cropSeason?.status === ProductionStatusName.Rejected;
+  const isWizardState = isPlanningCropSeason || isRejectedCropSeason;
+  const canEditMilestone = isWizardState;
 
   const findOverlappingMilestone = (
     startDate: string | null | undefined,
@@ -1369,6 +1377,9 @@ const ManagerMilestoneDetailPage = () => {
     } else {
       statuses.push(currentStep === 2 ? "current" : "upcoming");
     }
+
+    // Step 3: Tracking config — always accessible
+    statuses.push(currentStep === 3 ? "current" : "upcoming");
 
     return statuses;
   })();
@@ -1474,6 +1485,14 @@ const ManagerMilestoneDetailPage = () => {
     );
   }
 
+  // Redirect approved/active/sent/completed/cancelled to overview — wizard is planning/rejected only
+  if (cropSeason && !isWizardState) {
+    const overviewPath = zoneId
+      ? `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}/overview?zoneId=${encodeURIComponent(zoneId)}`
+      : `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}/overview`;
+    return <Navigate to={overviewPath} replace />;
+  }
+
   // Milestone not found
   if (!milestone) {
     return (
@@ -1505,7 +1524,7 @@ const ManagerMilestoneDetailPage = () => {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to="/dashboard/manager/milestones">Mốc sản xuất</Link>
+              <Link to={cropSeasonsUrl}>Quản lý mùa vụ</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -1618,6 +1637,8 @@ const ManagerMilestoneDetailPage = () => {
                 {currentStep === 1 &&
                   "Liên kết cảm biến từ thiết bị và cấu hình ngưỡng tối ưu."}
                 {currentStep === 2 && "Quản lý nhiệm vụ và phân công nông dân."}
+                {currentStep === 3 &&
+                  "Chọn các trường cần theo dõi tự động cho toàn bộ kế hoạch mùa vụ."}
               </CardDescription>
               {currentStep === 1 && hasDevice && !hasBoundSensors && (
                 <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
@@ -1636,19 +1657,31 @@ const ManagerMilestoneDetailPage = () => {
               {currentStep === 2 && !hasTasks && (
                 <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
                   <AlertTriangle className="h-3 w-3" />
-                  Cần tạo ít nhất 1 nhiệm vụ để bật nút hoàn thành.
+                  Cần tạo ít nhất 1 nhiệm vụ trước khi hoàn thành.
                 </p>
               )}
               {currentStep === 2 && hasTasks && !allTasksAssigned && (
                 <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
                   <AlertTriangle className="h-3 w-3" />
-                  Cần gán nhân viên cho tất cả nhiệm vụ để bật nút hoàn thành.
+                  Cần gán nhân viên cho tất cả nhiệm vụ trước khi hoàn thành.
                 </p>
               )}
               {currentStep === 2 && canCompleteMilestoneSetup && (
                 <p className="text-xs text-emerald-600 mt-1 flex items-center gap-1">
                   <Check className="h-3 w-3" />
+                  Nhiệm vụ đã sẵn sàng. Tiếp tục sang bước cấu hình theo dõi.
+                </p>
+              )}
+              {currentStep === 3 && canCompleteMilestoneSetup && (
+                <p className="text-xs text-emerald-600 mt-1 flex items-center gap-1">
+                  <Check className="h-3 w-3" />
                   Đã đủ điều kiện hoàn thành cấu hình mốc.
+                </p>
+              )}
+              {currentStep === 3 && !canCompleteMilestoneSetup && (
+                <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  Cần hoàn thành bước nhiệm vụ trước khi kết thúc.
                 </p>
               )}
             </div>
@@ -1668,11 +1701,13 @@ const ManagerMilestoneDetailPage = () => {
                   size="sm"
                   onClick={() =>
                     handleStepClick(
-                      currentStep === 2 && !hasDevice
-                        ? 0
-                        : currentStep === 1 && !hasDevice
+                      currentStep === 3
+                        ? 2
+                        : currentStep === 2 && !hasDevice
                           ? 0
-                          : currentStep - 1,
+                          : currentStep === 1 && !hasDevice
+                            ? 0
+                            : currentStep - 1,
                     )
                   }
                 >
@@ -1680,7 +1715,7 @@ const ManagerMilestoneDetailPage = () => {
                   Bước trước
                 </Button>
               )}
-              {currentStep < 2 && (
+              {currentStep < 3 && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -1691,7 +1726,7 @@ const ManagerMilestoneDetailPage = () => {
                   <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               )}
-              {currentStep === 2 && (
+              {currentStep === 3 && (
                 <Button
                   size="sm"
                   disabled={
@@ -1711,7 +1746,7 @@ const ManagerMilestoneDetailPage = () => {
           {/* Step 1: IoT Device */}
           {currentStep === 0 && (
             <>
-              {isPlanningCropSeason ? (
+              {isWizardState ? (
                 <IotAssignmentSection milestoneId={msId} />
               ) : (
                 <IotAssignmentReadOnly milestoneId={msId} />
@@ -1722,7 +1757,7 @@ const ManagerMilestoneDetailPage = () => {
           {/* Step 2: Sensor Binding & Thresholds */}
           {currentStep === 1 && (
             <>
-              {isPlanningCropSeason && assignmentId ? (
+              {isWizardState && assignmentId ? (
                 <div className="space-y-6">
                   <SensorBindingSection
                     assignmentId={assignmentId}
@@ -1731,7 +1766,7 @@ const ManagerMilestoneDetailPage = () => {
                   <Separator />
                   <ThresholdSection assignmentId={assignmentId} />
                 </div>
-              ) : !isPlanningCropSeason && assignment ? (
+              ) : assignment ? (
                 <SensorBindingReadOnly
                   sensors={assignment.sensors}
                   deviceName={assignment.device.deviceName}
@@ -1753,6 +1788,14 @@ const ManagerMilestoneDetailPage = () => {
               milestoneId={msId}
               canEdit={canEditMilestone}
               hasTasks={hasTasks}
+            />
+          )}
+
+          {/* Step 4: Tracking Config (crop-season level) */}
+          {currentStep === 3 && (
+            <TrackingConfigPanel
+              cropSeasonId={csId}
+              readOnly={!isPlanningCropSeason}
             />
           )}
         </CardContent>
