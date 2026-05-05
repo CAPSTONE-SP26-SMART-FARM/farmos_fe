@@ -128,7 +128,7 @@ export function SensorOverviewTab({ cropSeason }: { cropSeason: CropSeasonType }
     .slice()
     .sort((a, b) => a.milestoneOrder - b.milestoneOrder);
   const alertsQuery = useListAlerts({ page: 1, limit: 50 });
-  const alerts = (alertsQuery.data?.data.data ?? []).filter((a) => !a.isResolved);
+  const alerts = (alertsQuery.data?.data ?? []).filter((a) => !a.isResolved);
 
   if (listQuery.isLoading) {
     return (

@@ -1,4 +1,4 @@
-import { XCircle, SlidersHorizontal } from "lucide-react";
+import { XCircle } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { addMonths, endOfDay, startOfDay } from "date-fns";
