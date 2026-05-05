@@ -9,16 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -34,7 +25,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
 import useDebounce from "@/hooks/useDebounce";
 import { getApiErrorMessageVi } from "@/lib/error-message";
 import {
@@ -44,62 +34,19 @@ import {
   useUpdateFeature,
 } from "@/queries/useFeature";
 import type {
-  CreateFeatureBodyType,
   FeatureMenuType,
   ListFeaturesQueryType,
-  UpdateFeatureBodyType,
 } from "@/schemaValidatation/feature";
-import { Loader2, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { toast } from "sonner";
-
-type FormState = {
-  code: string;
-  name: string;
-  description: string;
-  valueType: CreateFeatureBodyType["valueType"];
-  unit: string;
-  defaultValue: string;
-};
-
-const INITIAL_FORM: FormState = {
-  code: "",
-  name: "",
-  description: "",
-  valueType: "TEXT",
-  unit: "",
-  defaultValue: "",
-};
-
-function toCreatePayload(form: FormState): CreateFeatureBodyType {
-  return {
-    code: form.code.trim(),
-    name: form.name.trim(),
-    valueType: form.valueType,
-    description: form.description.trim() || undefined,
-    unit: form.unit.trim() || undefined,
-    defaultValue: form.defaultValue.trim() || undefined,
-  };
-}
-
-function toUpdatePayload(form: FormState): UpdateFeatureBodyType {
-  return {
-    name: form.name.trim(),
-    description: form.description.trim() || undefined,
-    unit: form.unit.trim() || undefined,
-    defaultValue: form.defaultValue.trim() || undefined,
-  };
-}
-
-function toFormState(feature: FeatureMenuType): FormState {
-  return {
-    code: feature.code,
-    name: feature.name,
-    description: feature.description ?? "",
-    valueType: feature.valueType,
-    unit: feature.unit ?? "",
-    defaultValue: feature.defaultValue ?? "",
-  };
-}
+import {
+  type FormState,
+  INITIAL_FORM,
+  toCreatePayload,
+  toUpdatePayload,
+  toFormState,
+} from "./featureTypes";
+import { FeatureFormDialog } from "./components/FeatureFormDialog";
 
 export default function AdminFeaturesPage() {
   const [query, setQuery] = useState<ListFeaturesQueryType>({
@@ -227,10 +174,6 @@ export default function AdminFeaturesPage() {
                   Quản lý feature theo đúng CRUD của admin.
                 </CardDescription>
               </div>
-              {/* <Button onClick={onCreate}>
-                <Plus className="mr-2 h-4 w-4" />
-                Tạo feature
-              </Button> */}
             </div>
             <div className="grid gap-3 md:grid-cols-[1fr_140px]">
               <div className="relative">
@@ -324,14 +267,6 @@ export default function AdminFeaturesPage() {
                         >
                           Sửa
                         </Button>
-                        {/* <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => setDeletingFeatureCode(feature.code)}
-                        >
-                          <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                          Xóa
-                        </Button> */}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -375,141 +310,16 @@ export default function AdminFeaturesPage() {
         </Card>
       </div>
 
-      <Dialog
+      <FeatureFormDialog
         open={dialogOpen}
-        onOpenChange={(open) => {
-          if (!open && isSubmitting) return;
-          setDialogOpen(open);
-          if (!open) {
-            setForm(INITIAL_FORM);
-            setEditingFeatureCode(null);
-          }
-        }}
-      >
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>
-              {editingFeatureCode ? "Cập nhật feature" : "Tạo feature mới"}
-            </DialogTitle>
-            <DialogDescription>
-              {editingFeatureCode
-                ? "PATCH /features/{featureCode}"
-                : "POST /features"}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="feature-code">Mã feature</Label>
-              <Input
-                id="feature-code"
-                value={form.code}
-                disabled={Boolean(editingFeatureCode)}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, code: event.target.value }))
-                }
-                placeholder="VD: max_farm_count"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="feature-name">Tên feature</Label>
-              <Input
-                id="feature-name"
-                value={form.name}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, name: event.target.value }))
-                }
-                placeholder="VD: Số trang trại tối đa"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="feature-value-type">Kiểu dữ liệu</Label>
-              <Select
-                value={form.valueType}
-                disabled={Boolean(editingFeatureCode)}
-                onValueChange={(value) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    valueType: value as CreateFeatureBodyType["valueType"],
-                  }))
-                }
-              >
-                <SelectTrigger id="feature-value-type">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="BOOLEAN">BOOLEAN</SelectItem>
-                  <SelectItem value="INT">INT</SelectItem>
-                  <SelectItem value="DECIMAL">DECIMAL</SelectItem>
-                  <SelectItem value="JSON">JSON</SelectItem>
-                  <SelectItem value="TEXT">TEXT</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="feature-default">Giá trị mặc định</Label>
-              <Input
-                id="feature-default"
-                value={form.defaultValue}
-                onChange={(event) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    defaultValue: event.target.value,
-                  }))
-                }
-                placeholder="VD: 10"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="feature-unit">Đơn vị</Label>
-              <Input
-                id="feature-unit"
-                value={form.unit}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, unit: event.target.value }))
-                }
-                placeholder="VD: farm"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="feature-description">Mô tả</Label>
-              <Textarea
-                id="feature-description"
-                value={form.description}
-                onChange={(event) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    description: event.target.value,
-                  }))
-                }
-                rows={3}
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDialogOpen(false);
-                setForm(INITIAL_FORM);
-                setEditingFeatureCode(null);
-              }}
-            >
-              Hủy
-            </Button>
-            <Button
-              onClick={onSubmit}
-              disabled={isSubmitting}
-            >
-              {isSubmitting && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              {editingFeatureCode ? "Lưu thay đổi" : "Tạo feature"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={setDialogOpen}
+        form={form}
+        setForm={setForm}
+        editingFeatureCode={editingFeatureCode}
+        setEditingFeatureCode={setEditingFeatureCode}
+        isSubmitting={isSubmitting}
+        onSubmit={onSubmit}
+      />
 
       <ConfirmDialog
         open={Boolean(deletingFeatureCode)}

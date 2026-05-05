@@ -53,72 +53,19 @@ import {
   type UpdateDoctorRequestStatusBodyType,
 } from "@/schemaValidatation/doctorProfile";
 import { DOCTOR_TYPE_LABEL, REGISTRATION_STATUS_META } from "./statusMeta";
+import {
+  initialsOf,
+  formatDateTime,
+  formatDate,
+  InfoRow,
+  SectionTitle,
+} from "./doctorApplicationHelpers";
+import { QuickApproveSuspendButtons } from "./components/DoctorApplicationActions";
 
 interface Props {
   id?: string;
   onClose: () => void;
 }
-
-const initialsOf = (name?: string | null, email?: string) => {
-  const source = (name && name.trim()) || email || "?";
-  return source
-    .split(/\s+/)
-    .map((p) => p[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-};
-
-const formatDateTime = (iso?: string | null) => {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
-const formatDate = (iso?: string | null) => {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-};
-
-const InfoRow = ({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: React.ReactNode;
-}) => (
-  <div className="flex items-start gap-3">
-    <div className="mt-0.5 rounded-md border bg-muted/40 p-1.5 text-muted-foreground">
-      <Icon className="h-4 w-4" />
-    </div>
-    <div className="min-w-0 flex-1">
-      <div className="text-xs uppercase tracking-wide text-muted-foreground">
-        {label}
-      </div>
-      <div className="text-sm font-medium break-words">{value}</div>
-    </div>
-  </div>
-);
-
-const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-  <div className="mb-3 text-sm font-semibold text-foreground">{children}</div>
-);
 
 const DoctorApplicationDetailDialog = ({ id, onClose }: Props) => {
   const open = Boolean(id);
@@ -301,11 +248,7 @@ const DoctorApplicationDetailDialog = ({ id, onClose }: Props) => {
                 <div className="rounded-lg border p-5">
                   <SectionTitle>Nội dung đơn</SectionTitle>
                   <div className="space-y-4">
-                    <InfoRow
-                      icon={FileText}
-                      label="Tiêu đề"
-                      value={request.title}
-                    />
+                    <InfoRow icon={FileText} label="Tiêu đề" value={request.title} />
                     <div>
                       <div className="text-xs uppercase tracking-wide text-muted-foreground">
                         Mô tả
@@ -365,8 +308,7 @@ const DoctorApplicationDetailDialog = ({ id, onClose }: Props) => {
                       label="Hạn giấy phép"
                       value={formatDate(request.doctorProfile.licenseExpiryDate)}
                     />
-                    {typeof request.doctorProfile.yearsOfExperience ===
-                      "number" && (
+                    {typeof request.doctorProfile.yearsOfExperience === "number" && (
                       <InfoRow
                         icon={UserIcon}
                         label="Số năm kinh nghiệm"
@@ -390,11 +332,7 @@ const DoctorApplicationDetailDialog = ({ id, onClose }: Props) => {
               <div className="rounded-lg border p-5">
                 <SectionTitle>Thông tin người gửi</SectionTitle>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <InfoRow
-                    icon={Mail}
-                    label="Email"
-                    value={request.user.email}
-                  />
+                  <InfoRow icon={Mail} label="Email" value={request.user.email} />
                   <InfoRow
                     icon={Phone}
                     label="Số điện thoại"
@@ -517,107 +455,6 @@ const DoctorApplicationDetailDialog = ({ id, onClose }: Props) => {
               }}
             />
           )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-const QuickApproveSuspendButtons = ({
-  isPending,
-  currentStatus,
-  onAction,
-}: {
-  isPending: boolean;
-  currentStatus: string;
-  onAction: (s: UpdateDoctorRequestStatusBodyType["status"]) => void;
-}) => {
-  const isApproved = currentStatus === RegistrationStatusName.Approved;
-  const [confirm, setConfirm] = useState<
-    UpdateDoctorRequestStatusBodyType["status"] | null
-  >(null);
-
-  return (
-    <>
-      {isApproved ? (
-        <Button
-          type="button"
-          variant="outline"
-          disabled={isPending}
-          onClick={() => onAction(RegistrationStatusName.Suspended)}
-        >
-          Tạm ngưng
-        </Button>
-      ) : (
-        <>
-          <Button
-            type="button"
-            variant="destructive"
-            disabled={isPending}
-            onClick={() => setConfirm(RegistrationStatusName.Rejected)}
-          >
-            Từ chối
-          </Button>
-          <Button
-            type="button"
-            disabled={isPending}
-            className="bg-emerald-600 text-white hover:bg-emerald-600/90"
-            onClick={() => onAction(RegistrationStatusName.Approved)}
-          >
-            {isPending ? "Đang xử lý..." : "Duyệt đơn"}
-          </Button>
-        </>
-      )}
-      {confirm && (
-        <ConfirmInline
-          status={confirm}
-          onConfirm={() => {
-            onAction(confirm);
-            setConfirm(null);
-          }}
-          onCancel={() => setConfirm(null)}
-        />
-      )}
-    </>
-  );
-};
-
-const ConfirmInline = ({
-  status,
-  onConfirm,
-  onCancel,
-}: {
-  status: UpdateDoctorRequestStatusBodyType["status"];
-  onConfirm: () => void;
-  onCancel: () => void;
-}) => {
-  const meta = REGISTRATION_STATUS_META[status];
-  return (
-    <Dialog
-      open
-      onOpenChange={(o) => !o && onCancel()}
-    >
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Xác nhận {meta.label.toLowerCase()}</DialogTitle>
-          <DialogDescription>
-            Hành động này sẽ cập nhật trạng thái đơn và thông báo đến người
-            dùng. Hãy đảm bảo bạn đã ghi rõ lý do nếu cần.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="gap-2">
-          <Button
-            variant="outline"
-            onClick={onCancel}
-          >
-            Hủy
-          </Button>
-          <Button
-            variant={status === RegistrationStatusName.Rejected ? "destructive" : "default"}
-            onClick={onConfirm}
-          >
-            Xác nhận
-          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import EmptyState from "@/components/common/EmptyState";
 import { cn } from "@/lib/utils";
-import type { DoctorMock } from "../_mocks/ownerDashboard.mock";
+import type { OwnerDoctor as DoctorMock } from "@/types/dashboard";
 import { Stethoscope } from "lucide-react";
 import { Link } from "react-router";
 
@@ -91,7 +91,7 @@ function MyDoctorsCard({ doctors, className }: MyDoctorsCardProps) {
                       {doctor.fullName}
                     </p>
                     <p className="text-xs text-muted-foreground truncate">
-                      {doctor.specialty}
+                      {doctor.specialty ?? "—"}
                     </p>
                   </div>
                   <Badge

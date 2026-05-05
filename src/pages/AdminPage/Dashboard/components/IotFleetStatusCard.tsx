@@ -5,7 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { IotFleetSlice } from "../_mocks/adminDashboard.mock";
+import type { IotFleetSlice } from "@/types/dashboard";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
 interface FleetTooltipProps {

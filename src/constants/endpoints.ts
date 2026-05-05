@@ -564,13 +564,18 @@ export const API_ENDPOINTS = {
     DIFF: (cropSeasonId: string) =>
       `/crop-seasons/${cropSeasonId}/tracking/diff`,
     TRACKING_LOG: (cropSeasonId: string) =>
-      `/crop-seasons/${cropSeasonId}/tracking/log`,
+      `/crop-seasons/${cropSeasonId}/tracking-log`,
     FIELD_HISTORY: (cropSeasonId: string) =>
       `/crop-seasons/${cropSeasonId}/tracking/field-history`,
     REQUEST_SNAPSHOT: (cropSeasonId: string, requestId: string) =>
       `/crop-seasons/${cropSeasonId}/production-requests/${requestId}/snapshot`,
     REQUEST_DIFF: (cropSeasonId: string) =>
       `/crop-seasons/${cropSeasonId}/production-requests/diff`,
+  },
+  DASHBOARD: {
+    ADMIN: "/dashboard/admin",
+    OWNER: "/dashboard/owner",
+    MANAGER: "/dashboard/manager",
   },
 } as const;
 
@@ -1393,5 +1398,10 @@ export const QUERY_KEYS = {
       ["tracking", cropSeasonId, "field-history", query] as const,
     requestSnapshot: (cropSeasonId: string, requestId: string) =>
       ["tracking", cropSeasonId, "snapshot", requestId] as const,
+  },
+  dashboard: {
+    admin: (period: string) => ["dashboard", "admin", period] as const,
+    owner: (period: string) => ["dashboard", "owner", period] as const,
+    manager: (period: string) => ["dashboard", "manager", period] as const,
   },
 } as const;

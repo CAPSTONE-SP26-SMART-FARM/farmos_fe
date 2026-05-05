@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import type { ZoneCrewPresence } from "../_mocks/managerDashboard.mock";
+import type { ZoneCrewPresence } from "@/types/dashboard";
 
 function pctTone(pct: number): string {
   if (pct >= 80) return "bg-emerald-500";
