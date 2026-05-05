@@ -426,6 +426,7 @@ export const API_ENDPOINTS = {
     ADMIN_CLAWBACK: (id: string) => `/admin/tickets/${id}/clawback`,
     ADMIN_REPORT_REVENUE: "/admin/reports/ticket-revenue",
     ADMIN_REPORT_DOCTOR_COMMISSION: "/admin/reports/doctor-commission",
+    ADMIN_ANALYTICS: "/admin/ticket-analytics",
   },
   TICKET: {
     INCIDENT: {
@@ -1302,6 +1303,12 @@ export const QUERY_KEYS = {
       [
         "admin-ticket-reports-v2",
         "doctor-commission",
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+    analytics: (query?: Record<string, unknown>) =>
+      [
+        "admin-ticket-reports-v2",
+        "analytics",
         ...(query !== undefined ? [query] : []),
       ] as const,
   },

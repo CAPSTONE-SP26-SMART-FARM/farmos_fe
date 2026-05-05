@@ -17,11 +17,13 @@ import type { DoctorPerformanceRow } from "../_mocks/ticketAnalytics.mock";
 
 interface DoctorPerformanceTableProps {
   rows: DoctorPerformanceRow[];
+  hideEscalated?: boolean;
   className?: string;
 }
 
 function DoctorPerformanceTable({
   rows,
+  hideEscalated,
   className,
 }: DoctorPerformanceTableProps) {
   const totals = rows.reduce(
@@ -51,7 +53,7 @@ function DoctorPerformanceTable({
                 <TableHead>Bác sĩ</TableHead>
                 <TableHead className="text-right">Đang xử lý</TableHead>
                 <TableHead className="text-right">Đã xử lý</TableHead>
-                <TableHead className="text-right">Đã chuyển cấp</TableHead>
+                {!hideEscalated && <TableHead className="text-right">Đã chuyển cấp</TableHead>}
                 <TableHead className="text-right">AI hỗ trợ</TableHead>
                 <TableHead className="text-right">TG xử lý TB</TableHead>
                 <TableHead className="text-right">Hài lòng</TableHead>
@@ -67,17 +69,19 @@ function DoctorPerformanceTable({
                   <TableCell className="text-right tabular-nums">
                     {row.resolved}
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {row.escalated}
-                  </TableCell>
+                  {!hideEscalated && (
+                    <TableCell className="text-right tabular-nums">
+                      {row.escalated}
+                    </TableCell>
+                  )}
                   <TableCell className="text-right tabular-nums">
                     {row.aiFallback}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
-                    {row.avgResolutionHours}h
+                    {row.avgResolutionHours != null ? `${row.avgResolutionHours}h` : "—"}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
-                    {row.satisfaction.toFixed(1)} / 5
+                    {row.satisfaction != null ? `${row.satisfaction.toFixed(1)} / 5` : "—"}
                   </TableCell>
                 </TableRow>
               ))}
@@ -89,9 +93,11 @@ function DoctorPerformanceTable({
                 <TableCell className="text-right tabular-nums">
                   {totals.resolved}
                 </TableCell>
-                <TableCell className="text-right tabular-nums">
-                  {totals.escalated}
-                </TableCell>
+                {!hideEscalated && (
+                  <TableCell className="text-right tabular-nums">
+                    {totals.escalated}
+                  </TableCell>
+                )}
                 <TableCell className="text-right tabular-nums">
                   {totals.aiFallback}
                 </TableCell>
