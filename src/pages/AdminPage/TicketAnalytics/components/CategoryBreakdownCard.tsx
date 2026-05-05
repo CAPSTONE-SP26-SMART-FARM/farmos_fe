@@ -43,7 +43,7 @@ function CategoryBreakdownCard({
       <CardHeader>
         <CardTitle className="text-base">Phân loại sự cố</CardTitle>
         <CardDescription>
-          Nhóm phổ biến nhất: {top.label} ({top.count})
+          {top ? `Nhóm phổ biến nhất: ${top.label} (${top.count})` : "Chưa có dữ liệu"}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -87,7 +87,7 @@ function CategoryBreakdownCard({
                 <span>{slice.label}</span>
               </div>
               <span className="text-muted-foreground tabular-nums">
-                {((slice.count / total) * 100).toFixed(1)}%
+                {total > 0 ? `${((slice.count / total) * 100).toFixed(1)}%` : "—"}
               </span>
             </li>
           ))}

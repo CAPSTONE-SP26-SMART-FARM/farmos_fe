@@ -29,7 +29,7 @@ function TicketKpiStrip({ kpi }: TicketKpiStripProps) {
     {
       label: "Tổng số vé",
       value: kpi.totalTickets.toLocaleString("vi-VN"),
-      delta: kpi.totalDelta,
+      delta: kpi.totalDelta ?? undefined,
       hint: "so với kỳ trước",
     },
     {
@@ -40,23 +40,25 @@ function TicketKpiStrip({ kpi }: TicketKpiStripProps) {
     {
       label: "Đã xử lý",
       value: kpi.resolvedTickets.toLocaleString("vi-VN"),
-      delta: kpi.resolvedDelta,
+      delta: kpi.resolvedDelta ?? undefined,
       hint: `${kpi.resolutionRate.toFixed(1)}% tỷ lệ xử lý`,
     },
     {
       label: "AI tự xử lý",
       value: kpi.aiResolvedTickets.toLocaleString("vi-VN"),
-      hint: `${((kpi.aiResolvedTickets / kpi.resolvedTickets) * 100).toFixed(1)}% trong tổng đã xử lý`,
+      hint: kpi.resolvedTickets > 0
+        ? `${((kpi.aiResolvedTickets / kpi.resolvedTickets) * 100).toFixed(1)}% trong tổng đã xử lý`
+        : "0% trong tổng đã xử lý",
     },
     {
       label: "TG xử lý TB",
-      value: `${kpi.avgResolutionHours.toFixed(1)}h`,
-      delta: kpi.avgResolutionDelta,
+      value: kpi.avgResolutionHours != null ? `${kpi.avgResolutionHours.toFixed(1)}h` : "—",
+      delta: kpi.avgResolutionDelta ?? undefined,
       hint: "thời gian xử lý trung bình",
     },
     {
       label: "Hài lòng TB",
-      value: `${kpi.avgSatisfaction.toFixed(1)} / 5`,
+      value: kpi.avgSatisfaction != null ? `${kpi.avgSatisfaction.toFixed(1)} / 5` : "—",
       hint: `${kpi.satisfactionResponses} phản hồi`,
     },
   ];

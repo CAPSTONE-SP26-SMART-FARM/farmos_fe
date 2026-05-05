@@ -23,13 +23,13 @@ export interface TicketKpi {
   inProgressTickets: number;
   resolvedTickets: number;
   aiResolvedTickets: number;
-  avgResolutionHours: number;
-  avgSatisfaction: number;
+  avgResolutionHours: number | null;
+  avgSatisfaction: number | null;
   satisfactionResponses: number;
   resolutionRate: number;
-  totalDelta: number;
-  resolvedDelta: number;
-  avgResolutionDelta: number;
+  totalDelta: number | null;
+  resolvedDelta: number | null;
+  avgResolutionDelta: number | null;
 }
 
 export interface StatusDistribution {
@@ -66,8 +66,8 @@ export interface DoctorPerformanceRow {
   resolved: number;
   escalated: number;
   aiFallback: number;
-  avgResolutionHours: number;
-  satisfaction: number;
+  avgResolutionHours: number | null;
+  satisfaction: number | null;
 }
 
 export interface CriticalTicketRow {
