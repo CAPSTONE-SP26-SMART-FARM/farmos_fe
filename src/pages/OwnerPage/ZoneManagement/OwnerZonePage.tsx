@@ -1,16 +1,10 @@
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOwnerGetMyFarm } from "@/queries/useOwner";
 import type { ZoneType } from "@/schemaValidatation/zone";
 import { useFarmStore } from "@/stores/farmStore";
-import { Building2, Layers, Sprout, MapPin } from "lucide-react";
+import { Building2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import AssignBulkManagerPanel from "./components/AssignBulkManagerPanel";
@@ -19,12 +13,6 @@ import CreateZonePanel from "./components/CreateZonePanel";
 import EditZonePanel from "./components/EditZonePanel";
 import ZoneDetailPanel from "./components/ZoneDetailPanel";
 import ZoneListSection from "./components/ZoneListSection";
-
-const ZONE_SUMMARY_CARDS = [
-  // { title: "Tổng khu vực", value: "--", icon: Layers },
-  // { title: "Canh tác", value: "--", icon: Sprout },
-  // { title: "Tổng diện tích", value: "--", icon: MapPin },
-] as const;
 
 function OwnerZonePage() {
   const navigate = useNavigate();

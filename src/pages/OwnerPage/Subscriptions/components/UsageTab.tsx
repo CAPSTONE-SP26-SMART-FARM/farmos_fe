@@ -1,8 +1,6 @@
 import EmptyState from "@/components/common/EmptyState";
 import ErrorState from "@/components/common/ErrorState";
 import LoadingCard from "@/components/common/LoadingCard";
-import TableSkeleton from "@/components/common/TableSkeleton";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -26,23 +24,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatDateTimeVi } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { getApiErrorMessageVi } from "@/lib/error-message";
-import {
-  useOwnerMyQuota,
-  useSubscriptionUsageLedger,
-} from "@/queries/useSubscription";
+import { useOwnerMyQuota } from "@/queries/useSubscription";
 import { formatFeatureLabel } from "@/constants/featureLabel";
-import type {
-  MyQuotaFeatureType,
-  UsageLedgerQueryType,
-} from "@/schemaValidatation/subscription";
-import { Activity, Gauge } from "lucide-react";
+import type { MyQuotaFeatureType } from "@/schemaValidatation/subscription";
+import { Gauge } from "lucide-react";
 import { useState } from "react";
 
 interface UsageTabProps {
-  subscriptionId: string;
   enabled: boolean;
   featureCodes: string[];
 }
@@ -162,21 +152,98 @@ function FeatureUsageCard({ feature }: { feature: MyQuotaFeatureType }) {
   );
 }
 
-function UsageTab({ subscriptionId, enabled, featureCodes }: UsageTabProps) {
-  const [query, setQuery] = useState<UsageLedgerQueryType>({
-    page: 1,
-    limit: 10,
-    search: undefined,
-    featureCode: undefined,
-  });
+type QuotaRow = {
+  key: string;
+  featureCode: string;
+  scope: string;
+  limit: string;
+  used: string;
+  remaining: string;
+  pct: number | null;
+};
+
+function buildQuotaRows(features: MyQuotaFeatureType[]): QuotaRow[] {
+  const rows: QuotaRow[] = [];
+  for (const feature of features) {
+    if (feature.kind === "boolean") {
+      rows.push({
+        key: feature.featureCode,
+        featureCode: feature.featureCode,
+        scope: "Toàn tài khoản",
+        limit: feature.enabled ? "Đã bật" : "Tắt",
+        used: "—",
+        remaining: "—",
+        pct: null,
+      });
+    } else if (feature.kind === "raw") {
+      rows.push({
+        key: feature.featureCode,
+        featureCode: feature.featureCode,
+        scope: "Toàn tài khoản",
+        limit: feature.value,
+        used: "—",
+        remaining: "—",
+        pct: null,
+      });
+    } else if (feature.kind === "numeric") {
+      const pct =
+        feature.limit > 0
+          ? Math.min(100, (feature.used / feature.limit) * 100)
+          : 0;
+      rows.push({
+        key: feature.featureCode,
+        featureCode: feature.featureCode,
+        scope: "Toàn tài khoản",
+        limit: feature.limit.toLocaleString("vi-VN"),
+        used: feature.used.toLocaleString("vi-VN"),
+        remaining: feature.remaining.toLocaleString("vi-VN"),
+        pct,
+      });
+    } else {
+      // numeric_per_farm — expand một dòng cho mỗi farm để admin tra cứu nhanh
+      if (feature.perFarm.length === 0) {
+        rows.push({
+          key: feature.featureCode,
+          featureCode: feature.featureCode,
+          scope: "Chưa có nông trại",
+          limit: feature.limit.toLocaleString("vi-VN"),
+          used: "0",
+          remaining: feature.limit.toLocaleString("vi-VN"),
+          pct: 0,
+        });
+        continue;
+      }
+      for (const row of feature.perFarm) {
+        const pct =
+          feature.limit > 0
+            ? Math.min(100, (row.used / feature.limit) * 100)
+            : 0;
+        rows.push({
+          key: `${feature.featureCode}:${row.farmId}`,
+          featureCode: feature.featureCode,
+          scope: row.farmName,
+          limit: feature.limit.toLocaleString("vi-VN"),
+          used: row.used.toLocaleString("vi-VN"),
+          remaining: row.remaining.toLocaleString("vi-VN"),
+          pct,
+        });
+      }
+    }
+  }
+  return rows;
+}
+
+function UsageTab({ enabled, featureCodes }: UsageTabProps) {
+  const [filterFeatureCode, setFilterFeatureCode] = useState<string>("ALL");
 
   const quotaQuery = useOwnerMyQuota(enabled);
   const features = quotaQuery.data?.data?.features ?? [];
 
-  const usageQuery = useSubscriptionUsageLedger(subscriptionId, query, enabled);
-
-  const meta = usageQuery.data?.data?.meta;
-  const rows = usageQuery.data?.data?.data ?? [];
+  const allRows = buildQuotaRows(features);
+  const rows =
+    filterFeatureCode === "ALL"
+      ? allRows
+      : allRows.filter((r) => r.featureCode === filterFeatureCode);
 
   return (
     <div className="space-y-6">
@@ -224,135 +291,123 @@ function UsageTab({ subscriptionId, enabled, featureCodes }: UsageTabProps) {
         </CardContent>
       </Card>
 
-    <Card>
-      <CardHeader className="gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <CardTitle>Lịch sử sử dụng</CardTitle>
-          <CardDescription>
-            Theo dõi biến động tiêu thụ theo từng tính năng.
-          </CardDescription>
-        </div>
-        <Select
-          value={query.featureCode ?? "ALL"}
-          onValueChange={(value) =>
-            setQuery((prev) => ({
-              ...prev,
-              page: 1,
-              featureCode: value === "ALL" ? undefined : value,
-            }))
-          }
-        >
-          <SelectTrigger className="w-full md:w-60">
-            <SelectValue placeholder="Lọc theo tính năng" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">Tất cả tính năng</SelectItem>
-            {featureCodes.map((code) => (
-              <SelectItem
-                key={code}
-                value={code}
-              >
-                {formatFeatureLabel(code)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {usageQuery.isLoading ? (
-          <TableSkeleton />
-        ) : usageQuery.isError ? (
-          <ErrorState
-            message={getApiErrorMessageVi(
-              usageQuery.error,
-              "Không thể tải lịch sử sử dụng.",
-            )}
-            onRetry={() => usageQuery.refetch()}
-          />
-        ) : rows.length === 0 ? (
-          <EmptyState
-            icon={Activity}
-            title="Chưa có dữ liệu sử dụng"
-            description="Khi bạn bắt đầu sử dụng các tính năng, biến động sẽ xuất hiện ở đây."
-          />
-        ) : (
-          <>
+      <Card>
+        <CardHeader className="gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <CardTitle>Bảng hạn mức theo tính năng</CardTitle>
+            <CardDescription>
+              Tổng hợp hạn mức, mức đã dùng và còn lại theo dữ liệu hạn mức
+              hiện tại.
+            </CardDescription>
+          </div>
+          <Select
+            value={filterFeatureCode}
+            onValueChange={setFilterFeatureCode}
+          >
+            <SelectTrigger className="w-full md:w-60">
+              <SelectValue placeholder="Lọc theo tính năng" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Tất cả tính năng</SelectItem>
+              {featureCodes.map((code) => (
+                <SelectItem
+                  key={code}
+                  value={code}
+                >
+                  {formatFeatureLabel(code)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {quotaQuery.isLoading ? (
+            <div className="grid gap-3">
+              <LoadingCard rows={3} />
+            </div>
+          ) : quotaQuery.isError ? (
+            <ErrorState
+              message={getApiErrorMessageVi(
+                quotaQuery.error,
+                "Không thể tải bảng hạn mức.",
+              )}
+              onRetry={() => quotaQuery.refetch()}
+            />
+          ) : rows.length === 0 ? (
+            <EmptyState
+              icon={Gauge}
+              title="Không có dữ liệu hạn mức"
+              description={
+                filterFeatureCode === "ALL"
+                  ? "Đăng ký gói để bắt đầu xem hạn mức."
+                  : "Tính năng đã chọn không có hạn mức."
+              }
+            />
+          ) : (
             <div className="overflow-x-auto rounded-lg border">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Tính năng</TableHead>
-                    <TableHead>Biến động</TableHead>
-                    <TableHead>Ngữ cảnh</TableHead>
-                    <TableHead>Ghi chú</TableHead>
-                    <TableHead>Thời gian</TableHead>
+                    <TableHead>Phạm vi</TableHead>
+                    <TableHead className="text-right">Hạn mức</TableHead>
+                    <TableHead className="text-right">Đã dùng</TableHead>
+                    <TableHead className="text-right">Còn lại</TableHead>
+                    <TableHead className="w-40">Tiến độ</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {rows.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell className="font-medium">
-                        {formatFeatureLabel(row.featureCode)}
-                      </TableCell>
-                      <TableCell
-                        className={
-                          row.delta < 0
-                            ? "text-red-600"
-                            : "text-emerald-600"
-                        }
-                      >
-                        {row.delta > 0 ? `+${row.delta}` : row.delta}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {row.contextEntity ?? "-"}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {row.note ?? "-"}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {formatDateTimeVi(row.createdAt)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {rows.map((row) => {
+                    const tone =
+                      row.pct == null ? null : progressTone(row.pct);
+                    return (
+                      <TableRow key={row.key}>
+                        <TableCell className="font-medium">
+                          {formatFeatureLabel(row.featureCode)}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {row.scope}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {row.limit}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {row.used}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {row.remaining}
+                        </TableCell>
+                        <TableCell>
+                          {row.pct == null || tone == null ? (
+                            <span className="text-xs text-muted-foreground">
+                              —
+                            </span>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <Progress
+                                value={row.pct}
+                                className={cn("h-1.5 flex-1", tone.barClass)}
+                              />
+                              <span
+                                className={cn(
+                                  "w-10 text-right text-xs font-medium tabular-nums",
+                                  tone.pctClass,
+                                )}
+                              >
+                                {Math.round(row.pct)}%
+                              </span>
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
-            {meta && meta.totalPages > 1 && (
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm text-muted-foreground">
-                  Trang {meta.page}/{meta.totalPages}
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={!meta.hasPreviousPage}
-                    onClick={() =>
-                      setQuery((prev) => ({
-                        ...prev,
-                        page: Math.max(1, prev.page - 1),
-                      }))
-                    }
-                  >
-                    Trang trước
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={!meta.hasNextPage}
-                    onClick={() =>
-                      setQuery((prev) => ({ ...prev, page: prev.page + 1 }))
-                    }
-                  >
-                    Trang sau
-                  </Button>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </CardContent>
-    </Card>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

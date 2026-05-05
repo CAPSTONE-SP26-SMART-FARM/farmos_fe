@@ -29,6 +29,10 @@ import AdminCreateTicketCategoryPage from "@/pages/AdminPage/TicketCategories/Ad
 import AdminCommissionRulesPage from "@/pages/AdminPage/CommissionRules/AdminCommissionRulesPage";
 import AdminCreateCommissionRulePage from "@/pages/AdminPage/CommissionRules/AdminCreateCommissionRulePage";
 import AdminMedicinesPage from "@/pages/AdminPage/Medicines/AdminMedicinesPage";
+import AdminSeasonTemplatesPage from "@/pages/AdminPage/SeasonTemplates/AdminSeasonTemplatesPage";
+import AdminSeasonTemplateCreatePage from "@/pages/AdminPage/SeasonTemplates/AdminSeasonTemplateCreatePage";
+import AdminSeasonTemplateDetailPage from "@/pages/AdminPage/SeasonTemplates/AdminSeasonTemplateDetailPage";
+import AdminSeasonTemplateUsagePage from "@/pages/AdminPage/SeasonTemplates/AdminSeasonTemplateUsagePage";
 import AdminMedicineFreeTextStatsPage from "@/pages/AdminPage/Medicines/AdminMedicineFreeTextStatsPage";
 import AdminTicketSystemConfigsPage from "@/pages/AdminPage/SystemConfigs/AdminTicketSystemConfigsPage";
 import AdminDqsLeaderboardPage from "@/pages/AdminPage/DQS/AdminDqsLeaderboardPage";
@@ -262,6 +266,27 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/admin/packages",
         component: AdminPackagesPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      // ── Module 6 — Crop Season Templates ──
+      {
+        path: "/dashboard/admin/season-templates",
+        component: AdminSeasonTemplatesPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/season-templates/create",
+        component: AdminSeasonTemplateCreatePage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/season-templates/:id",
+        component: AdminSeasonTemplateDetailPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/season-templates/:id/usage",
+        component: AdminSeasonTemplateUsagePage,
         allowedRoles: [RoleName.Admin],
       },
       // ── Module 3 — Admin governance (Wave 2) ──

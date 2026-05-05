@@ -49,7 +49,7 @@ import type {
   ListFeaturesQueryType,
   UpdateFeatureBodyType,
 } from "@/schemaValidatation/feature";
-import { Loader2, Plus, Search, Trash2 } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
 
 type FormState = {
@@ -180,12 +180,6 @@ export default function AdminFeaturesPage() {
   const onEdit = (feature: FeatureMenuType) => {
     setEditingFeatureCode(feature.code);
     setForm(toFormState(feature));
-    setDialogOpen(true);
-  };
-
-  const onCreate = () => {
-    setEditingFeatureCode(null);
-    setForm(INITIAL_FORM);
     setDialogOpen(true);
   };
 

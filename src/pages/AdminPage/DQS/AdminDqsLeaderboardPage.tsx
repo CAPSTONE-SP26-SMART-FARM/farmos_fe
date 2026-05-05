@@ -11,11 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -122,11 +118,11 @@ export default function AdminDqsLeaderboardPage() {
             Bảng Xếp Hạng Bác Sĩ
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Xếp hạng bác sĩ theo điểm chất lượng tổng hợp từ 5 tiêu chí,
-            cập nhật cuối mỗi ngày.
+            Xếp hạng bác sĩ theo điểm chất lượng tổng hợp từ 5 tiêu chí, cập
+            nhật cuối mỗi ngày.
           </p>
         </div>
-        <div className="flex items-end gap-2">
+        <div className="flex items-center justify-start gap-2">
           <div className="w-full md:w-64">
             <DatePickerField
               label="Ngày dữ liệu"
@@ -185,10 +181,9 @@ export default function AdminDqsLeaderboardPage() {
         <CardHeader>
           <CardTitle>Xếp hạng chi tiết</CardTitle>
           <CardDescription>
-            Phân tích điểm chất lượng theo 5 tiêu chí: đánh giá sao (40%),
-            tần suất xử lý (20%), đúng hạn (20%), tỷ lệ nhận ticket (10%)
-            và thời lượng trực tuyến (10%). Bấm vào một dòng để xem chi
-            tiết bác sĩ.
+            Phân tích điểm chất lượng theo 5 tiêu chí: đánh giá sao (40%), tần
+            suất xử lý (20%), đúng hạn (20%), tỷ lệ nhận ticket (10%) và thời
+            lượng trực tuyến (10%). Bấm vào một dòng để xem chi tiết bác sĩ.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -275,9 +270,7 @@ export default function AdminDqsLeaderboardPage() {
                       key={row.doctorId}
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() =>
-                        navigate(
-                          `/dashboard/admin/doctors/${row.doctorId}/dqs`,
-                        )
+                        navigate(`/dashboard/admin/doctors/${row.doctorId}/dqs`)
                       }
                     >
                       <TableCell className="text-muted-foreground tabular-nums">

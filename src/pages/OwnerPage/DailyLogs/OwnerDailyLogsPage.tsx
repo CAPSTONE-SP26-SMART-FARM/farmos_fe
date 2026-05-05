@@ -8,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -17,16 +16,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import DatePickerField from "@/components/common/DatePickerField";
 import EmptyState from "@/components/common/EmptyState";
+import ErrorState from "@/components/common/ErrorState";
 import ProPagination from "@/components/common/pro-pagination";
+import TableSkeleton from "@/components/common/TableSkeleton";
+import { useOwnerDailyLogsByFarm } from "@/queries/useDailyLog";
+import { useOwnerGetMyFarm } from "@/queries/useOwner";
 import { formatDateTimeVi, formatDateVi } from "@/lib/format";
-import { NotebookPen } from "lucide-react";
-import { useMemo, useState } from "react";
+import { NotebookPen, Tractor } from "lucide-react";
+import { useState } from "react";
 import { useSearchParams } from "react-router";
-import {
-  filterMockLogsByDateRange,
-  mockOwnerDailyLogs,
-} from "./_mocks/ownerDailyLogs.mock";
 
 const DEFAULT_LIMIT = 10;
 
@@ -47,26 +47,19 @@ function OwnerDailyLogsPage() {
   const [fromDateInput, setFromDateInput] = useState(fromDateParam);
   const [toDateInput, setToDateInput] = useState(toDateParam);
 
-  // MOCK — replace with `useOwnerDailyLogsByFarm(farmId, query)` from
-  // `@/queries/useDailyLog` (also restore `useOwnerGetMyFarm()` to derive
-  // farmId) when wiring real backend data. The mock mirrors the BE
-  // `DailyLogResType` schema exactly so swap is a one-import change.
-  const filteredLogs = useMemo(
-    () =>
-      filterMockLogsByDateRange(
-        mockOwnerDailyLogs,
-        fromDateParam || undefined,
-        toDateParam || undefined,
-      ),
-    [fromDateParam, toDateParam],
-  );
+  const farmQuery = useOwnerGetMyFarm();
+  const farmId = farmQuery.data?.data.id;
 
-  const totalItems = filteredLogs.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / DEFAULT_LIMIT));
-  const safePage = Math.min(Math.max(1, page), totalPages);
-  const offset = (safePage - 1) * DEFAULT_LIMIT;
-  const logs = filteredLogs.slice(offset, offset + DEFAULT_LIMIT);
+  const logsQuery = useOwnerDailyLogsByFarm(farmId, {
+    page,
+    limit: DEFAULT_LIMIT,
+    fromDate: fromDateParam || undefined,
+    toDate: toDateParam || undefined,
+  });
 
+  const logs = logsQuery.data?.data.data ?? [];
+  const meta = logsQuery.data?.data.meta;
+  const totalItems = meta?.totalItems ?? 0;
   const hasFilter = Boolean(fromDateParam || toDateParam);
 
   const buildHref = (next?: number | null) => {
@@ -92,6 +85,8 @@ function OwnerDailyLogsPage() {
     setSearchParams(new URLSearchParams());
   };
 
+  const showFarmMissing = !farmQuery.isLoading && !farmId;
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       <div>
@@ -105,22 +100,20 @@ function OwnerDailyLogsPage() {
       <Card>
         <CardContent className="pt-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-end">
-            <div className="space-y-1.5">
-              <p className="text-sm font-medium">Từ ngày</p>
-              <Input
-                type="date"
+            <div className="w-44">
+              <DatePickerField
+                label="Từ ngày"
                 value={fromDateInput}
-                onChange={(e) => setFromDateInput(e.target.value)}
-                className="w-44"
+                onChange={setFromDateInput}
+                maxDate={toDateInput ? new Date(toDateInput) : undefined}
               />
             </div>
-            <div className="space-y-1.5">
-              <p className="text-sm font-medium">Đến ngày</p>
-              <Input
-                type="date"
+            <div className="w-44">
+              <DatePickerField
+                label="Đến ngày"
                 value={toDateInput}
-                onChange={(e) => setToDateInput(e.target.value)}
-                className="w-44"
+                onChange={setToDateInput}
+                minDate={fromDateInput ? new Date(fromDateInput) : undefined}
               />
             </div>
             <div className="flex gap-2">
@@ -147,11 +140,44 @@ function OwnerDailyLogsPage() {
         <CardHeader>
           <CardTitle className="text-base">Danh sách nhật ký</CardTitle>
           <CardDescription>
-            {`${totalItems} nhật ký được ghi nhận`}
+            {logsQuery.isLoading || farmQuery.isLoading
+              ? "Đang tải..."
+              : `${totalItems} nhật ký được ghi nhận`}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {logs.length === 0 ? (
+          {showFarmMissing ? (
+            <EmptyState
+              icon={Tractor}
+              title="Chưa có trang trại"
+              description="Bạn cần tạo trang trại trước khi xem nhật ký."
+            />
+          ) : farmQuery.isError ? (
+            <ErrorState
+              message="Không thể tải thông tin trang trại."
+              onRetry={() => farmQuery.refetch()}
+            />
+          ) : logsQuery.isError ? (
+            <ErrorState
+              message="Không thể tải nhật ký."
+              onRetry={() => logsQuery.refetch()}
+            />
+          ) : farmQuery.isLoading || logsQuery.isLoading ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nông dân</TableHead>
+                  <TableHead>Khu vực</TableHead>
+                  <TableHead>Công việc</TableHead>
+                  <TableHead>Hoạt động</TableHead>
+                  <TableHead className="w-32">Ngày ghi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableSkeleton />
+              </TableBody>
+            </Table>
+          ) : logs.length === 0 ? (
             <EmptyState
               icon={NotebookPen}
               title="Chưa có nhật ký"
@@ -228,10 +254,10 @@ function OwnerDailyLogsPage() {
                 </Table>
               </div>
 
-              {totalPages > 1 && (
+              {meta && meta.totalPages > 1 && (
                 <ProPagination
-                  totalPages={totalPages}
-                  currentPage={safePage}
+                  totalPages={meta.totalPages}
+                  currentPage={meta.page}
                   buildHref={buildHref}
                 />
               )}

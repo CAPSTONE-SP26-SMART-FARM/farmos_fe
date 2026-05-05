@@ -339,7 +339,6 @@ function OwnerSubscriptionDashboard({
           className="mt-4"
         >
           <UsageTab
-            subscriptionId={subscriptionId}
             enabled={Boolean(subscriptionId)}
             featureCodes={featureCodes}
           />

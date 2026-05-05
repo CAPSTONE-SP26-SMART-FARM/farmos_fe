@@ -93,7 +93,6 @@ import {
   Layers,
   ListTodo,
   Wheat,
-  ChevronRight,
   Settings,
   SlidersHorizontal,
   XCircle,
@@ -102,6 +101,7 @@ import {
   NotebookPen,
   MapPin,
   SquareArrowRight,
+  Sparkles,
 } from "lucide-react";
 import {
   addMonths,
@@ -121,6 +121,7 @@ import {
 } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import TrackingConfigPanel from "./components/TrackingConfigPanel";
+import ApplyTemplateDialog from "./components/ApplyTemplateDialog";
 import ManagerMilestoneTasksSection from "@/pages/ManagerPage/EmployeeTasks/ManagerMilestoneTasksSection";
 import { useTrackingDiff, useTrackingLog, useTrackingConfigs } from "@/queries/useTracking";
 import type {
@@ -383,6 +384,11 @@ function CreateCropSeasonScreen({
   onBack: () => void;
 }) {
   const [show, setShow] = useState(false);
+  const [applyTplOpen, setApplyTplOpen] = useState(false);
+  const [appliedTplBanner, setAppliedTplBanner] = useState<{
+    name: string;
+    version: number | null;
+  } | null>(null);
   const { mutateAsync, isPending } = useCreateCropSeason();
   const form = useForm<CreateCropSeasonBodyType>({
     resolver: zodResolver(CreateCropSeasonBodySchema),
@@ -492,6 +498,40 @@ function CreateCropSeasonScreen({
         </p>
       </div>
 
+      <Card className="border-emerald-200/60 bg-emerald-50/30 dark:bg-emerald-950/10">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="space-y-0.5">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-emerald-600" />
+                Bắt đầu từ mẫu vụ mùa
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Prefill nhanh giai đoạn, công việc và ngưỡng cảm biến từ mẫu
+                Admin tạo. Bạn vẫn chỉnh tự do trước khi lưu.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setApplyTplOpen(true)}
+            >
+              <Sparkles className="mr-1 h-4 w-4" />
+              Chọn mẫu
+            </Button>
+          </div>
+          {appliedTplBanner && (
+            <div className="mt-2 flex items-center gap-2 rounded-md border border-emerald-300 bg-white px-3 py-1.5 text-xs">
+              <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+              Đã prefill từ mẫu{" "}
+              <span className="font-medium">{appliedTplBanner.name}</span> · v
+              {appliedTplBanner.version ?? 1}. Bạn có thể chỉnh các trường bên
+              dưới.
+            </div>
+          )}
+        </CardHeader>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Thông tin mùa vụ</CardTitle>
@@ -598,6 +638,55 @@ function CreateCropSeasonScreen({
           </form>
         </CardContent>
       </Card>
+
+      <ApplyTemplateDialog
+        open={applyTplOpen}
+        onOpenChange={setApplyTplOpen}
+        defaultStartDate={
+          form.getValues("plantDate") || new Date().toISOString().slice(0, 10)
+        }
+        onApply={({ preview, startDate }) => {
+          // Prefill form fields from preview.
+          // - cropName: leave intact if user typed; otherwise template name as hint.
+          // - plantDate: from chosen startDate.
+          // - expectedHarvestDate: last milestone end (if present).
+          // - notes: concat suggested notes from milestones.
+          const lastMilestone = preview.milestones.at(-1);
+          const harvest = lastMilestone?.expectedEndDate
+            ? lastMilestone.expectedEndDate.slice(0, 10)
+            : undefined;
+          const currentCrop = form.getValues("cropName");
+          if (!currentCrop && preview.meta.templateName) {
+            form.setValue("cropName", preview.meta.templateName, {
+              shouldDirty: true,
+            });
+          }
+          form.setValue("plantDate", startDate, { shouldDirty: true });
+          if (harvest) {
+            form.setValue("expectedHarvestDate", harvest, {
+              shouldDirty: true,
+            });
+          }
+          const noteParts = preview.milestones
+            .filter((m) => m.suggestedNotes)
+            .map((m) => `• ${m.stageName}: ${m.suggestedNotes}`);
+          if (noteParts.length > 0) {
+            const existing = form.getValues("notes") ?? "";
+            form.setValue(
+              "notes",
+              existing ? `${existing}\n${noteParts.join("\n")}` : noteParts.join("\n"),
+              { shouldDirty: true },
+            );
+          }
+          setAppliedTplBanner({
+            name: preview.meta.templateName ?? "(không tên)",
+            version: preview.meta.appliedTemplateVersion,
+          });
+          toast.success(
+            `Đã prefill từ mẫu "${preview.meta.templateName ?? "(không tên)"}".`,
+          );
+        }}
+      />
     </div>
   );
 }
@@ -1660,7 +1749,7 @@ function SensorOverviewTab({ cropSeason }: { cropSeason: CropSeasonType }) {
   const milestones = (listQuery.data?.data.data ?? []).slice().sort((a, b) => a.milestoneOrder - b.milestoneOrder);
 
   const alertsQuery = useListAlerts({ page: 1, limit: 50 });
-  const alerts = (alertsQuery.data?.data.data ?? []).filter((a) => !a.isResolved);
+  const alerts = (alertsQuery.data?.data ?? []).filter((a) => !a.isResolved);
 
   if (listQuery.isLoading) {
     return (

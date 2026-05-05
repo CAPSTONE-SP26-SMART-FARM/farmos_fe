@@ -164,7 +164,7 @@ function SubscriptionLifecyclePanel({
     limit: 10,
     search: undefined,
     status: undefined,
-    ownerId: undefined,
+    ownerSearch: undefined,
   });
 
   const [ownerIdInput, setOwnerIdInput] = useState("");
@@ -369,11 +369,11 @@ function SubscriptionLifecyclePanel({
   }, [invoices, selectedInvoiceId]);
 
   const handleOwnerIdFilter = () => {
-    const ownerId = ownerIdInput.trim();
+    const ownerSearch = ownerIdInput.trim();
     setAdminQuery((prev) => ({
       ...prev,
       page: 1,
-      ownerId: ownerId || undefined,
+      ownerSearch: ownerSearch || undefined,
     }));
   };
 

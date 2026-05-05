@@ -113,6 +113,11 @@ export const sidebarData: SidebarData = {
       label: "Mẫu vận hành",
       items: [
         {
+          title: "Mẫu Vụ Mùa",
+          url: "/dashboard/admin/season-templates",
+          icon: Sprout,
+        },
+        {
           title: "Mẫu Cột Mốc",
           url: "/dashboard/admin/milestone-templates",
           icon: Milestone,

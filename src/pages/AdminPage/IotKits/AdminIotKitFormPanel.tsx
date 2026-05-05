@@ -122,7 +122,7 @@ export default function AdminIotKitFormPanel({
     } catch (error) {
       if (isApiErrorUnprocessableEntityResponse<CreateIotKitBodyType>(error)) {
         handleApiErrorUnprocessentity<CreateIotKitBodyType>(
-          error.response?.data?.errors,
+          error.response?.data?.errors ?? [],
           form.setError,
           { getValues: form.getValues },
         );

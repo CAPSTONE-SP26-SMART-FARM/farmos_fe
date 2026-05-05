@@ -11,7 +11,6 @@ export const ZoneManagerSchema = z.object({
   managerId: z.string().uuid(),
   assignedAt: z.string(),
   assignedBy: z.string().uuid(),
-  isPrimary: z.boolean(),
   notes: z.string().nullable(),
 });
 
@@ -35,7 +34,6 @@ export const ZoneManagerUserSchema = z.object({
 export const AssignManagerBodySchema = z
   .object({
     managerId: z.string().uuid(),
-    isPrimary: z.boolean().default(false),
   })
   .strict();
 
@@ -43,13 +41,6 @@ export const AssignManagerBodySchema = z
 export const AssignBulkManagerBodySchema = z
   .object({
     managerIds: z.array(z.string().uuid()).min(1),
-  })
-  .strict();
-
-/** Update primary manager flag */
-export const UpdatePrimaryManagerBodySchema = z
-  .object({
-    isPrimary: z.boolean(),
   })
   .strict();
 
@@ -99,9 +90,6 @@ export type ZoneManagerUserType = z.infer<typeof ZoneManagerUserSchema>;
 export type AssignManagerBodyType = z.infer<typeof AssignManagerBodySchema>;
 export type AssignBulkManagerBodyType = z.infer<
   typeof AssignBulkManagerBodySchema
->;
-export type UpdatePrimaryManagerBodyType = z.infer<
-  typeof UpdatePrimaryManagerBodySchema
 >;
 export type RemoveBulkManagerBodyType = z.infer<
   typeof RemoveBulkManagerBodySchema

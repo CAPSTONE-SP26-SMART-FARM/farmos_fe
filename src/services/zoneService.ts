@@ -83,14 +83,4 @@ export const zoneService = {
 
   removeManager: (zoneId: string, managerId: string) =>
     api.delete<MessageResType>(ZONES.MANAGERS.REMOVE(zoneId, managerId)),
-
-  updatePrimaryManager: (
-    zoneId: string,
-    managerId: string,
-    body: { isPrimary: boolean },
-  ) =>
-    api.put<ZoneManagerResType>(
-      ZONES.MANAGERS.UPDATE_PRIMARY(zoneId, managerId),
-      body,
-    ),
 };

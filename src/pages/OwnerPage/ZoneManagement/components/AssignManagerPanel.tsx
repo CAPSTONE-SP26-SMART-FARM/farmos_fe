@@ -2,14 +2,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -43,7 +35,6 @@ export default function AssignManagerPanel({
 }: Props) {
   const [show, setShow] = useState(false);
   const [selectedManagerId, setSelectedManagerId] = useState("");
-  const [isPrimary, setIsPrimary] = useState(false);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const limit = 10;
@@ -77,7 +68,7 @@ export default function AssignManagerPanel({
       return;
     }
     assignMutation.mutate(
-      { managerId: selectedManagerId, isPrimary },
+      { managerId: selectedManagerId },
       {
         onSuccess: () => {
           toast.success("Đã phân công quản lý cho khu vực.");
@@ -95,8 +86,6 @@ export default function AssignManagerPanel({
       },
     );
   };
-
-  const selectedManager = managers.find((m) => m.id === selectedManagerId);
 
   return (
     <div
@@ -245,34 +234,6 @@ export default function AssignManagerPanel({
                   </div>
                 </div>
               )}
-            </>
-          )}
-
-          {/* Primary toggle */}
-          {selectedManager && (
-            <>
-              <Separator />
-              <div className="space-y-2">
-                <Label htmlFor="primary-select">Quản lý chính</Label>
-                <Select
-                  value={isPrimary ? "yes" : "no"}
-                  onValueChange={(v) => setIsPrimary(v === "yes")}
-                >
-                  <SelectTrigger id="primary-select">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="no">Không</SelectItem>
-                    <SelectItem value="yes">
-                      Có - đặt làm quản lý chính
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Mỗi khu vực chỉ có một quản lý chính. Khi bật tùy chọn này,
-                  quản lý chính hiện tại sẽ bị thay thế.
-                </p>
-              </div>
             </>
           )}
 

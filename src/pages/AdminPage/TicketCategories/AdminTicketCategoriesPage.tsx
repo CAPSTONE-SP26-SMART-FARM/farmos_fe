@@ -46,7 +46,7 @@ import { isAxiosError } from "axios";
 import { Loader2, Pencil, Plus, Power, Search } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -68,7 +68,7 @@ function EditCategorySheet({
   const updateMutation = useUpdateTicketCategory();
 
   const form = useForm<UpdateTicketCategoryBodyType>({
-    resolver: zodResolver(UpdateTicketCategoryBodySchema),
+    resolver: zodResolver(UpdateTicketCategoryBodySchema) as Resolver<UpdateTicketCategoryBodyType>,
     defaultValues: {
       name: category.name,
       description: category.description ?? "",

@@ -94,7 +94,6 @@ export default memo(function SummaryStats({ stats }: SummaryStatsProps) {
                     "absolute bottom-0 left-0 right-0 h-0.5",
                     key === "warning" && "bg-amber-500",
                     key === "critical" && "bg-red-500",
-                    key === "stale" && "bg-gray-400",
                   )}
                 />
               )}

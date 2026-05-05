@@ -148,20 +148,3 @@ export const useOwnerRemoveZoneManager = (zoneId: string) => {
   });
 };
 
-export const useOwnerUpdatePrimaryManager = (zoneId: string) => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({
-      managerId,
-      isPrimary,
-    }: {
-      managerId: string;
-      isPrimary: boolean;
-    }) => zoneService.updatePrimaryManager(zoneId, managerId, { isPrimary }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.zones.managers.byZone(zoneId),
-      });
-    },
-  });
-};
