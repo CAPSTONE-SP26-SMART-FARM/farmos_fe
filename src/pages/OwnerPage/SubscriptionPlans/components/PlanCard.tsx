@@ -12,7 +12,7 @@ import { formatCurrencyVnd } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useListSubscriptionPlanVersions } from "@/queries/useSubscriptionPlan";
 import type { PlanResType } from "@/schemaValidatation/subscriptionPlan";
-import { ArrowRight, Check, Sparkle } from "lucide-react";
+import { Check, Sparkle } from "lucide-react";
 
 interface PlanCardProps {
   plan: PlanResType;
@@ -44,7 +44,6 @@ function PlanCard({
   disabledHint,
   ctaLabel = "Đăng ký gói này",
   onSubscribe,
-  onViewDetail,
   recommended,
   subscribePending,
 }: PlanCardProps) {

@@ -56,7 +56,7 @@ export default function IotKitPurchaseDialog({
       navigate(`/dashboard/owner/iot-kits/orders/${orderId}`);
     } catch (error) {
       if (isApiErrorUnprocessableEntityResponse(error)) {
-        handleApiErrorUnprocessentity(error.response?.data?.errors);
+        handleApiErrorUnprocessentity(error.response?.data?.errors ?? []);
         return;
       }
       onMutationError(error, "Không thể tạo đơn mua bộ Kit IoT.");

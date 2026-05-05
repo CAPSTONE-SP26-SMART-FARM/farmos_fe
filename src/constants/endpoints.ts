@@ -397,8 +397,6 @@ export const API_ENDPOINTS = {
       REMOVE: (zoneId: string, managerId: string) =>
         `/zones/${zoneId}/managers/${managerId}`,
       REMOVE_BULK: (zoneId: string) => `/zones/${zoneId}/managers/bulk`,
-      UPDATE_PRIMARY: (zoneId: string, managerId: string) =>
-        `/zones/${zoneId}/managers/${managerId}/primary`,
     },
   },
   // ── Ticket v2 ─────────────────────────────────────────────────────────
@@ -538,6 +536,25 @@ export const API_ENDPOINTS = {
       REPLY_REQUEST: (requestId: string) =>
         `/owner/production-requests/${requestId}/reply`,
     },
+  },
+  SEASON_TEMPLATES: {
+    // Admin CRUD (B1–B8)
+    ADMIN_LIST: "/admin/season-templates",
+    ADMIN_CREATE: "/admin/season-templates",
+    ADMIN_DETAIL: (id: string) => `/admin/season-templates/${id}`,
+    ADMIN_PATCH: (id: string) => `/admin/season-templates/${id}`,
+    ADMIN_DEACTIVATE: (id: string) =>
+      `/admin/season-templates/${id}/deactivate`,
+    ADMIN_ACTIVATE: (id: string) => `/admin/season-templates/${id}/activate`,
+    ADMIN_DELETE: (id: string) => `/admin/season-templates/${id}`,
+    ADMIN_USAGE: (id: string) => `/admin/season-templates/${id}/usage`,
+    // Public (Manager/Owner) (B9, B10)
+    PUBLIC_LIST: "/season-templates",
+    PUBLIC_DETAIL: (id: string) => `/season-templates/${id}`,
+    // Apply (B11, B13)
+    PREVIEW: "/crop-seasons/preview-from-template",
+    APPLIED_INFO: (cropSeasonId: string) =>
+      `/crop-seasons/${cropSeasonId}/applied-template-info`,
   },
   TRACKING: {
     AVAILABLE_FIELDS: (cropSeasonId: string) =>
@@ -1337,6 +1354,31 @@ export const QUERY_KEYS = {
     root: ["tickets", "ext"] as const,
     full: (id: string) => ["tickets", "ext", "full", id] as const,
     adminFull: (id: string) => ["tickets", "ext", "admin", "full", id] as const,
+  },
+  seasonTemplates: {
+    root: ["season-templates"] as const,
+    adminList: (query?: Record<string, unknown>) =>
+      [
+        "season-templates",
+        "admin",
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+    adminDetail: (id: string) =>
+      ["season-templates", "admin", "detail", id] as const,
+    adminUsage: (id: string) =>
+      ["season-templates", "admin", "usage", id] as const,
+    publicList: (query?: Record<string, unknown>) =>
+      [
+        "season-templates",
+        "public",
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+    publicDetail: (id: string) =>
+      ["season-templates", "public", "detail", id] as const,
+    appliedInfo: (cropSeasonId: string) =>
+      ["season-templates", "applied-info", cropSeasonId] as const,
   },
   tracking: {
     all: (cropSeasonId: string) => ["tracking", cropSeasonId] as const,

@@ -1,13 +1,11 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import IotDeviceForm from "@/pages/OwnerPage/IotDevices/IotDeviceForm";
 import { useNavigate } from "react-router";
 
 export default function AdminCreateIotDevicesPage() {
   const navigate = useNavigate();
-  const [farmId, setFarmId] = useState("");
+  const [farmId] = useState("");
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">

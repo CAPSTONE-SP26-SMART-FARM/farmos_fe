@@ -22,12 +22,10 @@ import { isApiErrorResponse } from "@/lib/utils";
 import {
   useOwnerListZoneManagers,
   useOwnerRemoveZoneManager,
-  useOwnerUpdatePrimaryManager,
 } from "@/queries/useZone";
 import type { ZoneManagerWithUserResType } from "@/schemaValidatation/zoneMember";
 import { format } from "date-fns";
 import {
-  Crown,
   Loader2,
   MoreVertical,
   Search,
@@ -84,7 +82,6 @@ export default function ZoneManagersSection({
   }, [isLoading, managers.length, meta, page]);
 
   const removeMutation = useOwnerRemoveZoneManager(zoneId);
-  const primaryMutation = useOwnerUpdatePrimaryManager(zoneId);
 
   const getErrorMessage = (error: unknown, fallback: string) => {
     if (isApiErrorResponse(error)) {
@@ -94,31 +91,11 @@ export default function ZoneManagersSection({
   };
 
   const handleRemove = (manager: ZoneManagerWithUserResType) => {
-    if (manager.isPrimary) {
-      toast.error(
-        "Không thể xóa quản lý chính. Hãy chuyển vai trò quản lý chính trước.",
-      );
-      return;
-    }
     removeMutation.mutate(manager.managerId, {
       onSuccess: () => toast.success("Đã gỡ quản lý khỏi khu vực."),
       onError: (error) =>
         toast.error(getErrorMessage(error, "Không thể gỡ quản lý.")),
     });
-  };
-
-  const handleSetPrimary = (manager: ZoneManagerWithUserResType) => {
-    if (manager.isPrimary) return;
-    primaryMutation.mutate(
-      { managerId: manager.managerId, isPrimary: true },
-      {
-        onSuccess: () => toast.success("Đã cập nhật quản lý chính."),
-        onError: (error) =>
-          toast.error(
-            getErrorMessage(error, "Không thể cập nhật quản lý chính."),
-          ),
-      },
-    );
   };
 
   return (
@@ -262,39 +239,18 @@ export default function ZoneManagersSection({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          {!m.isPrimary && (
-                            <DropdownMenuItem
-                              disabled={primaryMutation.isPending}
-                              onClick={() => handleSetPrimary(m)}
-                            >
-                              {primaryMutation.isPending ? (
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              ) : (
-                                <Crown className="h-4 w-4 mr-2" />
-                              )}
-                              Đặt làm quản lý chính
-                            </DropdownMenuItem>
-                          )}
-                          {!m.isPrimary && (
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              disabled={removeMutation.isPending}
-                              onClick={() => handleRemove(m)}
-                            >
-                              {removeMutation.isPending ? (
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              ) : (
-                                <Trash2 className="h-4 w-4 mr-2" />
-                              )}
-                              Gỡ
-                            </DropdownMenuItem>
-                          )}
-                          {m.isPrimary && (
-                            <DropdownMenuItem disabled>
-                              <Crown className="h-4 w-4 mr-2 text-yellow-500" />
-                              Quản lý chính - không thể gỡ
-                            </DropdownMenuItem>
-                          )}
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            disabled={removeMutation.isPending}
+                            onClick={() => handleRemove(m)}
+                          >
+                            {removeMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4 mr-2" />
+                            )}
+                            Gỡ
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

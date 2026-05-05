@@ -2,12 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -48,7 +43,10 @@ export default function ManagerCropSeasonsPage() {
   const [sidebarTab, setSidebarTab] = useState<"now" | "history">("now");
   const zoneId = searchParams.get("zoneId")?.trim() ?? "";
 
-  const assignedZonesQuery = useManagerListAssignedZones({ page: 1, limit: 100 });
+  const assignedZonesQuery = useManagerListAssignedZones({
+    page: 1,
+    limit: 100,
+  });
   const assignedZones = assignedZonesQuery.data?.data.data ?? [];
   const hasAssignedZones = assignedZones.length > 0;
   const selectedZoneName = assignedZones.find((z) => z.id === zoneId)?.name;
@@ -59,15 +57,25 @@ export default function ManagerCropSeasonsPage() {
     const next = new URLSearchParams(searchParams);
     next.delete("zoneId");
     setSearchParams(next, { replace: true });
-  }, [assignedZones, assignedZonesQuery.isLoading, searchParams, setSearchParams, zoneId]);
+  }, [
+    assignedZones,
+    assignedZonesQuery.isLoading,
+    searchParams,
+    setSearchParams,
+    zoneId,
+  ]);
 
-  const { data: allData, isLoading: seasonsLoading } = useManagerListCropSeasons(zoneId, {
-    page: 1,
-    limit: 50,
-  });
+  const { data: allData, isLoading: seasonsLoading } =
+    useManagerListCropSeasons(zoneId, {
+      page: 1,
+      limit: 50,
+    });
   const allSeasons = allData?.data.data ?? [];
-  const nowSeason = allSeasons.find((s) => !HISTORY_STATUSES.has(s.status)) ?? null;
-  const historySeasons = allSeasons.filter((s) => HISTORY_STATUSES.has(s.status));
+  const nowSeason =
+    allSeasons.find((s) => !HISTORY_STATUSES.has(s.status)) ?? null;
+  const historySeasons = allSeasons.filter((s) =>
+    HISTORY_STATUSES.has(s.status),
+  );
 
   useEffect(() => {
     if (!zoneId && showCreate) setShowCreate(false);
@@ -92,7 +100,12 @@ export default function ManagerCropSeasonsPage() {
       <div className="space-y-4">
         <Skeleton className="h-8 w-48" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-36 w-full rounded-xl" />)}
+          {[1, 2, 3].map((i) => (
+            <Skeleton
+              key={i}
+              className="h-36 w-full rounded-xl"
+            />
+          ))}
         </div>
       </div>
     );
@@ -112,7 +125,12 @@ export default function ManagerCropSeasonsPage() {
     nowSeason?.status === ProductionStatusName.Planning ||
     nowSeason?.status === ProductionStatusName.Rejected;
 
-  const tabMotion = { initial: { opacity: 0, y: 6 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -6 }, transition: { duration: 0.18, ease: "easeOut" as const } };
+  const tabMotion = {
+    initial: { opacity: 0, y: 6 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -6 },
+    transition: { duration: 0.18, ease: "easeOut" as const },
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -132,7 +150,9 @@ export default function ManagerCropSeasonsPage() {
           </Button>
           <div>
             <p className="text-xs text-muted-foreground">Quản lý mùa vụ</p>
-            <h1 className="text-xl font-bold leading-tight">{selectedZoneName ?? "Khu vực"}</h1>
+            <h1 className="text-xl font-bold leading-tight">
+              {selectedZoneName ?? "Khu vực"}
+            </h1>
           </div>
         </div>
 
@@ -163,7 +183,11 @@ export default function ManagerCropSeasonsPage() {
                     : "hover:bg-accent text-foreground"
                 }`}
               >
-                {tab === "now" ? <Sprout className="h-4 w-4 shrink-0" /> : <History className="h-4 w-4 shrink-0" />}
+                {tab === "now" ? (
+                  <Sprout className="h-4 w-4 shrink-0" />
+                ) : (
+                  <History className="h-4 w-4 shrink-0" />
+                )}
                 {tab === "now" ? "Vụ mùa hiện tại" : "Lịch sử"}
               </button>
             ))}
@@ -180,8 +204,8 @@ export default function ManagerCropSeasonsPage() {
         </div>
 
         <div className="flex-1 min-w-0 space-y-4">
-          {sidebarTab === "now" && (
-            seasonsLoading ? (
+          {sidebarTab === "now" &&
+            (seasonsLoading ? (
               <div className="space-y-4">
                 <Skeleton className="h-36 w-full" />
                 <Skeleton className="h-48 w-full" />
@@ -194,7 +218,10 @@ export default function ManagerCropSeasonsPage() {
                   <p className="text-xs text-muted-foreground mt-1 mb-4">
                     Tạo mùa vụ mới để bắt đầu lên kế hoạch
                   </p>
-                  <Button size="sm" onClick={() => setShowCreate(true)}>
+                  <Button
+                    size="sm"
+                    onClick={() => setShowCreate(true)}
+                  >
                     <Plus className="h-3 w-3 mr-1" />
                     Tạo mùa vụ
                   </Button>
@@ -202,113 +229,213 @@ export default function ManagerCropSeasonsPage() {
               </Card>
             ) : (
               <div className="space-y-4">
-                <CropSeasonSummaryCard season={nowSeason} zoneId={zoneId} />
+                <CropSeasonSummaryCard
+                  season={nowSeason}
+                  zoneId={zoneId}
+                />
 
                 {isPlanningState ? (
                   <Tabs defaultValue="milestones">
                     <TabsList className="w-full md:w-auto">
-                      <TabsTrigger value="milestones" className="flex items-center gap-1.5">
+                      <TabsTrigger
+                        value="milestones"
+                        className="flex items-center gap-1.5"
+                      >
                         <Layers className="h-3.5 w-3.5" />
                         Mốc công việc
                       </TabsTrigger>
-                      <TabsTrigger value="requests" className="flex items-center gap-1.5">
+                      <TabsTrigger
+                        value="requests"
+                        className="flex items-center gap-1.5"
+                      >
                         <Send className="h-3.5 w-3.5" />
                         Yêu cầu phê duyệt
                       </TabsTrigger>
                     </TabsList>
-                    <TabsContent value="milestones" className="mt-4">
-                      <motion.div key="milestones" {...tabMotion}>
-                        <MilestonesWithDetailTab cropSeason={nowSeason} zoneId={zoneId} />
+                    <TabsContent
+                      value="milestones"
+                      className="mt-4"
+                    >
+                      <motion.div
+                        key="milestones"
+                        {...tabMotion}
+                      >
+                        <MilestonesWithDetailTab
+                          cropSeason={nowSeason}
+                          zoneId={zoneId}
+                        />
                       </motion.div>
                     </TabsContent>
-                    <TabsContent value="requests" className="mt-4">
-                      <motion.div key="requests" {...tabMotion}>
-                        <RequestsHistoryTab cropSeasonId={nowSeason.id} readOnly={false} />
+                    <TabsContent
+                      value="requests"
+                      className="mt-4"
+                    >
+                      <motion.div
+                        key="requests"
+                        {...tabMotion}
+                      >
+                        <RequestsHistoryTab
+                          cropSeasonId={nowSeason.id}
+                          readOnly={false}
+                        />
                       </motion.div>
                     </TabsContent>
                   </Tabs>
                 ) : (
                   <Tabs defaultValue="milestones-op">
                     <TabsList className="w-full md:w-auto flex-wrap h-auto gap-1">
-                      <TabsTrigger value="milestones-op" className="flex items-center gap-1.5">
+                      <TabsTrigger
+                        value="milestones-op"
+                        className="flex items-center gap-1.5"
+                      >
                         <Layers className="h-3.5 w-3.5" />
                         Mốc công việc
                       </TabsTrigger>
-                      <TabsTrigger value="sensors" className="flex items-center gap-1.5">
+                      <TabsTrigger
+                        value="sensors"
+                        className="flex items-center gap-1.5"
+                      >
                         <Radio className="h-3.5 w-3.5" />
                         Cảm biến
                       </TabsTrigger>
-                      <TabsTrigger value="incidents" className="flex items-center gap-1.5">
+                      <TabsTrigger
+                        value="incidents"
+                        className="flex items-center gap-1.5"
+                      >
                         <AlertTriangle className="h-3.5 w-3.5" />
                         Sự cố
                       </TabsTrigger>
-                      <TabsTrigger value="daily-tasks" className="flex items-center gap-1.5">
+                      <TabsTrigger
+                        value="daily-tasks"
+                        className="flex items-center gap-1.5"
+                      >
                         <NotebookPen className="h-3.5 w-3.5" />
                         Nhật ký task
                       </TabsTrigger>
-                      <TabsTrigger value="tracking" className="flex items-center gap-1.5">
+                      <TabsTrigger
+                        value="tracking"
+                        className="flex items-center gap-1.5"
+                      >
                         <SlidersHorizontal className="h-3.5 w-3.5" />
                         Nhật ký thay đổi
                       </TabsTrigger>
-                      <TabsTrigger value="harvest" className="flex items-center gap-1.5">
+                      <TabsTrigger
+                        value="harvest"
+                        className="flex items-center gap-1.5"
+                      >
                         <Wheat className="h-3.5 w-3.5" />
                         Thu hoạch
                       </TabsTrigger>
-                      <TabsTrigger value="requests" className="flex items-center gap-1.5">
+                      <TabsTrigger
+                        value="requests"
+                        className="flex items-center gap-1.5"
+                      >
                         <Send className="h-3.5 w-3.5" />
                         Yêu cầu duyệt
                       </TabsTrigger>
                     </TabsList>
-                    <TabsContent value="milestones-op" className="mt-4">
-                      <motion.div key="milestones-op" {...tabMotion}>
-                        <MilestonesWithDetailTab cropSeason={nowSeason} zoneId={zoneId} />
+                    <TabsContent
+                      value="milestones-op"
+                      className="mt-4"
+                    >
+                      <motion.div
+                        key="milestones-op"
+                        {...tabMotion}
+                      >
+                        <MilestonesWithDetailTab
+                          cropSeason={nowSeason}
+                          zoneId={zoneId}
+                        />
                       </motion.div>
                     </TabsContent>
-                    <TabsContent value="sensors" className="mt-4">
-                      <motion.div key="sensors" {...tabMotion}>
+                    <TabsContent
+                      value="sensors"
+                      className="mt-4"
+                    >
+                      <motion.div
+                        key="sensors"
+                        {...tabMotion}
+                      >
                         <SensorOverviewTab cropSeason={nowSeason} />
                       </motion.div>
                     </TabsContent>
-                    <TabsContent value="incidents" className="mt-4">
-                      <motion.div key="incidents" {...tabMotion}>
+                    <TabsContent
+                      value="incidents"
+                      className="mt-4"
+                    >
+                      <motion.div
+                        key="incidents"
+                        {...tabMotion}
+                      >
                         <IncidentTab cropSeason={nowSeason} />
                       </motion.div>
                     </TabsContent>
-                    <TabsContent value="daily-tasks" className="mt-4">
-                      <motion.div key="daily-tasks" {...tabMotion}>
+                    <TabsContent
+                      value="daily-tasks"
+                      className="mt-4"
+                    >
+                      <motion.div
+                        key="daily-tasks"
+                        {...tabMotion}
+                      >
                         <DailyTasksTab cropSeason={nowSeason} />
                       </motion.div>
                     </TabsContent>
-                    <TabsContent value="tracking" className="mt-4">
-                      <motion.div key="tracking" {...tabMotion}>
+                    <TabsContent
+                      value="tracking"
+                      className="mt-4"
+                    >
+                      <motion.div
+                        key="tracking"
+                        {...tabMotion}
+                      >
                         <TrackingLogTab cropSeason={nowSeason} />
                       </motion.div>
                     </TabsContent>
-                    <TabsContent value="harvest" className="mt-4">
-                      <motion.div key="harvest" {...tabMotion}>
+                    <TabsContent
+                      value="harvest"
+                      className="mt-4"
+                    >
+                      <motion.div
+                        key="harvest"
+                        {...tabMotion}
+                      >
                         <HarvestRecordTab cropSeason={nowSeason} />
                       </motion.div>
                     </TabsContent>
-                    <TabsContent value="requests" className="mt-4">
-                      <motion.div key="requests-op" {...tabMotion}>
-                        <RequestsHistoryTab cropSeasonId={nowSeason.id} readOnly={true} />
+                    <TabsContent
+                      value="requests"
+                      className="mt-4"
+                    >
+                      <motion.div
+                        key="requests-op"
+                        {...tabMotion}
+                      >
+                        <RequestsHistoryTab
+                          cropSeasonId={nowSeason.id}
+                          readOnly={true}
+                        />
                       </motion.div>
                     </TabsContent>
                   </Tabs>
                 )}
               </div>
-            )
-          )}
+            ))}
 
           {sidebarTab === "history" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-base font-semibold">Lịch sử vụ mùa</h2>
                 {historySeasons.length > 0 && (
-                  <span className="text-sm text-muted-foreground">{historySeasons.length} vụ</span>
+                  <span className="text-sm text-muted-foreground">
+                    {historySeasons.length} vụ
+                  </span>
                 )}
               </div>
-              <HistoryView seasons={historySeasons} isLoading={seasonsLoading} />
+              <HistoryView
+                seasons={historySeasons}
+                isLoading={seasonsLoading}
+              />
             </div>
           )}
         </div>

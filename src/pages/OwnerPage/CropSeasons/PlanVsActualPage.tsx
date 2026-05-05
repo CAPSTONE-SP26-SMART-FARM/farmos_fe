@@ -1,8 +1,31 @@
 // src/pages/OwnerPage/CropSeasons/PlanVsActualPage.tsx
-import { useParams } from "react-router";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router";
+import {
+  ArrowLeft,
+  GitCompareArrows,
+  History,
+  Inbox,
+  Table2,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import ErrorState from "@/components/common/ErrorState";
 import LoadingCard from "@/components/common/LoadingCard";
 import EmptyState from "@/components/common/EmptyState";
@@ -11,12 +34,36 @@ import KpiSummaryCards from "./components/KpiSummaryCards";
 import DiffTable from "./components/DiffTable";
 import UnplannedTable from "./components/UnplannedTable";
 import TrackingTimeline from "./components/TrackingTimeline";
+import {
+  computeTrackingStats,
+  healthTone,
+} from "./components/tracking-stats";
 import type { TrackingLogQueryType } from "@/schemaValidatation/tracking";
 
 const DEFAULT_LOG_QUERY: TrackingLogQueryType = { page: 1, limit: 20 };
 
+type FilterKey = "all" | "late" | "ontime" | "early";
+
+const HEALTH_PILL_CLASS: Record<
+  ReturnType<typeof healthTone>,
+  string
+> = {
+  success: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  warning: "bg-amber-50 text-amber-700 border-amber-200",
+  danger: "bg-red-50 text-red-700 border-red-200",
+  muted: "bg-muted text-muted-foreground border-border",
+};
+
 function PlanVsActualPage() {
   const { id: cropSeasonId } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [show, setShow] = useState(false);
+  const [filter, setFilter] = useState<FilterKey>("all");
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setShow(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   const {
     data: diffData,
@@ -29,6 +76,33 @@ function PlanVsActualPage() {
     cropSeasonId!,
     DEFAULT_LOG_QUERY,
   );
+
+  const stats = useMemo(
+    () => (diffData?.data ? computeTrackingStats(diffData.data) : null),
+    [diffData?.data],
+  );
+
+  const filterOptions = useMemo(() => {
+    if (!stats) {
+      return [
+        { key: "all" as FilterKey, label: "Tất cả", count: 0 },
+        { key: "late" as FilterKey, label: "Trễ / Vượt", count: 0 },
+        { key: "ontime" as FilterKey, label: "Đúng", count: 0 },
+        { key: "early" as FilterKey, label: "Sớm / Thấp", count: 0 },
+      ];
+    }
+    return [
+      { key: "all" as FilterKey, label: "Tất cả", count: stats.total },
+      { key: "late" as FilterKey, label: "Trễ / Vượt", count: stats.late },
+      { key: "ontime" as FilterKey, label: "Đúng", count: stats.onTime },
+      { key: "early" as FilterKey, label: "Sớm / Thấp", count: stats.early },
+    ];
+  }, [stats]);
+
+  const handleBack = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/dashboard/owner/crop-seasons");
+  };
 
   if (loadingDiff) return <LoadingCard />;
   if (errorDiff) {
@@ -49,57 +123,223 @@ function PlanVsActualPage() {
   }
 
   const diff = diffData.data;
+  const cropName = diff.cropSeason.cropName ?? "Mùa vụ";
+  const tone = healthTone(stats!.onTimePct, stats!.total > 0);
+  const noTracked = diff.tracked.length === 0;
+  const noUnplanned = diff.unplanned.length === 0;
 
   return (
-    <div className="space-y-6">
-      {/* Page header */}
-      <div>
-        <Badge className="mb-2">Kế hoạch vs Thực tế</Badge>
-        <h1 className="text-2xl font-bold">
-          {diff.cropSeason.cropName ?? "Mùa vụ"}
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          So sánh kế hoạch ban đầu và tình hình thực tế
-        </p>
+    <TooltipProvider delayDuration={150}>
+      <div
+        className={`space-y-5 transition-transform duration-300 ease-out ${
+          show ? "translate-y-0" : "translate-y-4"
+        }`}
+      >
+        {/* ── Header ──────────────────────────────────────────── */}
+        <div
+          className={`transition-opacity duration-300 ease-out ${
+            show ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          <Breadcrumb className="mb-2">
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <span className="text-muted-foreground">Mùa vụ</span>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <span className="text-muted-foreground font-medium truncate max-w-50">
+                  {cropName}
+                </span>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Kế hoạch vs Thực tế</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBack}
+            className="mb-3 -ml-2 gap-1 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Quay lại chi tiết mùa vụ
+          </Button>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <Badge
+                variant="secondary"
+                className="mb-2 gap-1"
+              >
+                <GitCompareArrows className="h-3 w-3" />
+                Kế hoạch vs Thực tế
+              </Badge>
+              <h1 className="text-2xl font-bold truncate">{cropName}</h1>
+              <p className="text-muted-foreground text-sm">
+                So sánh kế hoạch ban đầu với tình hình thực tế của mùa vụ
+              </p>
+            </div>
+
+            {stats!.total > 0 && (
+              <div
+                className={`shrink-0 rounded-md border px-3 py-2 text-right ${HEALTH_PILL_CLASS[tone]}`}
+              >
+                <p className="text-[10px] uppercase tracking-wide font-semibold opacity-80">
+                  Tỉ lệ đúng KH
+                </p>
+                <p className="text-xl font-bold tabular-nums leading-none">
+                  {stats!.onTimePct}%
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── KPI / health summary ────────────────────────────── */}
+        <div
+          className={`transition-opacity duration-500 delay-75 ease-out ${
+            show ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          <KpiSummaryCards diff={diff} />
+        </div>
+
+        {/* ── Combined empty state ────────────────────────────── */}
+        {noTracked && noUnplanned ? (
+          <Card
+            className={`transition-opacity duration-500 delay-150 ease-out ${
+              show ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <Inbox className="h-8 w-8 text-muted-foreground mb-2" />
+              <p className="text-sm font-medium">
+                Chưa có dữ liệu so sánh nào
+              </p>
+              <p className="text-xs text-muted-foreground mt-1 max-w-md">
+                Mùa vụ chưa ghi nhận khác biệt giữa kế hoạch và thực tế.
+                Dữ liệu sẽ xuất hiện khi có hoạt động cập nhật.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          /* ── Tabs ────────────────────────────────────────── */
+          <div
+            className={`transition-opacity duration-500 delay-150 ease-out ${
+              show ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            <Tabs
+              defaultValue="diff"
+              className="space-y-4"
+            >
+              <TabsList>
+                <TabsTrigger
+                  value="diff"
+                  className="gap-1.5"
+                >
+                  <Table2 className="h-3.5 w-3.5" />
+                  Bảng so sánh
+                </TabsTrigger>
+                <TabsTrigger
+                  value="timeline"
+                  className="gap-1.5"
+                >
+                  <History className="h-3.5 w-3.5" />
+                  Timeline thay đổi
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent
+                value="diff"
+                className="space-y-5 mt-0"
+              >
+                {!noTracked && (
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <div className="flex flex-col gap-3">
+                        <div>
+                          <CardTitle className="text-base">
+                            Chi tiết so sánh theo trường
+                          </CardTitle>
+                          <CardDescription>
+                            Mỗi hàng hiển thị giá trị kế hoạch và thực tế cạnh
+                            nhau, kèm sai số.
+                          </CardDescription>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {filterOptions.map((opt) => {
+                            const active = filter === opt.key;
+                            return (
+                              <Button
+                                key={opt.key}
+                                variant={active ? "default" : "outline"}
+                                size="sm"
+                                className="h-7 text-xs gap-1.5"
+                                onClick={() => setFilter(opt.key)}
+                              >
+                                {opt.label}
+                                <span
+                                  className={`rounded-full px-1.5 text-[10px] font-semibold tabular-nums ${
+                                    active
+                                      ? "bg-primary-foreground/20 text-primary-foreground"
+                                      : "bg-muted text-muted-foreground"
+                                  }`}
+                                >
+                                  {opt.count}
+                                </span>
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <DiffTable
+                        tracked={diff.tracked}
+                        cropSeasonId={cropSeasonId!}
+                        filter={filter}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
+
+                {!noUnplanned && (
+                  <UnplannedTable unplanned={diff.unplanned} />
+                )}
+              </TabsContent>
+
+              <TabsContent
+                value="timeline"
+                className="mt-0"
+              >
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">
+                      Lịch sử thay đổi
+                    </CardTitle>
+                    <CardDescription>
+                      Toàn bộ thay đổi được ghi nhận theo thời gian.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <TrackingTimeline
+                      cropSeasonId={cropSeasonId!}
+                      initialData={logData?.data}
+                      isLoading={loadingLog}
+                    />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+        )}
       </div>
-
-      {/* KPI summary */}
-      <KpiSummaryCards diff={diff} />
-
-      <Separator />
-
-      {/* Main content tabs */}
-      <Tabs defaultValue="diff">
-        <TabsList>
-          <TabsTrigger value="diff">Bảng so sánh</TabsTrigger>
-          <TabsTrigger value="timeline">Timeline thay đổi</TabsTrigger>
-        </TabsList>
-
-        <TabsContent
-          value="diff"
-          className="space-y-6 mt-4"
-        >
-          <DiffTable
-            tracked={diff.tracked}
-            cropSeasonId={cropSeasonId!}
-          />
-          {diff.unplanned.length > 0 && (
-            <UnplannedTable unplanned={diff.unplanned} />
-          )}
-        </TabsContent>
-
-        <TabsContent
-          value="timeline"
-          className="mt-4"
-        >
-          <TrackingTimeline
-            cropSeasonId={cropSeasonId!}
-            initialData={logData?.data}
-            isLoading={loadingLog}
-          />
-        </TabsContent>
-      </Tabs>
-    </div>
+    </TooltipProvider>
   );
 }
 

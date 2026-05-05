@@ -72,7 +72,7 @@ function OwnerSubscriptionHistoryPage() {
     limit: 10,
     search: undefined,
     status: undefined,
-    ownerId: undefined,
+    ownerSearch: undefined,
   });
 
   const subscriptionHistoryQuery = useOwnerSubscriptionHistory(query, true);

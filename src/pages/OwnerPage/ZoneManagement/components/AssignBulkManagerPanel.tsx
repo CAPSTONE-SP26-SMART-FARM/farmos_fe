@@ -248,9 +248,7 @@ export default function AssignBulkManagerPanel({
           )}
 
           <p className="text-xs text-muted-foreground">
-            Quản lý được phân công hàng loạt sẽ ở vai trò thành viên thường
-            (không phải quản lý chính). Các quản lý đã được gán trước đó sẽ tự
-            động được bỏ qua.
+            Các quản lý đã được gán trước đó sẽ tự động được bỏ qua.
           </p>
 
           {/* Actions */}

@@ -1200,12 +1200,9 @@ function BatchCreateForm({
         farmId,
         body: {
           devices: data.devices.map((d) => ({
+            ...d,
             deviceName: d.deviceName.trim(),
-            deviceType: d.deviceType,
-            ...(d.deviceType === "wifi_module" && d.macAddress
-              ? { macAddress: d.macAddress.toUpperCase() }
-              : {}),
-            status: d.status,
+            macAddress: d.macAddress ? d.macAddress.toUpperCase() : d.macAddress,
           })),
         },
       });

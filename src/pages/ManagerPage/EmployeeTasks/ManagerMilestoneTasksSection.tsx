@@ -55,7 +55,7 @@ import {
   ChevronRight,
   CheckCircle2,
 } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { useMemo, useState, type FormEvent } from "react";
 import {
   useManagerListEmployeeTasks,
@@ -122,7 +122,7 @@ const CHILDREN_CONTAINER_MOTION = {
   },
 };
 
-const CHILD_ITEM_MOTION = {
+const CHILD_ITEM_MOTION: Variants = {
   hidden: { opacity: 0, y: 8 },
   visible: {
     opacity: 1,
@@ -140,13 +140,13 @@ const CHILD_TOGGLE_MOTION = {
     opacity: 1,
     y: 0,
     height: "auto",
-    transition: { duration: 0.2, ease: "easeOut" },
+    transition: { duration: 0.2, ease: "easeOut" as const },
   },
   exit: {
     opacity: 0,
     y: -4,
     height: 0,
-    transition: { duration: 0.16, ease: "easeInOut" },
+    transition: { duration: 0.16, ease: "easeInOut" as const },
   },
 };
 

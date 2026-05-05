@@ -74,23 +74,6 @@ function shortId(id: string | null | undefined) {
   return `${id.slice(0, 8)}…`;
 }
 
-function CopyableId({ value }: { value: string | null | undefined }) {
-  if (!value) return <span>—</span>;
-
-  return (
-    <button
-      type="button"
-      className="font-mono text-xs text-left underline-offset-2 hover:underline"
-      title="Sao chép ID"
-      onClick={async () => {
-        await navigator.clipboard.writeText(value);
-        toast.success("Đã sao chép ID.");
-      }}
-    >
-      {shortId(value)}
-    </button>
-  );
-}
 
 export default function AdminTicketDetailPage() {
   const { id } = useParams();
