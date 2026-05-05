@@ -19,7 +19,7 @@ import EmptyState from "@/components/common/EmptyState";
 import type {
   ManagerZoneOverview,
   ZoneStatus,
-} from "../_mocks/managerDashboard.mock";
+} from "@/types/dashboard";
 import { ChevronRight, Map } from "lucide-react";
 import { Link } from "react-router";
 

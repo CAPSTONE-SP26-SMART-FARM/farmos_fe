@@ -1,5 +1,5 @@
 import StatCard from "@/components/common/StatCard";
-import type { FarmGlance } from "../_mocks/ownerDashboard.mock";
+import type { OwnerFarmGlance as FarmGlance } from "@/types/dashboard";
 import { Building2, Map, Sprout, Users } from "lucide-react";
 
 interface FarmAtGlanceStripProps {

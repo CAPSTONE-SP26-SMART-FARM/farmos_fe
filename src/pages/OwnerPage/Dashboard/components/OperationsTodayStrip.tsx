@@ -1,5 +1,5 @@
 import StatCard from "@/components/common/StatCard";
-import type { OperationsToday } from "../_mocks/ownerDashboard.mock";
+import type { OwnerOperationsToday as OperationsToday } from "@/types/dashboard";
 import { ClipboardList, Milestone, NotebookPen, Percent } from "lucide-react";
 
 interface OperationsTodayStripProps {

@@ -6,7 +6,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatCurrencyVnd } from "@/lib/format";
-import type { DailyPoint } from "../_mocks/ownerDashboard.mock";
+import type { DailyPoint } from "@/types/dashboard";
 import { format, parse } from "date-fns";
 import {
   Area,

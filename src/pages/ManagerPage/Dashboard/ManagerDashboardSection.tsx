@@ -1,13 +1,9 @@
 import DailyLogActivityFeed from "@/components/common/DailyLogActivityFeed";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  mockCrewPresence,
-  mockManagerHealth,
-  mockManagerRecentLogs,
-  mockOperationsToday,
-  mockZonesGlance,
-  mockZonesOverview,
-} from "./_mocks/managerDashboard.mock";
+import { useManagerDashboard } from "@/queries/useDashboard";
+import type { DashboardPeriod } from "@/types/dashboard";
+import { useState } from "react";
 import CrewPresenceCard from "./components/CrewPresenceCard";
 import HealthAlertsCard from "./components/HealthAlertsCard";
 import OperationsTodayStrip from "./components/OperationsTodayStrip";
@@ -15,11 +11,14 @@ import ZonesAtGlanceStrip from "./components/ZonesAtGlanceStrip";
 import ZonesOverviewCard from "./components/ZonesOverviewCard";
 
 function ManagerDashboardSection() {
+  const [period, setPeriod] = useState<DashboardPeriod>("30d");
+  const query = useManagerDashboard(period);
+  const data = query.data?.data;
+
   return (
     <div className="space-y-6">
-      {/* Period filter — UI only on mock */}
       <div className="flex justify-end">
-        <Tabs defaultValue="30d">
+        <Tabs value={period} onValueChange={(v) => setPeriod(v as DashboardPeriod)}>
           <TabsList>
             <TabsTrigger value="7d">7 ngày</TabsTrigger>
             <TabsTrigger value="30d">30 ngày</TabsTrigger>
@@ -28,34 +27,42 @@ function ManagerDashboardSection() {
         </Tabs>
       </div>
 
-      {/* Section 1 — Zones at a glance */}
-      <ZonesAtGlanceStrip data={mockZonesGlance} />
+      {query.isLoading && (
+        <div className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 rounded-xl" />
+            ))}
+          </div>
+          <div className="grid gap-4 lg:grid-cols-3">
+            <Skeleton className="h-64 rounded-xl lg:col-span-2" />
+            <Skeleton className="h-64 rounded-xl" />
+          </div>
+        </div>
+      )}
 
-      {/* Section 2 — Operations today */}
-      <OperationsTodayStrip data={mockOperationsToday} />
+      {data && (
+        <>
+          <ZonesAtGlanceStrip data={data.zonesGlance} />
 
-      {/* Section 3 — Health alerts (wide) + Crew presence */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <HealthAlertsCard
-          data={mockManagerHealth}
-          className="lg:col-span-2"
-        />
-        <CrewPresenceCard zones={mockCrewPresence} />
-      </div>
+          <OperationsTodayStrip data={data.operationsToday} />
 
-      {/* Section 4 — Zones overview (wide) + Activity feed */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <ZonesOverviewCard
-          zones={mockZonesOverview}
-          className="lg:col-span-2"
-        />
-        <DailyLogActivityFeed
-          title="Hoạt động gần đây"
-          description="Nhật ký mới nhất từ các khu vực bạn quản lý."
-          logs={mockManagerRecentLogs}
-          maxItems={5}
-        />
-      </div>
+          <div className="grid gap-4 lg:grid-cols-3">
+            <HealthAlertsCard data={data.health} className="lg:col-span-2" />
+            <CrewPresenceCard zones={data.crewPresence} />
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-3">
+            <ZonesOverviewCard zones={data.zonesOverview} className="lg:col-span-2" />
+            <DailyLogActivityFeed
+              title="Hoạt động gần đây"
+              description="Nhật ký mới nhất từ các khu vực bạn quản lý."
+              logs={data.recentLogs}
+              maxItems={5}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 }

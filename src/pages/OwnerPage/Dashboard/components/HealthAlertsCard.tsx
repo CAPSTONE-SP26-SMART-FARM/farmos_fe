@@ -8,10 +8,10 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type {
-  HealthItem,
+  OwnerHealthItem as HealthItem,
   HealthSeverity,
-  HealthSummary,
-} from "../_mocks/ownerDashboard.mock";
+  OwnerHealthSummary as HealthSummary,
+} from "@/types/dashboard";
 import {
   AlertOctagon,
   AlertTriangle,

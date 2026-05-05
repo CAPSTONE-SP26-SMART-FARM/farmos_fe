@@ -11,7 +11,7 @@ import EmptyState from "@/components/common/EmptyState";
 import type {
   ActivityType,
   AdminActivityItem,
-} from "../_mocks/adminDashboard.mock";
+} from "@/types/dashboard";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
 import {

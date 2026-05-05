@@ -555,6 +555,11 @@ export const API_ENDPOINTS = {
     REQUEST_DIFF: (cropSeasonId: string) =>
       `/crop-seasons/${cropSeasonId}/production-requests/diff`,
   },
+  DASHBOARD: {
+    ADMIN: "/dashboard/admin",
+    OWNER: "/dashboard/owner",
+    MANAGER: "/dashboard/manager",
+  },
 } as const;
 
 //query keys
@@ -1351,5 +1356,10 @@ export const QUERY_KEYS = {
       ["tracking", cropSeasonId, "field-history", query] as const,
     requestSnapshot: (cropSeasonId: string, requestId: string) =>
       ["tracking", cropSeasonId, "snapshot", requestId] as const,
+  },
+  dashboard: {
+    admin: (period: string) => ["dashboard", "admin", period] as const,
+    owner: (period: string) => ["dashboard", "owner", period] as const,
+    manager: (period: string) => ["dashboard", "manager", period] as const,
   },
 } as const;

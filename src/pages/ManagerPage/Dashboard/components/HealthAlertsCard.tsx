@@ -11,7 +11,7 @@ import type {
   HealthSeverity,
   ManagerHealthItem,
   ManagerHealthSummary,
-} from "../_mocks/managerDashboard.mock";
+} from "@/types/dashboard";
 import {
   AlertOctagon,
   AlertTriangle,
