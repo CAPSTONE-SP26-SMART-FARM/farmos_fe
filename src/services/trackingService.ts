@@ -30,10 +30,20 @@ export const trackingService = {
       body,
     ),
 
-  getTrackingLog: (cropSeasonId: string, query: TrackingLogQueryType) =>
-    api.get<TrackingLogListResType>(
-      `${T.TRACKING_LOG(cropSeasonId)}?${queryString.stringify(query, { skipEmptyString: true, skipNull: true })}`,
-    ),
+  getTrackingLog: (cropSeasonId: string, query: TrackingLogQueryType) => {
+    // BE yêu cầu `from`/`to` là ISO datetime (`z.string().datetime()`),
+    // strict mode → 422 nếu gửi `YYYY-MM-DD`. UI dùng <Input type="date">
+    // → convert: `from` = đầu ngày UTC, `to` = cuối ngày UTC (inclusive).
+    const isYmd = (v?: string) => !!v && /^\d{4}-\d{2}-\d{2}$/.test(v);
+    const normalized = {
+      ...query,
+      from: isYmd(query.from) ? `${query.from}T00:00:00.000Z` : query.from,
+      to: isYmd(query.to) ? `${query.to}T23:59:59.999Z` : query.to,
+    };
+    return api.get<TrackingLogListResType>(
+      `${T.TRACKING_LOG(cropSeasonId)}?${queryString.stringify(normalized, { skipEmptyString: true, skipNull: true })}`,
+    );
+  },
 
   getDiff: (cropSeasonId: string) =>
     api.get<TrackingDiffResType>(T.DIFF(cropSeasonId)),

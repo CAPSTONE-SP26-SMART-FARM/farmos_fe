@@ -48,10 +48,12 @@ export default function IotQuotaWidget({
           <Skeleton className="h-4 w-64" />
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {[0, 1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-24 w-full" />
-            ))}
+          <div className="@container">
+            <div className="grid gap-4 grid-cols-1 @sm:grid-cols-2 @3xl:grid-cols-4">
+              {[0, 1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-24 w-full" />
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -154,45 +156,53 @@ export default function IotQuotaWidget({
 
   return (
     <Card className={className}>
-      <CardHeader>
-        <CardTitle>Hạn mức thiết bị IoT</CardTitle>
-        <CardDescription>
-          Đồng pha hạn với gói đăng ký
-          {quota.expiresAt
-            ? ` · hết hạn ${formatDateVi(quota.expiresAt)}`
-            : ""}
+      <CardHeader className="space-y-1.5">
+        <CardTitle className="text-base leading-tight">
+          Hạn mức thiết bị IoT
+        </CardTitle>
+        <CardDescription className="text-xs leading-relaxed">
+          <span className="block">Đồng pha hạn với gói đăng ký</span>
+          {quota.expiresAt && (
+            <span className="block text-muted-foreground/80">
+              Hết hạn {formatDateVi(quota.expiresAt)}
+            </span>
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <KpiCard
-            icon={Package}
-            label="Hạn mức gói"
-            value={quota.subscriptionMax}
-          />
-          <KpiCard
-            icon={PackagePlus}
-            label="Bộ kit cộng thêm"
-            value={quota.kitBonus}
-            tone="success"
-            hint={
-              quota.kitBonus > 0
-                ? `+${quota.kitBonus} từ kit đã mua`
-                : undefined
-            }
-          />
-          <KpiCard
-            icon={Cpu}
-            label="Đang sử dụng"
-            value={quota.used}
-            tone={usageRatio >= 0.8 ? "warning" : "default"}
-          />
-          <KpiCard
-            icon={Zap}
-            label="Còn lại"
-            value={quota.remaining}
-            tone={quota.remaining <= 0 ? "danger" : "success"}
-          />
+        {/* Container query — KpiCard responsive theo width của Card chứ không */}
+        {/* phải viewport. Quan trọng khi widget nằm trong sidebar hẹp.        */}
+        <div className="@container">
+          <div className="grid gap-3 grid-cols-1 @sm:grid-cols-2 @3xl:grid-cols-4">
+            <KpiCard
+              icon={Package}
+              label="Hạn mức gói"
+              value={quota.subscriptionMax}
+            />
+            <KpiCard
+              icon={PackagePlus}
+              label="Kit cộng thêm"
+              value={quota.kitBonus}
+              tone="success"
+              hint={
+                quota.kitBonus > 0
+                  ? `+${quota.kitBonus} từ kit đã mua`
+                  : undefined
+              }
+            />
+            <KpiCard
+              icon={Cpu}
+              label="Đang dùng"
+              value={quota.used}
+              tone={usageRatio >= 0.8 ? "warning" : "default"}
+            />
+            <KpiCard
+              icon={Zap}
+              label="Còn lại"
+              value={quota.remaining}
+              tone={quota.remaining <= 0 ? "danger" : "success"}
+            />
+          </div>
         </div>
       </CardContent>
     </Card>

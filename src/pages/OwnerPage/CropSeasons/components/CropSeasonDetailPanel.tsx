@@ -25,6 +25,7 @@ import {
   SlidersHorizontal,
   Sprout,
   ArrowLeft,
+  Wheat,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
@@ -33,6 +34,7 @@ import { SEASON_STATUS_MAP } from "./productionRequestHelpers";
 import { OwnerMilestonesSection } from "./OwnerMilestonesSection";
 import { OwnerRequestsSection } from "./OwnerRequestsSection";
 import { OwnerTrackingLogTab } from "./OwnerTrackingLogTab";
+import HarvestRecordTab from "@/components/common/HarvestRecord/HarvestRecordTab";
 
 interface Props {
   cropSeasonId: string;
@@ -254,6 +256,10 @@ export default function CropSeasonDetailPanel({
                 <SlidersHorizontal className="h-3.5 w-3.5" />
                 Nhật ký thay đổi
               </TabsTrigger>
+              <TabsTrigger value="harvest" className="flex items-center gap-1.5">
+                <Wheat className="h-3.5 w-3.5" />
+                Thu hoạch
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="milestones" className="mt-4">
               <OwnerMilestonesSection
@@ -269,6 +275,9 @@ export default function CropSeasonDetailPanel({
             </TabsContent>
             <TabsContent value="tracking" className="mt-4">
               <OwnerTrackingLogTab cropSeasonId={cropSeasonId} />
+            </TabsContent>
+            <TabsContent value="harvest" className="mt-4">
+              {season && <HarvestRecordTab cropSeason={season} />}
             </TabsContent>
           </Tabs>
         </>

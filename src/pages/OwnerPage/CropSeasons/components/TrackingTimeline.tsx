@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import TableSkeleton from "@/components/common/TableSkeleton";
+import DatePickerField from "@/components/common/DatePickerField";
 import { useTrackingLog } from "@/queries/useTracking";
 import {
   getEntityTypeLabel,
@@ -80,16 +81,14 @@ export default function TrackingTimeline({
     setPage(1);
   };
 
-  if (loading && items.length === 0) return <TableSkeleton />;
-
   return (
     <div className="space-y-4">
       {/* Filter bar */}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
         <Select
-          value={entityType}
+          value={entityType || "all"}
           onValueChange={(v) => {
-            setEntityType(v as TrackingEntityType | "");
+            setEntityType(v === "all" ? "" : (v as TrackingEntityType));
             handleFilterChange();
           }}
         >
@@ -97,7 +96,7 @@ export default function TrackingTimeline({
             <SelectValue placeholder="Loại thực thể" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Tất cả loại</SelectItem>
+            <SelectItem value="all">Tất cả loại</SelectItem>
             {ENTITY_TYPE_OPTIONS.map((t) => (
               <SelectItem
                 key={t}
@@ -119,26 +118,24 @@ export default function TrackingTimeline({
           }}
         />
 
-        <Input
-          type="date"
-          className="h-8 text-sm"
-          placeholder="Từ ngày"
+        <DatePickerField
           value={from}
-          onChange={(e) => {
-            setFrom(e.target.value);
+          onChange={(v) => {
+            setFrom(v);
             handleFilterChange();
           }}
+          placeholder="Từ ngày"
+          maxDate={to ? new Date(to) : undefined}
         />
 
-        <Input
-          type="date"
-          className="h-8 text-sm"
-          placeholder="Đến ngày"
+        <DatePickerField
           value={to}
-          onChange={(e) => {
-            setTo(e.target.value);
+          onChange={(v) => {
+            setTo(v);
             handleFilterChange();
           }}
+          placeholder="Đến ngày"
+          minDate={from ? new Date(from) : undefined}
         />
       </div>
 
@@ -159,9 +156,13 @@ export default function TrackingTimeline({
         </Button>
       )}
 
-      {items.length === 0 ? (
+      {loading ? (
+        <TableSkeleton />
+      ) : items.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-8">
-          Chưa có lịch sử thay đổi.
+          {hasFilter
+            ? "Không có thay đổi khớp bộ lọc."
+            : "Chưa có lịch sử thay đổi."}
         </p>
       ) : (
         <div className="space-y-3">

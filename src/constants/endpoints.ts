@@ -577,6 +577,13 @@ export const API_ENDPOINTS = {
     OWNER: "/dashboard/owner",
     MANAGER: "/dashboard/manager",
   },
+  HARVEST_RECORDS: {
+    LIST_BY_ZONE: (zoneId: string) => `/harvest-records/zone/${zoneId}`,
+    CREATE: (zoneId: string) => `/harvest-records/zone/${zoneId}`,
+    DETAIL: (id: string) => `/harvest-records/${id}`,
+    UPDATE: (id: string) => `/harvest-records/${id}`,
+    DELETE: (id: string) => `/harvest-records/${id}`,
+  },
 } as const;
 
 //query keys
@@ -1403,5 +1410,17 @@ export const QUERY_KEYS = {
     admin: (period: string) => ["dashboard", "admin", period] as const,
     owner: (period: string) => ["dashboard", "owner", period] as const,
     manager: (period: string) => ["dashboard", "manager", period] as const,
+  },
+  harvestRecords: {
+    root: ["harvest-records"] as const,
+    listByZone: (zoneId: string, query?: Record<string, unknown>) =>
+      [
+        "harvest-records",
+        "zone",
+        zoneId,
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+    detail: (id: string) => ["harvest-records", id] as const,
   },
 } as const;

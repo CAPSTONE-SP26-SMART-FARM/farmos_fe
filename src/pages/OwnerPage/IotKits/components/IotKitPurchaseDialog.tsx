@@ -9,10 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { useOwnerPurchaseIotKit } from "@/queries/useIotKit";
-import {
-  handleApiErrorUnprocessentity,
-  onMutationError,
-} from "@/lib/axios";
+import { handleApiErrorUnprocessentity, onMutationError } from "@/lib/axios";
 import { isApiErrorUnprocessableEntityResponse } from "@/lib/utils";
 import { formatCurrencyVnd } from "@/lib/format";
 import type {
@@ -40,7 +37,10 @@ export default function IotKitPurchaseDialog({
   const handleConfirm = async () => {
     const body: PurchaseIotKitBodyType = { quantity: 1 };
     try {
-      const res = await purchaseMutation.mutateAsync({ id: kit.id, data: body });
+      const res = await purchaseMutation.mutateAsync({
+        id: kit.id,
+        data: body,
+      });
       const { paymentUrl, orderId } = res.data;
       onOpenChange(false);
       toast.success("Đã tạo đơn mua bộ Kit IoT.");
@@ -48,7 +48,7 @@ export default function IotKitPurchaseDialog({
         const opened = window.open(paymentUrl, "_blank", "noopener,noreferrer");
         if (!opened) {
           toast.warning(
-            "Trình duyệt chặn cửa sổ bật lên. Vui lòng dùng nút 'Mở lại cổng PayOS' ở trang theo dõi đơn.",
+            "Trình duyệt chặn cửa sổ bật lên. Vui lòng dùng nút 'Thanh toán' ở trang theo dõi đơn.",
           );
         }
       }
@@ -64,7 +64,10 @@ export default function IotKitPurchaseDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Mua bộ Kit IoT</DialogTitle>

@@ -30,7 +30,7 @@ import { SensorOverviewTab } from "./components/SensorOverviewTab";
 import { IncidentTab } from "./components/IncidentTab";
 import { DailyTasksTab } from "./components/DailyTasksTab";
 import { TrackingLogTab } from "./components/TrackingOperationalView";
-import { HarvestRecordTab } from "./components/HarvestRecordTab";
+import HarvestRecordTab from "@/components/common/HarvestRecord/HarvestRecordTab";
 import { HistoryView } from "./components/HistoryView";
 import { ZoneLanding } from "./components/ZoneLanding";
 import { ZoneSwitcherCombobox } from "./components/ZoneSwitcherCombobox";

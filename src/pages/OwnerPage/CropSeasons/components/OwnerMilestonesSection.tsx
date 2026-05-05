@@ -26,7 +26,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useOwnerListProductionMilestones } from "@/queries/useProductionMilestone";
 import { AlertTriangle, ChevronDown, ChevronRight, Milestone } from "lucide-react";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useNavigate } from "react-router";
 import { format } from "date-fns";
 import OwnerMilestoneTasksSection from "@/pages/OwnerPage/EmployeeTasks/OwnerMilestoneTasksSection";
@@ -140,9 +140,8 @@ export function OwnerMilestonesSection({ cropSeasonId, canReportMilestoneInciden
                       };
                       const isExpanded = expandedId === milestone.id;
                       return (
-                        <>
+                        <Fragment key={milestone.id}>
                           <TableRow
-                            key={milestone.id}
                             className="cursor-pointer hover:bg-muted/50"
                             onClick={() => setExpandedId(isExpanded ? null : milestone.id)}
                           >
@@ -188,7 +187,7 @@ export function OwnerMilestonesSection({ cropSeasonId, canReportMilestoneInciden
                             </TableCell>
                           </TableRow>
                           {isExpanded && (
-                            <TableRow key={`${milestone.id}-detail`}>
+                            <TableRow>
                               <TableCell colSpan={7} className="p-0 border-t">
                                 <div className="px-4 py-3 bg-muted/20">
                                   <Tabs defaultValue="iot" className="space-y-3">
@@ -207,7 +206,7 @@ export function OwnerMilestonesSection({ cropSeasonId, canReportMilestoneInciden
                               </TableCell>
                             </TableRow>
                           )}
-                        </>
+                        </Fragment>
                       );
                     })}
                 </TableBody>
