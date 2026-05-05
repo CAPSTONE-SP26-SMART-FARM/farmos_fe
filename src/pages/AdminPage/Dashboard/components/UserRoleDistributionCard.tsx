@@ -5,7 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { UserRoleShare } from "../_mocks/adminDashboard.mock";
+import type { UserRoleShare } from "@/types/dashboard";
 import {
   Bar,
   BarChart,

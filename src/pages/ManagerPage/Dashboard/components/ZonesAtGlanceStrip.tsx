@@ -1,5 +1,5 @@
 import StatCard from "@/components/common/StatCard";
-import type { ManagerZonesGlance } from "../_mocks/managerDashboard.mock";
+import type { ManagerZonesGlance } from "@/types/dashboard";
 import { Map, Ruler, Sprout, Users } from "lucide-react";
 
 interface ZonesAtGlanceStripProps {

@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import type {
   ActionQueueItem,
   ActionQueueItemType,
-} from "../_mocks/adminDashboard.mock";
+} from "@/types/dashboard";
 import {
   AlertOctagon,
   ChevronRight,

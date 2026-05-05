@@ -5,7 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { RoleShare } from "../_mocks/ownerDashboard.mock";
+import type { OwnerRoleShare as RoleShare } from "@/types/dashboard";
 import {
   Bar,
   BarChart,

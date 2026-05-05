@@ -5,7 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { DailyPoint } from "../_mocks/adminDashboard.mock";
+import type { DailyPoint } from "@/types/dashboard";
 import { format, parse } from "date-fns";
 import {
   Bar,

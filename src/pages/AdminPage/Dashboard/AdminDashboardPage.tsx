@@ -1,15 +1,9 @@
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  mockActionQueue,
-  mockActivityFeed,
-  mockIotFleet,
-  mockKpis,
-  mockNewUsersTrend,
-  mockRevenueTrend,
-  mockSubscriptionDistribution,
-  mockUserRoleDistribution,
-} from "./_mocks/adminDashboard.mock";
+import { useAdminDashboard } from "@/queries/useDashboard";
+import type { DashboardPeriod } from "@/types/dashboard";
+import { useState } from "react";
 import ActionQueueCard from "./components/ActionQueueCard";
 import AdminActivityFeed from "./components/AdminActivityFeed";
 import IotFleetStatusCard from "./components/IotFleetStatusCard";
@@ -20,6 +14,10 @@ import SubscriptionDistributionCard from "./components/SubscriptionDistributionC
 import UserRoleDistributionCard from "./components/UserRoleDistributionCard";
 
 function AdminDashboardPage() {
+  const [period, setPeriod] = useState<DashboardPeriod>("30d");
+  const query = useAdminDashboard(period);
+  const data = query.data?.data;
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
@@ -30,8 +28,7 @@ function AdminDashboardPage() {
             Theo dõi sức khoẻ nền tảng, doanh thu và việc cần xử lý của admin.
           </p>
         </div>
-        {/* Period filter — UI only on mock data */}
-        <Tabs defaultValue="30d">
+        <Tabs value={period} onValueChange={(v) => setPeriod(v as DashboardPeriod)}>
           <TabsList>
             <TabsTrigger value="7d">7 ngày</TabsTrigger>
             <TabsTrigger value="30d">30 ngày</TabsTrigger>
@@ -40,34 +37,45 @@ function AdminDashboardPage() {
         </Tabs>
       </div>
 
-      {/* Section 1 — KPI strip */}
-      <KpiStrip data={mockKpis} />
+      {query.isLoading && (
+        <div className="space-y-6">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 rounded-xl" />
+            ))}
+          </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Skeleton className="h-64 rounded-xl" />
+            <Skeleton className="h-64 rounded-xl" />
+          </div>
+        </div>
+      )}
 
-      {/* Section 2 — Action queue + Activity feed */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <ActionQueueCard
-          pendingDoctorApps={mockActionQueue.pendingDoctorApps}
-          overdueInvoices={mockActionQueue.overdueInvoices}
-          criticalTickets={mockActionQueue.criticalTickets}
-        />
-        <AdminActivityFeed
-          items={mockActivityFeed}
-          maxItems={8}
-        />
-      </div>
+      {data && (
+        <>
+          <KpiStrip data={data.kpis} />
 
-      {/* Section 3 — Trends */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <RevenueTrendChart data={mockRevenueTrend} />
-        <NewUsersChart data={mockNewUsersTrend} />
-      </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <ActionQueueCard
+              pendingDoctorApps={data.actionQueue.pendingDoctorApps}
+              overdueInvoices={data.actionQueue.overdueInvoices}
+              criticalTickets={data.actionQueue.criticalTickets}
+            />
+            <AdminActivityFeed items={data.activityFeed} maxItems={8} />
+          </div>
 
-      {/* Section 4 — Distribution snapshots */}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <SubscriptionDistributionCard data={mockSubscriptionDistribution} />
-        <UserRoleDistributionCard data={mockUserRoleDistribution} />
-        <IotFleetStatusCard data={mockIotFleet} />
-      </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <RevenueTrendChart data={data.revenueTrend} />
+            <NewUsersChart data={data.newUsersTrend} />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <SubscriptionDistributionCard data={data.subscriptionDistribution} />
+            <UserRoleDistributionCard data={data.userRoleDistribution} />
+            <IotFleetStatusCard data={data.iotFleet} />
+          </div>
+        </>
+      )}
     </div>
   );
 }

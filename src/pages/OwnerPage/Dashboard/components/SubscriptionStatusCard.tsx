@@ -11,10 +11,10 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { formatCurrencyVnd, formatDateVi } from "@/lib/format";
 import type {
-  CreditBalanceMock,
-  LatestInvoiceMock,
-  SubscriptionStatusMock,
-} from "../_mocks/ownerDashboard.mock";
+  OwnerCreditBalance as CreditBalanceMock,
+  OwnerLatestInvoice as LatestInvoiceMock,
+  OwnerSubscriptionStatus as SubscriptionStatusMock,
+} from "@/types/dashboard";
 import {
   CheckCircle2,
   CreditCard,
@@ -68,7 +68,7 @@ const INVOICE_STATUS_META: Record<
 interface SubscriptionStatusCardProps {
   subscription: SubscriptionStatusMock;
   credits: CreditBalanceMock;
-  latestInvoice: LatestInvoiceMock;
+  latestInvoice: LatestInvoiceMock | null;
   className?: string;
 }
 
@@ -80,7 +80,6 @@ function SubscriptionStatusCard({
 }: SubscriptionStatusCardProps) {
   const subMeta = STATUS_META[subscription.status];
   const SubIcon = subMeta.icon;
-  const invMeta = INVOICE_STATUS_META[latestInvoice.status];
 
   const daysWarn =
     subscription.daysRemaining <= 7 && subscription.status !== "expired";
@@ -103,7 +102,7 @@ function SubscriptionStatusCard({
               <p className="text-2xl font-semibold">{subscription.planName}</p>
               <p className="text-xs text-muted-foreground">
                 {formatCurrencyVnd(subscription.monthlyPriceVnd)} / tháng ·
-                Hết hạn {formatDateVi(subscription.currentPeriodEnd)}
+                {subscription.currentPeriodEnd ? `Hết hạn ${formatDateVi(subscription.currentPeriodEnd)}` : "Chưa có ngày hết hạn"}
               </p>
             </div>
             <Badge
@@ -164,23 +163,27 @@ function SubscriptionStatusCard({
             <ReceiptText className="h-3.5 w-3.5" />
             Hoá đơn gần nhất
           </div>
-          <div className="flex items-center justify-between gap-2">
-            <div className="space-y-0.5">
-              <p className="text-sm font-medium">
-                #{latestInvoice.invoiceCode} ·{" "}
-                {formatCurrencyVnd(latestInvoice.amountVnd)}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Phát hành {formatDateVi(latestInvoice.issuedAt)}
-              </p>
+          {latestInvoice ? (
+            <div className="flex items-center justify-between gap-2">
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium">
+                  #{latestInvoice.invoiceCode} ·{" "}
+                  {formatCurrencyVnd(latestInvoice.amountVnd)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Phát hành {formatDateVi(latestInvoice.issuedAt)}
+                </p>
+              </div>
+              <Badge
+                variant="outline"
+                className={cn(INVOICE_STATUS_META[latestInvoice.status].tone)}
+              >
+                {INVOICE_STATUS_META[latestInvoice.status].label}
+              </Badge>
             </div>
-            <Badge
-              variant="outline"
-              className={cn(invMeta.tone)}
-            >
-              {invMeta.label}
-            </Badge>
-          </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Chưa có hoá đơn.</p>
+          )}
         </div>
 
         <div className="pt-1">

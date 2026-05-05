@@ -1,6 +1,6 @@
 import StatCard from "@/components/common/StatCard";
 import { formatCurrencyVnd } from "@/lib/format";
-import type { AdminKpiSummary } from "../_mocks/adminDashboard.mock";
+import type { AdminKpiSummary } from "@/types/dashboard";
 import {
   AlertOctagon,
   Building2,
