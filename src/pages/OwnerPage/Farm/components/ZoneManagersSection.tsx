@@ -40,7 +40,6 @@ import { toast } from "sonner";
 interface Props {
   zoneId: string;
   onAssignSingle: () => void;
-  onAssignBulk: () => void;
 }
 
 const USER_STATUS_LABELS: Record<string, string> = {
@@ -51,7 +50,6 @@ const USER_STATUS_LABELS: Record<string, string> = {
 export default function ZoneManagersSection({
   zoneId,
   onAssignSingle,
-  onAssignBulk,
 }: Props) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -123,14 +121,6 @@ export default function ZoneManagersSection({
               }}
             />
           </div>
-          <Button
-            variant="outline"
-            onClick={onAssignBulk}
-            className="gap-1.5"
-          >
-            <Users className="h-4 w-4" />
-            Phân công hàng loạt
-          </Button>
           <Button
             onClick={onAssignSingle}
             className="gap-1.5"

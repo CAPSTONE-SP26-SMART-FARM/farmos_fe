@@ -8,10 +8,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useLocation } from "react-router";
-import FarmManagement from "./FarmManagement/FarmManagement";
 import OwnerCropSeasonsPage from "./CropSeasons/OwnerCropSeasonsPage";
 import OwnerFarmMemberPage from "./FarmMember/OwnerFarmMemberPage";
-import OwnerZonePage from "./ZoneManagement/OwnerZonePage";
 import OwnerDashboardSection from "./Dashboard/OwnerDashboardSection";
 
 type OwnerView = {
@@ -41,29 +39,8 @@ const ownerViews: Record<string, OwnerView> = {
       "Trạng thái thanh toán",
     ],
   },
-  farms: {
-    title: "Quản lý trang trại",
-    description:
-      "Quản lý thông tin nông trại: diện tích, vị trí, thông số vận hành.",
-    highlights: [
-      "Tổng số trang trại",
-      "Trang trại hoạt động",
-      "Độ phủ cảm biến",
-      "Cập nhật gần nhất",
-    ],
-  },
-  zones: {
-    title: "Quản lý khu vực",
-    description: "Tạo và quản lý khu vực trong từng trang trại.",
-    highlights: [
-      "Tổng số khu vực",
-      "Khu vực chưa phân công",
-      "Mùa vụ đang hoạt động",
-      "Cảnh báo cảm biến",
-    ],
-  },
   managers: {
-    title: "Quản lý quản lý viên",
+    title: "Quản lý nhân viên",
     description: "Quản lý tài khoản quản lý viên và phân quyền theo vùng.",
     highlights: [
       "Tổng số quản lý viên",
@@ -120,14 +97,6 @@ function OwnerPage() {
   const section = getOwnerSection(pathname);
 
   // Render dedicated components for implemented sections
-  if (section === "farms") {
-    return <FarmManagement />;
-  }
-
-  if (section === "zones") {
-    return <OwnerZonePage />;
-  }
-
   if (section === "crop-seasons") {
     return <OwnerCropSeasonsPage />;
   }
@@ -179,8 +148,8 @@ function OwnerPage() {
             <CardHeader>
               <CardTitle>Khu vực làm việc</CardTitle>
               <CardDescription>
-                Màn hình `{section}` đã sẵn route và khung bố cục để nối dữ
-                liệu thật.
+                Màn hình `{section}` đã sẵn route và khung bố cục để nối dữ liệu
+                thật.
               </CardDescription>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">

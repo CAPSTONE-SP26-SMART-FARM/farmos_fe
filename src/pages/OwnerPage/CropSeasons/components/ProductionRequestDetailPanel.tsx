@@ -42,11 +42,20 @@ import {
 interface Props {
   requestId: string;
   onBack: () => void;
+  /**
+   * When true, render in a compact inline mode:
+   * - skips the page-level fade animation,
+   * - uses a smaller back link ("Đóng") instead of "Chi tiết mùa vụ",
+   * - omits the page-style outer Badge so the panel fits inside another card.
+   * Used by OwnerRequestsHistoryTab to embed this panel as a right-side detail.
+   */
+  compact?: boolean;
 }
 
 export default function ProductionRequestDetailPanel({
   requestId,
   onBack,
+  compact = false,
 }: Props) {
   const [show, setShow] = useState(false);
   const [confirmAction, setConfirmAction] = useState<
@@ -72,6 +81,10 @@ export default function ProductionRequestDetailPanel({
   }, []);
 
   const handleBack = () => {
+    if (compact) {
+      onBack();
+      return;
+    }
     setShow(false);
     setTimeout(onBack, 300);
   };
@@ -146,9 +159,13 @@ export default function ProductionRequestDetailPanel({
 
   return (
     <div
-      className={`space-y-6 transition-all duration-300 ease-out ${
-        show ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-      }`}
+      className={
+        compact
+          ? "space-y-6"
+          : `space-y-6 transition-all duration-300 ease-out ${
+              show ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+            }`
+      }
     >
       <ConfirmDialog
         open={confirmAction !== null}
@@ -183,12 +200,16 @@ export default function ProductionRequestDetailPanel({
           className="mb-3 -ml-2 gap-1 text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Chi tiết mùa vụ
+          {compact ? "Đóng" : "Chi tiết mùa vụ"}
         </Button>
         <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
           <div>
-            <Badge className="mb-2">Yêu cầu phê duyệt</Badge>
-            <h1 className="text-2xl font-bold">
+            {!compact && <Badge className="mb-2">Yêu cầu phê duyệt</Badge>}
+            <h1
+              className={
+                compact ? "text-lg font-semibold" : "text-2xl font-bold"
+              }
+            >
               {req ? (
                 <>
                   Chi tiết yêu cầu

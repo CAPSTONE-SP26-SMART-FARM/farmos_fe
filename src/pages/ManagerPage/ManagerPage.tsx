@@ -319,7 +319,7 @@ function AssignedZonesSection() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Tên zone</TableHead>
+                  <TableHead>Tên khu vực</TableHead>
                   <TableHead>Loại</TableHead>
                   <TableHead>Diện tích</TableHead>
                   <TableHead>Cập nhật</TableHead>
@@ -365,7 +365,7 @@ function AssignedZonesSection() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Tên zone</TableHead>
+                    <TableHead>Tên khu vực</TableHead>
                     <TableHead>Loại</TableHead>
                     <TableHead>Diện tích</TableHead>
                     <TableHead>Cập nhật</TableHead>

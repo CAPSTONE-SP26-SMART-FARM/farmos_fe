@@ -77,6 +77,7 @@ import OwnerWalletPage from "@/pages/OwnerPage/Wallet/OwnerWalletPage";
 import OrderSuccessPage from "@/pages/OrderResult/OrderSuccessPage";
 import OrderFailPage from "@/pages/OrderResult/OrderFailPage";
 import OwnerPage from "@/pages/OwnerPage/OwnerPage";
+import OwnerFarmPage from "@/pages/OwnerPage/Farm/OwnerFarmPage";
 import RegisterPage from "@/pages/RegisterPage/RegisterPage";
 import type { AppRoutes } from "./types";
 import DashboardLayout from "@/components/layout/DashboardLayout/DashboardLayout";
@@ -335,6 +336,11 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/owner",
         component: OwnerPage,
+        allowedRoles: [RoleName.Owner],
+      },
+      {
+        path: "/dashboard/owner/farm",
+        component: OwnerFarmPage,
         allowedRoles: [RoleName.Owner],
       },
       {

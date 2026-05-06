@@ -157,11 +157,13 @@ export function useSensorDashboard(
         const readingData = readingQueries[idx]?.data as
           | GetLatestReadingsByAssignmentResType
           | undefined;
+        const zoneId = assignment.zoneId ?? "";
+        const fallbackName = zoneId
+          ? `Khu vực #${zoneId.slice(0, 8)}`
+          : "Khu vực không xác định";
         return {
-          zoneId: assignment.zoneId,
-          zoneName:
-            zoneMap.get(assignment.zoneId) ??
-            `Khu vực #${assignment.zoneId.slice(0, 8)}`,
+          zoneId,
+          zoneName: (zoneId && zoneMap.get(zoneId)) ?? fallbackName,
           milestone,
           assignment,
           readings: readingData?.data ?? [],

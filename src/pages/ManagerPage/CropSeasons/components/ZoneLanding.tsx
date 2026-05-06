@@ -10,19 +10,27 @@ export function ZoneLanding({
   zones,
   isLoading,
   onSelect,
+  badgeText = "Cổng quản lý",
+  description = "Chọn khu vực để quản lý mùa vụ và theo dõi sản xuất.",
+  emptyTitle = "Chưa được phân công khu vực",
+  emptyDescription = "Liên hệ chủ vườn để được phân công quản lý khu vực.",
+  actionLabel = "Quản lý",
 }: {
   zones: ZoneType[];
   isLoading: boolean;
   onSelect: (id: string) => void;
+  badgeText?: string;
+  description?: string;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  actionLabel?: string;
 }) {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       <div>
-        <Badge className="mb-2">Cổng quản lý</Badge>
+        <Badge className="mb-2">{badgeText}</Badge>
         <h1 className="text-2xl font-bold">Quản lý mùa vụ</h1>
-        <p className="text-sm text-muted-foreground">
-          Chọn khu vực để quản lý mùa vụ và theo dõi sản xuất.
-        </p>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
 
       {isLoading ? (
@@ -32,10 +40,8 @@ export function ZoneLanding({
       ) : zones.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center border rounded-xl bg-muted/20">
           <MapPin className="h-12 w-12 text-muted-foreground/30 mb-4" />
-          <p className="font-medium">Chưa được phân công khu vực</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Liên hệ chủ vườn để được phân công quản lý khu vực.
-          </p>
+          <p className="font-medium">{emptyTitle}</p>
+          <p className="text-sm text-muted-foreground mt-1">{emptyDescription}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -73,7 +79,7 @@ export function ZoneLanding({
                       className="gap-1.5 text-primary"
                       onClick={() => onSelect(zone.id)}
                     >
-                      Quản lý
+                      {actionLabel}
                       <SquareArrowRight className="h-3.5 w-3.5" />
                     </Button>
                   </div>
