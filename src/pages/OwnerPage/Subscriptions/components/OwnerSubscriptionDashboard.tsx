@@ -29,12 +29,13 @@ import { toast } from "sonner";
 import BillingTab from "./BillingTab";
 import CancelSubscriptionSheet from "./CancelSubscriptionSheet";
 import CreditsAddonsTab from "./CreditsAddonsTab";
+import HistoryTab from "./HistoryTab";
 import OverviewTab from "./OverviewTab";
 import SubscriptionBannerCascade from "./SubscriptionBannerCascade";
 import SubscriptionHeroCard from "./SubscriptionHeroCard";
 import UsageTab from "./UsageTab";
 
-const TAB_VALUES = ["overview", "usage", "billing", "credits"] as const;
+const TAB_VALUES = ["overview", "usage", "billing", "credits", "history"] as const;
 type TabValue = (typeof TAB_VALUES)[number];
 
 function isTabValue(value: string | null): value is TabValue {
@@ -322,6 +323,7 @@ function OwnerSubscriptionDashboard({
           <TabsTrigger value="usage">Sử dụng</TabsTrigger>
           <TabsTrigger value="billing">Thanh toán</TabsTrigger>
           <TabsTrigger value="credits">Credit &amp; Bổ trợ</TabsTrigger>
+          <TabsTrigger value="history">Lịch sử</TabsTrigger>
         </TabsList>
 
         <TabsContent
@@ -361,6 +363,13 @@ function OwnerSubscriptionDashboard({
           className="mt-4"
         >
           <CreditsAddonsTab />
+        </TabsContent>
+
+        <TabsContent
+          value="history"
+          className="mt-4"
+        >
+          <HistoryTab />
         </TabsContent>
       </Tabs>
 
