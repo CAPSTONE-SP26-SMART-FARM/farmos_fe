@@ -11,11 +11,21 @@ import { SendRequestDialog } from "./SendRequestDialog";
 export function CropSeasonSummaryCard({
   season,
   zoneId,
+  actions,
+  footer,
 }: {
   season: CropSeasonType;
-  zoneId: string;
+  zoneId?: string;
+  actions?: React.ReactNode;
+  footer?: React.ReactNode;
 }) {
   const navigate = useNavigate();
+  const showDefaultManagerActions = actions === undefined;
+  const showDefaultManagerFooter =
+    footer === undefined &&
+    (season.status === ProductionStatusName.Planning ||
+      season.status === ProductionStatusName.Rejected);
+
   return (
     <Card className="border-l-4 border-l-primary">
       <CardHeader className="pb-3">
@@ -30,8 +40,14 @@ export function CropSeasonSummaryCard({
             )}
           </div>
           <div className="flex gap-2 shrink-0 flex-wrap">
-            <UpdateCropSeasonDialog season={season} />
-            <SendRequestDialog season={season} />
+            {showDefaultManagerActions ? (
+              <>
+                <UpdateCropSeasonDialog season={season} />
+                <SendRequestDialog season={season} />
+              </>
+            ) : (
+              actions
+            )}
           </div>
         </div>
       </CardHeader>
@@ -61,8 +77,9 @@ export function CropSeasonSummaryCard({
             {season.notes}
           </div>
         )}
-        {(season.status === ProductionStatusName.Planning ||
-          season.status === ProductionStatusName.Rejected) && (
+        {footer !== undefined ? (
+          <div className="mt-4">{footer}</div>
+        ) : showDefaultManagerFooter ? (
           <div className="mt-4">
             <Button
               size="sm"
@@ -79,7 +96,7 @@ export function CropSeasonSummaryCard({
               Quản lý mốc công việc
             </Button>
           </div>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   );

@@ -236,13 +236,8 @@ export const sidebarData: SidebarData = {
       items: [
         {
           title: "Quản Lý Trang Trại",
-          url: "/dashboard/owner/farms",
+          url: "/dashboard/owner/farm",
           icon: Building2,
-        },
-        {
-          title: "Quản Lý Khu Vực",
-          url: "/dashboard/owner/zones",
-          icon: Map,
         },
         {
           title: "Vụ Mùa",
@@ -250,7 +245,7 @@ export const sidebarData: SidebarData = {
           icon: Sprout,
         },
         {
-          title: "Quản Lý Quản Lý Viên",
+          title: "Quản Lý Nhân sự",
           url: "/dashboard/owner/managers",
           icon: Users,
         },

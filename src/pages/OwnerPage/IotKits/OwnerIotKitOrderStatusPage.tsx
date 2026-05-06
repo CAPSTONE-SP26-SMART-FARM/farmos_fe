@@ -328,7 +328,7 @@ export default function OwnerIotKitOrderStatusPage() {
               ) : (
                 <>
                   <ExternalLink className="mr-2 h-4 w-4" />
-                  Mở lại cổng PayOS
+                  Thanh toán
                 </>
               )}
             </Button>
