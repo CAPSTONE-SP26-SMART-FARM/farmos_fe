@@ -6,9 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertTriangle,
   ArrowLeft,
+  BookOpen,
   History,
   Layers,
-  NotebookPen,
   Plus,
   Radio,
   Send,
@@ -28,9 +28,9 @@ import { MilestonesWithDetailTab } from "./components/MilestonesWithDetailTab";
 import { RequestsHistoryTab } from "./components/RequestsHistoryTab";
 import { SensorOverviewTab } from "./components/SensorOverviewTab";
 import { IncidentTab } from "./components/IncidentTab";
-import { DailyTasksTab } from "./components/DailyTasksTab";
 import { TrackingLogTab } from "./components/TrackingOperationalView";
 import HarvestRecordTab from "@/components/common/HarvestRecord/HarvestRecordTab";
+import { DailyLogsTab } from "./components/DailyLogsTab";
 import { HistoryView } from "./components/HistoryView";
 import { ZoneLanding } from "./components/ZoneLanding";
 import { ZoneSwitcherCombobox } from "./components/ZoneSwitcherCombobox";
@@ -306,11 +306,11 @@ export default function ManagerCropSeasonsPage() {
                         Sự cố
                       </TabsTrigger>
                       <TabsTrigger
-                        value="daily-tasks"
+                        value="daily-logs"
                         className="flex items-center gap-1.5"
                       >
-                        <NotebookPen className="h-3.5 w-3.5" />
-                        Nhật ký task
+                        <BookOpen className="h-3.5 w-3.5" />
+                        Nhiệm vụ
                       </TabsTrigger>
                       <TabsTrigger
                         value="tracking"
@@ -371,14 +371,18 @@ export default function ManagerCropSeasonsPage() {
                       </motion.div>
                     </TabsContent>
                     <TabsContent
-                      value="daily-tasks"
+                      value="daily-logs"
                       className="mt-4"
                     >
                       <motion.div
-                        key="daily-tasks"
+                        key="daily-logs"
                         {...tabMotion}
                       >
-                        <DailyTasksTab cropSeason={nowSeason} />
+                        <DailyLogsTab
+                          zoneId={zoneId}
+                          zoneName={selectedZoneName}
+                          cropSeason={nowSeason}
+                        />
                       </motion.div>
                     </TabsContent>
                     <TabsContent

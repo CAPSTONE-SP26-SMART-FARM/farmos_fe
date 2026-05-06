@@ -30,6 +30,8 @@ export const AssignmentBoundSensorResSchema = z.object({
   status: z.string(),
   bindingId: z.string().uuid(),
   assignedAt: z.string(),
+  minValue: z.number().nullable().optional(),
+  maxValue: z.number().nullable().optional(),
   threshold: z.object({
     source: z.enum(["milestone", "zone", "none"]),
     optimalMin: z.number().nullable(),

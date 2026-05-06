@@ -87,6 +87,8 @@ export const AssignFarmerToTaskBodySchema = z.object({
 export const ListEmployeeTasksQuerySchema = PagingRequestSchema.extend({
   status: TaskStatusSchema.optional(),
   priority: TaskPrioritySchema.optional(),
+  sortByDueDate: z.enum(["asc", "desc"]).optional(),
+  createdInPlan: z.boolean().optional(),
 });
 
 // ── List response ──────────────────────────────────────────────────────
@@ -123,6 +125,27 @@ export type ListEmployeeTasksResType = z.infer<
 export type EmployeeTaskBatchResType = z.infer<
   typeof EmployeeTaskBatchResSchema
 >;
+
+// ── Task with crop-season context ──────────────────────────────────────
+
+export const TaskWithContextResSchema = EmployeeTaskResSchema.extend({
+  milestoneName: z.string().nullable(),
+  milestoneOrder: z.number().nullable(),
+  farmerName: z.string().nullable(),
+  farmerPhone: z.string().nullable(),
+});
+
+export const ListTasksWithContextResSchema = PagingResponseSchema(TaskWithContextResSchema);
+
+export const ListTasksWithContextQuerySchema = PagingRequestSchema.extend({
+  status: TaskStatusSchema.optional(),
+  priority: TaskPrioritySchema.optional(),
+  milestoneId: z.string().uuid().optional(),
+});
+
+export type TaskWithContextResType = z.infer<typeof TaskWithContextResSchema>;
+export type ListTasksWithContextResType = z.infer<typeof ListTasksWithContextResSchema>;
+export type ListTasksWithContextQueryType = z.infer<typeof ListTasksWithContextQuerySchema>;
 
 // ── Eligible Farmer ────────────────────────────────────────────────────
 

@@ -97,6 +97,29 @@ const STATUS_META: Record<
   cancelled: { label: "Đã hủy", variant: "destructive" },
 };
 
+function getTaskDisplayStatus(task: EmployeeTaskResType): {
+  label: string;
+  variant: "default" | "secondary" | "outline" | "destructive";
+} {
+  if (task.status === "cancelled") return { label: "Đã hủy", variant: "destructive" };
+  if (task.status === "verified") return { label: "Đã xác minh", variant: "default" };
+  if (task.status === "completed") return { label: "Hoàn thành", variant: "outline" };
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (task.dueDate && new Date(task.dueDate) < today) {
+    return { label: "Quá hạn", variant: "destructive" };
+  }
+
+  const startDate = task.startDate ? new Date(task.startDate) : null;
+  if (startDate && startDate > today) {
+    return { label: "Lên lịch", variant: "secondary" };
+  }
+
+  return STATUS_META[task.status] ?? { label: task.status, variant: "secondary" };
+}
+
 const PRIORITY_META: Record<
   TaskPriorityType,
   { label: string; className: string; icon: typeof Flag }
@@ -626,10 +649,10 @@ function TaskDetailSheet({
             <SheetTitle className="text-base">{task.title}</SheetTitle>
             <SheetDescription>
               <Badge
-                variant={STATUS_META[task.status].variant}
+                variant={getTaskDisplayStatus(task).variant}
                 className="text-xs"
               >
-                {STATUS_META[task.status].label}
+                {getTaskDisplayStatus(task).label}
               </Badge>
               {isOverdue(task) && (
                 <Badge
@@ -957,6 +980,8 @@ export function ManagerMilestoneTaskAssignmentScreen({
   const debouncedSearch = useDebounce(search, 500);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [createdInPlanFilter, setCreatedInPlanFilter] = useState<string>("all");
+  const [sortByDueDate, setSortByDueDate] = useState<"asc" | "desc" | "none">("none");
   const [farmerSelections, setFarmerSelections] = useState<
     Record<string, string>
   >({});
@@ -973,8 +998,15 @@ export function ManagerMilestoneTaskAssignmentScreen({
         priorityFilter !== "all"
           ? (priorityFilter as TaskPriorityType)
           : undefined,
+      createdInPlan:
+        createdInPlanFilter === "planned"
+          ? true
+          : createdInPlanFilter === "adhoc"
+            ? false
+            : undefined,
+      sortByDueDate: sortByDueDate !== "none" ? sortByDueDate : undefined,
     }),
-    [query, debouncedSearch, statusFilter, priorityFilter],
+    [query, debouncedSearch, statusFilter, priorityFilter, createdInPlanFilter, sortByDueDate],
   );
 
   const { data, isLoading } = useManagerListEmployeeTasks(
@@ -1047,7 +1079,7 @@ export function ManagerMilestoneTaskAssignmentScreen({
         </Button>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 items-center">
         <Input
           placeholder="Tìm nhiệm vụ..."
           value={search}
@@ -1057,43 +1089,104 @@ export function ManagerMilestoneTaskAssignmentScreen({
           }}
           className="h-8 text-xs w-44"
         />
-        <Select
-          value={statusFilter}
-          onValueChange={(v) => {
-            setStatusFilter(v);
-            setQuery((q) => ({ ...q, page: 1 }));
-          }}
-        >
-          <SelectTrigger className="h-8 text-xs w-36">
-            <SelectValue placeholder="Trạng thái" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tất cả trạng thái</SelectItem>
-            <SelectItem value="pending">Chờ xử lý</SelectItem>
-            <SelectItem value="in_progress">Đang thực hiện</SelectItem>
-            <SelectItem value="completed">Hoàn thành</SelectItem>
-            <SelectItem value="verified">Đã xác minh</SelectItem>
-            <SelectItem value="cancelled">Đã hủy</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select
-          value={priorityFilter}
-          onValueChange={(v) => {
-            setPriorityFilter(v);
-            setQuery((q) => ({ ...q, page: 1 }));
-          }}
-        >
-          <SelectTrigger className="h-8 text-xs w-36">
-            <SelectValue placeholder="Ưu tiên" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tất cả ưu tiên</SelectItem>
-            <SelectItem value="low">Thấp</SelectItem>
-            <SelectItem value="normal">Bình thường</SelectItem>
-            <SelectItem value="high">Cao</SelectItem>
-            <SelectItem value="urgent">Khẩn cấp</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Trạng thái:</span>
+          <Select
+            value={statusFilter}
+            onValueChange={(v) => {
+              setStatusFilter(v);
+              setQuery((q) => ({ ...q, page: 1 }));
+            }}
+          >
+            <SelectTrigger className="h-8 text-xs w-28">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả</SelectItem>
+              <SelectItem value="pending">Chờ xử lý</SelectItem>
+              <SelectItem value="in_progress">Đang thực hiện</SelectItem>
+              <SelectItem value="completed">Hoàn thành</SelectItem>
+              <SelectItem value="verified">Đã xác minh</SelectItem>
+              <SelectItem value="cancelled">Đã hủy</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Ưu tiên:</span>
+          <Select
+            value={priorityFilter}
+            onValueChange={(v) => {
+              setPriorityFilter(v);
+              setQuery((q) => ({ ...q, page: 1 }));
+            }}
+          >
+            <SelectTrigger className="h-8 text-xs w-24">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả</SelectItem>
+              <SelectItem value="low">Thấp</SelectItem>
+              <SelectItem value="normal">Bình thường</SelectItem>
+              <SelectItem value="high">Cao</SelectItem>
+              <SelectItem value="urgent">Khẩn cấp</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Loại:</span>
+          <Select
+            value={createdInPlanFilter}
+            onValueChange={(v) => {
+              setCreatedInPlanFilter(v);
+              setQuery((q) => ({ ...q, page: 1 }));
+            }}
+          >
+            <SelectTrigger className="h-8 text-xs w-24">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả</SelectItem>
+              <SelectItem value="planned">Kế hoạch</SelectItem>
+              <SelectItem value="adhoc">Phát sinh</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Deadline:</span>
+          <Select
+            value={sortByDueDate}
+            onValueChange={(v) => {
+              setSortByDueDate(v as "asc" | "desc" | "none");
+              setQuery((q) => ({ ...q, page: 1 }));
+            }}
+          >
+            <SelectTrigger className="h-8 text-xs w-24">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Mặc định</SelectItem>
+              <SelectItem value="asc">Gần nhất</SelectItem>
+              <SelectItem value="desc">Xa nhất</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {(search || statusFilter !== "all" || priorityFilter !== "all" || createdInPlanFilter !== "all" || sortByDueDate !== "none") && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 text-xs text-muted-foreground"
+            onClick={() => {
+              setSearch("");
+              setStatusFilter("all");
+              setPriorityFilter("all");
+              setCreatedInPlanFilter("all");
+              setSortByDueDate("none");
+              setQuery((q) => ({ ...q, page: 1 }));
+            }}
+          >
+            Xóa bộ lọc
+          </Button>
+        )}
       </div>
 
       {isLoading ? (
@@ -1149,10 +1242,10 @@ export function ManagerMilestoneTaskAssignmentScreen({
                       {PRIORITY_META[task.priority].label}
                     </Badge>
                     <Badge
-                      variant={STATUS_META[task.status].variant}
+                      variant={getTaskDisplayStatus(task).variant}
                       className="text-[10px]"
                     >
-                      {STATUS_META[task.status].label}
+                      {getTaskDisplayStatus(task).label}
                     </Badge>
                   </div>
                 </div>
@@ -1164,6 +1257,11 @@ export function ManagerMilestoneTaskAssignmentScreen({
                   >
                     {getAssigneeLabel(task.assignedTo)}
                   </Badge>
+                  {task.startDate && (
+                    <span className="text-[11px] text-muted-foreground">
+                      Bắt đầu: {formatDate(task.startDate)}
+                    </span>
+                  )}
                   {task.assignedDate && (
                     <span className="text-[11px] text-muted-foreground">
                       Gán lúc {formatDate(task.assignedDate)}
@@ -1307,6 +1405,8 @@ export default function ManagerMilestoneTasksSection({
   const debouncedSearch = useDebounce(search, 500);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [createdInPlanFilter, setCreatedInPlanFilter] = useState<string>("all");
+  const [sortByDueDate, setSortByDueDate] = useState<"asc" | "desc" | "none">("none");
 
   const effectiveQuery = useMemo(
     () => ({
@@ -1318,8 +1418,15 @@ export default function ManagerMilestoneTasksSection({
         priorityFilter !== "all"
           ? (priorityFilter as TaskPriorityType)
           : undefined,
+      createdInPlan:
+        createdInPlanFilter === "planned"
+          ? true
+          : createdInPlanFilter === "adhoc"
+            ? false
+            : undefined,
+      sortByDueDate: sortByDueDate !== "none" ? sortByDueDate : undefined,
     }),
-    [query, debouncedSearch, statusFilter, priorityFilter],
+    [query, debouncedSearch, statusFilter, priorityFilter, createdInPlanFilter, sortByDueDate],
   );
 
   const { data, isLoading } = useManagerListEmployeeTasks(
@@ -1448,7 +1555,7 @@ export default function ManagerMilestoneTasksSection({
       </AnimatePresence>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 items-center">
         <Input
           placeholder="Tìm kiếm..."
           value={search}
@@ -1458,43 +1565,104 @@ export default function ManagerMilestoneTasksSection({
           }}
           className="h-7 text-xs w-36"
         />
-        <Select
-          value={statusFilter}
-          onValueChange={(v) => {
-            setStatusFilter(v);
-            setQuery((q) => ({ ...q, page: 1 }));
-          }}
-        >
-          <SelectTrigger className="h-7 text-xs w-32">
-            <SelectValue placeholder="Trạng thái" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tất cả</SelectItem>
-            <SelectItem value="pending">Chờ xử lý</SelectItem>
-            <SelectItem value="in_progress">Đang thực hiện</SelectItem>
-            <SelectItem value="completed">Hoàn thành</SelectItem>
-            <SelectItem value="verified">Đã xác minh</SelectItem>
-            <SelectItem value="cancelled">Đã hủy</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select
-          value={priorityFilter}
-          onValueChange={(v) => {
-            setPriorityFilter(v);
-            setQuery((q) => ({ ...q, page: 1 }));
-          }}
-        >
-          <SelectTrigger className="h-7 text-xs w-32">
-            <SelectValue placeholder="Ưu tiên" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tất cả</SelectItem>
-            <SelectItem value="low">Thấp</SelectItem>
-            <SelectItem value="normal">Bình thường</SelectItem>
-            <SelectItem value="high">Cao</SelectItem>
-            <SelectItem value="urgent">Khẩn cấp</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Trạng thái:</span>
+          <Select
+            value={statusFilter}
+            onValueChange={(v) => {
+              setStatusFilter(v);
+              setQuery((q) => ({ ...q, page: 1 }));
+            }}
+          >
+            <SelectTrigger className="h-7 text-xs w-28">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả</SelectItem>
+              <SelectItem value="pending">Chờ xử lý</SelectItem>
+              <SelectItem value="in_progress">Đang thực hiện</SelectItem>
+              <SelectItem value="completed">Hoàn thành</SelectItem>
+              <SelectItem value="verified">Đã xác minh</SelectItem>
+              <SelectItem value="cancelled">Đã hủy</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Ưu tiên:</span>
+          <Select
+            value={priorityFilter}
+            onValueChange={(v) => {
+              setPriorityFilter(v);
+              setQuery((q) => ({ ...q, page: 1 }));
+            }}
+          >
+            <SelectTrigger className="h-7 text-xs w-24">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả</SelectItem>
+              <SelectItem value="low">Thấp</SelectItem>
+              <SelectItem value="normal">Bình thường</SelectItem>
+              <SelectItem value="high">Cao</SelectItem>
+              <SelectItem value="urgent">Khẩn cấp</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Loại:</span>
+          <Select
+            value={createdInPlanFilter}
+            onValueChange={(v) => {
+              setCreatedInPlanFilter(v);
+              setQuery((q) => ({ ...q, page: 1 }));
+            }}
+          >
+            <SelectTrigger className="h-7 text-xs w-24">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả</SelectItem>
+              <SelectItem value="planned">Kế hoạch</SelectItem>
+              <SelectItem value="adhoc">Phát sinh</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Deadline:</span>
+          <Select
+            value={sortByDueDate}
+            onValueChange={(v) => {
+              setSortByDueDate(v as "asc" | "desc" | "none");
+              setQuery((q) => ({ ...q, page: 1 }));
+            }}
+          >
+            <SelectTrigger className="h-7 text-xs w-24">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Mặc định</SelectItem>
+              <SelectItem value="asc">Gần nhất</SelectItem>
+              <SelectItem value="desc">Xa nhất</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {(search || statusFilter !== "all" || priorityFilter !== "all" || createdInPlanFilter !== "all" || sortByDueDate !== "none") && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs text-muted-foreground"
+            onClick={() => {
+              setSearch("");
+              setStatusFilter("all");
+              setPriorityFilter("all");
+              setCreatedInPlanFilter("all");
+              setSortByDueDate("none");
+              setQuery((q) => ({ ...q, page: 1 }));
+            }}
+          >
+            Xóa bộ lọc
+          </Button>
+        )}
       </div>
 
       {/* Task list */}
@@ -1542,6 +1710,9 @@ export default function ManagerMilestoneTasksSection({
                       )}
                       <p className="text-[10px] text-muted-foreground truncate">
                         {getAssigneeLabel(task.assignedTo)}
+                        {task.startDate && (
+                          <span className="ml-1.5">· Bắt đầu: {formatDate(task.startDate)}</span>
+                        )}
                       </p>
                     </div>
                     {isOverdue(task) && (
@@ -1555,10 +1726,10 @@ export default function ManagerMilestoneTasksSection({
                   </div>
                   <div className="flex items-center gap-2 shrink-0 ml-2">
                     <Badge
-                      variant={STATUS_META[task.status].variant}
+                      variant={getTaskDisplayStatus(task).variant}
                       className="text-[10px]"
                     >
-                      {STATUS_META[task.status].label}
+                      {getTaskDisplayStatus(task).label}
                     </Badge>
                     {canEdit && (
                       <DropdownMenu>

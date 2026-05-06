@@ -336,11 +336,6 @@ export const sidebarData: SidebarData = {
           url: "/dashboard/manager/crop-seasons",
           icon: Sprout,
         },
-        {
-          title: "Nhật Ký Công Việc",
-          url: "/dashboard/manager/daily-logs",
-          icon: NotebookPen,
-        },
       ],
     },
     {

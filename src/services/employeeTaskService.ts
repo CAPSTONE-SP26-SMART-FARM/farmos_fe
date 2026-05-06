@@ -7,6 +7,8 @@ import type {
   EmployeeTaskResType,
   ListEmployeeTasksQueryType,
   ListEmployeeTasksResType,
+  ListTasksWithContextQueryType,
+  ListTasksWithContextResType,
   UpdateEmployeeTaskBodyType,
   AssignFarmerToTaskBodyType,
 } from "@/schemaValidatation/employeeTask";
@@ -70,6 +72,12 @@ export const managerEmployeeTaskService = {
   eligibleFarmers: (milestoneId: string) =>
     api.get<EligibleFarmerResType[]>(
       MANAGER.EMPLOYEE_TASK.ELIGIBLE_FARMERS(milestoneId),
+    ),
+  listByCropSeason: (cropSeasonId: string, query: ListTasksWithContextQueryType) =>
+    api.get<ListTasksWithContextResType>(
+      API_ENDPOINTS.EMPLOYEE_TASK_CROP_SEASON.MANAGER_BY_CROP_SEASON(cropSeasonId) +
+        "?" +
+        queryString.stringify(query, { skipEmptyString: true, skipNull: true }),
     ),
 };
 
