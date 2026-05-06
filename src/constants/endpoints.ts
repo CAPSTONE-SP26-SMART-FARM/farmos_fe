@@ -491,10 +491,18 @@ export const API_ENDPOINTS = {
     DOCTOR_HISTORY: (id: string) => `/admin/doctors/${id}/dqs-history`, // B15
     LEADERBOARD: "/admin/dqs-leaderboard", // B16
   },
+  EMPLOYEE_TASK_CROP_SEASON: {
+    MANAGER_BY_CROP_SEASON: (cropSeasonId: string) =>
+      `/employee-task/manager/crop-season/${cropSeasonId}`,
+  },
   DAILY_LOG: {
+    FARMER_TODAY: "/daily-log/farmer/today",
     TASKS: "/daily-log/tasks",
+    SUBMIT: "/daily-log/submit",
     OWNER_BY_FARM: (farmId: string) => `/daily-log/owner/farm/${farmId}`,
     MANAGER_BY_ZONE: (zoneId: string) => `/daily-log/manager/zone/${zoneId}`,
+    MANAGER_ZONE_TODAY: (zoneId: string) =>
+      `/daily-log/manager/zone/${zoneId}/today`,
   },
   IOT_KITS: {
     // Admin
@@ -915,6 +923,13 @@ export const QUERY_KEYS = {
         "employee-tasks",
         milestoneId,
         "eligible-farmers",
+      ],
+      byCropSeason: (cropSeasonId: string, query?: Record<string, unknown>) => [
+        "manager",
+        "employee-tasks",
+        "crop-season",
+        cropSeasonId,
+        ...(query !== undefined ? [query] : []),
       ],
     },
   },

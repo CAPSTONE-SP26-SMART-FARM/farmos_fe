@@ -89,6 +89,76 @@ export const ListDailyLogsQuerySchema = PagingRequestSchema.extend({
 export const ListDailyLogsResSchema = PagingResponseSchema(DailyLogResSchema);
 
 // ============================================================
+// Submit daily log (POST /daily-log/submit — owner/manager/farmer)
+// ============================================================
+export const SubmitDailyLogBodySchema = z.object({
+  employeeTaskId: z.string().uuid(),
+  activities: z.string().min(1),
+  notes: z.string().default(""),
+});
+
+// ============================================================
+// Today tasks with log status (shared brief)
+// ============================================================
+export const TodayLogBriefSchema = z.object({
+  id: z.string().uuid(),
+  activities: z.string(),
+  notes: z.string(),
+  createdAt: z.string(),
+});
+
+export const FarmerTaskWithLogStatusSchema = z.object({
+  id: z.string().uuid(),
+  milestoneId: z.string().uuid(),
+  zoneId: z.string().uuid(),
+  milestoneName: z.string().nullable(),
+  title: z.string(),
+  description: z.string().nullable(),
+  priority: TaskPrioritySchema,
+  status: TaskStatusSchema,
+  startDate: z.string().nullable(),
+  assignedDate: z.string().nullable(),
+  hasLoggedToday: z.boolean(),
+  todayLog: TodayLogBriefSchema.nullable(),
+});
+
+export const FarmerTasksWithLogStatusListResSchema = PagingResponseSchema(
+  FarmerTaskWithLogStatusSchema,
+);
+
+// ============================================================
+// Manager today tasks with log status (GET /daily-log/manager/zone/:zoneId/today)
+// ============================================================
+export const ManagerTaskWithLogStatusSchema = z.object({
+  id: z.string().uuid(),
+  milestoneId: z.string().uuid(),
+  zoneId: z.string().uuid(),
+  milestoneName: z.string().nullable(),
+  title: z.string(),
+  description: z.string().nullable(),
+  priority: TaskPrioritySchema,
+  status: TaskStatusSchema,
+  startDate: z.string().nullable(),
+  assignedDate: z.string().nullable(),
+  assignedTo: z.string().nullable(),
+  farmerName: z.string().nullable(),
+  farmerPhone: z.string().nullable(),
+  hasLoggedToday: z.boolean(),
+  todayLog: TodayLogBriefSchema.nullable(),
+});
+
+export const ListManagerTodayTasksQuerySchema = z.object({
+  page: z.number().optional().default(1),
+  limit: z.number().optional().default(10),
+  milestoneId: z.string().uuid().optional(),
+  hasLoggedToday: z.boolean().optional(),
+});
+
+export const ManagerTasksWithLogStatusListResSchema = PagingResponseSchema(
+  ManagerTaskWithLogStatusSchema,
+);
+
+// ============================================================
 // Type exports
 // ============================================================
 export type TaskPriorityType = z.infer<typeof TaskPrioritySchema>;
@@ -102,6 +172,23 @@ export type ListTasksForDailyLogQueryType = z.infer<
 export type TasksForDailyLogListResType = z.infer<
   typeof TasksForDailyLogListResSchema
 >;
+export type TodayLogBriefType = z.infer<typeof TodayLogBriefSchema>;
+export type FarmerTaskWithLogStatusType = z.infer<
+  typeof FarmerTaskWithLogStatusSchema
+>;
+export type FarmerTasksWithLogStatusListResType = z.infer<
+  typeof FarmerTasksWithLogStatusListResSchema
+>;
+export type ManagerTaskWithLogStatusType = z.infer<
+  typeof ManagerTaskWithLogStatusSchema
+>;
+export type ListManagerTodayTasksQueryType = z.infer<
+  typeof ListManagerTodayTasksQuerySchema
+>;
+export type ManagerTasksWithLogStatusListResType = z.infer<
+  typeof ManagerTasksWithLogStatusListResSchema
+>;
 export type DailyLogResType = z.infer<typeof DailyLogResSchema>;
 export type ListDailyLogsQueryType = z.infer<typeof ListDailyLogsQuerySchema>;
 export type ListDailyLogsResType = z.infer<typeof ListDailyLogsResSchema>;
+export type SubmitDailyLogBodyType = z.infer<typeof SubmitDailyLogBodySchema>;

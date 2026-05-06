@@ -7,6 +7,7 @@ import type {
   AssignFarmerToTaskBodyType,
   CreateEmployeeTaskBatchBodyType,
   ListEmployeeTasksQueryType,
+  ListTasksWithContextQueryType,
   UpdateEmployeeTaskBodyType,
 } from "@/schemaValidatation/employeeTask";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -182,6 +183,22 @@ export const useManagerEligibleFarmers = (
     queryKey: QUERY_KEYS.manager.employeeTasks.eligibleFarmers(milestoneId),
     queryFn: () => managerEmployeeTaskService.eligibleFarmers(milestoneId),
     enabled: !!milestoneId && enabled,
+  });
+};
+
+export const useManagerListCropSeasonTasks = (
+  cropSeasonId: string,
+  query: ListTasksWithContextQueryType,
+  enabled = true,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.manager.employeeTasks.byCropSeason(
+      cropSeasonId,
+      query as Record<string, unknown>,
+    ),
+    queryFn: () =>
+      managerEmployeeTaskService.listByCropSeason(cropSeasonId, query),
+    enabled: !!cropSeasonId && enabled,
   });
 };
 

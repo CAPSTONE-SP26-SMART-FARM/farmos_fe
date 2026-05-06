@@ -52,8 +52,9 @@ function ManagerDailyLogsPage() {
   const toDateParam = searchParams.get("toDate") ?? "";
   const zoneIdParam = searchParams.get("zoneId") ?? "";
 
-  const [fromDateInput, setFromDateInput] = useState(fromDateParam);
-  const [toDateInput, setToDateInput] = useState(toDateParam);
+  const today = new Date().toISOString().slice(0, 10);
+  const [fromDateInput, setFromDateInput] = useState(fromDateParam || today);
+  const [toDateInput, setToDateInput] = useState(toDateParam || today);
 
   const zonesQuery = useManagerListAssignedZones({ page: 1, limit: 50 });
   const zones = useMemo(
