@@ -1,6 +1,5 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
 import InvoiceStatusBadge, {
   type InvoiceStatus,
 } from "@/components/common/InvoiceStatusBadge";
@@ -13,7 +12,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -30,21 +28,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getApiErrorMessageVi } from "@/lib/error-message";
-import {
-  useOwnerCredits,
-  useOwnerCreditHistory,
-  usePurchaseServicePackage,
-  useServicePackagePaymentStatus,
-  useServicePackages,
-} from "@/queries/useCredit";
-import { useInvoiceCheckout, useOwnerInvoices } from "@/queries/useInvoice";
+import { useOwnerInvoices } from "@/queries/useInvoice";
 import { useRealtimeBilling } from "@/hooks/useRealtimeBilling";
 import type { ListInvoicesQueryType } from "@/schemaValidatation/invoice";
-import type {
-  CreditHistoryQueryType,
-  ListServicePackagesQueryType,
-} from "@/schemaValidatation/credit";
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("vi-VN", {
@@ -52,12 +38,6 @@ const formatCurrency = (value: number) =>
     currency: "VND",
     maximumFractionDigits: 0,
   }).format(value);
-
-const TX_STATUS_LABEL: Record<string, string> = {
-  PENDING: "Đang xử lý",
-  SUCCESS: "Thành công",
-  FAILED: "Thất bại",
-};
 
 const REFERENCE_TYPE_LABEL: Record<string, string> = {
   SUBSCRIPTION: "Gói đăng ký",
@@ -79,63 +59,11 @@ function OwnerPaymentsPage() {
     referenceType: undefined,
     referenceId: undefined,
   });
-  const [packageQuery] = useState<ListServicePackagesQueryType>({
-    page: 1,
-    limit: 6,
-    search: undefined,
-  });
-  const [creditHistoryQuery] = useState<CreditHistoryQueryType>({
-    page: 1,
-    limit: 5,
-    search: undefined,
-    creditType: undefined,
-  });
-
-  const [confirmPurchasePackageId, setConfirmPurchasePackageId] = useState("");
-  const [selectedPackageId, setSelectedPackageId] = useState("");
 
   const ownerInvoicesQuery = useOwnerInvoices(invoiceQuery, true);
-  const ownerCreditsQuery = useOwnerCredits(true);
-  const ownerCreditHistoryQuery = useOwnerCreditHistory(
-    creditHistoryQuery,
-    true,
-  );
-  const servicePackagesQuery = useServicePackages(packageQuery, true);
-  const checkoutMutation = useInvoiceCheckout();
-  const purchasePackageMutation = usePurchaseServicePackage();
-  const servicePackagePaymentStatusQuery = useServicePackagePaymentStatus(
-    selectedPackageId,
-    Boolean(selectedPackageId),
-  );
 
   const invoices = ownerInvoicesQuery.data?.data?.data ?? [];
   const invoicesMeta = ownerInvoicesQuery.data?.data?.meta;
-  const ownerCredits = ownerCreditsQuery.data?.data?.data ?? [];
-  const ownerCreditHistory = ownerCreditHistoryQuery.data?.data?.data ?? [];
-  const packages = servicePackagesQuery.data?.data?.data ?? [];
-
-  const selectedPackage = useMemo(
-    () => packages.find((item) => item.id === selectedPackageId),
-    [packages, selectedPackageId],
-  );
-
-  const purchasePackage = async (packageId: string) => {
-    try {
-      const purchaseResult =
-        await purchasePackageMutation.mutateAsync(packageId);
-      const checkout = await checkoutMutation.mutateAsync({
-        id: purchaseResult.data.invoiceId,
-      });
-      window.open(checkout.data.paymentUrl, "_blank", "noopener,noreferrer");
-      setSelectedPackageId(packageId);
-      setConfirmPurchasePackageId("");
-      toast.success(
-        `Đã tạo hóa đơn ${purchaseResult.data.invoiceNumber}. Vui lòng hoàn tất thanh toán.`,
-      );
-    } catch (error) {
-      toast.error(getApiErrorMessageVi(error, "Mua gói dịch vụ thất bại."));
-    }
-  };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
