@@ -74,7 +74,7 @@ export default function OwnerIotKitOrderStatusPage() {
       const res = await checkoutMutation.mutateAsync({ id: order.invoiceId });
       const url = res.data.paymentUrl;
       if (url) {
-        window.open(url, "_blank", "noopener,noreferrer");
+        window.location.href = url;
       } else {
         toast.error("Không lấy được liên kết thanh toán mới.");
       }

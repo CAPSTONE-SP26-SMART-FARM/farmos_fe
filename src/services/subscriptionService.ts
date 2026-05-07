@@ -51,6 +51,12 @@ const subscriptionService = {
   renewSubscription: (id: string) =>
     api.post<SubscriptionCheckoutResType>(SUBSCRIPTIONS.RENEW(id)),
 
+  upgradeSubscription: (data: UpgradePlanVersionBodyType) =>
+    api.post<SubscriptionCheckoutResType, UpgradePlanVersionBodyType>(
+      SUBSCRIPTIONS.UPGRADE,
+      data,
+    ),
+
   cancelSubscription: (id: string, data: CancelSubscriptionBodyType) =>
     api.patch<SubscriptionResType, CancelSubscriptionBodyType>(
       SUBSCRIPTIONS.CANCEL(id),

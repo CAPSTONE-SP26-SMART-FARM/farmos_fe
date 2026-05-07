@@ -324,6 +324,14 @@ const BACKEND_ERROR_MAP: Record<string, string> = {
     "Không tạo được mã đơn. Vui lòng thử lại.",
   "error.ownernoactivesubscription":
     "Bạn cần có gói đăng ký đang hoạt động để xem hạn mức bộ Kit IoT.",
+  "error.cannotdeleteprovisioneddevice":
+    "Không thể xóa thiết bị đang được cấp cho chủ trang trại. Vui lòng thu hồi trước.",
+  "error.insufficientiotdevicesforkit":
+    "Kho thiết bị IoT không đủ để đáp ứng đơn kit này. Vui lòng thử lại sau.",
+  "error.insufficientiotdevices":
+    "Kho thiết bị IoT không đủ để đáp ứng gói đăng ký này. Vui lòng thử lại sau.",
+  "error.subscriptionexpiringsoon":
+    "Gói đăng ký còn dưới 1 tháng là hết hạn. Vui lòng gia hạn trước khi mua thêm Kit IoT.",
 
   // ── Raw Error.* keys (missing i18n, sent as-is) ──────────────────────
   tasktitleduplicate: "Tiêu đề công việc đã tồn tại trong mốc sản xuất này.",

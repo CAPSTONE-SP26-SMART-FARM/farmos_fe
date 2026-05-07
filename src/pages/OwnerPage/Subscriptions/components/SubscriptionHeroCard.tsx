@@ -12,6 +12,7 @@ import { formatDateVi, formatRelativeVi } from "@/lib/format";
 import type { SubscriptionResType } from "@/schemaValidatation/subscription";
 import {
   ArrowRight,
+  ArrowUpCircle,
   CreditCard,
   LifeBuoy,
   RotateCcw,
@@ -25,6 +26,7 @@ interface SubscriptionHeroCardProps {
   toggleAutoRenewLoading?: boolean;
   onRenew?: () => void;
   renewLoading?: boolean;
+  onUpgrade?: () => void;
   onResubscribe?: () => void;
   onPayPending?: () => void;
   onContactSupport?: () => void;
@@ -36,6 +38,7 @@ function SubscriptionHeroCard({
   toggleAutoRenewLoading,
   onRenew,
   renewLoading,
+  onUpgrade,
   onResubscribe,
   onPayPending,
   onContactSupport,
@@ -45,17 +48,27 @@ function SubscriptionHeroCard({
   const autoRenewSwitchDisabled = status === "PENDING" || toggleAutoRenewLoading;
 
   const renderActions = () => {
-    if (status === "ACTIVE" && onRenew) {
+    if (status === "ACTIVE") {
       return (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onRenew}
-          disabled={renewLoading}
-        >
-          <RotateCcw className="mr-2 h-4 w-4" />
-          {renewLoading ? "Đang gia hạn..." : "Gia hạn ngay"}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {onRenew && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onRenew}
+              disabled={renewLoading}
+            >
+              <RotateCcw className="mr-2 h-4 w-4" />
+              {renewLoading ? "Đang gia hạn..." : "Gia hạn ngay"}
+            </Button>
+          )}
+          {onUpgrade && (
+            <Button size="sm" onClick={onUpgrade}>
+              <ArrowUpCircle className="mr-2 h-4 w-4" />
+              Nâng gói
+            </Button>
+          )}
+        </div>
       );
     }
 

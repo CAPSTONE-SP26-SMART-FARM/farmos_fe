@@ -48,7 +48,7 @@ const REFERENCE_TYPE_LABEL: Record<string, string> = {
 function OwnerPaymentsPage() {
   const navigate = useNavigate();
 
-  // Realtime: invalidate invoices / subscriptions khi BE push event billing.
+  // PayOS callback toast/invalidation đã được DashboardLayout xử lý global.
   useRealtimeBilling();
 
   const [invoiceQuery, setInvoiceQuery] = useState<ListInvoicesQueryType>({
@@ -66,7 +66,7 @@ function OwnerPaymentsPage() {
   const invoicesMeta = ownerInvoicesQuery.data?.data?.meta;
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Thanh toán và hóa đơn</CardTitle>

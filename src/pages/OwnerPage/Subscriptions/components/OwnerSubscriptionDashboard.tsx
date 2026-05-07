@@ -33,6 +33,7 @@ import HistoryTab from "./HistoryTab";
 import OverviewTab from "./OverviewTab";
 import SubscriptionBannerCascade from "./SubscriptionBannerCascade";
 import SubscriptionHeroCard from "./SubscriptionHeroCard";
+import UpgradeSubscriptionDialog from "./UpgradeSubscriptionDialog";
 import UsageTab from "./UsageTab";
 
 const TAB_VALUES = ["overview", "usage", "billing", "credits", "history"] as const;
@@ -64,6 +65,7 @@ function OwnerSubscriptionDashboard({
     : "overview";
 
   const [isCancelOpen, setIsCancelOpen] = useState(false);
+  const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
 
   const isDetailMode = Boolean(subscriptionIdFromProps);
 
@@ -141,9 +143,9 @@ function OwnerSubscriptionDashboard({
     try {
       const result = await renewMutation.mutateAsync(subscriptionId);
       toast.success(
-        `Đã tạo hóa đơn gia hạn ${result.data.invoiceNumber}. Vui lòng thanh toán để kích hoạt.`,
+        `Đã tạo hóa đơn gia hạn ${result.data.invoiceNumber}. Chuyển tới trang thanh toán...`,
       );
-      setTab("billing");
+      navigate(`/dashboard/owner/payments/${result.data.invoiceId}`);
     } catch (error) {
       toast.error(getApiErrorMessageVi(error, "Gia hạn đăng ký thất bại."));
     }
@@ -296,6 +298,7 @@ function OwnerSubscriptionDashboard({
         toggleAutoRenewLoading={toggleAutoRenewMutation.isPending}
         onRenew={handleRenew}
         renewLoading={renewMutation.isPending}
+        onUpgrade={() => setIsUpgradeOpen(true)}
         onResubscribe={handleResubscribe}
         onPayPending={handlePayPending}
         onContactSupport={handleContactSupport}
@@ -353,7 +356,7 @@ function OwnerSubscriptionDashboard({
           <BillingTab
             subscription={subscription}
             onOpenCancel={() => setIsCancelOpen(true)}
-            onChangePlan={() => navigate(PLANS_PATH)}
+            onChangePlan={() => setIsUpgradeOpen(true)}
             showCancel={showCancelInBillingTab}
           />
         </TabsContent>
@@ -378,6 +381,13 @@ function OwnerSubscriptionDashboard({
         onOpenChange={setIsCancelOpen}
         subscriptionId={subscriptionId}
         onCancelled={() => navigate(PLANS_PATH)}
+      />
+
+      <UpgradeSubscriptionDialog
+        open={isUpgradeOpen}
+        onOpenChange={setIsUpgradeOpen}
+        currentPlanId={subscription?.planId}
+        currentPlanName={subscription?.plan?.name}
       />
     </div>
   );

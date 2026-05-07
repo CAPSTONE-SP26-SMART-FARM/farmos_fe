@@ -28,7 +28,7 @@ import {
   useOwnerInvoices,
 } from "@/queries/useInvoice";
 import type { SubscriptionResType } from "@/schemaValidatation/subscription";
-import { ExternalLink, FileText, ReceiptText, Trash2 } from "lucide-react";
+import { FileText, ReceiptText, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -69,8 +69,8 @@ function BillingTab({
         id: invoiceId,
         data: { gateway: "PAYOS" },
       });
-      window.open(result.data.paymentUrl, "_blank", "noopener,noreferrer");
       setConfirmPayId(null);
+      window.location.href = result.data.paymentUrl;
     } catch (error) {
       toast.error(
         getApiErrorMessageVi(error, "Không thể tạo phiên thanh toán."),
@@ -146,7 +146,6 @@ function BillingTab({
                               confirmPayId === invoice.id
                             }
                           >
-                            <ExternalLink className="mr-1 h-3 w-3" />
                             Thanh toán
                           </Button>
                         ) : (
@@ -175,18 +174,13 @@ function BillingTab({
 
       <Card>
         <CardHeader>
-          <CardTitle>Thay đổi gói</CardTitle>
+          <CardTitle>Nâng gói đăng ký</CardTitle>
           <CardDescription>
-            Xem các gói khác và chuyển sang gói phù hợp hơn.
+            Chuyển sang gói cao hơn để mở rộng tính năng và hạn mức.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button
-            variant="outline"
-            onClick={onChangePlan}
-          >
-            Xem bảng giá
-          </Button>
+          <Button onClick={onChangePlan}>Chọn gói mới</Button>
         </CardContent>
       </Card>
 
@@ -219,7 +213,7 @@ function BillingTab({
       <ConfirmDialog
         open={Boolean(confirmPayId)}
         title="Xác nhận thanh toán"
-        description="Bạn sẽ được chuyển đến cổng PayOS trong một tab mới để hoàn tất giao dịch."
+        description="Bạn sẽ được chuyển đến cổng PayOS để hoàn tất giao dịch."
         confirmLabel="Tiếp tục"
         cancelLabel="Hủy"
         onCancel={() => setConfirmPayId(null)}

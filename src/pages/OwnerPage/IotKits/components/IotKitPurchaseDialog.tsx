@@ -17,7 +17,6 @@ import type {
   PurchaseIotKitBodyType,
 } from "@/schemaValidatation/iotKit";
 import { toast } from "sonner";
-import { ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router";
 
 interface IotKitPurchaseDialogProps {
@@ -45,15 +44,10 @@ export default function IotKitPurchaseDialog({
       onOpenChange(false);
       toast.success("Đã tạo đơn mua bộ Kit IoT.");
       if (paymentUrl) {
-        const opened = window.open(paymentUrl, "_blank", "noopener,noreferrer");
-        if (!opened) {
-          toast.warning(
-            "Trình duyệt chặn cửa sổ bật lên. Vui lòng dùng nút 'Thanh toán' ở trang theo dõi đơn.",
-          );
-        }
+        window.location.href = paymentUrl;
+      } else {
+        navigate(`/dashboard/owner/iot-kits/orders/${orderId}`);
       }
-      // SPA navigate để giữ socket / cache, không reload toàn trang.
-      navigate(`/dashboard/owner/iot-kits/orders/${orderId}`);
     } catch (error) {
       if (isApiErrorUnprocessableEntityResponse(error)) {
         handleApiErrorUnprocessentity(error.response?.data?.errors ?? []);
@@ -100,8 +94,8 @@ export default function IotKitPurchaseDialog({
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Sau khi xác nhận, một tab mới sẽ mở cổng thanh toán PayOS. Trang theo
-          dõi đơn sẽ tự cập nhật tình trạng trong vòng 3-6 giây.
+          Sau khi xác nhận, bạn sẽ được chuyển đến cổng thanh toán PayOS. Kết
+          quả sẽ được cập nhật tự động sau khi thanh toán hoàn tất.
         </p>
 
         <DialogFooter>
@@ -116,14 +110,7 @@ export default function IotKitPurchaseDialog({
             onClick={handleConfirm}
             disabled={purchaseMutation.isPending}
           >
-            {purchaseMutation.isPending ? (
-              "Đang xử lý..."
-            ) : (
-              <>
-                <ExternalLink className="mr-2 h-4 w-4" />
-                Xác nhận và thanh toán
-              </>
-            )}
+            {purchaseMutation.isPending ? "Đang xử lý..." : "Xác nhận và thanh toán"}
           </Button>
         </DialogFooter>
       </DialogContent>

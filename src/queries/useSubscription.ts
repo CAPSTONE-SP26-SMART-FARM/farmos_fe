@@ -141,6 +141,26 @@ export const useOwnerRenewSubscription = () => {
   });
 };
 
+export const useOwnerUpgradeSubscription = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: UpgradePlanVersionBodyType) =>
+      subscriptionService.upgradeSubscription(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.subscriptions.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.subscriptions.my(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.invoices.all,
+      });
+    },
+  });
+};
+
 export const useSubscriptionCancel = () => {
   const queryClient = useQueryClient();
 

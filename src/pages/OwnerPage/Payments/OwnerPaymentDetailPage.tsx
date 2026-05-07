@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
-import { QUERY_KEYS } from "@/constants";
 import InvoiceStatusBadge, {
   type InvoiceStatus,
 } from "@/components/common/InvoiceStatusBadge";
@@ -59,9 +57,27 @@ const formatDateTime = (value?: string | null) => {
 function OwnerPaymentDetailPage() {
   const navigate = useNavigate();
   const { invoiceId = "" } = useParams<{ invoiceId: string }>();
-  const [searchParams, setSearchParams] = useSearchParams();
   const [isConfirmPayOpen, setIsConfirmPayOpen] = useState(false);
-  const queryClient = useQueryClient();
+
+  // Capture status SYNCHRONOUSLY at initial render — before any effect/router replace
+  const [payosStatus] = useState(
+    () => new URLSearchParams(window.location.search).get("status"),
+  );
+
+  useEffect(() => {
+    if (!payosStatus) return;
+    // Defer to next tick so the global <Toaster> finishes its own mount/subscribe
+    // cycle before we push a toast (avoids the toast being dropped silently).
+    const timeoutId = setTimeout(() => {
+      if (payosStatus === "success") {
+        toast.success("Thanh toán thành công.", { duration: 6000 });
+      } else {
+        toast.error("Thanh toán thất bại hoặc đã bị huỷ.", { duration: 6000 });
+      }
+    }, 50);
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const invoiceDetailQuery = useInvoiceDetail(invoiceId, Boolean(invoiceId));
   const checkoutMutation = useInvoiceCheckout();
@@ -72,53 +88,13 @@ function OwnerPaymentDetailPage() {
     invoice?.invoiceNumber,
   );
 
-  // After PayOS redirects back to this page, surface the result and refresh.
-  const paymentStatus = searchParams.get("paymentStatus");
-  useEffect(() => {
-    if (!paymentStatus) return;
-    if (paymentStatus === "success") {
-      toast.success("Thanh toán thành công.");
-    } else if (paymentStatus === "cancel") {
-      const cancelled = searchParams.get("cancel");
-      toast.error(
-        cancelled === "true"
-          ? "Bạn đã huỷ thanh toán."
-          : "Thanh toán không thành công.",
-      );
-    }
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.invoices.all });
-    if (invoiceId) {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.invoices.detail(invoiceId),
-      });
-    }
-    // Clean PayOS callback params from the URL after handling them.
-    const next = new URLSearchParams(searchParams);
-    [
-      "paymentStatus",
-      "code",
-      "id",
-      "cancel",
-      "status",
-      "orderCode",
-      "invoiceId",
-      "reference",
-      "paymentLinkId",
-    ].forEach((key) => next.delete(key));
-    setSearchParams(next, { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paymentStatus, invoiceId]);
-
   const handlePayInvoice = async () => {
     if (!invoiceId) return;
 
     try {
       const checkout = await checkoutMutation.mutateAsync({
         id: invoiceId,
-        data: {
-          gateway: "PAYOS",
-          returnUrl: window.location.href,
-        },
+        data: { gateway: "PAYOS" },
       });
       setIsConfirmPayOpen(false);
       window.location.href = checkout.data.paymentUrl;

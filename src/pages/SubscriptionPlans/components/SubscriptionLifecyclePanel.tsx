@@ -455,7 +455,7 @@ function SubscriptionLifecyclePanel({
         id: selectedInvoice.id,
         data: { gateway: "PAYOS" },
       });
-      window.open(result.data.paymentUrl, "_blank", "noopener,noreferrer");
+      window.location.href = result.data.paymentUrl;
     } catch (error) {
       toast.error(getApiErrorMessageVi(error, "Không thể tạo phiên thanh toán."));
     }

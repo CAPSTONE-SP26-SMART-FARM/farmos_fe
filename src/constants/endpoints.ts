@@ -33,6 +33,7 @@ export const API_ENDPOINTS = {
     MY_QUOTA: "/subscriptions/my/quota",
     BY_ID: (id: string) => `/subscriptions/${id}`,
     RENEW: (id: string) => `/subscriptions/${id}/renew`,
+    UPGRADE: "/subscriptions/upgrade",
     CANCEL: (id: string) => `/subscriptions/${id}/cancel`,
     AUTO_RENEW: (id: string) => `/subscriptions/${id}/auto-renew`,
     PLAN_VERSION: (id: string) => `/subscriptions/${id}/plan-version`,
