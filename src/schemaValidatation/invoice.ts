@@ -61,6 +61,7 @@ export const TransactionSchema = z.object({
 export const CheckoutBodySchema = z
   .object({
     gateway: z.literal("PAYOS").default("PAYOS"),
+    returnUrl: z.string().max(2048).optional(),
   })
   .strict();
 
