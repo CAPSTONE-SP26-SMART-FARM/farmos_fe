@@ -73,7 +73,6 @@ import OwnerSubscriptionPlanDetailPage from "@/pages/OwnerPage/SubscriptionPlans
 import OwnerSubscriptionsPage from "@/pages/OwnerPage/Subscriptions/OwnerSubscriptionsPage";
 import OwnerSubscriptionDetailPage from "@/pages/OwnerPage/Subscriptions/OwnerSubscriptionDetailPage";
 import OwnerSubscriptionHistoryPage from "@/pages/OwnerPage/Subscriptions/OwnerSubscriptionHistoryPage";
-import OwnerWalletPage from "@/pages/OwnerPage/Wallet/OwnerWalletPage";
 import OrderSuccessPage from "@/pages/OrderResult/OrderSuccessPage";
 import OrderFailPage from "@/pages/OrderResult/OrderFailPage";
 import OwnerPage from "@/pages/OwnerPage/OwnerPage";
@@ -376,11 +375,6 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/owner/payments/:invoiceId",
         component: OwnerPaymentDetailPage,
-        allowedRoles: [RoleName.Owner],
-      },
-      {
-        path: "/dashboard/owner/wallet",
-        component: OwnerWalletPage,
         allowedRoles: [RoleName.Owner],
       },
       {

@@ -147,7 +147,7 @@ function SubscriptionStatusCard({
           <div className="rounded-md border p-3">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Wallet className="h-3.5 w-3.5" />
-              Credit ticket
+              Lượt tư vấn bác sĩ
             </div>
             <p className="mt-1 text-xl font-semibold tabular-nums">
               {credits.ticketCredits}

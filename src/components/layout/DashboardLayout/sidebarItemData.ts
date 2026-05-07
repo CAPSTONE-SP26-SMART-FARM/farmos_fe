@@ -24,7 +24,6 @@ import {
   Trophy,
   UserCheck,
   Users,
-  Wallet,
 } from "lucide-react";
 import type { SidebarData } from "./types";
 
@@ -213,11 +212,6 @@ export const sidebarData: SidebarData = {
           title: "Gói Đăng Ký Của Tôi",
           url: "/dashboard/owner/subscriptions",
           icon: Package,
-        },
-        {
-          title: "Ví Credit",
-          url: "/dashboard/owner/wallet",
-          icon: Wallet,
         },
         {
           title: "Thanh Toán",

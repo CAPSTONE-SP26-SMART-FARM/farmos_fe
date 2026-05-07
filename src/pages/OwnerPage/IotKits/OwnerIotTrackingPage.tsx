@@ -173,7 +173,7 @@ export default function OwnerIotTrackingPage() {
             />
             <KpiCard
               icon={PackagePlus}
-              label="Bộ kit cộng thêm"
+              label="IoT kit mua thêm"
               value={quota.kitBonus}
               tone="success"
               hint={
@@ -190,7 +190,7 @@ export default function OwnerIotTrackingPage() {
             />
             <KpiCard
               icon={Zap}
-              label="Còn lại"
+              label="IoT kit chưa sử dụng"
               value={quota.remaining}
               tone={quota.remaining <= 0 ? "danger" : "success"}
             />

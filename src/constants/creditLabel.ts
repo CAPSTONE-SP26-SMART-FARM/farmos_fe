@@ -3,8 +3,8 @@
  * Falls back to a humanized form of the code if not listed.
  */
 const CREDIT_LABELS: Record<string, string> = {
-  ticket_general: "Vé bác sĩ chung",
-  TICKET_GENERAL: "Vé bác sĩ chung",
+  ticket_general: "Lượt tư vấn bác sĩ",
+  TICKET_GENERAL: "Lượt tư vấn bác sĩ",
 };
 
 export function formatCreditLabel(code: string): string {

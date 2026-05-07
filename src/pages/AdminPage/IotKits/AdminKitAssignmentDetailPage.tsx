@@ -298,7 +298,7 @@ export default function AdminKitAssignmentDetailPage() {
           </div>
           <div className="rounded-lg border p-3">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">
-              Bonus từ kit
+              IoT kit mua thêm
             </p>
             <p className="mt-1 text-2xl font-semibold tabular-nums text-emerald-600">
               +{quota.kitBonus}
@@ -323,7 +323,7 @@ export default function AdminKitAssignmentDetailPage() {
           </div>
           <div className="rounded-lg border p-3">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">
-              Còn lại
+              IoT kit chưa sử dụng
             </p>
             <p
               className={cn(
@@ -763,7 +763,7 @@ export default function AdminKitAssignmentDetailPage() {
                   )}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Còn lại:{" "}
+                  Chưa sử dụng:{" "}
                   <span className="font-medium text-foreground">
                     {orderDetail.remainingSlots}
                   </span>{" "}
