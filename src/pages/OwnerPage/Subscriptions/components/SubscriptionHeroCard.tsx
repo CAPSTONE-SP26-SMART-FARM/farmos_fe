@@ -13,12 +13,15 @@ import {
   ArrowRight,
   CreditCard,
   LifeBuoy,
+  RotateCcw,
   ShoppingBag,
   Sparkle,
 } from "lucide-react";
 
 interface SubscriptionHeroCardProps {
   subscription: SubscriptionResType;
+  onRenew?: () => void;
+  renewLoading?: boolean;
   onResubscribe?: () => void;
   onPayPending?: () => void;
   onContactSupport?: () => void;
@@ -26,6 +29,8 @@ interface SubscriptionHeroCardProps {
 
 function SubscriptionHeroCard({
   subscription,
+  onRenew,
+  renewLoading,
   onResubscribe,
   onPayPending,
   onContactSupport,
@@ -34,6 +39,20 @@ function SubscriptionHeroCard({
   const isActiveOrPending = status === "ACTIVE" || status === "PENDING";
 
   const renderActions = () => {
+    if (status === "ACTIVE" && onRenew) {
+      return (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onRenew}
+          disabled={renewLoading}
+        >
+          <RotateCcw className="mr-2 h-4 w-4" />
+          {renewLoading ? "Đang gia hạn..." : "Gia hạn ngay"}
+        </Button>
+      );
+    }
+
     if (status === "PENDING" && onPayPending) {
       return (
         <Button
