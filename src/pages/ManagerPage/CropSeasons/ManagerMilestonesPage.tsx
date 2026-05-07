@@ -93,7 +93,7 @@ const STATUS_META: Record<
   ProductionMilestoneStatusType,
   { label: string; variant: "default" | "secondary" | "outline" }
 > = {
-  pending: { label: "Chờ xử lý", variant: "secondary" },
+  pending: { label: "Chưa diễn ra", variant: "secondary" },
   in_progress: { label: "Đang thực hiện", variant: "default" },
   completed: { label: "Hoàn thành", variant: "outline" },
 };
@@ -363,7 +363,7 @@ const MilestoneEditFormFields = ({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="pending">Chờ xử lý</SelectItem>
+            <SelectItem value="pending">Chưa diễn ra</SelectItem>
             <SelectItem value="in_progress">Đang thực hiện</SelectItem>
             <SelectItem value="completed">Hoàn thành</SelectItem>
           </SelectContent>

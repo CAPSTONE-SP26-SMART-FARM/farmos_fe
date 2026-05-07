@@ -1,7 +1,9 @@
 import { QUERY_KEYS } from "@/constants";
 import type {
+  CreateServicePackageBodyType,
   CreditHistoryQueryType,
   ListServicePackagesQueryType,
+  UpdateServicePackageBodyType,
 } from "@/schemaValidatation/credit";
 import creditService from "@/services/creditService";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -47,6 +49,70 @@ export const usePurchaseServicePackage = () => {
       });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.invoices.all });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.credits.all });
+    },
+  });
+};
+
+export const useCreateServicePackage = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: CreateServicePackageBodyType) =>
+      creditService.createServicePackage(body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.servicePackages.all,
+      });
+    },
+  });
+};
+
+export const useUpdateServicePackage = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      body,
+    }: {
+      id: string;
+      body: UpdateServicePackageBodyType;
+    }) => creditService.updateServicePackage(id, body),
+    onSuccess: (_res, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.servicePackages.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.servicePackages.detail(variables.id),
+      });
+    },
+  });
+};
+
+export const useArchiveServicePackage = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => creditService.archiveServicePackage(id),
+    onSuccess: (_res, id) => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.servicePackages.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.servicePackages.detail(id),
+      });
+    },
+  });
+};
+
+export const useUnarchiveServicePackage = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => creditService.unarchiveServicePackage(id),
+    onSuccess: (_res, id) => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.servicePackages.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.servicePackages.detail(id),
+      });
     },
   });
 };

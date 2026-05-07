@@ -19,7 +19,9 @@ import {
   SENSOR_TYPE_LABEL_VI,
   type OwnerKitOrderTrackingType,
 } from "@/schemaValidatation/iotKit";
-import { Cpu } from "lucide-react";
+import { Cpu, CreditCard } from "lucide-react";
+import { useNavigate } from "react-router";
+import { useIotKitOrderPaymentStatus } from "@/queries/useIotKit";
 
 interface IotKitOrderDetailDialogProps {
   order: OwnerKitOrderTrackingType | null;
@@ -39,6 +41,14 @@ function IotKitOrderDetailDialog({
   open,
   onOpenChange,
 }: IotKitOrderDetailDialogProps) {
+  const navigate = useNavigate();
+  const isPending = order?.status === "PENDING";
+  const paymentStatusQuery = useIotKitOrderPaymentStatus(
+    order?.orderId ?? "",
+    !!order && isPending,
+  );
+  const pendingInvoiceId = paymentStatusQuery.data?.data?.invoiceId ?? null;
+
   if (!order) {
     return (
       <Dialog
@@ -213,6 +223,19 @@ function IotKitOrderDetailDialog({
 
         <Separator />
         <DialogFooter>
+          {isPending && (
+            <Button
+              onClick={() => {
+                if (!pendingInvoiceId) return;
+                onOpenChange(false);
+                navigate(`/dashboard/owner/payments/${pendingInvoiceId}`);
+              }}
+              disabled={!pendingInvoiceId || paymentStatusQuery.isLoading}
+            >
+              <CreditCard className="mr-2 h-4 w-4" />
+              Đi đến trang thanh toán
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}

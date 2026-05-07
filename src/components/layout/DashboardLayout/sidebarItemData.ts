@@ -17,7 +17,6 @@ import {
   Settings,
   Settings2,
   Shield,
-  SlidersHorizontal,
   Sprout,
   Tag,
   Ticket,
@@ -72,7 +71,7 @@ export const sidebarData: SidebarData = {
           icon: Package,
         },
         {
-          title: "Vòng Đời Đăng Ký",
+          title: "Quản Lý Đăng Ký",
           url: "/dashboard/admin/subscriptions",
           icon: Package,
         },
@@ -86,11 +85,6 @@ export const sidebarData: SidebarData = {
     {
       label: "IoT & Thiết bị",
       items: [
-        {
-          title: "Mẫu IoT",
-          url: "/dashboard/admin/iot-templates",
-          icon: SlidersHorizontal,
-        },
         {
           title: "Thiết Bị IoT",
           url: "/dashboard/admin/iot-devices",
@@ -111,11 +105,11 @@ export const sidebarData: SidebarData = {
     {
       label: "Mẫu vận hành",
       items: [
-        {
-          title: "Mẫu Vụ Mùa",
-          url: "/dashboard/admin/season-templates",
-          icon: Sprout,
-        },
+        // {
+        //   title: "Mẫu Vụ Mùa",
+        //   url: "/dashboard/admin/season-templates",
+        //   icon: Sprout,
+        // },
         {
           title: "Mẫu Cột Mốc",
           url: "/dashboard/admin/milestone-templates",

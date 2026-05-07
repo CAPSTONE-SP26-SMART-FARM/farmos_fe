@@ -48,7 +48,7 @@ const STATUS_META: Record<
   ProductionMilestoneStatusType,
   { label: string; variant: "default" | "secondary" | "outline" }
 > = {
-  pending: { label: "Chờ xử lý", variant: "secondary" },
+  pending: { label: "Chưa diễn ra", variant: "secondary" },
   in_progress: { label: "Đang thực hiện", variant: "default" },
   completed: { label: "Hoàn thành", variant: "outline" },
 };

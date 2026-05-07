@@ -9,7 +9,6 @@ import AdminFeaturesPage from "@/pages/AdminPage/Features/AdminFeaturesPage";
 import AdminIotKitsPage from "@/pages/AdminPage/IotKits/AdminIotKitsPage";
 import AdminKitAssignmentsPage from "@/pages/AdminPage/IotKits/AdminKitAssignmentsPage";
 import AdminKitAssignmentDetailPage from "@/pages/AdminPage/IotKits/AdminKitAssignmentDetailPage";
-import AdminIotTemplatesPage from "@/pages/AdminPage/IotTemplates/AdminIotTemplatesPage";
 import AdminInvoiceDetailPage from "@/pages/AdminPage/Invoices/AdminInvoiceDetailPage";
 import AdminInvoicesPage from "@/pages/AdminPage/Invoices/AdminInvoicesPage";
 import AdminIotDevicesPage from "@/pages/AdminPage/IotDevices/AdminIotDevicesPage";
@@ -172,11 +171,6 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/admin/ticket-analytics",
         component: AdminTicketAnalyticsPage,
-        allowedRoles: [RoleName.Admin],
-      },
-      {
-        path: "/dashboard/admin/iot-templates",
-        component: AdminIotTemplatesPage,
         allowedRoles: [RoleName.Admin],
       },
       {
