@@ -379,25 +379,9 @@ function SubDeviceCard({
         </div>
       </div>
 
-      <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
-        <div>
-          <span className="font-medium text-foreground">Cài đặt: </span>
-          {new Date(device.installedAt).toLocaleDateString("vi-VN")}
-        </div>
-        <div>
-          <span className="font-medium text-foreground">Owner: </span>
-          {device.owner ? (
-            <span className="text-emerald-700 dark:text-emerald-300">
-              {device.owner.name}
-            </span>
-          ) : (
-            "Chưa gán"
-          )}
-        </div>
-        <div>
-          <span className="font-medium text-foreground">Nông trại: </span>
-          {device.farm ? `${device.farm.name} (${device.farm.code})` : "—"}
-        </div>
+      <div className="text-xs text-muted-foreground">
+        <span className="font-medium text-foreground">Cài đặt: </span>
+        {new Date(device.installedAt).toLocaleDateString("vi-VN")}
       </div>
 
       {device.sensors.length > 0 && (

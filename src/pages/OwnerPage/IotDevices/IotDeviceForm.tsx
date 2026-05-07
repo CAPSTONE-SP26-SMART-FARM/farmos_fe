@@ -48,6 +48,7 @@ import {
   CloudRain,
   Sun,
 } from "lucide-react";
+
 import { useEffect, useState } from "react";
 import {
   Controller,
@@ -1445,36 +1446,6 @@ function EditDeviceForm({
         ? ownerUpdateMutation.isPending
         : managerUpdateMutation.isPending;
 
-  const adminCreateSensorsMutation = useAdminCreateSensorBatch();
-  const ownerCreateSensorsMutation = useOwnerCreateSensors();
-  const managerCreateSensorsMutation = useManagerCreateSensors();
-  const createSensorsAsync = ({
-    iotDeviceId,
-    body,
-  }: {
-    iotDeviceId: string;
-    body: { items: SensorBatchFormType["items"] };
-  }) => {
-    if (actor === "admin") {
-      return adminCreateSensorsMutation.mutateAsync({
-        deviceId: iotDeviceId,
-        body,
-      });
-    }
-
-    if (actor === "owner") {
-      return ownerCreateSensorsMutation.mutateAsync({ iotDeviceId, body });
-    }
-
-    return managerCreateSensorsMutation.mutateAsync({ iotDeviceId, body });
-  };
-  const sensorsPending =
-    actor === "admin"
-      ? adminCreateSensorsMutation.isPending
-      : actor === "owner"
-        ? ownerCreateSensorsMutation.isPending
-        : managerCreateSensorsMutation.isPending;
-  const [showSensorForm, setShowSensorForm] = useState(false);
 
   const isBoard = device.deviceType === "board_module";
 
@@ -1611,6 +1582,9 @@ function EditDeviceForm({
     actor === "admin"
       ? (adminDetailQuery.data?.data.sensors ?? []).map((s) => ({
           sensorType: s.sensorType,
+          status: s.status,
+          minValue: s.minValue,
+          maxValue: s.maxValue,
         }))
       : actor === "owner"
         ? (ownerSensorsQuery.data?.data?.data ?? [])
@@ -1618,23 +1592,31 @@ function EditDeviceForm({
   const existingSensorTypes = new Set(existingSensors.map((s) => s.sensorType));
   const remainingSensorSlots = Math.max(0, 4 - existingSensors.length);
 
-  const form = useForm<EditFormType>({
-    resolver: zodResolver(EditFormSchema),
-    defaultValues: {
-      deviceName: device.deviceName,
-      deviceType: device.deviceType as z.infer<typeof IotDeviceTypeSchema>,
-      macAddress: device.macAddress ?? "",
-      status: device.status,
-    },
-  });
-
-  useClearServerFieldErrors(form);
+  const adminCreateSensorsMutation = useAdminCreateSensorBatch();
+  const ownerCreateSensorsMutation = useOwnerCreateSensors();
+  const managerCreateSensorsMutation = useManagerCreateSensors();
+  const createSensorsAsync = ({
+    iotDeviceId,
+    body,
+  }: {
+    iotDeviceId: string;
+    body: { items: SensorBatchFormType["items"] };
+  }) => {
+    if (actor === "admin") return adminCreateSensorsMutation.mutateAsync({ deviceId: iotDeviceId, body });
+    if (actor === "owner") return ownerCreateSensorsMutation.mutateAsync({ iotDeviceId, body });
+    return managerCreateSensorsMutation.mutateAsync({ iotDeviceId, body });
+  };
+  const sensorsPending =
+    actor === "admin"
+      ? adminCreateSensorsMutation.isPending
+      : actor === "owner"
+        ? ownerCreateSensorsMutation.isPending
+        : managerCreateSensorsMutation.isPending;
+  const [showSensorForm, setShowSensorForm] = useState(false);
 
   const sensorForm = useForm<SensorBatchFormType>({
     resolver: zodResolver(SensorBatchFormSchema),
-    defaultValues: {
-      items: [{ sensorType: "soil_moisture", minValue: 0, maxValue: 100 }],
-    },
+    defaultValues: { items: [{ sensorType: "soil_moisture", minValue: 0, maxValue: 100 }] },
   });
   useClearServerFieldErrors(sensorForm);
 
@@ -1645,8 +1627,7 @@ function EditDeviceForm({
     replace: replaceSensors,
   } = useFieldArray({ control: sensorForm.control, name: "items" });
 
-  const currentSensorItems =
-    useWatch({ control: sensorForm.control, name: "items" }) ?? [];
+  const currentSensorItems = useWatch({ control: sensorForm.control, name: "items" }) ?? [];
 
   const SENSOR_TEMPLATE_TO_SENSOR_TYPE: Record<string, string> = {
     soil_moisture_sensor: "soil_moisture",
@@ -1659,33 +1640,55 @@ function EditDeviceForm({
     const seen = new Set<string>();
     const mapped = template.items
       .map((item) => {
-        const sensorType =
-          SENSOR_TEMPLATE_TO_SENSOR_TYPE[item.sensorType] ?? item.sensorType;
-        return {
-          sensorType: sensorType as z.infer<typeof SensorTypeSchema>,
-          minValue: item.minValue ?? 0,
-          maxValue: item.maxValue ?? 100,
-        };
+        const sensorType = SENSOR_TEMPLATE_TO_SENSOR_TYPE[item.sensorType] ?? item.sensorType;
+        return { sensorType: sensorType as z.infer<typeof SensorTypeSchema>, minValue: item.minValue ?? 0, maxValue: item.maxValue ?? 100 };
       })
       .filter((item) => {
-        if (existingSensorTypes.has(item.sensorType)) {
-          return false;
-        }
-
-        if (seen.has(item.sensorType)) {
-          return false;
-        }
-
+        if (existingSensorTypes.has(item.sensorType) || seen.has(item.sensorType)) return false;
         seen.add(item.sensorType);
         return true;
       })
       .slice(0, remainingSensorSlots);
+    if (mapped.length > 0) { replaceSensors(mapped); setShowSensorForm(true); }
+  };
 
-    if (mapped.length > 0) {
-      replaceSensors(mapped);
-      setShowSensorForm(true);
+  const onSensorSubmit = async (data: SensorBatchFormType) => {
+    sensorForm.clearErrors("items");
+    if (data.items.length > remainingSensorSlots) {
+      sensorForm.setError("items", { type: "manual", message: `Chỉ có thể thêm tối đa ${remainingSensorSlots} cảm biến nữa.` });
+      return;
+    }
+    const dup = data.items.find((item) => existingSensorTypes.has(item.sensorType));
+    if (dup) {
+      sensorForm.setError("items", { type: "manual", message: `${SENSOR_TYPE_LABEL[dup.sensorType] ?? dup.sensorType} đã tồn tại trên bo mạch.` });
+      return;
+    }
+    try {
+      await createSensorsAsync({ iotDeviceId: device.id, body: { items: data.items } });
+      setShowSensorForm(false);
+      const defaultSensorType = SENSOR_TYPE_VALUES.find((type) => !existingSensorTypes.has(type)) ?? "soil_moisture";
+      sensorForm.reset({ items: [{ sensorType: defaultSensorType, minValue: 0, maxValue: 100 }] });
+    } catch (error) {
+      if (isApiErrorUnprocessableEntityResponse<SensorBatchFormType>(error)) {
+        handleApiErrorUnprocessentity<SensorBatchFormType>(error.response!.data.errors, sensorForm.setError, { getValues: sensorForm.getValues });
+        return;
+      }
+      if (isApiErrorResponse(error)) { toast.error(error.response?.data.message ?? "Thêm cảm biến thất bại"); return; }
+      toast.error("Thêm cảm biến thất bại");
     }
   };
+
+  const form = useForm<EditFormType>({
+    resolver: zodResolver(EditFormSchema),
+    defaultValues: {
+      deviceName: device.deviceName,
+      deviceType: device.deviceType as z.infer<typeof IotDeviceTypeSchema>,
+      macAddress: device.macAddress ?? "",
+      status: device.status,
+    },
+  });
+
+  useClearServerFieldErrors(form);
 
   const doSave = async (data: EditFormType) => {
     try {
@@ -1716,68 +1719,6 @@ function EditDeviceForm({
     setConfirmSave(true);
   };
 
-  const onSensorSubmit = async (data: SensorBatchFormType) => {
-    sensorForm.clearErrors("items");
-
-    if (remainingSensorSlots <= 0) {
-      sensorForm.setError("items", {
-        type: "manual",
-        message: "Bo mạch đã đủ 4 cảm biến. Không thể thêm mới.",
-      });
-      return;
-    }
-
-    if (data.items.length > remainingSensorSlots) {
-      sensorForm.setError("items", {
-        type: "manual",
-        message: `Chỉ có thể thêm tối đa ${remainingSensorSlots} cảm biến nữa.`,
-      });
-      return;
-    }
-
-    const duplicatedWithExisting = data.items.find((item) =>
-      existingSensorTypes.has(item.sensorType),
-    );
-
-    if (duplicatedWithExisting) {
-      sensorForm.setError("items", {
-        type: "manual",
-        message: `${SENSOR_TYPE_LABEL[duplicatedWithExisting.sensorType] ?? duplicatedWithExisting.sensorType} đã tồn tại trên bo mạch.`,
-      });
-      return;
-    }
-
-    try {
-      await createSensorsAsync({
-        iotDeviceId: device.id,
-        body: { items: data.items },
-      });
-      setShowSensorForm(false);
-      const defaultSensorType =
-        SENSOR_TYPE_VALUES.find((type) => !existingSensorTypes.has(type)) ??
-        "soil_moisture";
-      sensorForm.reset({
-        items: [{ sensorType: defaultSensorType, minValue: 0, maxValue: 100 }],
-      });
-    } catch (error) {
-      if (isApiErrorUnprocessableEntityResponse<SensorBatchFormType>(error)) {
-        handleApiErrorUnprocessentity<SensorBatchFormType>(
-          error.response!.data.errors,
-          sensorForm.setError,
-          { getValues: sensorForm.getValues },
-        );
-        return;
-      }
-
-      if (isApiErrorResponse(error)) {
-        toast.error(error.response?.data.message ?? "Thêm cảm biến thất bại");
-        return;
-      }
-
-      toast.error("Thêm cảm biến thất bại");
-    }
-  };
-
   const dtVal = useWatch({ control: form.control, name: "deviceType" });
   const DIcon = DEVICE_TYPE_ICON[dtVal] ?? Cpu;
 
@@ -1789,10 +1730,6 @@ function EditDeviceForm({
       });
     }
   }, [dtVal, form]);
-
-  const sensorItemsError = sensorForm.formState.errors.items as
-    | { message?: string }
-    | undefined;
 
   return (
     <div
@@ -1884,11 +1821,7 @@ function EditDeviceForm({
                       </Field>
                     )}
                   />
-                ) : (
-                  <div className="rounded-md border border-dashed bg-muted/20 p-3 text-xs text-muted-foreground">
-                    Địa chỉ MAC chỉ áp dụng cho mô-đun WiFi.
-                  </div>
-                )}
+                ) : null}
                 <Controller
                   name="status"
                   control={form.control}
@@ -2036,11 +1969,7 @@ function EditDeviceForm({
                         }
                       />
                     </Field>
-                  ) : (
-                    <div className="rounded-md border border-dashed bg-muted/20 p-3 text-xs text-muted-foreground">
-                      Địa chỉ MAC chỉ áp dụng cho mô-đun WiFi.
-                    </div>
-                  )}
+                  ) : null}
                 </div>
               );
             })}
@@ -2048,23 +1977,27 @@ function EditDeviceForm({
         </Card>
       )}
 
-      {/* Sensor creation for board_module */}
-      {isBoard && !device.sensorsLockedAt && (
+      {isBoard && (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Thêm cảm biến</CardTitle>
+                <CardTitle>Cảm biến trên bo mạch ({existingSensors.length}/4)</CardTitle>
                 <CardDescription>
-                  Bo mạch hiện có {existingSensors.length}/4 cảm biến. Mỗi loại
-                  cảm biến chỉ được gắn 1 lần.
+                  {remainingSensorSlots > 0
+                    ? `Còn ${remainingSensorSlots} vị trí trống. Mỗi loại cảm biến chỉ được gắn 1 lần.`
+                    : "Bo mạch đã đủ 4 cảm biến."}
                 </CardDescription>
               </div>
-              {!showSensorForm && remainingSensorSlots > 0 && (
+              {!showSensorForm && remainingSensorSlots > 0 && !device.sensorsLockedAt && (
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => setShowSensorForm(true)}
+                  onClick={() => {
+                    const defaultType = SENSOR_TYPE_VALUES.find((t) => !existingSensorTypes.has(t)) ?? "soil_moisture";
+                    sensorForm.reset({ items: [{ sensorType: defaultType, minValue: 0, maxValue: 100 }] });
+                    setShowSensorForm(true);
+                  }}
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Thêm cảm biến
@@ -2072,59 +2005,53 @@ function EditDeviceForm({
               )}
             </div>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              <span>Còn lại: {remainingSensorSlots} vị trí</span>
-              {existingSensors.length > 0 && (
-                <span>
-                  Đang có:{" "}
-                  {existingSensors
-                    .map(
-                      (sensor) =>
-                        SENSOR_TYPE_LABEL[sensor.sensorType] ??
-                        sensor.sensorType,
-                    )
-                    .join(", ")}
-                </span>
-              )}
-            </div>
-            <SensorTemplatePicker
-              actor={actor}
-              onApply={applySensorTemplate}
-            />
-            {remainingSensorSlots === 0 && (
-              <p className="text-sm text-muted-foreground">
-                Bo mạch đã đủ 4 cảm biến, không thể thêm mới.
-              </p>
-            )}
-          </CardContent>
-          {showSensorForm && (
+
+          {existingSensors.length > 0 && (
             <CardContent>
-              <form onSubmit={sensorForm.handleSubmit(onSensorSubmit)}>
+              <div className="grid gap-3 md:grid-cols-2">
+                {existingSensors.map((sensor, i) => {
+                  const SIcon = SENSOR_TYPE_ICON[sensor.sensorType] ?? Cpu;
+                  const label = SENSOR_TYPE_LABEL[sensor.sensorType] ?? sensor.sensorType;
+                  const statusLabel = "status" in sensor
+                    ? ({ active: "Hoạt động", inactive: "Tắt", calibrating: "Hiệu chuẩn" }[(sensor as { status: string }).status] ?? (sensor as { status: string }).status)
+                    : null;
+                  return (
+                    <div key={i} className="rounded-lg border bg-background p-3 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="flex items-center gap-1.5 text-sm font-medium">
+                          <SIcon className="h-4 w-4 text-muted-foreground" />
+                          {label}
+                        </span>
+                        {statusLabel && <Badge variant="outline">{statusLabel}</Badge>}
+                      </div>
+                      {"minValue" in sensor && "maxValue" in sensor && (
+                        <div className="text-xs text-muted-foreground">
+                          Nhỏ nhất: {(sensor as { minValue: number }).minValue} | Lớn nhất: {(sensor as { maxValue: number }).maxValue}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          )}
+
+          {showSensorForm && !device.sensorsLockedAt && (
+            <CardContent>
+              <SensorTemplatePicker actor={actor} onApply={applySensorTemplate} />
+              <form onSubmit={sensorForm.handleSubmit(onSensorSubmit)} className="mt-3">
                 <div className="space-y-3">
-                  {sensorItemsError?.message && (
+                  {(sensorForm.formState.errors.items as { message?: string } | undefined)?.message && (
                     <p className="text-sm text-destructive">
-                      {sensorItemsError.message}
+                      {(sensorForm.formState.errors.items as { message?: string }).message}
                     </p>
                   )}
-
                   {sensorFields.map((field, index) => (
-                    <div
-                      key={field.id}
-                      className="rounded-lg border bg-muted/10 p-3 space-y-3"
-                    >
+                    <div key={field.id} className="rounded-lg border bg-muted/10 p-3 space-y-3">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium">
-                          Cảm biến #{index + 1}
-                        </p>
+                        <p className="text-sm font-medium">Cảm biến #{index + 1}</p>
                         {sensorFields.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-destructive"
-                            onClick={() => removeSensor(index)}
-                          >
+                          <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeSensor(index)}>
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         )}
@@ -2136,43 +2063,17 @@ function EditDeviceForm({
                           render={({ field: f, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
                               <FieldLabel>Loại cảm biến *</FieldLabel>
-                              <Select
-                                value={f.value}
-                                onValueChange={f.onChange}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
+                              <Select value={f.value} onValueChange={f.onChange}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
-                                  {Object.entries(SENSOR_TYPE_LABEL).map(
-                                    ([val, label]) => {
-                                      const alreadyBound =
-                                        existingSensorTypes.has(val);
-                                      const selectedElsewhere =
-                                        currentSensorItems.some(
-                                          (item, itemIndex) =>
-                                            itemIndex !== index &&
-                                            item?.sensorType === val,
-                                        );
-
-                                      return (
-                                        <SelectItem
-                                          key={val}
-                                          value={val}
-                                          disabled={
-                                            alreadyBound || selectedElsewhere
-                                          }
-                                        >
-                                          {label}
-                                        </SelectItem>
-                                      );
-                                    },
-                                  )}
+                                  {Object.entries(SENSOR_TYPE_LABEL).map(([val, label]) => (
+                                    <SelectItem key={val} value={val} disabled={existingSensorTypes.has(val) || currentSensorItems.some((item, idx) => idx !== index && item?.sensorType === val)}>
+                                      {label}
+                                    </SelectItem>
+                                  ))}
                                 </SelectContent>
                               </Select>
-                              <FieldError>
-                                {fieldState.error?.message}
-                              </FieldError>
+                              <FieldError>{fieldState.error?.message}</FieldError>
                             </Field>
                           )}
                         />
@@ -2182,17 +2083,8 @@ function EditDeviceForm({
                           render={({ field: f, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
                               <FieldLabel>Giá trị tối thiểu *</FieldLabel>
-                              <Input
-                                type="number"
-                                step="any"
-                                {...f}
-                                onChange={(e) =>
-                                  f.onChange(e.target.valueAsNumber)
-                                }
-                              />
-                              <FieldError>
-                                {fieldState.error?.message}
-                              </FieldError>
+                              <Input type="number" step="any" {...f} onChange={(e) => f.onChange(e.target.valueAsNumber)} />
+                              <FieldError>{fieldState.error?.message}</FieldError>
                             </Field>
                           )}
                         />
@@ -2202,91 +2094,41 @@ function EditDeviceForm({
                           render={({ field: f, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
                               <FieldLabel>Giá trị tối đa *</FieldLabel>
-                              <Input
-                                type="number"
-                                step="any"
-                                {...f}
-                                onChange={(e) =>
-                                  f.onChange(e.target.valueAsNumber)
-                                }
-                              />
-                              <FieldError>
-                                {fieldState.error?.message}
-                              </FieldError>
+                              <Input type="number" step="any" {...f} onChange={(e) => f.onChange(e.target.valueAsNumber)} />
+                              <FieldError>{fieldState.error?.message}</FieldError>
                             </Field>
                           )}
                         />
                       </div>
                     </div>
                   ))}
-
                   {sensorFields.length < remainingSensorSlots && (
                     <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
+                      type="button" variant="outline" size="sm" className="w-full"
                       onClick={() => {
-                        const usedInForm = new Set(
-                          currentSensorItems
-                            .map((item) => item?.sensorType)
-                            .filter(Boolean),
-                        );
-                        const nextSensorType = SENSOR_TYPE_VALUES.find(
-                          (type) =>
-                            !existingSensorTypes.has(type) &&
-                            !usedInForm.has(type),
-                        );
-
-                        if (!nextSensorType) {
-                          return;
-                        }
-
-                        appendSensor({
-                          sensorType: nextSensorType,
-                          minValue: 0,
-                          maxValue: 100,
-                        });
+                        const usedInForm = new Set(currentSensorItems.map((item) => item?.sensorType).filter(Boolean));
+                        const next = SENSOR_TYPE_VALUES.find((type) => !existingSensorTypes.has(type) && !usedInForm.has(type));
+                        if (next) appendSensor({ sensorType: next, minValue: 0, maxValue: 100 });
                       }}
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       Thêm cảm biến
                     </Button>
                   )}
-
                   <div className="flex justify-end gap-2 pt-2">
                     <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
+                      type="button" variant="outline" size="sm"
                       onClick={() => {
-                        const defaultSensorType =
-                          SENSOR_TYPE_VALUES.find(
-                            (type) => !existingSensorTypes.has(type),
-                          ) ?? "soil_moisture";
+                        const defaultType = SENSOR_TYPE_VALUES.find((t) => !existingSensorTypes.has(t)) ?? "soil_moisture";
                         setShowSensorForm(false);
                         sensorForm.clearErrors("items");
-                        sensorForm.reset({
-                          items: [
-                            {
-                              sensorType: defaultSensorType,
-                              minValue: 0,
-                              maxValue: 100,
-                            },
-                          ],
-                        });
+                        sensorForm.reset({ items: [{ sensorType: defaultType, minValue: 0, maxValue: 100 }] });
                       }}
                     >
                       Hủy
                     </Button>
-                    <Button
-                      type="submit"
-                      size="sm"
-                      disabled={sensorsPending}
-                    >
-                      {sensorsPending && (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      )}
+                    <Button type="submit" size="sm" disabled={sensorsPending}>
+                      {sensorsPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       Tạo {sensorFields.length} cảm biến
                     </Button>
                   </div>
