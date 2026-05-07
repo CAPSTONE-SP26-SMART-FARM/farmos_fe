@@ -15,6 +15,7 @@ import { getApiErrorMessageVi } from "@/lib/error-message";
 import { isApiErrorResponse } from "@/lib/utils";
 import {
   useOwnerMySubscription,
+  useOwnerRenewSubscription,
   useSubscriptionDetail,
   useSubscriptionEntitlements,
 } from "@/queries/useSubscription";
@@ -23,6 +24,7 @@ import type { SubscriptionResType } from "@/schemaValidatation/subscription";
 import { ArrowLeft, Package } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
+import { toast } from "sonner";
 import CancelSubscriptionSheet from "./CancelSubscriptionSheet";
 import CreditsAddonsTab from "./CreditsAddonsTab";
 import DangerZoneSection from "./DangerZoneSection";
@@ -128,6 +130,21 @@ function OwnerSubscriptionDashboard({
       for (const [k, v] of Object.entries(extra)) params.set(k, v);
     }
     setSearchParams(params, { replace: false });
+  };
+
+  const renewMutation = useOwnerRenewSubscription();
+
+  const handleRenew = async () => {
+    if (!subscriptionId) return;
+    try {
+      const result = await renewMutation.mutateAsync(subscriptionId);
+      toast.success(
+        `Đã tạo hóa đơn gia hạn ${result.data.invoiceNumber}. Chuyển tới trang thanh toán...`,
+      );
+      navigate(`/dashboard/owner/payments/${result.data.invoiceId}`);
+    } catch (error) {
+      toast.error(getApiErrorMessageVi(error, "Gia hạn đăng ký thất bại."));
+    }
   };
 
   const handleResubscribe = () => navigate(PLANS_PATH);
@@ -253,6 +270,8 @@ function OwnerSubscriptionDashboard({
 
       <SubscriptionHeroCard
         subscription={subscription}
+        onRenew={handleRenew}
+        renewLoading={renewMutation.isPending}
         onResubscribe={handleResubscribe}
         onPayPending={handlePayPending}
         onContactSupport={handleContactSupport}
