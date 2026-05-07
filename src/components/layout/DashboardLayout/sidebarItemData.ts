@@ -215,11 +215,6 @@ export const sidebarData: SidebarData = {
           icon: Package,
         },
         {
-          title: "Lịch Sử Đăng Ký",
-          url: "/dashboard/owner/subscriptions/history",
-          icon: Package,
-        },
-        {
           title: "Ví Credit",
           url: "/dashboard/owner/wallet",
           icon: Wallet,
