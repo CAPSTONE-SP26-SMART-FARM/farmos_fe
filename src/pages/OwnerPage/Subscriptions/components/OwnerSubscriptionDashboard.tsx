@@ -15,8 +15,6 @@ import { getApiErrorMessageVi } from "@/lib/error-message";
 import { isApiErrorResponse } from "@/lib/utils";
 import {
   useOwnerMySubscription,
-  useOwnerRenewSubscription,
-  useOwnerToggleAutoRenew,
   useSubscriptionDetail,
   useSubscriptionEntitlements,
 } from "@/queries/useSubscription";
@@ -25,17 +23,16 @@ import type { SubscriptionResType } from "@/schemaValidatation/subscription";
 import { ArrowLeft, Package } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
-import { toast } from "sonner";
-import BillingTab from "./BillingTab";
 import CancelSubscriptionSheet from "./CancelSubscriptionSheet";
 import CreditsAddonsTab from "./CreditsAddonsTab";
+import DangerZoneSection from "./DangerZoneSection";
 import HistoryTab from "./HistoryTab";
 import OverviewTab from "./OverviewTab";
 import SubscriptionBannerCascade from "./SubscriptionBannerCascade";
 import SubscriptionHeroCard from "./SubscriptionHeroCard";
 import UsageTab from "./UsageTab";
 
-const TAB_VALUES = ["overview", "usage", "billing", "credits", "history"] as const;
+const TAB_VALUES = ["overview", "usage", "credits", "history"] as const;
 type TabValue = (typeof TAB_VALUES)[number];
 
 function isTabValue(value: string | null): value is TabValue {
@@ -110,9 +107,6 @@ function OwnerSubscriptionDashboard({
     Boolean(subscriptionId),
   );
 
-  const renewMutation = useOwnerRenewSubscription();
-  const toggleAutoRenewMutation = useOwnerToggleAutoRenew();
-
   const unpaidInvoice = useMemo(
     () =>
       invoicesQuery.data?.data?.data?.find((inv) => inv.status === "OPEN"),
@@ -136,42 +130,12 @@ function OwnerSubscriptionDashboard({
     setSearchParams(params, { replace: false });
   };
 
-  const handleRenew = async () => {
-    if (!subscriptionId) return;
-    try {
-      const result = await renewMutation.mutateAsync(subscriptionId);
-      toast.success(
-        `Đã tạo hóa đơn gia hạn ${result.data.invoiceNumber}. Vui lòng thanh toán để kích hoạt.`,
-      );
-      setTab("billing");
-    } catch (error) {
-      toast.error(getApiErrorMessageVi(error, "Gia hạn đăng ký thất bại."));
-    }
-  };
-
-  const handleToggleAutoRenew = async (next: boolean) => {
-    if (!subscriptionId) return;
-    try {
-      await toggleAutoRenewMutation.mutateAsync({
-        id: subscriptionId,
-        data: { autoRenew: next },
-      });
-      toast.success(
-        next ? "Đã bật tự động gia hạn." : "Đã tắt tự động gia hạn.",
-      );
-    } catch (error) {
-      toast.error(
-        getApiErrorMessageVi(error, "Cập nhật tự động gia hạn thất bại."),
-      );
-    }
-  };
-
   const handleResubscribe = () => navigate(PLANS_PATH);
   const handlePayPending = () => {
     if (unpaidInvoice) {
-      setTab("billing", { invoiceId: unpaidInvoice.id });
+      navigate(`/dashboard/owner/payments/${unpaidInvoice.id}`);
     } else {
-      setTab("billing");
+      navigate("/dashboard/owner/payments");
     }
   };
   const handleContactSupport = () => navigate(SUPPORT_TICKETS_PATH);
@@ -283,19 +247,12 @@ function OwnerSubscriptionDashboard({
       ?.gatewayResponse as { orderCode?: string | number } | null)?.orderCode ??
     null;
 
-  const showCancelInBillingTab =
-    subscription.status === "ACTIVE" || subscription.status === "PENDING";
-
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {breadcrumbNode}
 
       <SubscriptionHeroCard
         subscription={subscription}
-        onToggleAutoRenew={handleToggleAutoRenew}
-        toggleAutoRenewLoading={toggleAutoRenewMutation.isPending}
-        onRenew={handleRenew}
-        renewLoading={renewMutation.isPending}
         onResubscribe={handleResubscribe}
         onPayPending={handlePayPending}
         onContactSupport={handleContactSupport}
@@ -306,11 +263,9 @@ function OwnerSubscriptionDashboard({
         unpaidInvoice={unpaidInvoice}
         paymentPending={paymentPending}
         paymentOrderCode={paymentOrderCode}
-        onRenew={handleRenew}
-        renewLoading={renewMutation.isPending}
-        onPayNow={(invoiceId) => setTab("billing", { invoiceId })}
-        onEnableAutoRenew={() => handleToggleAutoRenew(true)}
-        enableAutoRenewLoading={toggleAutoRenewMutation.isPending}
+        onPayNow={(invoiceId) =>
+          navigate(`/dashboard/owner/payments/${invoiceId}`)
+        }
         onContactSupport={handleContactSupport}
       />
 
@@ -321,7 +276,6 @@ function OwnerSubscriptionDashboard({
         <TabsList>
           <TabsTrigger value="overview">Tổng quan</TabsTrigger>
           <TabsTrigger value="usage">Sử dụng</TabsTrigger>
-          <TabsTrigger value="billing">Thanh toán</TabsTrigger>
           <TabsTrigger value="credits">Credit &amp; Bổ trợ</TabsTrigger>
           <TabsTrigger value="history">Lịch sử</TabsTrigger>
         </TabsList>
@@ -347,18 +301,6 @@ function OwnerSubscriptionDashboard({
         </TabsContent>
 
         <TabsContent
-          value="billing"
-          className="mt-4"
-        >
-          <BillingTab
-            subscription={subscription}
-            onOpenCancel={() => setIsCancelOpen(true)}
-            onChangePlan={() => navigate(PLANS_PATH)}
-            showCancel={showCancelInBillingTab}
-          />
-        </TabsContent>
-
-        <TabsContent
           value="credits"
           className="mt-4"
         >
@@ -372,6 +314,11 @@ function OwnerSubscriptionDashboard({
           <HistoryTab />
         </TabsContent>
       </Tabs>
+
+      <DangerZoneSection
+        subscription={subscription}
+        onOpenCancel={() => setIsCancelOpen(true)}
+      />
 
       <CancelSubscriptionSheet
         open={isCancelOpen}

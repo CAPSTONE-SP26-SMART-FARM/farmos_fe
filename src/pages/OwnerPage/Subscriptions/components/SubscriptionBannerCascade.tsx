@@ -8,12 +8,8 @@ interface SubscriptionBannerCascadeProps {
   unpaidInvoice?: InvoiceType;
   paymentPending?: boolean;
   paymentOrderCode?: string | number | null;
-  onRenew?: () => void;
   onPayNow?: (invoiceId: string) => void;
-  onEnableAutoRenew?: () => void;
   onContactSupport?: () => void;
-  renewLoading?: boolean;
-  enableAutoRenewLoading?: boolean;
 }
 
 function SubscriptionBannerCascade({
@@ -21,12 +17,8 @@ function SubscriptionBannerCascade({
   unpaidInvoice,
   paymentPending,
   paymentOrderCode,
-  onRenew,
   onPayNow,
-  onEnableAutoRenew,
   onContactSupport,
-  renewLoading,
-  enableAutoRenewLoading,
 }: SubscriptionBannerCascadeProps) {
   if (subscription.status === "SUSPENDED") {
     return (
@@ -60,16 +52,7 @@ function SubscriptionBannerCascade({
             ? `Đã hết hạn ${daysAgo} ngày trước`
             : "Gói đăng ký đã hết hạn"
         }
-        description="Gia hạn để tiếp tục sử dụng dịch vụ đầy đủ."
-        action={
-          onRenew
-            ? {
-                label: "Gia hạn ngay",
-                onClick: onRenew,
-                loading: renewLoading,
-              }
-            : undefined
-        }
+        description="Đăng ký gói mới để tiếp tục sử dụng dịch vụ đầy đủ."
       />
     );
   }
@@ -97,21 +80,12 @@ function SubscriptionBannerCascade({
       new Date(subscription.expiresAt),
       new Date(),
     );
-    if (daysLeft >= 0 && daysLeft <= 14 && !subscription.autoRenew) {
+    if (daysLeft >= 0 && daysLeft <= 14) {
       return (
         <StatusBanner
           variant="info"
           title={`Sắp hết hạn trong ${daysLeft} ngày`}
-          description="Bật tự động gia hạn để tránh gián đoạn dịch vụ."
-          action={
-            onEnableAutoRenew
-              ? {
-                  label: "Bật tự động gia hạn",
-                  onClick: onEnableAutoRenew,
-                  loading: enableAutoRenewLoading,
-                }
-              : undefined
-          }
+          description="Đăng ký gói mới trước khi hết hạn để tránh gián đoạn dịch vụ."
         />
       );
     }

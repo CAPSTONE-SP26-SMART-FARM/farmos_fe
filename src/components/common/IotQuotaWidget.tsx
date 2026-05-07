@@ -141,7 +141,10 @@ export default function IotQuotaWidget({
         <Badge variant="outline">Hạn mức IoT</Badge>
         <span>
           <span className="font-semibold">{quota.remaining}</span>
-          <span className="text-muted-foreground"> / {totalCapacity} còn lại</span>
+          <span className="text-muted-foreground">
+            {" "}
+            / {totalCapacity} chưa sử dụng
+          </span>
         </span>
         <span className="text-muted-foreground">·</span>
         <Link
@@ -181,7 +184,7 @@ export default function IotQuotaWidget({
             />
             <KpiCard
               icon={PackagePlus}
-              label="Kit cộng thêm"
+              label="IoT kit mua thêm"
               value={quota.kitBonus}
               tone="success"
               hint={
@@ -198,7 +201,7 @@ export default function IotQuotaWidget({
             />
             <KpiCard
               icon={Zap}
-              label="Còn lại"
+              label="IoT kit chưa sử dụng"
               value={quota.remaining}
               tone={quota.remaining <= 0 ? "danger" : "success"}
             />

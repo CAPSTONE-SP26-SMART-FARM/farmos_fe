@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatCreditLabel } from "@/constants/creditLabel";
 import { formatCurrencyVnd } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { ServicePackageType } from "@/schemaValidatation/credit";
@@ -67,8 +68,8 @@ function ServicePackageGrid({
                 <p className="text-3xl font-bold">
                   +{pkg.creditAmount.toLocaleString("vi-VN")}
                 </p>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  {pkg.creditType}
+                <p className="text-xs text-muted-foreground">
+                  {formatCreditLabel(pkg.creditType)}
                 </p>
               </div>
               <div className="mt-auto space-y-1">

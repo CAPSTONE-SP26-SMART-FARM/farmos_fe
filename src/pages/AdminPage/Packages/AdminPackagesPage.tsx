@@ -186,7 +186,7 @@ function AdminPackagesPage() {
                     <th className="p-3">Gói</th>
                     <th className="p-3">Thời hạn (tháng)</th>
                     <th className="p-3">Bộ IoT</th>
-                    <th className="p-3">Vé bác sĩ</th>
+                    <th className="p-3">Lượt tư vấn bác sĩ</th>
                     <th className="p-3">Giá (VND)</th>
                     <th className="p-3">Trạng thái</th>
                     <th className="p-3 w-12.5"></th>

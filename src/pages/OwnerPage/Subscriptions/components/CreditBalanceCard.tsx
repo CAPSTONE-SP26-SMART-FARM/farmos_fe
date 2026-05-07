@@ -1,16 +1,17 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatCreditLabel } from "@/constants/creditLabel";
 import { cn } from "@/lib/utils";
 import type { OwnerCreditType } from "@/schemaValidatation/credit";
-import { AlertTriangle, Coins } from "lucide-react";
+import { AlertTriangle, Stethoscope } from "lucide-react";
 
 export const LOW_BALANCE_THRESHOLD = 10;
 
-interface BalanceCardProps {
+interface CreditBalanceCardProps {
   credit: OwnerCreditType;
 }
 
-function BalanceCard({ credit }: BalanceCardProps) {
+function CreditBalanceCard({ credit }: CreditBalanceCardProps) {
   const isLow = credit.balance < LOW_BALANCE_THRESHOLD;
 
   return (
@@ -19,10 +20,10 @@ function BalanceCard({ credit }: BalanceCardProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
-              <Coins className="h-4 w-4 text-primary" />
+              <Stethoscope className="h-4 w-4 text-primary" />
             </div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-              {credit.creditType}
+            <p className="text-sm font-medium">
+              {formatCreditLabel(credit.creditType)}
             </p>
           </div>
           {isLow && (
@@ -35,7 +36,7 @@ function BalanceCard({ credit }: BalanceCardProps) {
             </Badge>
           )}
         </div>
-        <p className="text-4xl font-bold">
+        <p className="text-4xl font-bold tabular-nums">
           {credit.balance.toLocaleString("vi-VN")}
         </p>
       </CardContent>
@@ -43,4 +44,4 @@ function BalanceCard({ credit }: BalanceCardProps) {
   );
 }
 
-export default BalanceCard;
+export default CreditBalanceCard;

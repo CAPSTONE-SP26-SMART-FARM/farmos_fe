@@ -2,29 +2,23 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
 import SubscriptionStatusBadge from "@/components/common/SubscriptionStatusBadge";
 import { formatDateVi, formatRelativeVi } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import type { SubscriptionResType } from "@/schemaValidatation/subscription";
 import {
   ArrowRight,
   CreditCard,
   LifeBuoy,
-  RotateCcw,
   ShoppingBag,
   Sparkle,
 } from "lucide-react";
 
 interface SubscriptionHeroCardProps {
   subscription: SubscriptionResType;
-  onToggleAutoRenew: (next: boolean) => void;
-  toggleAutoRenewLoading?: boolean;
-  onRenew?: () => void;
-  renewLoading?: boolean;
   onResubscribe?: () => void;
   onPayPending?: () => void;
   onContactSupport?: () => void;
@@ -32,33 +26,14 @@ interface SubscriptionHeroCardProps {
 
 function SubscriptionHeroCard({
   subscription,
-  onToggleAutoRenew,
-  toggleAutoRenewLoading,
-  onRenew,
-  renewLoading,
   onResubscribe,
   onPayPending,
   onContactSupport,
 }: SubscriptionHeroCardProps) {
   const { status } = subscription;
-  const showAutoRenewSwitch = status === "ACTIVE" || status === "PENDING";
-  const autoRenewSwitchDisabled = status === "PENDING" || toggleAutoRenewLoading;
+  const isActiveOrPending = status === "ACTIVE" || status === "PENDING";
 
   const renderActions = () => {
-    if (status === "ACTIVE" && onRenew) {
-      return (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onRenew}
-          disabled={renewLoading}
-        >
-          <RotateCcw className="mr-2 h-4 w-4" />
-          {renewLoading ? "Đang gia hạn..." : "Gia hạn ngay"}
-        </Button>
-      );
-    }
-
     if (status === "PENDING" && onPayPending) {
       return (
         <Button
@@ -71,34 +46,7 @@ function SubscriptionHeroCard({
       );
     }
 
-    if (status === "EXPIRED") {
-      return (
-        <div className="flex flex-wrap gap-2">
-          {onRenew && (
-            <Button
-              size="sm"
-              onClick={onRenew}
-              disabled={renewLoading}
-            >
-              <RotateCcw className="mr-2 h-4 w-4" />
-              {renewLoading ? "Đang gia hạn..." : "Gia hạn gói này"}
-            </Button>
-          )}
-          {onResubscribe && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onResubscribe}
-            >
-              <ShoppingBag className="mr-2 h-4 w-4" />
-              Đăng ký gói khác
-            </Button>
-          )}
-        </div>
-      );
-    }
-
-    if (status === "CANCELLED" && onResubscribe) {
+    if ((status === "EXPIRED" || status === "CANCELLED") && onResubscribe) {
       return (
         <Button
           size="sm"
@@ -138,14 +86,16 @@ function SubscriptionHeroCard({
             </CardTitle>
             <SubscriptionStatusBadge status={subscription.status} />
           </div>
-          <CardDescription>
-            Mã đăng ký: {subscription.id.slice(0, 8)}…
-          </CardDescription>
         </div>
         <div className="shrink-0">{renderActions()}</div>
       </CardHeader>
 
-      <CardContent className="grid gap-4 md:grid-cols-3">
+      <CardContent
+        className={cn(
+          "grid gap-4",
+          isActiveOrPending ? "md:grid-cols-2" : "md:grid-cols-3",
+        )}
+      >
         <div className="rounded-lg border p-3">
           <p className="text-xs text-muted-foreground">Bắt đầu</p>
           <p className="font-medium">{formatDateVi(subscription.startedAt)}</p>
@@ -159,38 +109,14 @@ function SubscriptionHeroCard({
             </p>
           )}
         </div>
-        {showAutoRenewSwitch ? (
-          <div className="flex flex-col justify-between rounded-lg border p-3">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <p className="text-xs text-muted-foreground">
-                  Tự động gia hạn
-                </p>
-                <p className="font-medium">
-                  {subscription.autoRenew ? "Đang bật" : "Đang tắt"}
-                </p>
-              </div>
-              <Switch
-                checked={subscription.autoRenew}
-                onCheckedChange={onToggleAutoRenew}
-                disabled={autoRenewSwitchDisabled}
-                aria-label="Bật/tắt tự động gia hạn"
-              />
-            </div>
-            {status === "PENDING" && (
-              <p className="mt-2 text-xs text-muted-foreground">
-                Có thể chỉnh sau khi thanh toán hoàn tất.
-              </p>
-            )}
-          </div>
-        ) : (
+        {!isActiveOrPending && (
           <div className="rounded-lg border border-dashed p-3">
             <p className="text-xs text-muted-foreground">Gói đã kết thúc</p>
             <p className="text-sm">
               {status === "CANCELLED"
                 ? "Bạn có thể đăng ký gói mới bất cứ lúc nào."
                 : status === "EXPIRED"
-                  ? "Gia hạn để tiếp tục sử dụng, hoặc chọn gói khác."
+                  ? "Đăng ký gói mới để tiếp tục sử dụng dịch vụ."
                   : "Liên hệ hỗ trợ để biết thêm thông tin."}
             </p>
           </div>

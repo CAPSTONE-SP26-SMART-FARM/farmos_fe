@@ -25,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatCreditLabel } from "@/constants/creditLabel";
 import { formatDateTimeVi } from "@/lib/format";
 import { getApiErrorMessageVi } from "@/lib/error-message";
 import { cn } from "@/lib/utils";
@@ -93,7 +94,7 @@ function CreditLedgerTable({ creditTypes }: CreditLedgerTableProps) {
                 key={t}
                 value={t}
               >
-                {t}
+                {formatCreditLabel(t)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -142,8 +143,8 @@ function CreditLedgerTable({ creditTypes }: CreditLedgerTableProps) {
                           {TRANSACTION_TYPE_LABEL[row.transactionType]}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-xs uppercase text-muted-foreground">
-                        {row.creditType}
+                      <TableCell className="text-sm text-muted-foreground">
+                        {formatCreditLabel(row.creditType)}
                       </TableCell>
                       <TableCell
                         className={cn(
