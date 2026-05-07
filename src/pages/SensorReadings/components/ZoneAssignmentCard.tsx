@@ -52,7 +52,7 @@ export default memo(function ZoneAssignmentCard({
               </span>
               <span className="flex items-center gap-1">
                 <Cpu className="h-3.5 w-3.5" />
-                {group.assignment.device.deviceName}
+                {group.assignment.device?.deviceName ?? "Chưa gán thiết bị"}
               </span>
             </div>
           </div>

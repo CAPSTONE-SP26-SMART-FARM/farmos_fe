@@ -73,10 +73,6 @@ export function IncidentTab({ cropSeason }: { cropSeason: CropSeasonType }) {
         <p className="text-sm text-muted-foreground">
           {tickets.length > 0 ? `${tickets.length} sự cố gần đây` : "Không có sự cố nào"}
         </p>
-        <Button size="sm" onClick={toCreate}>
-          <Plus className="h-3 w-3 mr-1.5" />
-          Báo cáo sự cố
-        </Button>
       </div>
 
       {tickets.length === 0 ? (

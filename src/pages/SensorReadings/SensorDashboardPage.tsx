@@ -94,9 +94,9 @@ export default function SensorDashboardPage({
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         {/* Left: Zone groups */}
         <div className="space-y-4">
-          {zones.map((group) => (
+          {zones.map((group, idx) => (
             <ZoneAssignmentCard
-              key={group.assignment.assignmentId}
+              key={`${group.assignment.assignmentId}-${group.zoneId}-${idx}`}
               group={group}
               role={role}
             />

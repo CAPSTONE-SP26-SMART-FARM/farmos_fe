@@ -117,7 +117,6 @@ function OwnerPaymentDetailPage() {
         id: invoiceId,
         data: {
           gateway: "PAYOS",
-          returnUrl: window.location.href,
         },
       });
       setIsConfirmPayOpen(false);

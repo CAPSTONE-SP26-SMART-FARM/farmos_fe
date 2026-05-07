@@ -145,7 +145,7 @@ export default function OwnerIotKitOrderStatusPage() {
               Đơn {orderNumber ?? `${order.orderId.slice(0, 8)}…`}
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
-              Theo dõi tình trạng thanh toán và việc cấp phát thiết bị cho đơn
+              Theo dõi tình trạng thanh toán và việc gán Iot kit cho đơn
               của bạn.
             </p>
           </div>

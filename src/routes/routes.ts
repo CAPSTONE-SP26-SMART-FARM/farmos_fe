@@ -58,11 +58,13 @@ import ManagerSensorDashboardPage from "@/pages/ManagerPage/SensorDashboard/Mana
 import OwnerCropSeasonsPage from "@/pages/OwnerPage/CropSeasons/OwnerCropSeasonsPage";
 import PlanVsActualPage from "@/pages/OwnerPage/CropSeasons/PlanVsActualPage";
 import OwnerEmployeeTaskTemplatesPage from "@/pages/OwnerPage/EmployeeTaskTemplates/OwnerEmployeeTaskTemplatesPage";
-import OwnerIotDevicesPage from "@/pages/OwnerPage/IotDevices/OwnerIotDevicesPage";
 import OwnerIotKitsPage from "@/pages/OwnerPage/IotKits/OwnerIotKitsPage";
 import OwnerIotKitDetailPage from "@/pages/OwnerPage/IotKits/OwnerIotKitDetailPage";
 import OwnerIotKitOrderStatusPage from "@/pages/OwnerPage/IotKits/OwnerIotKitOrderStatusPage";
-import OwnerIotTrackingPage from "@/pages/OwnerPage/IotKits/OwnerIotTrackingPage";
+import OwnerIotHubPage, {
+  RedirectToIotDevicesTab,
+  RedirectToIotOverviewTab,
+} from "@/pages/OwnerPage/IotHub/OwnerIotHubPage";
 import OwnerDailyLogsPage from "@/pages/OwnerPage/DailyLogs/OwnerDailyLogsPage";
 import OwnerSensorReadingPage from "@/pages/OwnerPage/SensorReadings/OwnerSensorReadingPage";
 import OwnerSensorDashboardPage from "@/pages/OwnerPage/SensorDashboard/OwnerSensorDashboardPage";
@@ -398,18 +400,23 @@ const routes: AppRoutes = [
         allowedRoles: [RoleName.Owner, RoleName.Manager],
       },
       {
+        path: "/dashboard/owner/iot",
+        component: OwnerIotHubPage,
+        allowedRoles: [RoleName.Owner],
+      },
+      {
         path: "/dashboard/owner/iot-devices",
-        component: OwnerIotDevicesPage,
+        component: RedirectToIotDevicesTab,
+        allowedRoles: [RoleName.Owner],
+      },
+      {
+        path: "/dashboard/owner/iot-tracking",
+        component: RedirectToIotOverviewTab,
         allowedRoles: [RoleName.Owner],
       },
       {
         path: "/dashboard/owner/iot-kits",
         component: OwnerIotKitsPage,
-        allowedRoles: [RoleName.Owner],
-      },
-      {
-        path: "/dashboard/owner/iot-tracking",
-        component: OwnerIotTrackingPage,
         allowedRoles: [RoleName.Owner],
       },
       {

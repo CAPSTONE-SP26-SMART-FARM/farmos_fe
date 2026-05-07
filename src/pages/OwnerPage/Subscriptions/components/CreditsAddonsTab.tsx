@@ -193,7 +193,7 @@ function CreditsAddonsTab() {
                 variant="outline"
                 size="sm"
                 className="mt-4"
-                onClick={() => navigate("/dashboard/owner/iot-devices")}
+                onClick={() => navigate("/dashboard/owner/iot?tab=devices")}
               >
                 Quản lý thiết bị
               </Button>

@@ -41,7 +41,7 @@ export default function AdminEditIotDevicePage() {
         <CardHeader>
           <CardTitle>Không tìm thấy thiết bị</CardTitle>
           <CardDescription>
-            Thiết bị đã bị xóa hoặc không tồn tại trong hệ thống cấp phát.
+            Thiết bị đã bị xóa hoặc không tồn tại trong hệ thống gán Iot kit.
           </CardDescription>
         </CardHeader>
       </Card>

@@ -1597,16 +1597,6 @@ const ManagerMilestoneDetailPage = () => {
                 Xóa
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem
-              onClick={() =>
-                navigate(
-                  `/dashboard/manager/tickets?milestoneId=${msId}&milestoneName=${encodeURIComponent(`#${milestone.milestoneOrder} ${milestone.stageName}`)}`,
-                )
-              }
-            >
-              <AlertTriangle className="h-4 w-4 mr-2" />
-              Báo cáo sự cố
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

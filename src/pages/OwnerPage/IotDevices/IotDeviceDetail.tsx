@@ -199,7 +199,7 @@ export default function IotDeviceDetail({
         <CardHeader>
           <CardTitle>Thông tin thiết bị</CardTitle>
           <CardDescription>
-            Chi tiết cấu hình thiết bị IoT cấp phát.
+            Chi tiết cấu hình Iot kit đã gán.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -279,7 +279,7 @@ export default function IotDeviceDetail({
         <CardHeader>
           <CardTitle>Cảm biến trên bo mạch ({device.sensors.length})</CardTitle>
           <CardDescription>
-            Cảm biến được trả trực tiếp từ chi tiết cấp phát.
+            Cảm biến được trả trực tiếp từ chi tiết gán Iot kit.
           </CardDescription>
         </CardHeader>
         <CardContent>

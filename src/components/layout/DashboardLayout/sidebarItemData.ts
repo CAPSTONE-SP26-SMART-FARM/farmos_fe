@@ -102,7 +102,7 @@ export const sidebarData: SidebarData = {
           icon: PackagePlus,
         },
         {
-          title: "Cấp phát kit",
+          title: "Gán Iot kit",
           url: "/dashboard/admin/iot-kits/assignments",
           icon: PackagePlus,
         },
@@ -259,18 +259,13 @@ export const sidebarData: SidebarData = {
       label: "IoT & Cảm biến",
       items: [
         {
-          title: "Thiết Bị IoT",
-          url: "/dashboard/owner/iot-devices",
+          title: "Thiết Bị & Hạn Mức IoT",
+          url: "/dashboard/owner/iot",
           icon: Cpu,
         },
         {
           title: "Mua Bộ Kit IoT",
           url: "/dashboard/owner/iot-kits",
-          icon: PackagePlus,
-        },
-        {
-          title: "Theo Dõi Cấp Phát IoT",
-          url: "/dashboard/owner/iot-tracking",
           icon: PackagePlus,
         },
         {

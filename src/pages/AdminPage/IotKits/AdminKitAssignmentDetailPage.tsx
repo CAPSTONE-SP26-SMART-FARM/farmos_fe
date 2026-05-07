@@ -445,7 +445,7 @@ export default function AdminKitAssignmentDetailPage() {
       {/* Assigned devices — unassign */}
       <Card>
         <CardHeader>
-          <CardTitle>Thiết bị đã cấp phát</CardTitle>
+          <CardTitle>Iot kit đã gán</CardTitle>
           <CardDescription>
             Các bo mạch đang được gán cho chủ vườn này. Thu hồi để giải phóng
             slot quota.
@@ -476,7 +476,7 @@ export default function AdminKitAssignmentDetailPage() {
                       colSpan={4}
                       className="py-8 text-center text-sm text-muted-foreground"
                     >
-                      Chưa có thiết bị nào được cấp phát.
+                      Chưa có Iot kit nào được gán.
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -515,7 +515,7 @@ export default function AdminKitAssignmentDetailPage() {
       <Card>
         <CardHeader className="gap-2 md:flex-row md:items-start md:justify-between">
           <div>
-            <CardTitle>Cấp phát thiết bị</CardTitle>
+            <CardTitle>Gán Iot kit</CardTitle>
             <CardDescription>
               Chọn các bo mạch còn trống để cấp cho chủ vườn. Mỗi thiết bị tiêu
               1 slot quota.
