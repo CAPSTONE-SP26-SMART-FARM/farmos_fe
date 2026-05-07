@@ -284,7 +284,7 @@ const BACKEND_ERROR_MAP: Record<string, string> = {
   "plan has no active version.":
     "Gói đăng ký chưa có phiên bản nào được kích hoạt.",
   "subscription is not active.":
-    "Đăng ký không hoạt động, không thể thực hiện hành động này.",
+    "Bạn chưa có gói đăng ký đang hoạt động, không thể mua được.",
   "you do not have permission to access this subscription.":
     "Bạn không có quyền truy cập đăng ký này.",
   "subscription cannot be renewed in its current status.":
@@ -299,7 +299,7 @@ const BACKEND_ERROR_MAP: Record<string, string> = {
     "Gói đăng ký chưa có phiên bản nào được kích hoạt.",
   "error.planversionnotactive": "Phiên bản gói chưa được kích hoạt.",
   "error.subscriptionnotactive":
-    "Đăng ký không hoạt động, không thể thực hiện hành động này.",
+    "Bạn chưa có gói đăng ký đang hoạt động, không thể mua được.",
   "error.subscriptionaccessdenied": "Bạn không có quyền truy cập đăng ký này.",
   "error.subscriptioncannotrenew":
     "Đăng ký không thể gia hạn với trạng thái hiện tại.",
