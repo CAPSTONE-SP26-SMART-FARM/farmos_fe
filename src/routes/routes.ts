@@ -9,7 +9,6 @@ import AdminFeaturesPage from "@/pages/AdminPage/Features/AdminFeaturesPage";
 import AdminIotKitsPage from "@/pages/AdminPage/IotKits/AdminIotKitsPage";
 import AdminKitAssignmentsPage from "@/pages/AdminPage/IotKits/AdminKitAssignmentsPage";
 import AdminKitAssignmentDetailPage from "@/pages/AdminPage/IotKits/AdminKitAssignmentDetailPage";
-import AdminIotTemplatesPage from "@/pages/AdminPage/IotTemplates/AdminIotTemplatesPage";
 import AdminInvoiceDetailPage from "@/pages/AdminPage/Invoices/AdminInvoiceDetailPage";
 import AdminInvoicesPage from "@/pages/AdminPage/Invoices/AdminInvoicesPage";
 import AdminIotDevicesPage from "@/pages/AdminPage/IotDevices/AdminIotDevicesPage";
@@ -58,14 +57,15 @@ import ManagerSensorDashboardPage from "@/pages/ManagerPage/SensorDashboard/Mana
 import OwnerCropSeasonsPage from "@/pages/OwnerPage/CropSeasons/OwnerCropSeasonsPage";
 import PlanVsActualPage from "@/pages/OwnerPage/CropSeasons/PlanVsActualPage";
 import OwnerEmployeeTaskTemplatesPage from "@/pages/OwnerPage/EmployeeTaskTemplates/OwnerEmployeeTaskTemplatesPage";
-import OwnerIotDevicesPage from "@/pages/OwnerPage/IotDevices/OwnerIotDevicesPage";
 import OwnerIotKitsPage from "@/pages/OwnerPage/IotKits/OwnerIotKitsPage";
 import OwnerIotKitDetailPage from "@/pages/OwnerPage/IotKits/OwnerIotKitDetailPage";
 import OwnerIotKitOrderStatusPage from "@/pages/OwnerPage/IotKits/OwnerIotKitOrderStatusPage";
-import OwnerIotTrackingPage from "@/pages/OwnerPage/IotKits/OwnerIotTrackingPage";
+import OwnerIotHubPage, {
+  RedirectToIotDevicesTab,
+  RedirectToIotOverviewTab,
+} from "@/pages/OwnerPage/IotHub/OwnerIotHubPage";
 import OwnerDailyLogsPage from "@/pages/OwnerPage/DailyLogs/OwnerDailyLogsPage";
 import OwnerSensorReadingPage from "@/pages/OwnerPage/SensorReadings/OwnerSensorReadingPage";
-import OwnerSensorDashboardPage from "@/pages/OwnerPage/SensorDashboard/OwnerSensorDashboardPage";
 import OwnerPaymentsPage from "@/pages/OwnerPage/Payments/OwnerPaymentsPage";
 import OwnerPaymentDetailPage from "@/pages/OwnerPage/Payments/OwnerPaymentDetailPage";
 import OwnerSubscriptionPlansPage from "@/pages/OwnerPage/SubscriptionPlans/OwnerSubscriptionPlansPage";
@@ -171,11 +171,6 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/admin/ticket-analytics",
         component: AdminTicketAnalyticsPage,
-        allowedRoles: [RoleName.Admin],
-      },
-      {
-        path: "/dashboard/admin/iot-templates",
-        component: AdminIotTemplatesPage,
         allowedRoles: [RoleName.Admin],
       },
       {
@@ -398,18 +393,23 @@ const routes: AppRoutes = [
         allowedRoles: [RoleName.Owner, RoleName.Manager],
       },
       {
+        path: "/dashboard/owner/iot",
+        component: OwnerIotHubPage,
+        allowedRoles: [RoleName.Owner],
+      },
+      {
         path: "/dashboard/owner/iot-devices",
-        component: OwnerIotDevicesPage,
+        component: RedirectToIotDevicesTab,
+        allowedRoles: [RoleName.Owner],
+      },
+      {
+        path: "/dashboard/owner/iot-tracking",
+        component: RedirectToIotOverviewTab,
         allowedRoles: [RoleName.Owner],
       },
       {
         path: "/dashboard/owner/iot-kits",
         component: OwnerIotKitsPage,
-        allowedRoles: [RoleName.Owner],
-      },
-      {
-        path: "/dashboard/owner/iot-tracking",
-        component: OwnerIotTrackingPage,
         allowedRoles: [RoleName.Owner],
       },
       {
@@ -425,11 +425,6 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/owner/sensor-readings/:assignmentId",
         component: OwnerSensorReadingPage,
-        allowedRoles: [RoleName.Owner],
-      },
-      {
-        path: "/dashboard/owner/sensor-dashboard",
-        component: OwnerSensorDashboardPage,
         allowedRoles: [RoleName.Owner],
       },
       {

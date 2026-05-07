@@ -19,8 +19,9 @@ import {
   SENSOR_TYPE_LABEL_VI,
   type OwnerKitOrderTrackingType,
 } from "@/schemaValidatation/iotKit";
-import { Cpu } from "lucide-react";
+import { Cpu, CreditCard } from "lucide-react";
 import { useNavigate } from "react-router";
+import { useIotKitOrderPaymentStatus } from "@/queries/useIotKit";
 
 interface IotKitOrderDetailDialogProps {
   order: OwnerKitOrderTrackingType | null;
@@ -41,6 +42,12 @@ function IotKitOrderDetailDialog({
   onOpenChange,
 }: IotKitOrderDetailDialogProps) {
   const navigate = useNavigate();
+  const isPending = order?.status === "PENDING";
+  const paymentStatusQuery = useIotKitOrderPaymentStatus(
+    order?.orderId ?? "",
+    !!order && isPending,
+  );
+  const pendingInvoiceId = paymentStatusQuery.data?.data?.invoiceId ?? null;
 
   if (!order) {
     return (
@@ -66,15 +73,13 @@ function IotKitOrderDetailDialog({
       onOpenChange={onOpenChange}
     >
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
-        <DialogHeader>
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <DialogTitle>Đơn #{order.orderNumber}</DialogTitle>
-              <DialogDescription>
-                Mua ngày {formatDateVi(order.createdAt)} ·{" "}
-                {formatCurrencyVnd(order.totalAmount)}
-              </DialogDescription>
-            </div>
+        <DialogHeader className="pr-8">
+          <DialogTitle>Đơn #{order.orderNumber}</DialogTitle>
+          <DialogDescription>
+            Mua ngày {formatDateVi(order.createdAt)} ·{" "}
+            {formatCurrencyVnd(order.totalAmount)}
+          </DialogDescription>
+          <div className="pt-1">
             <IotKitOrderStatusBadge status={order.status} />
           </div>
         </DialogHeader>
@@ -169,8 +174,8 @@ function IotKitOrderDetailDialog({
             </p>
             {order.devices.length === 0 ? (
               <p className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
-                Chưa có thiết bị nào được gán cho đơn này. Liên hệ admin để
-                được cấp phát.
+                Chưa có Iot kit nào được gán cho đơn này. Liên hệ admin để
+                được gán Iot kit.
               </p>
             ) : (
               <div className="overflow-hidden rounded-md border">
@@ -217,18 +222,25 @@ function IotKitOrderDetailDialog({
         )}
 
         <Separator />
-        <DialogFooter className="gap-2 sm:justify-between">
+        <DialogFooter>
+          {isPending && (
+            <Button
+              onClick={() => {
+                if (!pendingInvoiceId) return;
+                onOpenChange(false);
+                navigate(`/dashboard/owner/payments/${pendingInvoiceId}`);
+              }}
+              disabled={!pendingInvoiceId || paymentStatusQuery.isLoading}
+            >
+              <CreditCard className="mr-2 h-4 w-4" />
+              Đi đến trang thanh toán
+            </Button>
+          )}
           <Button
-            variant="ghost"
+            variant="outline"
             onClick={() => onOpenChange(false)}
           >
             Đóng
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => navigate(`/dashboard/owner/iot-tracking`)}
-          >
-            Xem trang theo dõi IoT
           </Button>
         </DialogFooter>
       </DialogContent>

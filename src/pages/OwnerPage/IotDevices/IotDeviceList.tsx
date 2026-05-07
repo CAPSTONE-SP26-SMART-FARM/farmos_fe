@@ -148,10 +148,10 @@ export default function IotDeviceList({
             </Badge>
             <CardTitle className="flex items-center gap-2">
               <Cpu className="h-5 w-5 text-primary" />
-              Thiết bị IoT cấp phát {farmName ? `- ${farmName}` : ""}
+              Iot kit đã gán {farmName ? `- ${farmName}` : ""}
             </CardTitle>
             <CardDescription className="mt-1">
-              Danh sách bo mạch được cấp quyền truy cập từ hệ thống cấp phát.
+              Danh sách bo mạch được cấp quyền truy cập từ hệ thống gán Iot kit.
             </CardDescription>
           </div>
         </div>

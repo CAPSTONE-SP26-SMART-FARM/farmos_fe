@@ -1,6 +1,7 @@
 import { API_ENDPOINTS } from "@/constants";
 import { api } from "@/lib/axios";
 import type {
+  CreateServicePackageBodyType,
   CreditHistoryQueryType,
   ListCreditHistoryResType,
   ListServicePackagesQueryType,
@@ -9,6 +10,7 @@ import type {
   PurchaseCreditResType,
   ServicePackagePaymentStatusResType,
   ServicePackageType,
+  UpdateServicePackageBodyType,
 } from "@/schemaValidatation/credit";
 import queryString from "query-string";
 
@@ -38,6 +40,24 @@ const creditService = {
     api.get<ServicePackagePaymentStatusResType>(
       SERVICE_PACKAGES.PAYMENT_STATUS(id),
     ),
+
+  createServicePackage: (body: CreateServicePackageBodyType) =>
+    api.post<ServicePackageType, CreateServicePackageBodyType>(
+      SERVICE_PACKAGES.BASE,
+      body,
+    ),
+
+  updateServicePackage: (id: string, body: UpdateServicePackageBodyType) =>
+    api.patch<ServicePackageType, UpdateServicePackageBodyType>(
+      SERVICE_PACKAGES.BY_ID(id),
+      body,
+    ),
+
+  archiveServicePackage: (id: string) =>
+    api.patch<ServicePackageType, undefined>(SERVICE_PACKAGES.ARCHIVE(id)),
+
+  unarchiveServicePackage: (id: string) =>
+    api.patch<ServicePackageType, undefined>(SERVICE_PACKAGES.UNARCHIVE(id)),
 };
 
 export default creditService;

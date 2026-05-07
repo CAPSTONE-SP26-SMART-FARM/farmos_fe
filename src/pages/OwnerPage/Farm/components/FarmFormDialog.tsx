@@ -15,13 +15,6 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useOwnerCreateFarm, useOwnerUpdateFarm } from "@/queries/useOwner";
 import {
   CreateFarmBodySchema,
@@ -41,8 +34,6 @@ import {
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
 import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import { toast } from "sonner";
-
-const FARM_TYPES = [{ value: "cultivation" as const, label: "Canh tác" }];
 
 type Props =
   | {
@@ -160,7 +151,7 @@ function UpdateFarmBody({
     defaultValues: {
       code: farm.code,
       name: farm.name,
-      farmType: farm.farmType,
+      farmType: "cultivation",
       description: farm.description ?? "",
       address: farm.address ?? "",
       areaSqm: farm.areaSqm ?? undefined,
@@ -171,7 +162,7 @@ function UpdateFarmBody({
     form.reset({
       code: farm.code,
       name: farm.name,
-      farmType: farm.farmType,
+      farmType: "cultivation",
       description: farm.description ?? "",
       address: farm.address ?? "",
       areaSqm: farm.areaSqm ?? undefined,
@@ -272,31 +263,6 @@ function FarmFields(props: FarmFieldsControl) {
           )}
         />
       </div>
-
-      <Controller
-        name="farmType"
-        control={control}
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel>Loại nông trại</FieldLabel>
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Chọn loại nông trại" />
-              </SelectTrigger>
-              <SelectContent>
-                {FARM_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {fieldState.invalid && (
-              <FieldError errors={[fieldState.error]} />
-            )}
-          </Field>
-        )}
-      />
 
       <Controller
         name="address"

@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Ticket } from "lucide-react";
+import { Ticket } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useNavigate } from "react-router";
@@ -55,7 +55,6 @@ export function IncidentTab({ cropSeason }: { cropSeason: CropSeasonType }) {
   const ticketQuery = useManagerTicketList(zoneId, { page: 1, limit: 20 });
   const tickets = ticketQuery.data?.data.data ?? [];
 
-  const toCreate = () => navigate(`/dashboard/manager/tickets`);
   const toDetail = (ticketId: string) =>
     navigate(`/dashboard/manager/tickets?ticketId=${ticketId}`);
 
@@ -73,10 +72,6 @@ export function IncidentTab({ cropSeason }: { cropSeason: CropSeasonType }) {
         <p className="text-sm text-muted-foreground">
           {tickets.length > 0 ? `${tickets.length} sự cố gần đây` : "Không có sự cố nào"}
         </p>
-        <Button size="sm" onClick={toCreate}>
-          <Plus className="h-3 w-3 mr-1.5" />
-          Báo cáo sự cố
-        </Button>
       </div>
 
       {tickets.length === 0 ? (

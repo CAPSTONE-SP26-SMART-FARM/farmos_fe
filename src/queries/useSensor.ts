@@ -14,7 +14,7 @@ import { onMutationError } from "@/lib/axios";
 function unsupportedProvisioningSensorWrite(role: "owner" | "manager") {
   return Promise.reject(
     new Error(
-      `Luồng đã ngừng hỗ trợ: vai trò ${role} không còn được phép thao tác ghi cảm biến. Vui lòng sử dụng API cấp phát của quản trị viên.`,
+      `Luồng đã ngừng hỗ trợ: vai trò ${role} không còn được phép thao tác ghi cảm biến. Vui lòng sử dụng API gán Iot kit của quản trị viên.`,
     ),
   );
 }

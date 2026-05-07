@@ -49,6 +49,30 @@ export const ListServicePackagesQuerySchema = PagingRequestSchema.extend(
   {},
 ).strict();
 
+export const CreateServicePackageBodySchema = z
+  .object({
+    code: z.string().min(1, "Vui lòng nhập mã gói").max(50),
+    name: z.string().min(1, "Vui lòng nhập tên gói").max(255),
+    description: z.string().optional(),
+    price: z.number().min(0, "Giá phải >= 0"),
+    creditAmount: z
+      .number()
+      .int("Số credit phải là số nguyên")
+      .positive("Số credit phải > 0"),
+    creditType: z.string().min(1, "Vui lòng nhập loại credit"),
+  })
+  .strict();
+
+export const UpdateServicePackageBodySchema = z
+  .object({
+    name: z.string().min(1).max(255).optional(),
+    description: z.string().optional(),
+    price: z.number().min(0).optional(),
+    creditAmount: z.number().int().positive().optional(),
+    creditType: z.string().min(1).optional(),
+  })
+  .strict();
+
 export const PurchaseCreditResSchema = z.object({
   invoiceId: z.string().uuid(),
   invoiceNumber: z.string(),
@@ -103,4 +127,10 @@ export type OwnerCreditsResType = z.infer<typeof OwnerCreditsResSchema>;
 export type ListCreditHistoryResType = z.infer<typeof ListCreditHistoryResSchema>;
 export type ListServicePackagesResType = z.infer<
   typeof ListServicePackagesResSchema
+>;
+export type CreateServicePackageBodyType = z.infer<
+  typeof CreateServicePackageBodySchema
+>;
+export type UpdateServicePackageBodyType = z.infer<
+  typeof UpdateServicePackageBodySchema
 >;

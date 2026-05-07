@@ -44,7 +44,6 @@ import {
   ChevronRight,
   MessageSquare,
   Pill,
-  Plus,
   Send,
   Ticket,
 } from "lucide-react";
@@ -819,15 +818,6 @@ function OwnerTicketsPage() {
             Theo dõi các sự cố trong nông trại và trạng thái hỗ trợ từ bác sĩ.
           </p>
         </div>
-        {farmId && (
-          <Button
-            onClick={() => setShowCreate(true)}
-            className="gap-1.5 shrink-0"
-          >
-            <Plus className="h-4 w-4" />
-            Báo cáo sự cố
-          </Button>
-        )}
       </div>
 
       {!farmId ? (

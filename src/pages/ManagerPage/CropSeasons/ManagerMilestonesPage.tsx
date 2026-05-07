@@ -45,7 +45,6 @@ import {
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  AlertTriangle,
   ArrowLeft,
   ArrowUp,
   ArrowDown,
@@ -94,7 +93,7 @@ const STATUS_META: Record<
   ProductionMilestoneStatusType,
   { label: string; variant: "default" | "secondary" | "outline" }
 > = {
-  pending: { label: "Chờ xử lý", variant: "secondary" },
+  pending: { label: "Chưa diễn ra", variant: "secondary" },
   in_progress: { label: "Đang thực hiện", variant: "default" },
   completed: { label: "Hoàn thành", variant: "outline" },
 };
@@ -364,7 +363,7 @@ const MilestoneEditFormFields = ({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="pending">Chờ xử lý</SelectItem>
+            <SelectItem value="pending">Chưa diễn ra</SelectItem>
             <SelectItem value="in_progress">Đang thực hiện</SelectItem>
             <SelectItem value="completed">Hoàn thành</SelectItem>
           </SelectContent>
@@ -1670,17 +1669,6 @@ const ManagerMilestonesPage = () => {
                             Xóa
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(
-                              `/dashboard/manager/tickets?milestoneId=${m.id}&milestoneName=${encodeURIComponent(`#${m.milestoneOrder} ${m.stageName}`)}`,
-                            );
-                          }}
-                        >
-                          <AlertTriangle className="h-4 w-4 mr-2" />
-                          Báo cáo sự cố
-                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>

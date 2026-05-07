@@ -117,7 +117,7 @@ export default function AdminIotDevicesPage() {
 						Danh sách thiết bị
 					</CardTitle>
 					<CardDescription>
-						Dữ liệu lấy từ API cấp phát dành cho quản trị viên.
+						Dữ liệu lấy từ API gán Iot kit dành cho quản trị viên.
 					</CardDescription>
 
 					<div className="mt-2 grid gap-2 md:grid-cols-[1fr_200px_140px]">

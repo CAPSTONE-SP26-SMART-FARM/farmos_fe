@@ -496,7 +496,7 @@ function SubscriptionLifecyclePanel({
               ) : (
                 <User className="h-4 w-4" />
               )}
-              {isAdmin ? "Vòng đời đăng ký" : "Gói đăng ký của tôi"}
+              {isAdmin ? "Quản lý đăng ký" : "Gói đăng ký của tôi"}
             </CardTitle>
             <CardDescription>
               {isAdmin
@@ -693,7 +693,7 @@ function SubscriptionLifecyclePanel({
                     <CardTitle>Chi tiết đăng ký</CardTitle>
                     <CardDescription>
                       {isAdmin
-                        ? "Theo dõi vòng đời đăng ký của khách hàng."
+                        ? "Theo dõi và quản lý đăng ký của khách hàng."
                         : "Chủ trang trại có thể gia hạn, bật/tắt tự động gia hạn và hủy đăng ký."}
                     </CardDescription>
                   </div>

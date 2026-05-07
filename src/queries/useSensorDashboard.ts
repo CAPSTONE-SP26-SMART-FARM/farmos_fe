@@ -112,8 +112,9 @@ export function useSensorDashboard(
       assignment: MilestoneAssignmentDetailResType;
     }[] = [];
     assignmentQueries.forEach((q, idx) => {
-      if (q.data?.data) {
-        result.push({ milestone: milestones[idx], assignment: q.data.data });
+      const a = q.data?.data;
+      if (a && a.device && a.assignmentId) {
+        result.push({ milestone: milestones[idx], assignment: a });
       }
     });
     return result;

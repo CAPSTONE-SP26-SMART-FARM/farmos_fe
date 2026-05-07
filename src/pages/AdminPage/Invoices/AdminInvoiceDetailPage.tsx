@@ -1,5 +1,4 @@
 import { useNavigate, useParams } from "react-router";
-import { useState } from "react";
 import {
   ArrowLeft,
   CalendarClock,
@@ -586,36 +585,6 @@ function TransactionsCard({
   );
 }
 
-function ReferenceDataCard({ data }: { data: unknown }) {
-  const [open, setOpen] = useState(false);
-  if (!data) return null;
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Dữ liệu tham chiếu mở rộng</CardTitle>
-        <CardDescription>
-          Đã tải đầy đủ chi tiết domain liên quan (ví dụ: đơn hàng IoT Kit kèm
-          line items + provisions).
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setOpen((prev) => !prev)}
-        >
-          {open ? "Ẩn JSON" : "Xem dữ liệu chi tiết"}
-        </Button>
-        {open && (
-          <pre className="mt-3 max-h-96 overflow-auto rounded-md border bg-muted p-3 text-xs">
-            {JSON.stringify(data, null, 2)}
-          </pre>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
 function DetailSkeleton() {
   return (
     <div className="space-y-6">
@@ -734,11 +703,6 @@ function AdminInvoiceDetailPage() {
       </div>
 
       <TransactionsCard transactions={invoice.transactions} />
-
-      {invoice.referenceType === "IOT_KIT_ORDER" &&
-      invoice.referenceData != null ? (
-        <ReferenceDataCard data={invoice.referenceData} />
-      ) : null}
     </div>
   );
 }

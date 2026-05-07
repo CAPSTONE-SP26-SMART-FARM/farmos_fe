@@ -125,7 +125,7 @@ export const mockHealth: HealthSummary = {
       severity: "warning",
       title: "Thiết bị #IOT-012 mất kết nối",
       subtitle: "Khu B · Offline 4 giờ qua",
-      href: "/dashboard/owner/iot-devices",
+      href: "/dashboard/owner/iot?tab=devices",
       ageHours: 4,
     },
   ],

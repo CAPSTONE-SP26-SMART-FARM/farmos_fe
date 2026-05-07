@@ -109,7 +109,7 @@ function AdminSubscriptionsWorkspace() {
               Quản trị viên
             </Badge>
             <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-              Vòng đời đăng ký
+              Quản lý đăng ký
             </h1>
             <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">
               Theo dõi và quản lý tất cả gói đăng ký. Lọc theo trạng thái, tìm

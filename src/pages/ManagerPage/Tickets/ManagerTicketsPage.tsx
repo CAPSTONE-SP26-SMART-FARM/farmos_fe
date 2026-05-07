@@ -57,7 +57,6 @@ import {
   Map,
   MessageSquare,
   Pill,
-  Plus,
   Send,
   Ticket,
 } from "lucide-react";
@@ -819,15 +818,6 @@ function ManagerTicketsPage() {
             Theo dõi sự cố trong các khu vực bạn quản lý.
           </p>
         </div>
-        {selectedZoneId && (
-          <Button
-            onClick={() => setShowCreate(true)}
-            className="gap-1.5 shrink-0"
-          >
-            <Plus className="h-4 w-4" />
-            Báo cáo sự cố
-          </Button>
-        )}
       </div>
 
       {/* Zone selector */}

@@ -69,8 +69,8 @@ function OwnerPaymentDetailPage() {
   );
 
   // Capture PayOS status SYNCHRONOUSLY at first render — before any router/effect can strip the URL.
-  const [payosStatus] = useState(
-    () => new URLSearchParams(window.location.search).get("status"),
+  const [payosStatus] = useState(() =>
+    new URLSearchParams(window.location.search).get("status"),
   );
 
   useEffect(() => {
@@ -142,9 +142,7 @@ function OwnerPaymentDetailPage() {
               </p>
               <p>
                 Trạng thái:{" "}
-                <InvoiceStatusBadge
-                  status={invoice.status as InvoiceStatus}
-                />
+                <InvoiceStatusBadge status={invoice.status as InvoiceStatus} />
               </p>
               <p>
                 Loại hóa đơn:{" "}

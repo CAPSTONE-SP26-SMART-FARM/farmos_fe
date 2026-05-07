@@ -154,10 +154,10 @@ export default function AdminFeaturesPage() {
             <div>
               <Badge className="mb-2">Cổng quản trị</Badge>
               <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-                Feature Menu
+                Tính năng theo gói
               </h1>
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
-                Quản lý danh mục feature dùng để cấu hình quyền lợi theo gói
+                Quản lý danh mục tính năng dùng để cấu hình quyền lợi theo gói
                 dịch vụ.
               </p>
             </div>
@@ -169,9 +169,9 @@ export default function AdminFeaturesPage() {
           <CardHeader className="space-y-4">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <CardTitle>Danh sách feature</CardTitle>
+                <CardTitle>Danh sách tính năng</CardTitle>
                 <CardDescription>
-                  Quản lý feature theo đúng CRUD của admin.
+                  Quản lý tính năng dùng cho các gói dịch vụ.
                 </CardDescription>
               </div>
             </div>
@@ -184,7 +184,7 @@ export default function AdminFeaturesPage() {
                     setSearch(event.target.value);
                     setQuery((prev) => ({ ...prev, page: 1 }));
                   }}
-                  placeholder="Tìm theo mã hoặc tên feature..."
+                  placeholder="Tìm theo mã hoặc tên tính năng..."
                   className="pl-9"
                 />
               </div>
@@ -214,7 +214,7 @@ export default function AdminFeaturesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Mã</TableHead>
-                  <TableHead>Tên feature</TableHead>
+                  <TableHead>Tên tính năng</TableHead>
                   <TableHead>Kiểu dữ liệu</TableHead>
                   <TableHead>Giá trị mặc định</TableHead>
                   <TableHead>Đơn vị</TableHead>
@@ -238,7 +238,7 @@ export default function AdminFeaturesPage() {
                       colSpan={6}
                       className="py-6 text-center text-muted-foreground"
                     >
-                      Không có feature phù hợp bộ lọc.
+                      Không có tính năng phù hợp bộ lọc.
                     </TableCell>
                   </TableRow>
                 )}
@@ -323,9 +323,9 @@ export default function AdminFeaturesPage() {
 
       <ConfirmDialog
         open={Boolean(deletingFeatureCode)}
-        title="Xóa feature này?"
-        description="Hành động này không thể hoàn tác. Feature đang dùng trong plan có thể bị từ chối xóa."
-        confirmLabel={deleteMutation.isPending ? "Đang xóa..." : "Xóa feature"}
+        title="Xóa tính năng này?"
+        description="Hành động này không thể hoàn tác. Tính năng đang dùng trong gói dịch vụ có thể bị từ chối xóa."
+        confirmLabel={deleteMutation.isPending ? "Đang xóa..." : "Xóa tính năng"}
         cancelLabel="Hủy"
         variant="destructive"
         onConfirm={onDelete}

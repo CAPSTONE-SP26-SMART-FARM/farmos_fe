@@ -24,14 +24,12 @@ import { formatCurrencyVnd, formatDateVi } from "@/lib/format";
 import { cn, isApiErrorResponse } from "@/lib/utils";
 import { useMyIotTracking } from "@/queries/useIotKit";
 import {
-  BOARD_TYPE_LABEL_VI,
-  KIT_MODULE_LABEL_VI,
-  SENSOR_TYPE_LABEL_VI,
   type IotKitOrderStatus,
   type OwnerKitOrderTrackingType,
   type ProvisionedDeviceSummaryType,
 } from "@/schemaValidatation/iotKit";
 import {
+  ChevronRight,
   CircleSlash,
   Cpu,
   Package,
@@ -40,6 +38,8 @@ import {
   Wifi,
   Zap,
 } from "lucide-react";
+import { useState } from "react";
+import IotKitOrderDetailDialog from "@/pages/OwnerPage/Subscriptions/components/IotKitOrderDetailDialog";
 import { Link, useNavigate } from "react-router";
 
 const ORDER_STATUS_META: Record<
@@ -48,7 +48,8 @@ const ORDER_STATUS_META: Record<
 > = {
   PENDING: {
     label: "Chờ thanh toán",
-    className: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+    className:
+      "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
   },
   PAID: {
     label: "Đã thanh toán",
@@ -73,9 +74,15 @@ const DEVICE_STATUS_LABEL: Record<string, string> = {
   retired: "Ngưng hoạt động",
 };
 
-export default function OwnerIotTrackingPage() {
+export default function OwnerIotTrackingPage({
+  embedded = false,
+}: {
+  embedded?: boolean;
+} = {}) {
   const navigate = useNavigate();
   const trackingQuery = useMyIotTracking();
+  const [selectedOrder, setSelectedOrder] =
+    useState<OwnerKitOrderTrackingType | null>(null);
 
   if (trackingQuery.isLoading) {
     return (
@@ -96,17 +103,16 @@ export default function OwnerIotTrackingPage() {
       return (
         <Card>
           <CardHeader>
-            <CardTitle>Theo dõi cấp phát IoT</CardTitle>
+            <CardTitle>Theo dõi gán Iot kit</CardTitle>
           </CardHeader>
           <CardContent>
             <EmptyState
               icon={CircleSlash}
               title="Chưa có gói đăng ký active"
-              description="Bạn cần có gói đăng ký đang hoạt động để xem các thiết bị đã được cấp phát."
+              description="Bạn cần có gói đăng ký đang hoạt động để xem các Iot kit đã được gán."
               action={{
                 label: "Xem gói đăng ký",
-                onClick: () =>
-                  navigate("/dashboard/owner/subscription-plans"),
+                onClick: () => navigate("/dashboard/owner/subscription-plans"),
               }}
             />
           </CardContent>
@@ -116,7 +122,7 @@ export default function OwnerIotTrackingPage() {
 
     return (
       <ErrorState
-        message="Không tải được dữ liệu cấp phát IoT."
+        message="Không tải được dữ liệu gán Iot kit."
         onRetry={() => trackingQuery.refetch()}
       />
     );
@@ -131,27 +137,28 @@ export default function OwnerIotTrackingPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Header */}
-      <section className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div>
-            <Badge className="mb-2">Theo dõi</Badge>
-            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-              Cấp phát thiết bị IoT
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
-              Tổng quan hạn mức, các bộ kit đã mua và thiết bị được cấp phát
-              cho bạn.
-            </p>
+      {!embedded && (
+        <section className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <Badge className="mb-2">Theo dõi</Badge>
+              <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+                Gán Iot kit
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
+                Tổng quan hạn mức, các bộ kit đã mua và Iot kit được gán cho
+                bạn.
+              </p>
+            </div>
+            <Button asChild>
+              <Link to="/dashboard/owner/iot-kits">
+                <ShoppingBag className="mr-2 h-4 w-4" />
+                Mua thêm kit
+              </Link>
+            </Button>
           </div>
-          <Button asChild>
-            <Link to="/dashboard/owner/iot-kits">
-              <ShoppingBag className="mr-2 h-4 w-4" />
-              Mua thêm kit
-            </Link>
-          </Button>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Quota overview */}
       <Card>
@@ -206,12 +213,15 @@ export default function OwnerIotTrackingPage() {
             Thiết bị từ gói đăng ký ({subscriptionDevices.length})
           </CardTitle>
           <CardDescription>
-            Các bo mạch được admin cấp phát trực tiếp qua hạn mức gói (không
+            Các bo mạch được admin gán Iot kit trực tiếp qua hạn mức gói (không
             qua đơn kit).
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <DeviceTable devices={subscriptionDevices} emptyText="Chưa có thiết bị nào được cấp qua gói đăng ký." />
+          <DeviceTable
+            devices={subscriptionDevices}
+            emptyText="Chưa có thiết bị nào được cấp qua gói đăng ký."
+          />
         </CardContent>
       </Card>
 
@@ -223,8 +233,8 @@ export default function OwnerIotTrackingPage() {
             Đơn kit đã mua ({kitOrders.length})
           </CardTitle>
           <CardDescription>
-            Mỗi đơn hiển thị bộ kit đã mua, slot quota và các thiết bị đã
-            được gán.
+            Mỗi đơn hiển thị bộ kit đã mua, slot quota và các thiết bị đã được
+            gán.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -239,15 +249,35 @@ export default function OwnerIotTrackingPage() {
               }}
             />
           ) : (
-            kitOrders.map((order) => <KitOrderCard key={order.orderId} order={order} />)
+            kitOrders.map((order) => (
+              <KitOrderCard
+                key={order.orderId}
+                order={order}
+                onOpen={() => setSelectedOrder(order)}
+              />
+            ))
           )}
         </CardContent>
       </Card>
+
+      <IotKitOrderDetailDialog
+        order={selectedOrder}
+        open={selectedOrder !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedOrder(null);
+        }}
+      />
     </div>
   );
 }
 
-function KitOrderCard({ order }: { order: OwnerKitOrderTrackingType }) {
+function KitOrderCard({
+  order,
+  onOpen,
+}: {
+  order: OwnerKitOrderTrackingType;
+  onOpen: () => void;
+}) {
   const meta = ORDER_STATUS_META[order.status];
   const pct =
     order.totalSlots > 0
@@ -256,62 +286,50 @@ function KitOrderCard({ order }: { order: OwnerKitOrderTrackingType }) {
   const full = pct >= 100;
   const near = pct >= 80 && !full;
   const isPaid = order.status === "PAID";
+  const isAssigned = order.devices.length > 0;
 
   return (
-    <div className="space-y-3 rounded-xl border bg-background p-4">
-      {/* Header row */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="font-semibold">#{order.orderNumber}</p>
+    <button
+      type="button"
+      onClick={onOpen}
+      className="group flex w-full items-start justify-between gap-3 rounded-xl border bg-background p-4 text-left transition-colors hover:bg-muted/40 hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <div className="min-w-0 flex-1 space-y-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="font-semibold">#{order.orderNumber}</p>
+          <span
+            className={cn(
+              "rounded-md px-2 py-0.5 text-xs font-medium",
+              meta.className,
+            )}
+          >
+            {meta.label}
+          </span>
+          {isPaid && (
             <span
               className={cn(
                 "rounded-md px-2 py-0.5 text-xs font-medium",
-                meta.className,
+                isAssigned
+                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                  : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
               )}
             >
-              {meta.label}
+              {isAssigned ? "Đã gán Iot kit" : "Chưa gán Iot kit"}
             </span>
-            <span className="text-xs text-muted-foreground">
-              {formatDateVi(order.createdAt)}
-            </span>
-          </div>
-          <p className="text-sm">
-            <span className="font-medium">{order.kit.name}</span>
-            <span className="text-muted-foreground"> · {order.kit.code}</span>
-          </p>
-          <div className="flex flex-wrap gap-1">
-            <Badge variant="outline">
-              {BOARD_TYPE_LABEL_VI[order.kit.boardType]}
-            </Badge>
-            {order.kit.includedSensors?.map((s) => (
-              <Badge key={s} variant="secondary">
-                {SENSOR_TYPE_LABEL_VI[s]}
-              </Badge>
-            ))}
-            {order.kit.includedModules?.map((m) => (
-              <Badge key={m} variant="secondary">
-                {KIT_MODULE_LABEL_VI[m]}
-              </Badge>
-            ))}
-          </div>
+          )}
         </div>
-        <div className="text-right">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            Tổng tiền
-          </p>
-          <p className="text-base font-semibold tabular-nums">
-            {formatCurrencyVnd(order.totalAmount)}
-          </p>
-        </div>
-      </div>
-
-      {/* Slot progress (only for PAID orders) */}
-      {isPaid && (
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Slot đã dùng</span>
-            <span className="tabular-nums">
+        <p className="truncate text-sm font-medium">{order.kit.name}</p>
+        {isPaid && (
+          <div className="flex items-center gap-3">
+            <Progress
+              value={pct}
+              className={cn(
+                "h-1.5 flex-1",
+                full && "[&>div]:bg-red-500",
+                near && "[&>div]:bg-amber-500",
+              )}
+            />
+            <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
               <span
                 className={cn(
                   "font-semibold",
@@ -321,37 +339,23 @@ function KitOrderCard({ order }: { order: OwnerKitOrderTrackingType }) {
               >
                 {order.usedSlots}
               </span>
-              <span className="text-muted-foreground"> / {order.totalSlots}</span>
+              <span> / {order.totalSlots} slot</span>
             </span>
           </div>
-          <Progress
-            value={pct}
-            className={cn(
-              "h-1.5",
-              full && "[&>div]:bg-red-500",
-              near && "[&>div]:bg-amber-500",
-            )}
-          />
+        )}
+      </div>
+      <div className="flex items-center gap-2 text-right">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            Tổng tiền
+          </p>
+          <p className="text-base font-semibold tabular-nums">
+            {formatCurrencyVnd(order.totalAmount)}
+          </p>
         </div>
-      )}
-
-      {/* Devices in this order */}
-      {isPaid && (
-        <div className="rounded-lg border bg-muted/30 p-2">
-          <DeviceTable
-            devices={order.devices}
-            emptyText="Đơn này chưa có thiết bị được gán. Liên hệ admin để được cấp phát."
-            compact
-          />
-        </div>
-      )}
-
-      {order.status === "CANCELLED" && order.cancelledAt && (
-        <p className="text-xs text-muted-foreground">
-          Đã hủy lúc {formatDateVi(order.cancelledAt)}
-        </p>
-      )}
-    </div>
+        <ChevronRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
+      </div>
+    </button>
   );
 }
 
@@ -384,7 +388,7 @@ function DeviceTable({
           <TableRow>
             <TableHead>Tên thiết bị</TableHead>
             <TableHead>Trạng thái</TableHead>
-            <TableHead>Cấp phát lúc</TableHead>
+            <TableHead>Gán lúc</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

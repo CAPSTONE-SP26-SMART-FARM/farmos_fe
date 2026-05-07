@@ -11,25 +11,18 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { getApiErrorMessageVi } from "@/lib/error-message";
-import { isApiErrorResponse } from "@/lib/utils";
-import {
-  useOwnerCredits,
-  usePurchaseServicePackage,
-  useServicePackages,
-} from "@/queries/useCredit";
+import { useOwnerCredits } from "@/queries/useCredit";
 import { useMyIotTracking } from "@/queries/useIotKit";
 import { useOwnerMyQuota } from "@/queries/useSubscription";
 import { cn } from "@/lib/utils";
-import type { ServicePackageType } from "@/schemaValidatation/credit";
 import type { OwnerKitOrderTrackingType } from "@/schemaValidatation/iotKit";
 import { ChevronRight, Coins, Cpu, Package } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
 import CreditBalanceCard from "./CreditBalanceCard";
 import CreditLedgerTable from "./CreditLedgerTable";
 import IotKitOrderDetailDialog from "./IotKitOrderDetailDialog";
-import ServicePackageGrid from "./ServicePackageGrid";
+import ServicePackagesPurchaseSection from "./ServicePackagesPurchaseSection";
 
 const formatDateVi = (iso: string) => {
   const d = new Date(iso);
@@ -51,21 +44,13 @@ function CreditsAddonsTab() {
   const quotaQuery = useOwnerMyQuota(true);
   const creditsQuery = useOwnerCredits(true);
   const trackingQuery = useMyIotTracking(true);
-  const packagesQuery = useServicePackages(
-    { page: 1, limit: 20, search: undefined },
-    true,
-  );
-  const purchaseMutation = usePurchaseServicePackage();
 
   const [selectedOrder, setSelectedOrder] =
     useState<OwnerKitOrderTrackingType | null>(null);
-  const [purchasingId, setPurchasingId] = useState<string | null>(null);
 
   const credits = creditsQuery.data?.data?.data ?? [];
   const iotDevices = quotaQuery.data?.data?.iotDevices;
   const trackingOrders = trackingQuery.data?.data?.kitOrders ?? [];
-  const packages = packagesQuery.data?.data?.data ?? [];
-  const activePackages = packages.filter((p) => p.isActive);
   const creditTypeFilters = Array.from(
     new Set(credits.map((c) => c.creditType)),
   ).sort();
@@ -75,21 +60,6 @@ function CreditsAddonsTab() {
     : 0;
   const iotUsageRatio =
     iotDevices && iotTotal > 0 ? iotDevices.used / iotTotal : 0;
-
-  const handlePurchase = async (pkg: ServicePackageType) => {
-    setPurchasingId(pkg.id);
-    try {
-      const result = await purchaseMutation.mutateAsync(pkg.id);
-      navigate(`/dashboard/owner/payments/${result.data.invoiceId}`);
-    } catch (error) {
-      if (isApiErrorResponse(error)) {
-        toast.error(error.response?.data.message ?? "Mua gói thất bại.");
-      } else {
-        toast.error(getApiErrorMessageVi(error, "Mua gói thất bại."));
-      }
-      setPurchasingId(null);
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -193,7 +163,7 @@ function CreditsAddonsTab() {
                 variant="outline"
                 size="sm"
                 className="mt-4"
-                onClick={() => navigate("/dashboard/owner/iot-devices")}
+                onClick={() => navigate("/dashboard/owner/iot?tab=devices")}
               >
                 Quản lý thiết bị
               </Button>
@@ -281,45 +251,7 @@ function CreditsAddonsTab() {
       {/* ──────────────────────────────────────────────────────── */}
       {/* Section 4 — Mua thêm credit                              */}
       {/* ──────────────────────────────────────────────────────── */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Mua thêm credit</CardTitle>
-          <CardDescription>
-            Chọn gói phù hợp. Sau khi xác nhận, bạn sẽ được chuyển đến trang
-            thanh toán.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {packagesQuery.isLoading ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <LoadingCard rows={2} />
-              <LoadingCard rows={2} />
-              <LoadingCard rows={2} />
-              <LoadingCard rows={2} />
-            </div>
-          ) : packagesQuery.isError ? (
-            <ErrorState
-              message={getApiErrorMessageVi(
-                packagesQuery.error,
-                "Không thể tải danh sách gói.",
-              )}
-              onRetry={() => packagesQuery.refetch()}
-            />
-          ) : activePackages.length === 0 ? (
-            <EmptyState
-              icon={Package}
-              title="Chưa có gói khả dụng"
-              description="Vui lòng quay lại sau."
-            />
-          ) : (
-            <ServicePackageGrid
-              packages={activePackages}
-              onPurchase={handlePurchase}
-              purchasingId={purchasingId}
-            />
-          )}
-        </CardContent>
-      </Card>
+      <ServicePackagesPurchaseSection />
 
       {/* ──────────────────────────────────────────────────────── */}
       {/* Section 5 — Lịch sử biến động credit                     */}

@@ -35,7 +35,7 @@ export default function ManagerIotDevicesPage() {
           <Badge className="mb-2 w-fit">Cổng quản lý</Badge>
           <CardTitle className="flex items-center gap-2">
             <Cpu className="h-5 w-5 text-primary" />
-            Cấu hình IoT cấp phát
+            Cấu hình Iot kit gán
           </CardTitle>
           <CardDescription>
             Luồng iot-device cũ đã ngừng sử dụng. Trang này chỉ dùng dữ liệu từ
@@ -44,7 +44,7 @@ export default function ManagerIotDevicesPage() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Quản lý có quyền xem danh sách bo mạch được hệ thống cấp phát trả
+            Quản lý có quyền xem danh sách bo mạch được hệ thống gán Iot kit trả
             về.
           </p>
         </CardContent>

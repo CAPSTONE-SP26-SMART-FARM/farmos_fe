@@ -17,7 +17,6 @@ import {
   Settings,
   Settings2,
   Shield,
-  SlidersHorizontal,
   Sprout,
   Tag,
   Ticket,
@@ -57,7 +56,7 @@ export const sidebarData: SidebarData = {
           icon: Building2,
         },
         {
-          title: "Feature Menu",
+          title: "Tính Năng Theo Gói",
           url: "/dashboard/admin/features",
           icon: Blocks,
         },
@@ -72,7 +71,7 @@ export const sidebarData: SidebarData = {
           icon: Package,
         },
         {
-          title: "Vòng Đời Đăng Ký",
+          title: "Quản Lý Đăng Ký",
           url: "/dashboard/admin/subscriptions",
           icon: Package,
         },
@@ -87,11 +86,6 @@ export const sidebarData: SidebarData = {
       label: "IoT & Thiết bị",
       items: [
         {
-          title: "Mẫu IoT",
-          url: "/dashboard/admin/iot-templates",
-          icon: SlidersHorizontal,
-        },
-        {
           title: "Thiết Bị IoT",
           url: "/dashboard/admin/iot-devices",
           icon: Cpu,
@@ -102,7 +96,7 @@ export const sidebarData: SidebarData = {
           icon: PackagePlus,
         },
         {
-          title: "Cấp phát kit",
+          title: "Gán Iot kit",
           url: "/dashboard/admin/iot-kits/assignments",
           icon: PackagePlus,
         },
@@ -111,11 +105,11 @@ export const sidebarData: SidebarData = {
     {
       label: "Mẫu vận hành",
       items: [
-        {
-          title: "Mẫu Vụ Mùa",
-          url: "/dashboard/admin/season-templates",
-          icon: Sprout,
-        },
+        // {
+        //   title: "Mẫu Vụ Mùa",
+        //   url: "/dashboard/admin/season-templates",
+        //   icon: Sprout,
+        // },
         {
           title: "Mẫu Cột Mốc",
           url: "/dashboard/admin/milestone-templates",
@@ -259,24 +253,14 @@ export const sidebarData: SidebarData = {
       label: "IoT & Cảm biến",
       items: [
         {
-          title: "Thiết Bị IoT",
-          url: "/dashboard/owner/iot-devices",
+          title: "Thiết Bị & Hạn Mức IoT",
+          url: "/dashboard/owner/iot",
           icon: Cpu,
         },
         {
-          title: "Mua Bộ Kit IoT",
+          title: "Mua Dịch Vụ",
           url: "/dashboard/owner/iot-kits",
           icon: PackagePlus,
-        },
-        {
-          title: "Theo Dõi Cấp Phát IoT",
-          url: "/dashboard/owner/iot-tracking",
-          icon: PackagePlus,
-        },
-        {
-          title: "Tổng Quan Cảm Biến",
-          url: "/dashboard/owner/sensor-dashboard",
-          icon: Activity,
         },
       ],
     },

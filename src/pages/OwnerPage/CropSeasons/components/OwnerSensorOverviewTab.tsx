@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { AlertTriangle, Cpu, Radio } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -122,6 +123,13 @@ function MilestoneSensorSection({
     !!assignmentId,
   );
   const readings = readingsQuery.data?.data ?? [];
+
+  // Force refetch readings when assignmentId becomes available, so cards show
+  // immediately on first tab open (avoid stale-cache showing empty state).
+  useEffect(() => {
+    if (assignmentId) readingsQuery.refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assignmentId]);
   const meta = MILESTONE_STATUS_META[milestone.status] ?? {
     label: milestone.status,
     variant: "secondary" as const,
@@ -147,7 +155,7 @@ function MilestoneSensorSection({
         <div className="flex items-center gap-1.5 shrink-0">
           <Cpu className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="text-xs text-muted-foreground">
-            {assignment.device.deviceName}
+            {assignment.device?.deviceName ?? "Chưa gán thiết bị"}
           </span>
         </div>
       </div>
