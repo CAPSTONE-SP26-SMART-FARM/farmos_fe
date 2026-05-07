@@ -268,11 +268,6 @@ export const sidebarData: SidebarData = {
           url: "/dashboard/owner/iot-kits",
           icon: PackagePlus,
         },
-        {
-          title: "Tổng Quan Cảm Biến",
-          url: "/dashboard/owner/sensor-dashboard",
-          icon: Activity,
-        },
       ],
     },
     {

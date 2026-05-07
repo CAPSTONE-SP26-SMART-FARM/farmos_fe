@@ -67,7 +67,6 @@ import OwnerIotHubPage, {
 } from "@/pages/OwnerPage/IotHub/OwnerIotHubPage";
 import OwnerDailyLogsPage from "@/pages/OwnerPage/DailyLogs/OwnerDailyLogsPage";
 import OwnerSensorReadingPage from "@/pages/OwnerPage/SensorReadings/OwnerSensorReadingPage";
-import OwnerSensorDashboardPage from "@/pages/OwnerPage/SensorDashboard/OwnerSensorDashboardPage";
 import OwnerPaymentsPage from "@/pages/OwnerPage/Payments/OwnerPaymentsPage";
 import OwnerPaymentDetailPage from "@/pages/OwnerPage/Payments/OwnerPaymentDetailPage";
 import OwnerSubscriptionPlansPage from "@/pages/OwnerPage/SubscriptionPlans/OwnerSubscriptionPlansPage";
@@ -432,11 +431,6 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/owner/sensor-readings/:assignmentId",
         component: OwnerSensorReadingPage,
-        allowedRoles: [RoleName.Owner],
-      },
-      {
-        path: "/dashboard/owner/sensor-dashboard",
-        component: OwnerSensorDashboardPage,
         allowedRoles: [RoleName.Owner],
       },
       {

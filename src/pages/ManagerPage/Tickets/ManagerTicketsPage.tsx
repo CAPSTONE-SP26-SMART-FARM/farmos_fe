@@ -57,7 +57,6 @@ import {
   Map,
   MessageSquare,
   Pill,
-  Plus,
   Send,
   Ticket,
 } from "lucide-react";

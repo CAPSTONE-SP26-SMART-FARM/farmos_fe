@@ -2026,7 +2026,7 @@ function EditDeviceForm({
                       </div>
                       {"minValue" in sensor && "maxValue" in sensor && (
                         <div className="text-xs text-muted-foreground">
-                          Nhỏ nhất: {(sensor as { minValue: number }).minValue} | Lớn nhất: {(sensor as { maxValue: number }).maxValue}
+                          Nhỏ nhất: {(sensor as unknown as { minValue: number }).minValue} | Lớn nhất: {(sensor as unknown as { maxValue: number }).maxValue}
                         </div>
                       )}
                     </div>

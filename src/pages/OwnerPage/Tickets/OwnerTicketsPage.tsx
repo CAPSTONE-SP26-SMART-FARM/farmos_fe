@@ -44,7 +44,6 @@ import {
   ChevronRight,
   MessageSquare,
   Pill,
-  Plus,
   Send,
   Ticket,
 } from "lucide-react";
