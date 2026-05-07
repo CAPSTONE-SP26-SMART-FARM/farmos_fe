@@ -18,15 +18,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import useDebounce from "@/hooks/useDebounce";
 import { useOwnerIotKits } from "@/queries/useIotKit";
 import type { ListIotKitsQueryType } from "@/schemaValidatation/iotKit";
-import { PackageOpen, Search } from "lucide-react";
+import { PackageOpen, Search, Stethoscope, ShoppingBag } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
+import ServicePackagesPurchaseSection from "@/pages/OwnerPage/Subscriptions/components/ServicePackagesPurchaseSection";
+
+const VALID_TABS = ["kits", "vouchers"] as const;
+type TabKey = (typeof VALID_TABS)[number];
 
 export default function OwnerIotKitsPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawTab = searchParams.get("tab");
+  const tab: TabKey = (VALID_TABS as readonly string[]).includes(rawTab ?? "")
+    ? (rawTab as TabKey)
+    : "kits";
+
+  const handleTabChange = (next: string) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("tab", next);
+    setSearchParams(params, { replace: true });
+  };
+
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"createdAt" | "price" | "name">(
@@ -58,15 +75,29 @@ export default function OwnerIotKitsPage() {
           <div className="space-y-2">
             <Badge className="mb-2">Chủ trang trại</Badge>
             <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-              Mua thêm Bộ Kit IoT
+              Mua thêm dịch vụ
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
-              Mở rộng hạn mức thiết bị IoT của trang trại bạn. Mỗi bộ phủ ~4 m²
-              và đồng pha hạn với gói đăng ký hiện tại.
+              Mở rộng hạn mức thiết bị IoT hoặc nạp thêm lượt tư vấn bác sĩ
+              cho nông trại của bạn.
             </p>
           </div>
         </div>
       </section>
+
+      <Tabs value={tab} onValueChange={handleTabChange} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="kits" className="gap-1.5">
+            <ShoppingBag className="h-4 w-4" />
+            Mua bộ Kit IoT
+          </TabsTrigger>
+          <TabsTrigger value="vouchers" className="gap-1.5">
+            <Stethoscope className="h-4 w-4" />
+            Mua vé tư vấn bác sĩ
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="kits" className="mt-0">
 
       <Card className="overflow-hidden border-border/70">
         <CardHeader className="bg-muted/30">
@@ -177,6 +208,15 @@ export default function OwnerIotKitsPage() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="vouchers" className="mt-0">
+          <ServicePackagesPurchaseSection
+            title="Mua vé tư vấn bác sĩ"
+            description="Chọn gói lượt tư vấn bác sĩ phù hợp. Sau khi xác nhận, bạn sẽ được chuyển đến trang thanh toán."
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

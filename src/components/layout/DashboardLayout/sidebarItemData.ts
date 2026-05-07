@@ -57,7 +57,7 @@ export const sidebarData: SidebarData = {
           icon: Building2,
         },
         {
-          title: "Feature Menu",
+          title: "Tính Năng Theo Gói",
           url: "/dashboard/admin/features",
           icon: Blocks,
         },
@@ -264,7 +264,7 @@ export const sidebarData: SidebarData = {
           icon: Cpu,
         },
         {
-          title: "Mua Bộ Kit IoT",
+          title: "Mua Dịch Vụ",
           url: "/dashboard/owner/iot-kits",
           icon: PackagePlus,
         },
