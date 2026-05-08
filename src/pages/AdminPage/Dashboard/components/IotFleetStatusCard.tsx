@@ -41,7 +41,7 @@ function IotFleetStatusCard({ data, className }: IotFleetStatusCardProps) {
       <CardHeader>
         <CardTitle className="text-base">Tình trạng thiết bị IoT</CardTitle>
         <CardDescription>
-          {total.toLocaleString("vi-VN")} thiết bị · {activePct}% đang hoạt động
+          {total.toLocaleString("vi-VN")} bộ · {activePct}% đang hoạt động
         </CardDescription>
       </CardHeader>
       <CardContent>

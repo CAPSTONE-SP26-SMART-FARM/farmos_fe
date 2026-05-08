@@ -39,6 +39,7 @@ export const API_ENDPOINTS = {
     PLAN_VERSION: (id: string) => `/subscriptions/${id}/plan-version`,
     ENTITLEMENTS: (id: string) => `/subscriptions/${id}/entitlements`,
     USAGE: (id: string) => `/subscriptions/${id}/usage`,
+    QUOTA: (id: string) => `/subscriptions/${id}/quota`,
     PAYMENT_STATUS: (id: string) => `/subscriptions/${id}/payment-status`,
   },
   INVOICES: {
@@ -662,6 +663,7 @@ export const QUERY_KEYS = {
       "usage",
       ...(query !== undefined ? [query] : []),
     ],
+    quota: (id: string) => ["subscriptions", id, "quota"],
     paymentStatus: (id: string) => ["subscriptions", id, "payment-status"],
   },
   invoices: {

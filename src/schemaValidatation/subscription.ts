@@ -45,6 +45,7 @@ export const SubscriptionEntitlementSchema = z.object({
   id: z.string().uuid(),
   subscriptionId: z.string().uuid(),
   featureCode: z.string(),
+  featureName: z.string().nullable(),
   value: z.string(),
   periodStart: z.string().nullable(),
   periodEnd: z.string().nullable(),
@@ -202,15 +203,23 @@ export type ListEntitlementsResType = z.infer<typeof ListEntitlementsResSchema>;
 // MyQuota — aggregated quota for the current owner
 // ============================================================
 export type MyQuotaFeatureType =
-  | { featureCode: string; kind: "numeric"; limit: number; used: number; remaining: number }
   | {
       featureCode: string;
+      featureName: string | null;
+      kind: "numeric";
+      limit: number;
+      used: number;
+      remaining: number;
+    }
+  | {
+      featureCode: string;
+      featureName: string | null;
       kind: "numeric_per_farm";
       limit: number;
       perFarm: { farmId: string; farmName: string; used: number; remaining: number }[];
     }
-  | { featureCode: string; kind: "boolean"; enabled: boolean }
-  | { featureCode: string; kind: "raw"; value: string };
+  | { featureCode: string; featureName: string | null; kind: "boolean"; enabled: boolean }
+  | { featureCode: string; featureName: string | null; kind: "raw"; value: string };
 
 export type MyQuotaResType = {
   subscription: {

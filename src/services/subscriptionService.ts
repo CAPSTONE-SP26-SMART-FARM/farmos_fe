@@ -36,6 +36,9 @@ const subscriptionService = {
 
   getMyQuota: () => api.get<MyQuotaResType>(SUBSCRIPTIONS.MY_QUOTA),
 
+  getSubscriptionQuota: (id: string) =>
+    api.get<MyQuotaResType>(SUBSCRIPTIONS.QUOTA(id)),
+
   getSubscriptionsSummary: () =>
     api.get<SubscriptionSummaryResType>(SUBSCRIPTIONS.SUMMARY),
 

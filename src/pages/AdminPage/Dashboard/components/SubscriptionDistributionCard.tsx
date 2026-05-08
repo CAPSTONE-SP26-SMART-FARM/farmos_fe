@@ -40,8 +40,10 @@ function SubscriptionDistributionCard({
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle className="text-base">Cơ cấu gói đăng ký</CardTitle>
-        <CardDescription>{total} đăng ký đang hoạt động</CardDescription>
+        <CardTitle className="text-base">Gói đã đăng ký theo loại</CardTitle>
+        <CardDescription>
+          {total.toLocaleString("vi-VN")} đăng ký theo từng gói
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="h-48 w-full">

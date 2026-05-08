@@ -53,7 +53,6 @@ import ManagerEmployeeTaskTemplatesPage from "@/pages/ManagerPage/EmployeeTaskTe
 import ManagerIotDevicesPage from "@/pages/ManagerPage/IotDevices/ManagerIotDevicesPage";
 import ManagerDailyLogsPage from "@/pages/ManagerPage/DailyLogs/ManagerDailyLogsPage";
 import ManagerSensorReadingPage from "@/pages/ManagerPage/SensorReadings/ManagerSensorReadingPage";
-import ManagerSensorDashboardPage from "@/pages/ManagerPage/SensorDashboard/ManagerSensorDashboardPage";
 import OwnerCropSeasonsPage from "@/pages/OwnerPage/CropSeasons/OwnerCropSeasonsPage";
 import PlanVsActualPage from "@/pages/OwnerPage/CropSeasons/PlanVsActualPage";
 import OwnerEmployeeTaskTemplatesPage from "@/pages/OwnerPage/EmployeeTaskTemplates/OwnerEmployeeTaskTemplatesPage";
@@ -514,11 +513,6 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/manager/sensor-readings/:assignmentId",
         component: ManagerSensorReadingPage,
-        allowedRoles: [RoleName.Manager],
-      },
-      {
-        path: "/dashboard/manager/sensor-dashboard",
-        component: ManagerSensorDashboardPage,
         allowedRoles: [RoleName.Manager],
       },
       {

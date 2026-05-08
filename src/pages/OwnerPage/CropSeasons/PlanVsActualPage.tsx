@@ -1,6 +1,8 @@
 // src/pages/OwnerPage/CropSeasons/PlanVsActualPage.tsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { QUERY_KEYS } from "@/constants/endpoints";
 import {
   ArrowLeft,
   GitCompareArrows,
@@ -42,8 +44,6 @@ import type { TrackingLogQueryType } from "@/schemaValidatation/tracking";
 
 const DEFAULT_LOG_QUERY: TrackingLogQueryType = { page: 1, limit: 20 };
 
-type FilterKey = "all" | "late" | "ontime" | "early";
-
 const HEALTH_PILL_CLASS: Record<
   ReturnType<typeof healthTone>,
   string
@@ -57,8 +57,9 @@ const HEALTH_PILL_CLASS: Record<
 function PlanVsActualPage() {
   const { id: cropSeasonId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [show, setShow] = useState(false);
-  const [filter, setFilter] = useState<FilterKey>("all");
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setShow(true));
@@ -72,6 +73,18 @@ function PlanVsActualPage() {
     refetch: refetchDiff,
   } = useTrackingDiff(cropSeasonId!);
 
+  const handleRefresh = async () => {
+    if (!cropSeasonId) return;
+    setIsRefreshing(true);
+    try {
+      await queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.tracking.all(cropSeasonId),
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   const { data: logData, isLoading: loadingLog } = useTrackingLog(
     cropSeasonId!,
     DEFAULT_LOG_QUERY,
@@ -81,23 +94,6 @@ function PlanVsActualPage() {
     () => (diffData?.data ? computeTrackingStats(diffData.data) : null),
     [diffData?.data],
   );
-
-  const filterOptions = useMemo(() => {
-    if (!stats) {
-      return [
-        { key: "all" as FilterKey, label: "Tất cả", count: 0 },
-        { key: "late" as FilterKey, label: "Trễ / Vượt", count: 0 },
-        { key: "ontime" as FilterKey, label: "Đúng", count: 0 },
-        { key: "early" as FilterKey, label: "Sớm / Thấp", count: 0 },
-      ];
-    }
-    return [
-      { key: "all" as FilterKey, label: "Tất cả", count: stats.total },
-      { key: "late" as FilterKey, label: "Trễ / Vượt", count: stats.late },
-      { key: "ontime" as FilterKey, label: "Đúng", count: stats.onTime },
-      { key: "early" as FilterKey, label: "Sớm / Thấp", count: stats.early },
-    ];
-  }, [stats]);
 
   const handleBack = () => {
     if (window.history.length > 1) navigate(-1);
@@ -205,7 +201,11 @@ function PlanVsActualPage() {
             show ? "opacity-100" : "opacity-0"
           }`}
         >
-          <KpiSummaryCards diff={diff} />
+          <KpiSummaryCards
+            diff={diff}
+            onRefresh={handleRefresh}
+            isRefreshing={isRefreshing}
+          />
         </div>
 
         {/* ── Combined empty state ────────────────────────────── */}
@@ -261,48 +261,18 @@ function PlanVsActualPage() {
                 {!noTracked && (
                   <Card>
                     <CardHeader className="pb-3">
-                      <div className="flex flex-col gap-3">
-                        <div>
-                          <CardTitle className="text-base">
-                            Chi tiết so sánh theo trường
-                          </CardTitle>
-                          <CardDescription>
-                            Mỗi hàng hiển thị giá trị kế hoạch và thực tế cạnh
-                            nhau, kèm sai số.
-                          </CardDescription>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {filterOptions.map((opt) => {
-                            const active = filter === opt.key;
-                            return (
-                              <Button
-                                key={opt.key}
-                                variant={active ? "default" : "outline"}
-                                size="sm"
-                                className="h-7 text-xs gap-1.5"
-                                onClick={() => setFilter(opt.key)}
-                              >
-                                {opt.label}
-                                <span
-                                  className={`rounded-full px-1.5 text-[10px] font-semibold tabular-nums ${
-                                    active
-                                      ? "bg-primary-foreground/20 text-primary-foreground"
-                                      : "bg-muted text-muted-foreground"
-                                  }`}
-                                >
-                                  {opt.count}
-                                </span>
-                              </Button>
-                            );
-                          })}
-                        </div>
-                      </div>
+                      <CardTitle className="text-base">
+                        Chi tiết so sánh theo trường
+                      </CardTitle>
+                      <CardDescription>
+                        Mỗi hàng hiển thị giá trị kế hoạch và thực tế cạnh
+                        nhau, kèm sai số.
+                      </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <DiffTable
                         tracked={diff.tracked}
                         cropSeasonId={cropSeasonId!}
-                        filter={filter}
                       />
                     </CardContent>
                   </Card>

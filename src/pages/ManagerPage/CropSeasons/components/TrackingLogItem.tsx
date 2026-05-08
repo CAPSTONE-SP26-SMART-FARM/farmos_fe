@@ -50,8 +50,14 @@ export function TrackingLogItem({ log }: { log: TrackingLogItemType }) {
   const IconComp = getEntityLogIcon(log.entityType);
   const colorClass = ENTITY_COLOR_MAP[log.entityType] ?? "bg-muted text-muted-foreground";
   const changeInfo = CHANGE_TYPE_MAP[log.changeType] ?? CHANGE_TYPE_MAP.update;
-  const oldVal = formatTrackingValue(log.oldValueJson, log.dataType);
-  const newVal = formatTrackingValue(log.newValueJson, log.dataType);
+  const oldVal = formatTrackingValue(log.oldValueJson, log.dataType, {
+    entityType: log.entityType,
+    fieldName: log.fieldName,
+  });
+  const newVal = formatTrackingValue(log.newValueJson, log.dataType, {
+    entityType: log.entityType,
+    fieldName: log.fieldName,
+  });
 
   const displayName =
     log.changedByUser?.fullName ??
