@@ -1,4 +1,5 @@
 // src/pages/OwnerPage/CropSeasons/components/DiffTable.tsx
+import { format, parseISO } from "date-fns";
 import { useState } from "react";
 import {
   Accordion,
@@ -171,10 +172,26 @@ export default function DiffTable({
                                 dataType={field.dataType}
                               />
                             </TableCell>
-                            <TableCell className="text-xs text-muted-foreground">
-                              {field.changeCount > 0
-                                ? `${field.changeCount} lần`
-                                : "—"}
+                            <TableCell className="text-xs text-muted-foreground whitespace-normal">
+                              <div>
+                                {field.changeCount > 0
+                                  ? `${field.changeCount} lần`
+                                  : "—"}
+                              </div>
+                              {field.lastChangedAt ? (
+                                <div className="text-[10px] mt-1 tabular-nums opacity-90">
+                                  {(() => {
+                                    try {
+                                      return format(
+                                        parseISO(field.lastChangedAt),
+                                        "dd/MM/yyyy HH:mm",
+                                      );
+                                    } catch {
+                                      return field.lastChangedAt;
+                                    }
+                                  })()}
+                                </div>
+                              ) : null}
                             </TableCell>
                             <TableCell>
                               <Button

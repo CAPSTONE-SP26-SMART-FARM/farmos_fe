@@ -19,6 +19,7 @@ import {
   getEntityTypeLabel,
   getFieldLabel,
   formatTrackingValue,
+  getTrackingActorLines,
 } from "@/lib/tracking-display";
 import type {
   TrackingEntityType,
@@ -166,57 +167,78 @@ export default function TrackingTimeline({
         </p>
       ) : (
         <div className="space-y-3">
-          {items.map((item, idx) => (
-            <div key={item.id}>
-              <div className="flex items-start gap-3">
-                {/* Time column */}
-                <span className="text-xs text-muted-foreground w-32 shrink-0 pt-0.5">
-                  {format(parseISO(item.changedAt), "dd/MM HH:mm")}
-                </span>
-
-                {/* Content */}
-                <div className="flex-1 text-sm">
-                  <span className="font-medium">
-                    {getEntityTypeLabel(item.entityType)}
-                  </span>{" "}
-                  —{" "}
-                  <span className="text-muted-foreground">
-                    {getFieldLabel(item.fieldName)}
+          {items.map((item, idx) => {
+            const actor = getTrackingActorLines(item);
+            return (
+              <div key={item.id}>
+                <div className="flex items-start gap-3">
+                  {/* Time column */}
+                  <span className="text-xs text-muted-foreground w-28 shrink-0 pt-0.5">
+                    {format(parseISO(item.changedAt), "dd/MM HH:mm")}
                   </span>
-                  <div className="mt-1 flex items-center gap-2">
-                    <span className="text-muted-foreground text-xs">
-                      {formatTrackingValue(item.oldValueJson, item.dataType, {
-                        entityType: item.entityType,
-                        fieldName: item.fieldName,
-                      })}
-                    </span>
-                    <span className="text-xs">→</span>
-                    <span className="font-medium text-xs">
-                      {formatTrackingValue(item.newValueJson, item.dataType, {
-                        entityType: item.entityType,
-                        fieldName: item.fieldName,
-                      })}
-                    </span>
-                  </div>
-                </div>
 
-                {/* Source badge */}
-                <Badge
-                  variant="outline"
-                  className="text-xs shrink-0"
-                >
-                  {item.source === "manual"
-                    ? "Thủ công"
-                    : item.source === "system"
-                      ? "Hệ thống"
-                      : item.source === "iot"
-                        ? "Cảm biến"
-                        : (item.source ?? "Hệ thống")}
-                </Badge>
+                  {/* Content */}
+                  <div className="flex-1 min-w-0 text-sm">
+                    <span className="font-medium">
+                      {getEntityTypeLabel(item.entityType)}
+                    </span>{" "}
+                    —{" "}
+                    <span className="text-muted-foreground">
+                      {getFieldLabel(item.fieldName)}
+                    </span>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <span className="text-muted-foreground text-xs">
+                        {formatTrackingValue(item.oldValueJson, item.dataType, {
+                          entityType: item.entityType,
+                          fieldName: item.fieldName,
+                        })}
+                      </span>
+                      <span className="text-xs">→</span>
+                      <span className="font-medium text-xs">
+                        {formatTrackingValue(item.newValueJson, item.dataType, {
+                          entityType: item.entityType,
+                          fieldName: item.fieldName,
+                        })}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Actor */}
+                  <div className="w-36 shrink-0 text-right text-xs pt-0.5">
+                    {actor.primary ? (
+                      <div>
+                        <span className="font-medium block leading-snug wrap-anywhere">
+                          {actor.primary}
+                        </span>
+                        {actor.secondary && (
+                          <span className="text-muted-foreground block mt-0.5 wrap-anywhere">
+                            {actor.secondary}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </div>
+
+                  {/* Source badge */}
+                  <Badge
+                    variant="outline"
+                    className="text-xs shrink-0"
+                  >
+                    {item.source === "manual"
+                      ? "Thủ công"
+                      : item.source === "system"
+                        ? "Hệ thống"
+                        : item.source === "iot"
+                          ? "Cảm biến"
+                          : (item.source ?? "Hệ thống")}
+                  </Badge>
+                </div>
+                {idx < items.length - 1 && <Separator className="mt-3" />}
               </div>
-              {idx < items.length - 1 && <Separator className="mt-3" />}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

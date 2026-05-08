@@ -108,7 +108,8 @@ export const TrackingLogItemSchema = z.object({
   changedAt: z.string(),
   source: z.string().nullable(),
   changedBy: z.string().nullable(),
-  changedByName: z.string().nullable(),
+  changedByName: z.string().min(1),
+  changedByEmail: z.string().nullable().optional(),
   changedByUser: TrackingLogUserSchema.nullable().optional(),
   requestId: z.string().nullable(),
 });

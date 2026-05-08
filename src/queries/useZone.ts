@@ -148,3 +148,29 @@ export const useOwnerRemoveZoneManager = (zoneId: string) => {
   });
 };
 
+/** Owner: soft-delete farm staff (`DELETE /zones/:zoneId/members/:userId`). */
+export const useOwnerSoftDeleteFarmStaffUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: {
+      zoneId: string;
+      userId: string;
+      farmMemberId: string;
+    }) => zoneService.softDeleteFarmStaffUser(vars.zoneId, vars.userId),
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.farmMembers.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.farmMembers.detail(vars.farmMemberId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.zones.managers.byZone(vars.zoneId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.zones.managers.availableByZone(vars.zoneId),
+      });
+    },
+  });
+};
+

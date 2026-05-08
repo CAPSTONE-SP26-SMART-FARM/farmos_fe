@@ -400,6 +400,11 @@ export const API_ENDPOINTS = {
         `/zones/${zoneId}/managers/${managerId}`,
       REMOVE_BULK: (zoneId: string) => `/zones/${zoneId}/managers/bulk`,
     },
+    /** Soft-delete farm staff user (`users.deleted_at`); any zone under the farm may be used. */
+    MEMBERS: {
+      SOFT_DELETE: (zoneId: string, userId: string) =>
+        `/zones/${zoneId}/members/${userId}`,
+    },
   },
   // ── Ticket v2 ─────────────────────────────────────────────────────────
   TICKET_CATEGORIES: {
