@@ -54,7 +54,7 @@ function NewUsersChart({ data, className }: NewUsersChartProps) {
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle className="text-base">Người dùng mới 30 ngày gần nhất</CardTitle>
+        <CardTitle className="text-base">Người dùng mới theo ngày</CardTitle>
         <CardDescription>
           {total.toLocaleString("vi-VN")} đăng ký · {data.length} ngày
         </CardDescription>

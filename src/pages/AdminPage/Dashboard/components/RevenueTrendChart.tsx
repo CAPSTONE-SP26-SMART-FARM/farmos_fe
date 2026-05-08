@@ -63,7 +63,7 @@ function RevenueTrendChart({ data, className }: RevenueTrendChartProps) {
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle className="text-base">Doanh thu 30 ngày gần nhất</CardTitle>
+        <CardTitle className="text-base">Doanh thu theo ngày</CardTitle>
         <CardDescription>
           Tổng cộng {formatCurrencyVnd(total)} · {data.length} ngày
         </CardDescription>
