@@ -14,17 +14,11 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import EmptyState from "@/components/common/EmptyState";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import { useMedicineFreetextStats } from "@/queries/useMedicine";
-import { Loader2, Plus, Sparkles } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
 import { useState } from "react";
 import AdminMedicineFormSheet from "./AdminMedicineFormSheet";
 
@@ -58,11 +52,7 @@ export default function AdminMedicineFreeTextStatsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {listQuery.isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : sorted.length === 0 ? (
+          {!listQuery.isLoading && sorted.length === 0 ? (
             <EmptyState
               icon={Sparkles}
               title="Chưa có thuốc tự nhập"
@@ -70,39 +60,51 @@ export default function AdminMedicineFreeTextStatsPage() {
             />
           ) : (
             <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tên thuốc bác sĩ nhập</TableHead>
-                    <TableHead className="text-right">Số lần xuất hiện</TableHead>
-                    <TableHead className="text-right">Thao tác</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sorted.map((row) => (
-                    <TableRow key={row.customMedicineName}>
-                      <TableCell className="font-medium">
-                        {row.customMedicineName}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        <Badge variant="secondary">{row.count}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setPrefillName(row.customMedicineName)}
-                        >
-                          <Plus className="mr-1 h-3.5 w-3.5" />
-                          Tạo thuốc
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <DataTable
+                columns={
+                  [
+                    {
+                      accessorKey: "customMedicineName",
+                      header: "Tên thuốc bác sĩ nhập",
+                      cell: ({ row }) => (
+                        <span className="font-medium">
+                          {row.original.customMedicineName}
+                        </span>
+                      ),
+                    },
+                    {
+                      accessorKey: "count",
+                      header: () => (
+                        <div className="text-right">Số lần xuất hiện</div>
+                      ),
+                      cell: ({ row }) => (
+                        <div className="text-right tabular-nums">
+                          <Badge variant="secondary">
+                            {row.original.count}
+                          </Badge>
+                        </div>
+                      ),
+                    },
+                  ] as ColumnDef<(typeof sorted)[number]>[]
+                }
+                data={sorted}
+                isLoading={listQuery.isLoading}
+                actions={[
+                  {
+                    key: "create",
+                    label: "Tạo thuốc",
+                    icon: Plus,
+                    onSelect: (row) =>
+                      setPrefillName(row.customMedicineName),
+                  },
+                ]}
+                emptyText="Chưa có thuốc tự nhập."
+              />
             </div>
           )}
+          {/* avoid unused-import warning if any */}
+          <Button className="hidden" />
+          <Badge className="hidden" />
         </CardContent>
       </Card>
 

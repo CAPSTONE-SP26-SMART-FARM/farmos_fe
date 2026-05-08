@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Eye } from "lucide-react";
 import InvoiceStatusBadge, {
   type InvoiceStatus,
 } from "@/components/common/InvoiceStatusBadge";
+import { DataTable } from "@/components/common/DataTable";
+import type { DataTableAction } from "@/components/common/DataTable/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,14 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useAdminInvoices } from "@/queries/useInvoice";
 import type {
   InvoiceAdminListItemType,
@@ -37,8 +33,6 @@ import type {
   ListInvoicesQueryType,
 } from "@/schemaValidatation/invoice";
 import { formatCurrencyVnd, formatDateVi } from "@/lib/format";
-
-const COLUMN_COUNT = 9;
 
 const STATUS_OPTIONS: Array<{
   value: "ALL" | InvoiceStatusType;
@@ -134,6 +128,107 @@ function AdminInvoicesPage() {
   const invoices = listInvoicesQuery.data?.data?.data ?? [];
   const meta = listInvoicesQuery.data?.data?.meta;
 
+  const columns = useMemo<ColumnDef<InvoiceAdminListItemType>[]>(
+    () => [
+      {
+        accessorKey: "invoiceNumber",
+        header: "Mã hóa đơn",
+        cell: ({ row }) => (
+          <span className="font-medium">{row.original.invoiceNumber}</span>
+        ),
+      },
+      {
+        id: "customer",
+        header: "Khách hàng",
+        cell: ({ row }) => (
+          <div className="flex flex-col gap-0.5">
+            <span className="font-medium">
+              {row.original.owner.fullName ?? "—"}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {row.original.owner.email ??
+                row.original.owner.phone ??
+                row.original.owner.id.slice(0, 8)}
+            </span>
+          </div>
+        ),
+      },
+      {
+        id: "reference",
+        header: "Tham chiếu",
+        cell: ({ row }) => (
+          <div className="flex flex-col gap-0.5">
+            <Badge
+              variant="outline"
+              className="w-fit"
+            >
+              {row.original.reference
+                ? REFERENCE_TYPE_LABEL[row.original.reference.type]
+                : row.original.referenceType}
+            </Badge>
+            <span className="text-xs text-muted-foreground">
+              {row.original.reference?.label ?? "—"}
+            </span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "issueDate",
+        header: "Ngày phát hành",
+        cell: ({ row }) => formatDateVi(row.original.issueDate),
+      },
+      {
+        accessorKey: "dueDate",
+        header: "Hạn thanh toán",
+        cell: ({ row }) => (
+          <DueDateCell
+            invoice={row.original}
+            nowMs={nowMs}
+          />
+        ),
+      },
+      {
+        accessorKey: "totalAmount",
+        header: () => <div className="text-right">Tổng tiền</div>,
+        cell: ({ row }) => (
+          <div className="flex flex-col items-end gap-0.5">
+            <span className="font-medium">
+              {formatCurrencyVnd(row.original.totalAmount)}
+            </span>
+          </div>
+        ),
+      },
+      {
+        id: "latestTransaction",
+        header: "Thanh toán gần nhất",
+        cell: ({ row }) => (
+          <LatestTransactionCell tx={row.original.latestTransaction} />
+        ),
+      },
+      {
+        accessorKey: "status",
+        header: "Trạng thái",
+        cell: ({ row }) => (
+          <InvoiceStatusBadge status={row.original.status as InvoiceStatus} />
+        ),
+      },
+    ],
+    [nowMs],
+  );
+
+  const actions: DataTableAction<InvoiceAdminListItemType>[] = useMemo(
+    () => [
+      {
+        key: "view",
+        label: "Xem chi tiết",
+        icon: Eye,
+        onSelect: (invoice) =>
+          navigate(`/dashboard/admin/invoices/${invoice.id}`),
+      },
+    ],
+    [navigate],
+  );
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       <Card>
@@ -215,122 +310,20 @@ function AdminInvoicesPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Mã hóa đơn</TableHead>
-                  <TableHead>Khách hàng</TableHead>
-                  <TableHead>Tham chiếu</TableHead>
-                  <TableHead>Ngày phát hành</TableHead>
-                  <TableHead>Hạn thanh toán</TableHead>
-                  <TableHead className="text-right">Tổng tiền</TableHead>
-                  <TableHead>Thanh toán gần nhất</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead className="text-right">Chi tiết</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {listInvoicesQuery.isLoading && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={COLUMN_COUNT}
-                      className="py-6 text-center text-muted-foreground"
-                    >
-                      Đang tải danh sách hóa đơn...
-                    </TableCell>
-                  </TableRow>
-                )}
-                {!listInvoicesQuery.isLoading && listInvoicesQuery.isError && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={COLUMN_COUNT}
-                      className="py-6 text-center text-destructive"
-                    >
-                      Không thể tải danh sách hóa đơn.
-                    </TableCell>
-                  </TableRow>
-                )}
-                {!listInvoicesQuery.isLoading &&
-                  !listInvoicesQuery.isError &&
-                  invoices.length === 0 && (
-                    <TableRow>
-                      <TableCell
-                        colSpan={COLUMN_COUNT}
-                        className="py-6 text-center text-muted-foreground"
-                      >
-                        Không có dữ liệu hóa đơn.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                {invoices.map((invoice) => (
-                  <TableRow key={invoice.id}>
-                    <TableCell className="font-medium">
-                      {invoice.invoiceNumber}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-medium">
-                          {invoice.owner.fullName ?? "—"}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {invoice.owner.email ??
-                            invoice.owner.phone ??
-                            invoice.owner.id.slice(0, 8)}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-0.5">
-                        <Badge
-                          variant="outline"
-                          className="w-fit"
-                        >
-                          {invoice.reference
-                            ? REFERENCE_TYPE_LABEL[invoice.reference.type]
-                            : invoice.referenceType}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {invoice.reference?.label ?? "—"}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{formatDateVi(invoice.issueDate)}</TableCell>
-                    <TableCell>
-                      <DueDateCell
-                        invoice={invoice}
-                        nowMs={nowMs}
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex flex-col items-end gap-0.5">
-                        <span className="font-medium">
-                          {formatCurrencyVnd(invoice.totalAmount)}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <LatestTransactionCell tx={invoice.latestTransaction} />
-                    </TableCell>
-                    <TableCell>
-                      <InvoiceStatusBadge
-                        status={invoice.status as InvoiceStatus}
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          navigate(`/dashboard/admin/invoices/${invoice.id}`)
-                        }
-                      >
-                        Mở
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <DataTable
+              columns={columns}
+              data={invoices}
+              isLoading={listInvoicesQuery.isLoading}
+              actions={actions}
+              onRowClick={(invoice) =>
+                navigate(`/dashboard/admin/invoices/${invoice.id}`)
+              }
+              emptyText={
+                listInvoicesQuery.isError
+                  ? "Không thể tải danh sách hóa đơn."
+                  : "Không có dữ liệu hóa đơn."
+              }
+            />
           </div>
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">

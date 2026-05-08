@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,14 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import { getSubscriptionStatusBadgeVariant } from "@/lib/utils";
 import { useOwnerSubscriptionHistory } from "@/queries/useSubscription";
 import type {
@@ -55,6 +49,15 @@ const formatDateTime = (value?: string | null) => {
   }).format(date);
 };
 
+type SubscriptionRow = {
+  id: string;
+  plan?: { name?: string | null; code?: string | null } | null;
+  status: SubscriptionStatusType;
+  startedAt?: string | null;
+  expiresAt?: string | null;
+  autoRenew: boolean;
+};
+
 function HistoryTab() {
   const [query, setQuery] = useState<ListSubscriptionsQueryType>({
     page: 1,
@@ -65,8 +68,53 @@ function HistoryTab() {
   });
 
   const subscriptionHistoryQuery = useOwnerSubscriptionHistory(query, true);
-  const subscriptions = subscriptionHistoryQuery.data?.data?.data ?? [];
+  const subscriptions = (subscriptionHistoryQuery.data?.data?.data ??
+    []) as SubscriptionRow[];
   const meta = subscriptionHistoryQuery.data?.data?.meta;
+
+  const columns = useMemo<ColumnDef<SubscriptionRow>[]>(
+    () => [
+      {
+        id: "plan",
+        header: "Gói",
+        cell: ({ row }) => (
+          <div className="space-y-1">
+            <p className="font-medium">
+              {row.original.plan?.name ?? "Gói không xác định"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {row.original.plan?.code ?? "-"}
+            </p>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "status",
+        header: "Trạng thái",
+        cell: ({ row }) => (
+          <Badge variant={getSubscriptionStatusBadgeVariant(row.original.status)}>
+            {SUBSCRIPTION_STATUS_LABEL[row.original.status]}
+          </Badge>
+        ),
+      },
+      {
+        accessorKey: "startedAt",
+        header: "Bắt đầu",
+        cell: ({ row }) => formatDateTime(row.original.startedAt),
+      },
+      {
+        accessorKey: "expiresAt",
+        header: "Hết hạn",
+        cell: ({ row }) => formatDateTime(row.original.expiresAt),
+      },
+      {
+        accessorKey: "autoRenew",
+        header: "Tự động gia hạn",
+        cell: ({ row }) => (row.original.autoRenew ? "Bật" : "Tắt"),
+      },
+    ],
+    [],
+  );
 
   return (
     <div className="space-y-4">
@@ -112,55 +160,12 @@ function HistoryTab() {
           <CardTitle>Danh sách đăng ký</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Gói</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Bắt đầu</TableHead>
-                <TableHead>Hết hạn</TableHead>
-                <TableHead>Tự động gia hạn</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {subscriptionHistoryQuery.isLoading && (
-                <TableRow>
-                  <TableCell colSpan={6} className="py-6 text-center text-muted-foreground">
-                    Đang tải lịch sử đăng ký...
-                  </TableCell>
-                </TableRow>
-              )}
-              {!subscriptionHistoryQuery.isLoading && subscriptions.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="py-6 text-center text-muted-foreground">
-                    Bạn chưa có lịch sử đăng ký nào.
-                  </TableCell>
-                </TableRow>
-              )}
-              {subscriptions.map((subscription) => (
-                <TableRow key={subscription.id}>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <p className="font-medium">
-                        {subscription.plan?.name ?? "Gói không xác định"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {subscription.plan?.code ?? "-"}
-                      </p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={getSubscriptionStatusBadgeVariant(subscription.status)}>
-                      {SUBSCRIPTION_STATUS_LABEL[subscription.status]}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{formatDateTime(subscription.startedAt)}</TableCell>
-                  <TableCell>{formatDateTime(subscription.expiresAt)}</TableCell>
-                  <TableCell>{subscription.autoRenew ? "Bật" : "Tắt"}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={columns}
+            data={subscriptions}
+            isLoading={subscriptionHistoryQuery.isLoading}
+            emptyText="Bạn chưa có lịch sử đăng ký nào."
+          />
 
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">

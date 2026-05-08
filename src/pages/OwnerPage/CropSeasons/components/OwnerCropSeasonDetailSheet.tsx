@@ -8,14 +8,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Eye } from "lucide-react";
 import { useState } from "react";
 import { useOwnerListRequests } from "@/queries/useCropSeason";
@@ -79,46 +73,55 @@ function OwnerDetailContent({ season }: { season: CropSeasonType }) {
               <Skeleton key={i} className="h-12 w-full" />
             ))}
           </div>
-        ) : requests.length === 0 ? (
+        ) : !requestsQuery.isLoading && requests.length === 0 ? (
           <p className="text-muted-foreground text-sm text-center py-6 bg-muted/20 rounded-md">
             Chưa có yêu cầu nào được gửi
           </p>
         ) : (
           <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Ngày gửi</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead>Ngày phản hồi</TableHead>
-                  <TableHead>Ghi chú chủ vườn</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {requests.map((r) => {
-                  const rs = REQUEST_STATUS_MAP[r.status] ?? {
-                    label: r.status,
-                    variant: "secondary" as const,
-                  };
-                  return (
-                    <TableRow key={r.id}>
-                      <TableCell className="text-sm">
-                        {formatDate(r.sentAt)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={rs.variant}>{rs.label}</Badge>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {formatDate(r.repliedAt)}
-                      </TableCell>
-                      <TableCell className="text-sm max-w-50 truncate">
-                        {r.description ?? "—"}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <DataTable
+              columns={
+                [
+                  {
+                    accessorKey: "sentAt",
+                    header: "Ngày gửi",
+                    cell: ({ row }) => (
+                      <span className="text-sm">{formatDate(row.original.sentAt)}</span>
+                    ),
+                  },
+                  {
+                    accessorKey: "status",
+                    header: "Trạng thái",
+                    cell: ({ row }) => {
+                      const rs = REQUEST_STATUS_MAP[row.original.status] ?? {
+                        label: row.original.status,
+                        variant: "secondary" as const,
+                      };
+                      return <Badge variant={rs.variant}>{rs.label}</Badge>;
+                    },
+                  },
+                  {
+                    accessorKey: "repliedAt",
+                    header: "Ngày phản hồi",
+                    cell: ({ row }) => (
+                      <span className="text-sm">{formatDate(row.original.repliedAt)}</span>
+                    ),
+                  },
+                  {
+                    accessorKey: "description",
+                    header: "Ghi chú chủ vườn",
+                    cell: ({ row }) => (
+                      <span className="text-sm max-w-50 truncate block">
+                        {row.original.description ?? "—"}
+                      </span>
+                    ),
+                  },
+                ] as ColumnDef<(typeof requests)[number]>[]
+              }
+              data={requests}
+              isLoading={requestsQuery.isLoading}
+              emptyText="Chưa có yêu cầu nào."
+            />
           </div>
         )}
       </div>

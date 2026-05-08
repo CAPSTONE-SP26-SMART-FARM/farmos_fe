@@ -1,13 +1,6 @@
-import {
-  flexRender,
-  getCoreRowModel,
-  getPaginationRowModel,
-  useReactTable,
-  type ColumnDef,
-} from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import type { UserResType } from "@/types/user";
 import { RoleName } from "@/constants/role";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -18,19 +11,13 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Info } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import ProPagination from "@/components/common/pro-pagination";
+import { DataTable } from "@/components/common/DataTable";
+import { DataTablePagination } from "@/components/common/DataTable/DataTablePagination";
+import type { DataTableAction } from "@/components/common/DataTable/types";
 import useDebounce from "@/hooks/useDebounce";
-import TableSkeleton from "@/components/common/TableSkeleton";
+import usePageParam from "@/hooks/usePageParam";
 import { useAdminListUsers } from "@/queries/useAdmin";
 import type { ListUsersQueryType } from "@/schemaValidatation/user";
 
@@ -85,10 +72,69 @@ const statusVariant: Record<
   BLOCKED: "destructive",
 };
 
+const columns: ColumnDef<UserResType>[] = [
+  {
+    accessorKey: "fullName",
+    header: "Họ tên",
+    cell: ({ row }) => (
+      <div className="font-medium">{row.getValue("fullName")}</div>
+    ),
+  },
+  {
+    accessorKey: "email",
+    header: "Email",
+    cell: ({ row }) => (
+      <div className="text-muted-foreground">{row.getValue("email")}</div>
+    ),
+  },
+  {
+    accessorKey: "role",
+    header: "Vai trò",
+    cell: ({ row }) => {
+      const role = row.getValue("role") as string;
+      return (
+        <Badge
+          variant={roleVariant[role] ?? "outline"}
+          className="capitalize"
+        >
+          {ROLE_LABELS[role.toLowerCase()] ?? role}
+        </Badge>
+      );
+    },
+  },
+  {
+    accessorKey: "status",
+    header: "Trạng thái",
+    cell: ({ row }) => {
+      const status = row.getValue("status") as string;
+      return (
+        <Badge variant={statusVariant[status] ?? "outline"}>
+          {STATUS_LABELS[status] ?? status}
+        </Badge>
+      );
+    },
+  },
+  {
+    accessorKey: "phone",
+    header: "Số điện thoại",
+    cell: ({ row }) => (
+      <div>{(row.getValue("phone") as string | null) ?? "—"}</div>
+    ),
+  },
+  {
+    accessorKey: "createdAt",
+    header: "Ngày tham gia",
+    cell: ({ row }) => (
+      <div>
+        {new Date(row.getValue("createdAt") as string).toLocaleDateString()}
+      </div>
+    ),
+  },
+];
+
 const UserTable = ({ onViewDetail }: UserTableProps) => {
-  const [searchParam] = useSearchParams();
-  const page = searchParam.get("page") ? Number(searchParam.get("page")) : 1;
-  const pageIndex = page - 1;
+  const { page } = usePageParam();
+  const [searchParam, setSearchParam] = useSearchParams();
 
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
@@ -115,108 +161,29 @@ const UserTable = ({ onViewDetail }: UserTableProps) => {
   const totalPages = listResult.data?.data.meta.totalPages ?? 0;
   const totalRecords = listResult.data?.data.meta.totalItems ?? 0;
 
-  const columns: ColumnDef<UserResType>[] = [
-    {
-      accessorKey: "fullName",
-      header: "Họ tên",
-      cell: ({ row }) => (
-        <div className="font-medium">{row.getValue("fullName")}</div>
-      ),
-    },
-    {
-      accessorKey: "email",
-      header: "Email",
-      cell: ({ row }) => (
-        <div className="text-muted-foreground">{row.getValue("email")}</div>
-      ),
-    },
-    {
-      accessorKey: "role",
-      header: "Vai trò",
-      cell: ({ row }) => {
-        const role = row.getValue("role") as string;
-        return (
-          <Badge
-            variant={roleVariant[role] ?? "outline"}
-            className="capitalize"
-          >
-            {ROLE_LABELS[role.toLowerCase()] ?? role}
-          </Badge>
-        );
-      },
-    },
-    {
-      accessorKey: "status",
-      header: "Trạng thái",
-      cell: ({ row }) => {
-        const status = row.getValue("status") as string;
-        return (
-          <Badge variant={statusVariant[status] ?? "outline"}>
-            {STATUS_LABELS[status] ?? status}
-          </Badge>
-        );
-      },
-    },
-    {
-      accessorKey: "phone",
-      header: "Số điện thoại",
-      cell: ({ row }) => (
-        <div>{(row.getValue("phone") as string | null) ?? "—"}</div>
-      ),
-    },
-    {
-      accessorKey: "createdAt",
-      header: "Ngày tham gia",
-      cell: ({ row }) => (
-        <div>
-          {new Date(row.getValue("createdAt") as string).toLocaleDateString()}
-        </div>
-      ),
-    },
-    {
-      id: "actions",
-      header: "Thao tác",
-      cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onViewDetail(row.original.id)}
-        >
-          <Info className="h-4 w-4" />
-        </Button>
-      ),
-    },
-  ];
-
-  const [pagination, setPagination] = useState({ pageIndex, pageSize: 10 });
-
   useEffect(() => {
-    setPagination({ pageIndex, pageSize: 10 });
-  }, [pageIndex]);
-
-  useEffect(() => {
-    if (page > 1 && debouncedSearch) {
+    if (
+      page > 1 &&
+      (debouncedSearch || roleFilter !== "all" || statusFilter !== "all")
+    ) {
       const params = new URLSearchParams(searchParam);
       params.set("page", "1");
-      window.history.replaceState(
-        {},
-        "",
-        `${location.pathname}?${params.toString()}`,
-      );
+      setSearchParam(params, { replace: true });
     }
-  }, [debouncedSearch, page, searchParam]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch, roleFilter, statusFilter]);
 
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    onPaginationChange: setPagination,
-    manualPagination: true,
-    autoResetPageIndex: false,
-    pageCount: totalPages,
-    state: { pagination },
-  });
+  const actions: DataTableAction<UserResType>[] = useMemo(
+    () => [
+      {
+        key: "view",
+        label: "Xem chi tiết",
+        icon: Info,
+        onSelect: (row) => onViewDetail(row.id),
+      },
+    ],
+    [onViewDetail],
+  );
 
   return (
     <div className="w-full">
@@ -265,70 +232,20 @@ const UserTable = ({ onViewDetail }: UserTableProps) => {
         </Select>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {listResult.isLoading && <TableSkeleton />}
-            {!listResult.isLoading && table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : !listResult.isLoading ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  Không có kết quả.
-                </TableCell>
-              </TableRow>
-            ) : null}
-          </TableBody>
-        </Table>
-      </div>
+      <DataTable
+        columns={columns}
+        data={data}
+        isLoading={listResult.isLoading}
+        actions={actions}
+      />
 
       <div className="py-4">
-        <div className="text-xs text-muted-foreground">
-          Hiển thị <strong>{table.getPaginationRowModel().rows.length}</strong>{" "}
-          trên <strong>{totalRecords}</strong> kết quả
-        </div>
-        {totalPages > 1 && (
-          <ProPagination
-            currentPage={page}
-            totalPages={totalPages}
-            buildHref={(p) => {
-              const params = new URLSearchParams(searchParam);
-              if (p) params.set("page", String(p));
-              else params.delete("page");
-              return { pathname: location.pathname, search: params.toString() };
-            }}
-          />
-        )}
+        <DataTablePagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalItems={totalRecords}
+          rowCount={data.length}
+        />
       </div>
     </div>
   );

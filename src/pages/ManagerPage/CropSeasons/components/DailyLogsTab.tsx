@@ -2,19 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import DatePickerField from "@/components/common/DatePickerField";
 import EmptyState from "@/components/common/EmptyState";
 import ErrorState from "@/components/common/ErrorState";
-import TableSkeleton from "@/components/common/TableSkeleton";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import { useManagerDailyLogsByZone } from "@/queries/useDailyLog";
 import { formatDateTimeVi, formatDateVi } from "@/lib/format";
 import {
@@ -86,6 +79,70 @@ function LogsPanel({ zoneId, zoneName }: LogsPanelProps) {
     setPage(1);
   };
 
+  type DailyLogRow = (typeof logs)[number];
+
+  const columns: ColumnDef<DailyLogRow>[] = [
+    {
+      id: "farmer",
+      header: "Người ghi",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Avatar size="sm">
+            {row.original.farmer.avatarUrl && (
+              <AvatarImage
+                src={row.original.farmer.avatarUrl}
+                alt={row.original.farmer.fullName}
+              />
+            )}
+            <AvatarFallback>
+              {getInitials(row.original.farmer.fullName)}
+            </AvatarFallback>
+          </Avatar>
+          <span className="text-sm font-medium truncate">
+            {row.original.farmer.fullName}
+          </span>
+        </div>
+      ),
+    },
+    {
+      id: "task",
+      header: "Công việc",
+      cell: ({ row }) => (
+        <span className="text-sm">
+          {row.original.task?.title ?? (
+            <span className="text-muted-foreground italic">—</span>
+          )}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "activities",
+      header: "Hoạt động",
+      cell: ({ row }) => (
+        <div className="text-sm max-w-md">
+          <p className="line-clamp-2">{row.original.activities}</p>
+          {row.original.notes && (
+            <p className="text-xs italic text-muted-foreground line-clamp-1">
+              Ghi chú: {row.original.notes}
+            </p>
+          )}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "logDate",
+      header: "Ngày ghi",
+      cell: ({ row }) => (
+        <span
+          className="text-xs text-muted-foreground"
+          title={formatDateTimeVi(row.original.createdAt)}
+        >
+          {formatDateVi(row.original.logDate)}
+        </span>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-4">
       {/* Date filter */}
@@ -120,19 +177,7 @@ function LogsPanel({ zoneId, zoneName }: LogsPanelProps) {
         <div>
           {logsQuery.isError ? (
             <ErrorState message="Không thể tải nhật ký." onRetry={() => logsQuery.refetch()} />
-          ) : logsQuery.isLoading ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Người ghi</TableHead>
-                  <TableHead>Công việc</TableHead>
-                  <TableHead>Hoạt động</TableHead>
-                  <TableHead className="w-32">Ngày ghi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody><TableSkeleton /></TableBody>
-            </Table>
-          ) : logs.length === 0 ? (
+          ) : !logsQuery.isLoading && logs.length === 0 ? (
             <EmptyState
               icon={NotebookPen}
               title="Chưa có nhật ký"
@@ -141,50 +186,12 @@ function LogsPanel({ zoneId, zoneName }: LogsPanelProps) {
           ) : (
             <>
               <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Người ghi</TableHead>
-                      <TableHead>Công việc</TableHead>
-                      <TableHead>Hoạt động</TableHead>
-                      <TableHead className="w-32">Ngày ghi</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {logs.map((log) => (
-                      <TableRow key={log.id} className="hover:bg-muted/40 transition-colors">
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Avatar size="sm">
-                              {log.farmer.avatarUrl && (
-                                <AvatarImage src={log.farmer.avatarUrl} alt={log.farmer.fullName} />
-                              )}
-                              <AvatarFallback>{getInitials(log.farmer.fullName)}</AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm font-medium truncate">{log.farmer.fullName}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {log.task?.title ?? <span className="text-muted-foreground italic">—</span>}
-                        </TableCell>
-                        <TableCell className="text-sm max-w-md">
-                          <p className="line-clamp-2">{log.activities}</p>
-                          {log.notes && (
-                            <p className="text-xs italic text-muted-foreground line-clamp-1">
-                              Ghi chú: {log.notes}
-                            </p>
-                          )}
-                        </TableCell>
-                        <TableCell
-                          className="text-xs text-muted-foreground"
-                          title={formatDateTimeVi(log.createdAt)}
-                        >
-                          {formatDateVi(log.logDate)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <DataTable
+                  columns={columns}
+                  data={logs}
+                  isLoading={logsQuery.isLoading}
+                  emptyText="Chưa có nhật ký."
+                />
               </div>
 
               {meta && meta.totalPages > 1 && (

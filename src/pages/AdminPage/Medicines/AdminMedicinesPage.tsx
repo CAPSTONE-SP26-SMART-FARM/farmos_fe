@@ -23,15 +23,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import EmptyState from "@/components/common/EmptyState";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
   useAdminMedicineList,
   useToggleMedicine,
@@ -42,8 +36,8 @@ import {
   type MedicineResType,
 } from "@/schemaValidatation/medicine";
 import { getApiErrorMessageVi } from "@/lib/error-message";
-import { Loader2, Pencil, Pill, Plus, Power, Search } from "lucide-react";
-import { useState } from "react";
+import { Pencil, Pill, Plus, Power, Search } from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import AdminMedicineFormSheet from "./AdminMedicineFormSheet";
 
@@ -95,6 +89,93 @@ export default function AdminMedicinesPage() {
     setEditTarget(medicine);
     setSheetOpen(true);
   };
+
+  const columns = useMemo<ColumnDef<MedicineResType>[]>(
+    () => [
+      {
+        accessorKey: "code",
+        header: "Mã",
+        cell: ({ row }) => (
+          <span className="font-mono text-xs">{row.original.code}</span>
+        ),
+      },
+      {
+        accessorKey: "name",
+        header: "Tên thuốc",
+        cell: ({ row }) => (
+          <span className="font-medium">{row.original.name}</span>
+        ),
+      },
+      {
+        accessorKey: "scientificName",
+        header: "Tên khoa học",
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground italic">
+            {row.original.scientificName ?? "—"}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "form",
+        header: "Dạng",
+        cell: ({ row }) => (
+          <span className="text-sm">
+            {MEDICINE_FORM_LABEL[row.original.form]}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "unit",
+        header: "Đơn vị",
+        cell: ({ row }) => (
+          <span className="text-sm">{row.original.unit}</span>
+        ),
+      },
+      {
+        accessorKey: "strength",
+        header: "Hàm lượng",
+        cell: ({ row }) => (
+          <span className="text-sm">{row.original.strength ?? "—"}</span>
+        ),
+      },
+      {
+        accessorKey: "withdrawalPeriodDays",
+        header: () => <div className="text-right">Ngừng thuốc (ngày)</div>,
+        cell: ({ row }) => (
+          <div className="text-right tabular-nums">
+            {row.original.withdrawalPeriodDays != null &&
+            row.original.withdrawalPeriodDays > 0 ? (
+              <Badge
+                variant="outline"
+                className="bg-amber-500/10 text-amber-700 border-amber-200"
+              >
+                {row.original.withdrawalPeriodDays}
+              </Badge>
+            ) : (
+              <span className="text-muted-foreground text-xs">—</span>
+            )}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "isActive",
+        header: "Trạng thái",
+        cell: ({ row }) => (
+          <Badge
+            variant={row.original.isActive ? "default" : "outline"}
+            className={
+              row.original.isActive
+                ? "bg-emerald-500/10 text-emerald-700 border-emerald-200"
+                : "text-muted-foreground"
+            }
+          >
+            {row.original.isActive ? "Hoạt động" : "Vô hiệu"}
+          </Badge>
+        ),
+      },
+    ],
+    [],
+  );
 
   const handleConfirmToggle = async () => {
     if (!toggleTarget) return;
@@ -165,12 +246,7 @@ export default function AdminMedicinesPage() {
             </Button>
           </div>
 
-          {/* Table */}
-          {listQuery.isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : items.length === 0 ? (
+          {!listQuery.isLoading && items.length === 0 ? (
             <EmptyState
               icon={Pill}
               title="Chưa có thuốc nào"
@@ -179,99 +255,37 @@ export default function AdminMedicinesPage() {
             />
           ) : (
             <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Mã</TableHead>
-                    <TableHead>Tên thuốc</TableHead>
-                    <TableHead>Tên khoa học</TableHead>
-                    <TableHead>Dạng</TableHead>
-                    <TableHead>Đơn vị</TableHead>
-                    <TableHead>Hàm lượng</TableHead>
-                    <TableHead className="text-right">
-                      Ngừng thuốc (ngày)
-                    </TableHead>
-                    <TableHead>Trạng thái</TableHead>
-                    <TableHead className="text-right">Thao tác</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((med) => (
-                    <TableRow key={med.id}>
-                      <TableCell className="font-mono text-xs">
-                        {med.code}
-                      </TableCell>
-                      <TableCell className="font-medium">{med.name}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground italic">
-                        {med.scientificName ?? "—"}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {MEDICINE_FORM_LABEL[med.form]}
-                      </TableCell>
-                      <TableCell className="text-sm">{med.unit}</TableCell>
-                      <TableCell className="text-sm">
-                        {med.strength ?? "—"}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {med.withdrawalPeriodDays != null &&
-                        med.withdrawalPeriodDays > 0 ? (
-                          <Badge
-                            variant="outline"
-                            className="bg-amber-500/10 text-amber-700 border-amber-200"
-                          >
-                            {med.withdrawalPeriodDays}
-                          </Badge>
-                        ) : (
-                          <span className="text-muted-foreground text-xs">
-                            —
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={med.isActive ? "default" : "outline"}
-                          className={
-                            med.isActive
-                              ? "bg-emerald-500/10 text-emerald-700 border-emerald-200"
-                              : "text-muted-foreground"
-                          }
-                        >
-                          {med.isActive ? "Hoạt động" : "Vô hiệu"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => handleOpenEdit(med)}
-                            title="Chỉnh sửa"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => setToggleTarget(med)}
-                            disabled={toggleMutation.isPending}
-                            title={
-                              med.isActive ? "Vô hiệu hoá" : "Kích hoạt"
-                            }
-                          >
-                            <Power
-                              className={
-                                med.isActive
-                                  ? "h-4 w-4 text-destructive"
-                                  : "h-4 w-4 text-emerald-600"
-                              }
-                            />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <DataTable
+                columns={columns}
+                data={items}
+                isLoading={listQuery.isLoading}
+                actions={[
+                  {
+                    key: "edit",
+                    label: "Chỉnh sửa",
+                    icon: Pencil,
+                    onSelect: (med) => handleOpenEdit(med),
+                  },
+                  {
+                    key: "toggle-off",
+                    label: "Vô hiệu hoá",
+                    icon: Power,
+                    variant: "destructive",
+                    hidden: (med) => !med.isActive,
+                    disabled: () => toggleMutation.isPending,
+                    onSelect: (med) => setToggleTarget(med),
+                  },
+                  {
+                    key: "toggle-on",
+                    label: "Kích hoạt",
+                    icon: Power,
+                    hidden: (med) => med.isActive,
+                    disabled: () => toggleMutation.isPending,
+                    onSelect: (med) => setToggleTarget(med),
+                  },
+                ]}
+                emptyText="Chưa có thuốc nào."
+              />
             </div>
           )}
 

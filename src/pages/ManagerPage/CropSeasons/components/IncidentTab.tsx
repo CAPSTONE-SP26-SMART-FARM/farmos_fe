@@ -1,15 +1,7 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Ticket } from "lucide-react";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Eye, Ticket } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useNavigate } from "react-router";
@@ -53,18 +45,67 @@ export function IncidentTab({ cropSeason }: { cropSeason: CropSeasonType }) {
   const navigate = useNavigate();
   const zoneId = cropSeason.zoneId;
   const ticketQuery = useManagerTicketList(zoneId, { page: 1, limit: 20 });
-  const tickets = ticketQuery.data?.data.data ?? [];
+  const tickets = (ticketQuery.data?.data.data ?? []) as TicketIncidentResType[];
 
   const toDetail = (ticketId: string) =>
     navigate(`/dashboard/manager/tickets?ticketId=${ticketId}`);
 
-  if (ticketQuery.isLoading) {
-    return (
-      <div className="space-y-2">
-        {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
-      </div>
-    );
-  }
+  const columns: ColumnDef<TicketIncidentResType>[] = [
+    {
+      accessorKey: "ticketNumber",
+      header: "Mã",
+      cell: ({ row }) => (
+        <span className="font-mono text-xs">{row.original.ticketNumber}</span>
+      ),
+    },
+    {
+      accessorKey: "title",
+      header: "Tiêu đề",
+      cell: ({ row }) => (
+        <span className="font-medium max-w-52 truncate block">
+          {row.original.title}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "severity",
+      header: "Mức độ",
+      cell: ({ row }) => (
+        <Badge variant={SEVERITY_VARIANT[row.original.severity]} className="text-xs">
+          {SEVERITY_LABEL[row.original.severity]}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Trạng thái",
+      cell: ({ row }) => (
+        <Badge variant={TICKET_STATUS_VARIANT[row.original.status]} className="text-xs">
+          {TICKET_STATUS_LABEL[row.original.status]}
+        </Badge>
+      ),
+    },
+    {
+      id: "creator",
+      header: "Người báo",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">
+          {row.original.creator.fullName}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Ngày tạo",
+      cell: ({ row }) => (
+        <span className="text-xs text-muted-foreground">
+          {format(new Date(row.original.createdAt), "dd/MM/yy HH:mm", {
+            locale: vi,
+          })}
+        </span>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-4">
@@ -74,7 +115,7 @@ export function IncidentTab({ cropSeason }: { cropSeason: CropSeasonType }) {
         </p>
       </div>
 
-      {tickets.length === 0 ? (
+      {!ticketQuery.isLoading && tickets.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center border rounded-md bg-muted/20">
           <Ticket className="h-10 w-10 text-muted-foreground/30 mb-3" />
           <p className="text-sm font-medium">Không có sự cố nào</p>
@@ -84,56 +125,21 @@ export function IncidentTab({ cropSeason }: { cropSeason: CropSeasonType }) {
         </div>
       ) : (
         <div className="overflow-x-auto rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-24">Mã</TableHead>
-                <TableHead>Tiêu đề</TableHead>
-                <TableHead className="w-28">Mức độ</TableHead>
-                <TableHead className="w-32">Trạng thái</TableHead>
-                <TableHead className="w-36">Người báo</TableHead>
-                <TableHead className="w-32">Ngày tạo</TableHead>
-                <TableHead className="w-16" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tickets.map((ticket: TicketIncidentResType) => (
-                <TableRow
-                  key={ticket.id}
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => toDetail(ticket.id)}
-                >
-                  <TableCell className="font-mono text-xs">{ticket.ticketNumber}</TableCell>
-                  <TableCell className="font-medium max-w-52 truncate">{ticket.title}</TableCell>
-                  <TableCell>
-                    <Badge variant={SEVERITY_VARIANT[ticket.severity]} className="text-xs">
-                      {SEVERITY_LABEL[ticket.severity]}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={TICKET_STATUS_VARIANT[ticket.status]} className="text-xs">
-                      {TICKET_STATUS_LABEL[ticket.status]}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {ticket.creator.fullName}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {format(new Date(ticket.createdAt), "dd/MM/yy HH:mm", { locale: vi })}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => { e.stopPropagation(); toDetail(ticket.id); }}
-                    >
-                      Xem
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={columns}
+            data={tickets}
+            isLoading={ticketQuery.isLoading}
+            actions={[
+              {
+                key: "view",
+                label: "Xem chi tiết",
+                icon: Eye,
+                onSelect: (ticket) => toDetail(ticket.id),
+              },
+            ]}
+            onRowClick={(ticket) => toDetail(ticket.id)}
+            emptyText="Không có sự cố nào."
+          />
         </div>
       )}
     </div>

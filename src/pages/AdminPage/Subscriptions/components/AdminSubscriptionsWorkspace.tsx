@@ -1,7 +1,8 @@
 import EmptyState from "@/components/common/EmptyState";
 import ErrorState from "@/components/common/ErrorState";
 import SubscriptionStatusBadge from "@/components/common/SubscriptionStatusBadge";
-import TableSkeleton from "@/components/common/TableSkeleton";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,14 +13,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { formatDateVi } from "@/lib/format";
 import { getApiErrorMessageVi } from "@/lib/error-message";
 import {
@@ -28,9 +21,10 @@ import {
 } from "@/queries/useSubscription";
 import type {
   ListSubscriptionsQueryType,
+  SubscriptionResType,
   SubscriptionStatusType,
 } from "@/schemaValidatation/subscription";
-import { Filter, Inbox, Shield } from "lucide-react";
+import { Eye, Filter, Inbox, Shield } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import StatusFilterPills from "./StatusFilterPills";
@@ -181,9 +175,7 @@ function AdminSubscriptionsWorkspace() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {listQuery.isLoading ? (
-            <TableSkeleton />
-          ) : listQuery.isError ? (
+          {listQuery.isError ? (
             <ErrorState
               message={getApiErrorMessageVi(
                 listQuery.error,
@@ -191,7 +183,7 @@ function AdminSubscriptionsWorkspace() {
               )}
               onRetry={() => listQuery.refetch()}
             />
-          ) : subscriptions.length === 0 ? (
+          ) : !listQuery.isLoading && subscriptions.length === 0 ? (
             <EmptyState
               icon={Inbox}
               title="Không có đăng ký phù hợp"
@@ -215,65 +207,80 @@ function AdminSubscriptionsWorkspace() {
           ) : (
             <>
               <div className="overflow-x-auto rounded-lg border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Chủ trại</TableHead>
-                      <TableHead>Gói</TableHead>
-                      <TableHead>Trạng thái</TableHead>
-                      <TableHead>Hết hạn</TableHead>
-                      <TableHead>Ngày đăng ký</TableHead>
-                      <TableHead className="text-right">Hành động</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {subscriptions.map((sub) => (
-                      <TableRow key={sub.id}>
-                        <TableCell>
-                          {sub.owner ? (
+                <DataTable
+                  columns={
+                    [
+                      {
+                        id: "owner",
+                        header: "Chủ trại",
+                        cell: ({ row }) =>
+                          row.original.owner ? (
                             <div className="flex flex-col">
                               <span className="text-sm font-medium">
-                                {sub.owner.fullName}
+                                {row.original.owner.fullName}
                               </span>
                               <span className="text-xs text-muted-foreground">
-                                {sub.owner.email}
+                                {row.original.owner.email}
                               </span>
                             </div>
                           ) : (
                             <span className="font-mono text-xs">
-                              {sub.ownerId.slice(0, 8)}…
+                              {row.original.ownerId.slice(0, 8)}…
                             </span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {sub.plan?.name ?? sub.planId.slice(0, 8)}
-                        </TableCell>
-                        <TableCell>
-                          <SubscriptionStatusBadge status={sub.status} />
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {formatDateVi(sub.expiresAt)}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {formatDateVi(sub.createdAt)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() =>
-                              navigate(
-                                `/dashboard/admin/subscriptions/${sub.id}`,
-                              )
-                            }
-                          >
-                            Mở
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                          ),
+                      },
+                      {
+                        id: "plan",
+                        header: "Gói",
+                        cell: ({ row }) =>
+                          row.original.plan?.name ??
+                          row.original.planId.slice(0, 8),
+                      },
+                      {
+                        accessorKey: "status",
+                        header: "Trạng thái",
+                        cell: ({ row }) => (
+                          <SubscriptionStatusBadge
+                            status={row.original.status}
+                          />
+                        ),
+                      },
+                      {
+                        accessorKey: "expiresAt",
+                        header: "Hết hạn",
+                        cell: ({ row }) => (
+                          <span className="text-sm text-muted-foreground">
+                            {formatDateVi(row.original.expiresAt)}
+                          </span>
+                        ),
+                      },
+                      {
+                        accessorKey: "createdAt",
+                        header: "Ngày đăng ký",
+                        cell: ({ row }) => (
+                          <span className="text-sm text-muted-foreground">
+                            {formatDateVi(row.original.createdAt)}
+                          </span>
+                        ),
+                      },
+                    ] as ColumnDef<SubscriptionResType>[]
+                  }
+                  data={subscriptions}
+                  isLoading={listQuery.isLoading}
+                  actions={[
+                    {
+                      key: "view",
+                      label: "Xem chi tiết",
+                      icon: Eye,
+                      onSelect: (sub) =>
+                        navigate(`/dashboard/admin/subscriptions/${sub.id}`),
+                    },
+                  ]}
+                  onRowClick={(sub) =>
+                    navigate(`/dashboard/admin/subscriptions/${sub.id}`)
+                  }
+                  emptyText="Không có đăng ký phù hợp."
+                />
               </div>
               {meta && meta.totalPages > 1 && (
                 <div className="flex items-center justify-between gap-3">

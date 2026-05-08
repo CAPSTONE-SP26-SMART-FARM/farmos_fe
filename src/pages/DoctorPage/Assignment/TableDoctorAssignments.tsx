@@ -1,15 +1,4 @@
-import {
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-  type ColumnDef,
-  type ColumnFiltersState,
-  type SortingState,
-  type VisibilityState,
-} from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,24 +8,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import ProPagination from "@/components/common/pro-pagination";
-import TableSkeleton from "@/components/common/TableSkeleton";
+import { DataTable } from "@/components/common/DataTable";
+import { DataTablePagination } from "@/components/common/DataTable/DataTablePagination";
+import type { DataTableAction } from "@/components/common/DataTable/types";
 import { useDoctorListAssignment } from "@/queries/useDoctor";
 import type {
   AssignmentWithOwnerResType,
   ListAssignmentsQueryType,
 } from "@/schemaValidatation/doctorAssignment";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 import useDebounce from "@/hooks/useDebounce";
+import usePageParam from "@/hooks/usePageParam";
 import { Info, X } from "lucide-react";
 import DoctorAssignmentDetailDialog from "./DoctorAssignmentDetailDialog";
 
@@ -53,7 +36,7 @@ const columns: ColumnDef<AssignmentWithOwnerResType>[] = [
     cell: ({ row }) => {
       const original = row.original;
       return (
-        <div className="min-w-[180px]">
+        <div className="min-w-45">
           <div className="font-medium">{original.owner?.fullName ?? "—"}</div>
           <div className="text-xs text-muted-foreground">
             {original.owner?.email ?? "—"}
@@ -89,26 +72,11 @@ const columns: ColumnDef<AssignmentWithOwnerResType>[] = [
       return Number.isNaN(d.getTime()) ? value : d.toLocaleString();
     },
   },
-  {
-    id: "action",
-    header: "Thao tác",
-    cell: ({ row }) => (
-      <Button
-        variant="ghost"
-        onClick={() => row.toggleSelected(true)}
-        title="Xem chi tiết"
-      >
-        <Info />
-      </Button>
-    ),
-  },
 ];
 
 const TableDoctorAssignments = () => {
-  const navigate = useNavigate();
-  const [searchParam] = useSearchParams();
-  const page = searchParam.get("page") ? Number(searchParam.get("page")) : 1;
-  const pageIndex = page - 1;
+  const { page } = usePageParam();
+  const [searchParam, setSearchParam] = useSearchParams();
 
   const [detailId, setDetailId] = useState<string | undefined>(undefined);
 
@@ -132,60 +100,28 @@ const TableDoctorAssignments = () => {
   const totalPages = listResult.data?.data.meta.totalPages ?? 0;
   const totalRecords = listResult.data?.data.meta.totalItems ?? 0;
 
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = useState({});
-  const [pagination, setPagination] = useState({
-    pageIndex,
-    pageSize: 10,
-  });
-
-  useEffect(() => {
-    const selected = table.getSelectedRowModel().rows?.[0]?.original as
-      | AssignmentWithOwnerResType
-      | undefined;
-    if (selected?.id) setDetailId(selected.id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rowSelection]);
-
-  useEffect(() => {
-    table.setPagination({ pageIndex, pageSize: 10 });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageIndex]);
-
   useEffect(() => {
     if (page > 1 && (filters.status || debouncedSearch)) {
-      navigate("/dashboard/doctor/my-assignments?page=1", { replace: true });
+      const params = new URLSearchParams(searchParam);
+      params.set("page", "1");
+      setSearchParam(params, { replace: true });
     }
-  }, [page, filters.status, debouncedSearch, navigate]);
-
-  const table = useReactTable({
-    data,
-    columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    onPaginationChange: setPagination,
-    manualPagination: true,
-    manualFiltering: true,
-    autoResetPageIndex: false,
-    pageCount: totalPages,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-      pagination,
-    },
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.status, debouncedSearch]);
 
   const clearFilters = () => setFilters({ search: "", status: undefined });
+
+  const actions: DataTableAction<AssignmentWithOwnerResType>[] = useMemo(
+    () => [
+      {
+        key: "view",
+        label: "Xem chi tiết",
+        icon: Info,
+        onSelect: (row) => setDetailId(row.id),
+      },
+    ],
+    [],
+  );
 
   return (
     <div className="w-full">
@@ -208,7 +144,7 @@ const TableDoctorAssignments = () => {
           }
           defaultValue="all"
         >
-          <SelectTrigger className="w-[180px] capitalize">
+          <SelectTrigger className="w-45 capitalize">
             <SelectValue
               placeholder="Lọc theo trạng thái"
               className="capitalize"
@@ -254,79 +190,20 @@ const TableDoctorAssignments = () => {
         </div>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {listResult.isLoading && <TableSkeleton />}
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  onClick={() => {
-                    row.toggleSelected(true);
-                    setDetailId(row.original.id);
-                  }}
-                  className="cursor-pointer"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  Không có kết quả.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <DataTable
+        columns={columns}
+        data={data}
+        isLoading={listResult.isLoading}
+        actions={actions}
+        onRowClick={(row) => setDetailId(row.id)}
+      />
 
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="text-xs text-muted-foreground py-4 flex-1 ">
-          Hiển thị <strong>{table.getPaginationRowModel().rows.length}</strong>{" "}
-          / <strong>{totalRecords}</strong> kết quả
-        </div>
-        <div>
-          <ProPagination
-            currentPage={page}
-            totalPages={totalPages}
-            buildHref={(page: number | null | undefined) => {
-              const params = new URLSearchParams(searchParam);
-              if (page) params.set("page", String(page));
-              else params.delete("page");
-              return { pathname: location.pathname, search: params.toString() };
-            }}
-          />
-        </div>
-      </div>
+      <DataTablePagination
+        currentPage={page}
+        totalPages={totalPages}
+        totalItems={totalRecords}
+        rowCount={data.length}
+      />
 
       <DoctorAssignmentDetailDialog
         id={detailId}

@@ -7,15 +7,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Eye } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useOwnerGetMyFarm } from "@/queries/useOwner";
 import {
@@ -781,8 +776,80 @@ function OwnerTicketsPage() {
   // Realtime: invalidate list khi có ticket mới / kết thúc thuộc farm này.
   useRealtimeTicket(RoleName.Owner, { farmId });
 
-  const tickets = data?.data.data ?? [];
+  const tickets = (data?.data.data ?? []) as TicketIncidentResType[];
   const meta = data?.data.meta;
+
+  const columns: ColumnDef<TicketIncidentResType>[] = [
+    {
+      accessorKey: "ticketNumber",
+      header: "Mã",
+      cell: ({ row }) => (
+        <span className="font-mono text-xs">{row.original.ticketNumber}</span>
+      ),
+    },
+    {
+      accessorKey: "title",
+      header: "Tiêu đề",
+      cell: ({ row }) => (
+        <span className="font-medium max-w-50 truncate block">
+          {row.original.title}
+        </span>
+      ),
+    },
+    {
+      id: "zone",
+      header: "Khu vực",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">
+          {row.original.zone?.name ?? "—"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "severity",
+      header: "Mức độ",
+      cell: ({ row }) => (
+        <Badge
+          variant={SEVERITY_VARIANT[row.original.severity]}
+          className="text-xs"
+        >
+          {SEVERITY_LABEL[row.original.severity]}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Trạng thái",
+      cell: ({ row }) => (
+        <Badge
+          variant={STATUS_VARIANT[row.original.status]}
+          className="text-xs"
+        >
+          {STATUS_LABEL[row.original.status]}
+        </Badge>
+      ),
+    },
+    {
+      id: "assignee",
+      header: "Bác sĩ",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">
+          {row.original.assignee?.fullName ?? "Chưa phân công"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Ngày tạo",
+      cell: ({ row }) => (
+        <span className="text-xs text-muted-foreground">
+          {format(new Date(row.original.createdAt), "dd/MM/yy HH:mm", {
+            locale: vi,
+          })}
+        </span>
+      ),
+    },
+  ];
 
   if (showCreate) {
     return (
@@ -852,20 +919,11 @@ function OwnerTicketsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <div className="space-y-2">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton
-                    key={i}
-                    className="h-12 w-full"
-                  />
-                ))}
-              </div>
-            ) : isError ? (
+            {isError ? (
               <p className="text-sm text-destructive text-center py-8">
                 Không tải được danh sách. Vui lòng thử lại.
               </p>
-            ) : tickets.length === 0 ? (
+            ) : !isLoading && tickets.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <Ticket className="h-8 w-8 text-muted-foreground mb-3" />
                 <p className="text-sm text-muted-foreground">
@@ -875,77 +933,21 @@ function OwnerTicketsPage() {
             ) : (
               <>
                 <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Mã</TableHead>
-                        <TableHead>Tiêu đề</TableHead>
-                        <TableHead>Khu vực</TableHead>
-                        <TableHead>Mức độ</TableHead>
-                        <TableHead>Trạng thái</TableHead>
-                        <TableHead>Bác sĩ</TableHead>
-                        <TableHead>Ngày tạo</TableHead>
-                        <TableHead className="w-16"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {tickets.map((ticket: TicketIncidentResType) => (
-                        <TableRow
-                          key={ticket.id}
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => setViewingTicketId(ticket.id)}
-                        >
-                          <TableCell className="font-mono text-xs">
-                            {ticket.ticketNumber}
-                          </TableCell>
-                          <TableCell className="font-medium max-w-50 truncate">
-                            {ticket.title}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {ticket.zone?.name ?? "—"}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={SEVERITY_VARIANT[ticket.severity]}
-                              className="text-xs"
-                            >
-                              {SEVERITY_LABEL[ticket.severity]}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={STATUS_VARIANT[ticket.status]}
-                              className="text-xs"
-                            >
-                              {STATUS_LABEL[ticket.status]}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {ticket.assignee?.fullName ?? "Chưa phân công"}
-                          </TableCell>
-                          <TableCell className="text-xs text-muted-foreground">
-                            {format(
-                              new Date(ticket.createdAt),
-                              "dd/MM/yy HH:mm",
-                              { locale: vi },
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setViewingTicketId(ticket.id);
-                              }}
-                            >
-                              Xem
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                  <DataTable
+                    columns={columns}
+                    data={tickets}
+                    isLoading={isLoading}
+                    actions={[
+                      {
+                        key: "view",
+                        label: "Xem",
+                        icon: Eye,
+                        onSelect: (ticket) => setViewingTicketId(ticket.id),
+                      },
+                    ]}
+                    onRowClick={(ticket) => setViewingTicketId(ticket.id)}
+                    emptyText="Không có sự cố nào."
+                  />
                 </div>
 
                 {/* Pagination */}

@@ -8,20 +8,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
   useAdminSeasonTemplateDetail,
   useAdminSeasonTemplateUsage,
 } from "@/queries/useSeasonTemplate";
-import { ArrowLeft, BarChart3, Loader2 } from "lucide-react";
+import { ArrowLeft, BarChart3 } from "lucide-react";
 import { useNavigate, useParams } from "react-router";
+
+type UsageRow = {
+  productionRequestId: string;
+  cropName?: string | null;
+  appliedTemplateVersion?: number | null;
+  capturedAt: string;
+  cropSeasonId: string;
+};
 
 export default function AdminSeasonTemplateUsagePage() {
   const { id = "" } = useParams<{ id: string }>();
@@ -31,6 +33,45 @@ export default function AdminSeasonTemplateUsagePage() {
 
   const usage = usageQuery.data?.data;
   const detail = detailQuery.data?.data;
+
+  const columns: ColumnDef<UsageRow>[] = [
+    {
+      accessorKey: "cropName",
+      header: "Tên vụ",
+      cell: ({ row }) => (
+        <span className="font-medium">
+          {row.original.cropName ?? "(không tên)"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "appliedTemplateVersion",
+      header: "Phiên bản mẫu",
+      cell: ({ row }) => (
+        <span className="font-mono text-xs">
+          v{row.original.appliedTemplateVersion ?? "?"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "capturedAt",
+      header: "Thời điểm",
+      cell: ({ row }) => (
+        <span className="text-xs text-muted-foreground">
+          {new Date(row.original.capturedAt).toLocaleString("vi-VN")}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "cropSeasonId",
+      header: "CropSeason ID",
+      cell: ({ row }) => (
+        <span className="font-mono text-xs text-muted-foreground">
+          {row.original.cropSeasonId.slice(0, 8)}…
+        </span>
+      ),
+    },
+  ];
 
   return (
     <div className="p-6 space-y-6 animate-in fade-in duration-300">
@@ -69,11 +110,7 @@ export default function AdminSeasonTemplateUsagePage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {usageQuery.isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : !usage || usage.totalUsage === 0 ? (
+          {!usageQuery.isLoading && (!usage || usage.totalUsage === 0) ? (
             <EmptyState
               icon={BarChart3}
               title="Chưa có vụ nào áp dụng mẫu này"
@@ -81,42 +118,22 @@ export default function AdminSeasonTemplateUsagePage() {
             />
           ) : (
             <>
-              <div className="text-sm text-muted-foreground">
-                Tổng cộng:{" "}
-                <span className="font-semibold text-foreground">
-                  {usage.totalUsage}
-                </span>{" "}
-                vụ đã áp dụng.
-              </div>
+              {usage && (
+                <div className="text-sm text-muted-foreground">
+                  Tổng cộng:{" "}
+                  <span className="font-semibold text-foreground">
+                    {usage.totalUsage}
+                  </span>{" "}
+                  vụ đã áp dụng.
+                </div>
+              )}
               <div className="overflow-x-auto rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tên vụ</TableHead>
-                      <TableHead>Phiên bản mẫu</TableHead>
-                      <TableHead>Thời điểm</TableHead>
-                      <TableHead className="text-xs">CropSeason ID</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {usage.data.map((u) => (
-                      <TableRow key={u.productionRequestId}>
-                        <TableCell className="font-medium">
-                          {u.cropName ?? "(không tên)"}
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">
-                          v{u.appliedTemplateVersion ?? "?"}
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {new Date(u.capturedAt).toLocaleString("vi-VN")}
-                        </TableCell>
-                        <TableCell className="font-mono text-xs text-muted-foreground">
-                          {u.cropSeasonId.slice(0, 8)}…
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <DataTable
+                  columns={columns}
+                  data={(usage?.data ?? []) as UsageRow[]}
+                  isLoading={usageQuery.isLoading}
+                  emptyText="Chưa có dữ liệu."
+                />
               </div>
             </>
           )}

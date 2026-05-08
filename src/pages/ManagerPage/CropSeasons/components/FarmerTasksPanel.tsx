@@ -7,17 +7,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import EmptyState from "@/components/common/EmptyState";
 import ErrorState from "@/components/common/ErrorState";
-import TableSkeleton from "@/components/common/TableSkeleton";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import { useManagerListCropSeasonTasks } from "@/queries/useEmployeeTask";
 import { useManagerListProductionMilestones } from "@/queries/useProductionMilestone";
 import type { CropSeasonType } from "@/types/cropSeason";
@@ -87,6 +80,96 @@ export function FarmerTasksPanel({ cropSeason }: FarmerTasksPanelProps) {
 
   const resetPage = () => setPage(1);
 
+  type TaskRow = (typeof tasks)[number];
+
+  const columns: ColumnDef<TaskRow>[] = [
+    {
+      accessorKey: "milestoneName",
+      header: "Mốc",
+      cell: ({ row }) => (
+        <span className="text-xs text-muted-foreground whitespace-nowrap">
+          {row.original.milestoneOrder != null
+            ? `#${row.original.milestoneOrder} `
+            : ""}
+          {row.original.milestoneName ?? "—"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "title",
+      header: "Nhiệm vụ",
+      cell: ({ row }) => (
+        <div>
+          <p className="text-sm font-medium">{row.original.title}</p>
+          {row.original.description && (
+            <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+              {row.original.description}
+            </p>
+          )}
+          {row.original.createdInPlan === false && (
+            <Badge
+              variant="secondary"
+              className="text-[10px] bg-purple-100 text-purple-700 mt-0.5"
+            >
+              Phát sinh
+            </Badge>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: "farmer",
+      header: "Nông dân",
+      cell: ({ row }) =>
+        row.original.farmerName ? (
+          <div className="flex items-center gap-1.5">
+            <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <span className="text-sm truncate">{row.original.farmerName}</span>
+          </div>
+        ) : (
+          <span className="text-xs text-muted-foreground italic">
+            Chưa gán
+          </span>
+        ),
+    },
+    {
+      accessorKey: "priority",
+      header: "Ưu tiên",
+      cell: ({ row }) => (
+        <Badge
+          className={
+            PRIORITY_CLASS[row.original.priority] ?? "bg-slate-100 text-slate-600"
+          }
+        >
+          {PRIORITY_LABEL[row.original.priority] ?? row.original.priority}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Trạng thái",
+      cell: ({ row }) => {
+        const statusMeta = STATUS_META[row.original.status] ?? {
+          label: row.original.status,
+          variant: "secondary" as const,
+        };
+        return (
+          <div>
+            <Badge variant={statusMeta.variant} className="text-xs">
+              {statusMeta.label}
+            </Badge>
+            {row.original.completedAt && (
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                Hoàn thành:{" "}
+                {new Date(row.original.completedAt).toLocaleDateString("vi-VN")}
+              </p>
+            )}
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
@@ -130,22 +213,7 @@ export function FarmerTasksPanel({ cropSeason }: FarmerTasksPanelProps) {
           message="Không thể tải nhiệm vụ."
           onRetry={() => tasksQuery.refetch()}
         />
-      ) : tasksQuery.isLoading ? (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Mốc</TableHead>
-              <TableHead>Nhiệm vụ</TableHead>
-              <TableHead>Nông dân</TableHead>
-              <TableHead>Ưu tiên</TableHead>
-              <TableHead>Trạng thái</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableSkeleton />
-          </TableBody>
-        </Table>
-      ) : tasks.length === 0 ? (
+      ) : !tasksQuery.isLoading && tasks.length === 0 ? (
         <EmptyState
           icon={ClipboardList}
           title="Chưa có nhiệm vụ"
@@ -154,79 +222,12 @@ export function FarmerTasksPanel({ cropSeason }: FarmerTasksPanelProps) {
       ) : (
         <>
           <div className="overflow-x-auto rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-32">Mốc</TableHead>
-                  <TableHead>Nhiệm vụ</TableHead>
-                  <TableHead className="w-40">Nông dân</TableHead>
-                  <TableHead className="w-28">Ưu tiên</TableHead>
-                  <TableHead className="w-36">Trạng thái</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tasks.map((task) => {
-                  const statusMeta =
-                    STATUS_META[task.status] ?? { label: task.status, variant: "secondary" as const };
-                  return (
-                    <TableRow
-                      key={task.id}
-                      className="transition-colors hover:bg-muted/40"
-                    >
-                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                        {task.milestoneOrder != null ? `#${task.milestoneOrder} ` : ""}
-                        {task.milestoneName ?? "—"}
-                      </TableCell>
-                      <TableCell>
-                        <p className="text-sm font-medium">{task.title}</p>
-                        {task.description && (
-                          <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                            {task.description}
-                          </p>
-                        )}
-                        {task.createdInPlan === false && (
-                          <Badge
-                            variant="secondary"
-                            className="text-[10px] bg-purple-100 text-purple-700 mt-0.5"
-                          >
-                            Phát sinh
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {task.farmerName ? (
-                          <div className="flex items-center gap-1.5">
-                            <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                            <span className="text-sm truncate">{task.farmerName}</span>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-muted-foreground italic">Chưa gán</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          className={
-                            PRIORITY_CLASS[task.priority] ?? "bg-slate-100 text-slate-600"
-                          }
-                        >
-                          {PRIORITY_LABEL[task.priority] ?? task.priority}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={statusMeta.variant} className="text-xs">
-                          {statusMeta.label}
-                        </Badge>
-                        {task.completedAt && (
-                          <p className="text-[10px] text-muted-foreground mt-0.5">
-                            Hoàn thành: {new Date(task.completedAt).toLocaleDateString("vi-VN")}
-                          </p>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <DataTable
+              columns={columns}
+              data={tasks}
+              isLoading={tasksQuery.isLoading}
+              emptyText="Chưa có nhiệm vụ."
+            />
           </div>
 
           {meta && meta.totalPages > 1 && (

@@ -11,19 +11,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import useDebounce from "@/hooks/useDebounce";
 import { getApiErrorMessageVi } from "@/lib/error-message";
 import { useAdminOwnersWithAvailableKits } from "@/queries/useIotKit";
-import { ChevronRight, PackageOpen, Search, Users } from "lucide-react";
+import { Eye, PackageOpen, Search, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 
@@ -57,6 +50,89 @@ export default function AdminKitAssignmentsPage() {
   const items = result?.data ?? [];
   const meta = result?.meta;
 
+  type OwnerRow = (typeof items)[number];
+
+  const columns: ColumnDef<OwnerRow>[] = [
+    {
+      id: "owner",
+      header: "Chủ vườn",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3">
+          <Avatar className="h-9 w-9">
+            {row.original.owner.avatarUrl ? (
+              <AvatarImage src={row.original.owner.avatarUrl} />
+            ) : null}
+            <AvatarFallback>
+              {getInitials(row.original.owner.fullName)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <p className="truncate font-medium">
+              {row.original.owner.fullName || row.original.owner.email}
+            </p>
+            <p className="truncate text-xs text-muted-foreground">
+              ID: {row.original.owner.id.slice(0, 8)}…
+            </p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "contact",
+      header: "Liên hệ",
+      cell: ({ row }) => (
+        <div className="text-sm">
+          <p className="truncate">{row.original.owner.email}</p>
+          {row.original.owner.phone && (
+            <p className="truncate text-xs text-muted-foreground">
+              {row.original.owner.phone}
+            </p>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: "quota",
+      header: () => <div className="text-right">Quota gói</div>,
+      cell: ({ row }) => (
+        <div className="text-right tabular-nums">
+          <span className="font-semibold">{row.original.quota.used}</span>
+          <span className="text-muted-foreground">
+            {" "}
+            / {row.original.quota.effectiveLimit}
+          </span>
+          <p className="text-xs text-muted-foreground">
+            còn {row.original.quota.remaining}
+          </p>
+        </div>
+      ),
+    },
+    {
+      id: "orders",
+      header: () => <div className="text-right">Bộ kit còn slot</div>,
+      cell: ({ row }) => (
+        <div className="text-right">
+          <Badge variant="secondary">{row.original.orders.length} đơn</Badge>
+        </div>
+      ),
+    },
+    {
+      id: "remaining",
+      header: () => <div className="text-right">Slot trống</div>,
+      cell: ({ row }) => {
+        const totalRemaining = row.original.orders.reduce(
+          (acc, o) => acc + o.remainingSlots,
+          0,
+        );
+        return (
+          <div className="text-right tabular-nums font-semibold text-emerald-600">
+            {totalRemaining}
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       <Card>
@@ -86,16 +162,7 @@ export default function AdminKitAssignmentsPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {ownersQuery.isLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton
-                  key={i}
-                  className="h-14 w-full"
-                />
-              ))}
-            </div>
-          ) : ownersQuery.isError ? (
+          {ownersQuery.isError ? (
             <ErrorState
               message={getApiErrorMessageVi(
                 ownersQuery.error,
@@ -103,7 +170,7 @@ export default function AdminKitAssignmentsPage() {
               )}
               onRetry={() => ownersQuery.refetch()}
             />
-          ) : items.length === 0 ? (
+          ) : !ownersQuery.isLoading && items.length === 0 ? (
             <EmptyState
               icon={Users}
               title="Chưa có chủ vườn nào đủ điều kiện"
@@ -112,89 +179,28 @@ export default function AdminKitAssignmentsPage() {
           ) : (
             <>
               <div className="overflow-x-auto rounded-lg border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[280px]">Chủ vườn</TableHead>
-                      <TableHead>Liên hệ</TableHead>
-                      <TableHead className="text-right">Quota gói</TableHead>
-                      <TableHead className="text-right">Bộ kit còn slot</TableHead>
-                      <TableHead className="text-right">Slot trống</TableHead>
-                      <TableHead className="w-[60px]"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {items.map((row) => {
-                      const totalRemaining = row.orders.reduce(
-                        (acc, o) => acc + o.remainingSlots,
-                        0,
-                      );
-                      const onClick = () =>
+                <DataTable
+                  columns={columns}
+                  data={items}
+                  isLoading={ownersQuery.isLoading}
+                  actions={[
+                    {
+                      key: "view",
+                      label: "Xem chi tiết",
+                      icon: Eye,
+                      onSelect: (row) =>
                         navigate(
                           `/dashboard/admin/iot-kits/assignments/${row.owner.id}`,
-                        );
-                      return (
-                        <TableRow
-                          key={row.owner.id}
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={onClick}
-                        >
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-9 w-9">
-                                {row.owner.avatarUrl ? (
-                                  <AvatarImage src={row.owner.avatarUrl} />
-                                ) : null}
-                                <AvatarFallback>
-                                  {getInitials(row.owner.fullName)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="min-w-0">
-                                <p className="truncate font-medium">
-                                  {row.owner.fullName || row.owner.email}
-                                </p>
-                                <p className="truncate text-xs text-muted-foreground">
-                                  ID: {row.owner.id.slice(0, 8)}…
-                                </p>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-sm">
-                            <p className="truncate">{row.owner.email}</p>
-                            {row.owner.phone && (
-                              <p className="truncate text-xs text-muted-foreground">
-                                {row.owner.phone}
-                              </p>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right tabular-nums">
-                            <span className="font-semibold">
-                              {row.quota.used}
-                            </span>
-                            <span className="text-muted-foreground">
-                              {" "}
-                              / {row.quota.effectiveLimit}
-                            </span>
-                            <p className="text-xs text-muted-foreground">
-                              còn {row.quota.remaining}
-                            </p>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Badge variant="secondary">
-                              {row.orders.length} đơn
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right tabular-nums font-semibold text-emerald-600">
-                            {totalRemaining}
-                          </TableCell>
-                          <TableCell>
-                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                        ),
+                    },
+                  ]}
+                  onRowClick={(row) =>
+                    navigate(
+                      `/dashboard/admin/iot-kits/assignments/${row.owner.id}`,
+                    )
+                  }
+                  emptyText="Chưa có dữ liệu."
+                />
               </div>
 
               {meta && meta.totalPages > 1 && (

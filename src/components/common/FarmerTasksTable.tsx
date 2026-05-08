@@ -6,15 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DataTable } from "@/components/common/DataTable";
 import { cn } from "@/lib/utils";
 import EmptyState from "@/components/common/EmptyState";
 import ErrorState from "@/components/common/ErrorState";
@@ -23,6 +15,7 @@ import type {
   TaskPriorityType,
   TaskStatusEnumType,
 } from "@/schemaValidatation/dailyLog";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
   AlertTriangle,
   ArrowDown,
@@ -30,6 +23,7 @@ import {
   ClipboardList,
   Minus,
 } from "lucide-react";
+import { useMemo } from "react";
 
 const PRIORITY_LABELS: Record<TaskPriorityType, string> = {
   urgent: "Khẩn cấp",
@@ -130,6 +124,59 @@ function FarmerTasksTable({
   const visible = maxRows ? sorted.slice(0, maxRows) : sorted;
   const hiddenCount = Math.max(0, sorted.length - visible.length);
 
+  const columns = useMemo<ColumnDef<FarmerTaskForDailyLogType>[]>(
+    () => [
+      {
+        accessorKey: "priority",
+        header: "Ưu tiên",
+        cell: ({ row }) => <PriorityBadge priority={row.original.priority} />,
+      },
+      {
+        accessorKey: "title",
+        header: "Công việc",
+        cell: ({ row }) => (
+          <div>
+            <p className="font-medium">{row.original.title}</p>
+            {row.original.description && (
+              <p className="text-xs text-muted-foreground line-clamp-1">
+                {row.original.description}
+              </p>
+            )}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "status",
+        header: "Trạng thái",
+        cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      },
+      {
+        id: "logged",
+        header: () => <div className="text-right">Nhật ký</div>,
+        cell: ({ row }) => {
+          const logged = loggedTaskIds?.has(row.original.id) ?? false;
+          return (
+            <div className="text-right">
+              {logged ? (
+                <Badge className="bg-emerald-500/10 text-emerald-700 border-transparent">
+                  Đã ghi
+                </Badge>
+              ) : (
+                <Badge
+                  variant="outline"
+                  className="text-muted-foreground"
+                >
+                  Chưa ghi
+                </Badge>
+              )}
+            </div>
+          );
+        },
+      },
+    ],
+    [loggedTaskIds],
+  );
+
   return (
     <Card className={className}>
       <CardHeader>
@@ -142,29 +189,7 @@ function FarmerTasksTable({
             message="Không thể tải danh sách công việc."
             onRetry={onRetry}
           />
-        ) : isLoading ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Ưu tiên</TableHead>
-                <TableHead>Công việc</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead className="text-right">Nhật ký</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {Array.from({ length: 4 }).map((_, i) => (
-                <TableRow key={i}>
-                  {Array.from({ length: 4 }).map((__, j) => (
-                    <TableCell key={j}>
-                      <Skeleton className="h-4 w-full" />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : visible.length === 0 ? (
+        ) : !isLoading && visible.length === 0 ? (
           <EmptyState
             icon={ClipboardList}
             title="Đã hoàn thành"
@@ -173,56 +198,13 @@ function FarmerTasksTable({
         ) : (
           <>
             <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-32">Ưu tiên</TableHead>
-                    <TableHead>Công việc</TableHead>
-                    <TableHead className="w-32">Trạng thái</TableHead>
-                    <TableHead className="w-32 text-right">Nhật ký</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {visible.map((task) => {
-                    const logged = loggedTaskIds?.has(task.id) ?? false;
-                    return (
-                      <TableRow
-                        key={task.id}
-                        className="transition-colors hover:bg-muted/40"
-                      >
-                        <TableCell>
-                          <PriorityBadge priority={task.priority} />
-                        </TableCell>
-                        <TableCell>
-                          <p className="font-medium">{task.title}</p>
-                          {task.description && (
-                            <p className="text-xs text-muted-foreground line-clamp-1">
-                              {task.description}
-                            </p>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <StatusBadge status={task.status} />
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {logged ? (
-                            <Badge className="bg-emerald-500/10 text-emerald-700 border-transparent">
-                              Đã ghi
-                            </Badge>
-                          ) : (
-                            <Badge
-                              variant="outline"
-                              className="text-muted-foreground"
-                            >
-                              Chưa ghi
-                            </Badge>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+              <DataTable
+                columns={columns}
+                data={visible}
+                isLoading={isLoading}
+                pageSize={4}
+                emptyText="Hôm nay chưa có công việc."
+              />
             </div>
             {hiddenCount > 0 && (
               <p className="mt-3 text-xs text-muted-foreground">

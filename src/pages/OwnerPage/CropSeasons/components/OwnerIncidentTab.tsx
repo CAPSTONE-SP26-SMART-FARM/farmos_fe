@@ -1,15 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Ticket } from "lucide-react";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Eye, Ticket } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useNavigate } from "react-router";
@@ -17,14 +10,6 @@ import { useOwnerGetMyFarm } from "@/queries/useOwner";
 import { useOwnerTicketList } from "@/queries/useTicket";
 import type { TicketIncidentResType } from "@/schemaValidatation/ticket";
 import type { CropSeasonType } from "@/types/cropSeason";
-
-/**
- * Owner-side variant of IncidentTab.
- * - Uses useOwnerTicketList (farm-scoped) and client-side filters by cropSeason.zoneId.
- * - Navigation target is /dashboard/owner/tickets.
- * - Owner does not "create" incidents from this read-only view (creation is in the
- *   Tickets tab).
- */
 
 const SEVERITY_LABEL: Record<string, string> = {
   low: "Thấp",
@@ -73,22 +58,76 @@ export function OwnerIncidentTab({
   const farmQuery = useOwnerGetMyFarm();
   const farmId = farmQuery.data?.data?.id ?? "";
   const ticketQuery = useOwnerTicketList(farmId, { page: 1, limit: 50 });
-  const allTickets = ticketQuery.data?.data.data ?? [];
-  // Scope to this crop season's zone (owner endpoint returns farm-wide tickets)
+  const allTickets = (ticketQuery.data?.data.data ?? []) as TicketIncidentResType[];
   const tickets = allTickets.filter((t) => t.zoneId === cropSeason.zoneId);
 
   const toDetail = (ticketId: string) =>
     navigate(`/dashboard/owner/tickets?ticketId=${ticketId}`);
 
-  if (farmQuery.isLoading || ticketQuery.isLoading) {
-    return (
-      <div className="space-y-2">
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-12 w-full" />
-        ))}
-      </div>
-    );
-  }
+  const isLoading = farmQuery.isLoading || ticketQuery.isLoading;
+
+  const columns: ColumnDef<TicketIncidentResType>[] = [
+    {
+      accessorKey: "ticketNumber",
+      header: "Mã",
+      cell: ({ row }) => (
+        <span className="font-mono text-xs">{row.original.ticketNumber}</span>
+      ),
+    },
+    {
+      accessorKey: "title",
+      header: "Tiêu đề",
+      cell: ({ row }) => (
+        <span className="font-medium max-w-52 truncate block">
+          {row.original.title}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "severity",
+      header: "Mức độ",
+      cell: ({ row }) => (
+        <Badge
+          variant={SEVERITY_VARIANT[row.original.severity]}
+          className="text-xs"
+        >
+          {SEVERITY_LABEL[row.original.severity]}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Trạng thái",
+      cell: ({ row }) => (
+        <Badge
+          variant={TICKET_STATUS_VARIANT[row.original.status]}
+          className="text-xs"
+        >
+          {TICKET_STATUS_LABEL[row.original.status]}
+        </Badge>
+      ),
+    },
+    {
+      id: "creator",
+      header: "Người báo",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">
+          {row.original.creator.fullName}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Ngày tạo",
+      cell: ({ row }) => (
+        <span className="text-xs text-muted-foreground">
+          {format(new Date(row.original.createdAt), "dd/MM/yy HH:mm", {
+            locale: vi,
+          })}
+        </span>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-4">
@@ -104,7 +143,7 @@ export function OwnerIncidentTab({
         </Button>
       </div>
 
-      {tickets.length === 0 ? (
+      {!isLoading && tickets.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center border rounded-md bg-muted/20">
           <Ticket className="h-10 w-10 text-muted-foreground/30 mb-3" />
           <p className="text-sm font-medium">Không có sự cố nào</p>
@@ -114,71 +153,21 @@ export function OwnerIncidentTab({
         </div>
       ) : (
         <div className="overflow-x-auto rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-24">Mã</TableHead>
-                <TableHead>Tiêu đề</TableHead>
-                <TableHead className="w-28">Mức độ</TableHead>
-                <TableHead className="w-32">Trạng thái</TableHead>
-                <TableHead className="w-36">Người báo</TableHead>
-                <TableHead className="w-32">Ngày tạo</TableHead>
-                <TableHead className="w-16" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tickets.map((ticket: TicketIncidentResType) => (
-                <TableRow
-                  key={ticket.id}
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => toDetail(ticket.id)}
-                >
-                  <TableCell className="font-mono text-xs">
-                    {ticket.ticketNumber}
-                  </TableCell>
-                  <TableCell className="font-medium max-w-52 truncate">
-                    {ticket.title}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={SEVERITY_VARIANT[ticket.severity]}
-                      className="text-xs"
-                    >
-                      {SEVERITY_LABEL[ticket.severity]}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={TICKET_STATUS_VARIANT[ticket.status]}
-                      className="text-xs"
-                    >
-                      {TICKET_STATUS_LABEL[ticket.status]}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {ticket.creator.fullName}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {format(new Date(ticket.createdAt), "dd/MM/yy HH:mm", {
-                      locale: vi,
-                    })}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toDetail(ticket.id);
-                      }}
-                    >
-                      Xem
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={columns}
+            data={tickets}
+            isLoading={isLoading}
+            actions={[
+              {
+                key: "view",
+                label: "Xem chi tiết",
+                icon: Eye,
+                onSelect: (ticket) => toDetail(ticket.id),
+              },
+            ]}
+            onRowClick={(ticket) => toDetail(ticket.id)}
+            emptyText="Không có sự cố nào."
+          />
         </div>
       )}
     </div>

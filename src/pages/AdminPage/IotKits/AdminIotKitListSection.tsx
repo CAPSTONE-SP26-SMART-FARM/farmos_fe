@@ -15,17 +15,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import EmptyState from "@/components/common/EmptyState";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
+  Archive,
   ArchiveRestore,
   Boxes,
   Pencil,
@@ -88,6 +82,81 @@ export default function AdminIotKitListSection({
 
   const kits = listQuery.data?.data?.data ?? [];
   const meta = listQuery.data?.data?.meta;
+
+  const kitColumns = useMemo<ColumnDef<IotDeviceKitResType>[]>(
+    () => [
+      {
+        accessorKey: "code",
+        header: "Mã",
+        cell: ({ row }) => (
+          <span className="font-mono text-xs">{row.original.code}</span>
+        ),
+      },
+      {
+        accessorKey: "name",
+        header: "Tên",
+        cell: ({ row }) => (
+          <span className="font-medium">{row.original.name}</span>
+        ),
+      },
+      {
+        accessorKey: "boardType",
+        header: "Loại board",
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">
+            {BOARD_TYPE_LABEL_VI[row.original.boardType] ??
+              row.original.boardType}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "deviceCount",
+        header: () => <div className="text-right">Số bộ</div>,
+        cell: ({ row }) => (
+          <div className="text-right">{row.original.deviceCount}</div>
+        ),
+      },
+      {
+        accessorKey: "price",
+        header: () => <div className="text-right">Giá</div>,
+        cell: ({ row }) => (
+          <div className="text-right font-medium">
+            {formatCurrencyVnd(row.original.price)}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "isActive",
+        header: "Trạng thái",
+        cell: ({ row }) =>
+          row.original.isActive ? (
+            <Badge
+              variant="outline"
+              className="bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-200"
+            >
+              Đang hoạt động
+            </Badge>
+          ) : (
+            <Badge
+              variant="outline"
+              className="bg-muted text-muted-foreground border-border"
+            >
+              Đã lưu trữ
+            </Badge>
+          ),
+      },
+      {
+        accessorKey: "createdAt",
+        header: "Ngày tạo",
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">
+            {formatDateVi(row.original.createdAt)}
+          </span>
+        ),
+      },
+    ],
+    [],
+  );
 
   const handleArchive = async () => {
     if (!archiveTarget) return;
@@ -172,113 +241,44 @@ export default function AdminIotKitListSection({
       </CardHeader>
 
       <CardContent className="space-y-4 pt-5">
-        <div className="overflow-x-auto rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Mã</TableHead>
-                <TableHead>Tên</TableHead>
-                <TableHead>Loại board</TableHead>
-                <TableHead className="text-right">Số bộ</TableHead>
-                <TableHead className="text-right">Giá</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Ngày tạo</TableHead>
-                <TableHead className="text-right">Hành động</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {listQuery.isLoading ? (
-                Array.from({ length: 5 }).map((_, rowIdx) => (
-                  <TableRow key={`skeleton-${rowIdx}`}>
-                    {Array.from({ length: 8 }).map((__, colIdx) => (
-                      <TableCell key={colIdx}>
-                        <Skeleton className="h-6 w-full" />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : kits.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="py-12">
-                    <EmptyState
-                      icon={PackageOpen}
-                      title="Chưa có bộ Kit nào"
-                      description="Tạo bộ Kit đầu tiên để Owner có thể mua thêm hạn mức thiết bị."
-                    />
-                  </TableCell>
-                </TableRow>
-              ) : (
-                kits.map((kit) => (
-                  <TableRow key={kit.id}>
-                    <TableCell className="font-mono text-xs">
-                      {kit.code}
-                    </TableCell>
-                    <TableCell className="font-medium">{kit.name}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {BOARD_TYPE_LABEL_VI[kit.boardType] ?? kit.boardType}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {kit.deviceCount}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrencyVnd(kit.price)}
-                    </TableCell>
-                    <TableCell>
-                      {kit.isActive ? (
-                        <Badge
-                          variant="outline"
-                          className="bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-200"
-                        >
-                          Đang hoạt động
-                        </Badge>
-                      ) : (
-                        <Badge
-                          variant="outline"
-                          className="bg-muted text-muted-foreground border-border"
-                        >
-                          Đã lưu trữ
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatDateVi(kit.createdAt)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onEdit(kit)}
-                        >
-                          <Pencil className="mr-1 h-4 w-4" />
-                          Sửa
-                        </Button>
-                        {kit.isActive ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setArchiveTarget(kit)}
-                          >
-                            Lưu trữ
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setUnarchiveTarget(kit)}
-                          >
-                            <ArchiveRestore className="mr-1 h-4 w-4" />
-                            Bỏ lưu trữ
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+        {!listQuery.isLoading && kits.length === 0 ? (
+          <EmptyState
+            icon={PackageOpen}
+            title="Chưa có bộ Kit nào"
+            description="Tạo bộ Kit đầu tiên để Owner có thể mua thêm hạn mức thiết bị."
+          />
+        ) : (
+          <div className="overflow-x-auto">
+            <DataTable
+              columns={kitColumns}
+              data={kits}
+              isLoading={listQuery.isLoading}
+              actions={[
+                {
+                  key: "edit",
+                  label: "Sửa",
+                  icon: Pencil,
+                  onSelect: (kit) => onEdit(kit),
+                },
+                {
+                  key: "archive",
+                  label: "Lưu trữ",
+                  icon: Archive,
+                  hidden: (kit) => !kit.isActive,
+                  onSelect: (kit) => setArchiveTarget(kit),
+                },
+                {
+                  key: "unarchive",
+                  label: "Bỏ lưu trữ",
+                  icon: ArchiveRestore,
+                  hidden: (kit) => kit.isActive,
+                  onSelect: (kit) => setUnarchiveTarget(kit),
+                },
+              ]}
+              emptyText="Chưa có bộ Kit nào."
+            />
+          </div>
+        )}
 
         {meta && meta.totalPages > 1 && (
           <div className="flex items-center justify-between pt-2 text-xs text-muted-foreground">

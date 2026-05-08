@@ -9,14 +9,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import DatePickerField from "@/components/common/DatePickerField";
 import { getApiErrorMessageVi } from "@/lib/error-message";
 import {
@@ -209,66 +203,81 @@ export default function HarvestRecordTab({ cropSeason }: Props) {
         />
       ) : (
         <div className="overflow-x-auto rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Ngày thu hoạch</TableHead>
-                <TableHead className="text-right">Sản lượng</TableHead>
-                <TableHead>Đơn vị</TableHead>
-                <TableHead>Phẩm cấp</TableHead>
-                <TableHead>Ghi chú</TableHead>
-                <TableHead>Tạo lúc</TableHead>
-                <TableHead className="text-right">Thao tác</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((r) => (
-                <TableRow key={r.id}>
-                  <TableCell className="font-medium">
-                    {formatDateOnly(r.harvestDate)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {r.quantity.toLocaleString("vi-VN")}
-                  </TableCell>
-                  <TableCell>{r.unit}</TableCell>
-                  <TableCell>
-                    {r.qualityGrade ? (
-                      <Badge variant="outline">{r.qualityGrade}</Badge>
+          <DataTable
+            columns={
+              [
+                {
+                  accessorKey: "harvestDate",
+                  header: "Ngày thu hoạch",
+                  cell: ({ row }) => (
+                    <span className="font-medium">
+                      {formatDateOnly(row.original.harvestDate)}
+                    </span>
+                  ),
+                },
+                {
+                  accessorKey: "quantity",
+                  header: () => <div className="text-right">Sản lượng</div>,
+                  cell: ({ row }) => (
+                    <div className="text-right tabular-nums">
+                      {row.original.quantity.toLocaleString("vi-VN")}
+                    </div>
+                  ),
+                },
+                {
+                  accessorKey: "unit",
+                  header: "Đơn vị",
+                  cell: ({ row }) => row.original.unit,
+                },
+                {
+                  accessorKey: "qualityGrade",
+                  header: "Phẩm cấp",
+                  cell: ({ row }) =>
+                    row.original.qualityGrade ? (
+                      <Badge variant="outline">{row.original.qualityGrade}</Badge>
                     ) : (
                       <span className="text-muted-foreground text-xs">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="max-w-[16rem] truncate text-sm text-muted-foreground">
-                    {r.notes ?? "—"}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {formatDateOnly(r.createdAt)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => handleOpenEdit(r)}
-                        title="Chỉnh sửa"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => setDeleteTarget(r)}
-                        disabled={deleteMutation.isPending}
-                        title="Xoá"
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                    ),
+                },
+                {
+                  accessorKey: "notes",
+                  header: "Ghi chú",
+                  cell: ({ row }) => (
+                    <span className="max-w-[16rem] truncate text-sm text-muted-foreground block">
+                      {row.original.notes ?? "—"}
+                    </span>
+                  ),
+                },
+                {
+                  accessorKey: "createdAt",
+                  header: "Tạo lúc",
+                  cell: ({ row }) => (
+                    <span className="text-xs text-muted-foreground">
+                      {formatDateOnly(row.original.createdAt)}
+                    </span>
+                  ),
+                },
+              ] as ColumnDef<HarvestRecordResType>[]
+            }
+            data={items}
+            actions={[
+              {
+                key: "edit",
+                label: "Chỉnh sửa",
+                icon: Pencil,
+                onSelect: (r) => handleOpenEdit(r),
+              },
+              {
+                key: "delete",
+                label: "Xoá",
+                icon: Trash2,
+                variant: "destructive",
+                disabled: () => deleteMutation.isPending,
+                onSelect: (r) => setDeleteTarget(r),
+              },
+            ]}
+            emptyText="Chưa có bản ghi."
+          />
         </div>
       )}
 

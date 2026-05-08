@@ -20,14 +20,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import { getApiErrorMessageVi } from "@/lib/error-message";
 import { formatCurrencyVnd } from "@/lib/format";
 import { isApiErrorResponse } from "@/lib/utils";
@@ -275,50 +269,62 @@ function OwnerSubscriptionPlanDetailPage() {
                 </p>
               ) : (
                 <div className="rounded-lg border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Tính năng</TableHead>
-                        <TableHead className="w-[180px]">Giá trị</TableHead>
-                        <TableHead className="hidden md:table-cell">
-                          Ghi chú
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {features.map((f) => {
-                        const value = formatFeatureValue(f.value);
-                        const showUnit =
-                          f.featureUnit && value !== "Có" && value !== "Không";
-                        return (
-                          <TableRow key={f.id}>
-                            <TableCell>
+                  <DataTable
+                    columns={
+                      [
+                        {
+                          id: "feature",
+                          header: "Tính năng",
+                          cell: ({ row }) => (
+                            <div>
                               <div className="font-medium">
-                                {f.featureName ?? f.featureCode}
+                                {row.original.featureName ??
+                                  row.original.featureCode}
                               </div>
-                              {f.featureDescription && (
+                              {row.original.featureDescription && (
                                 <div className="text-xs text-muted-foreground">
-                                  {f.featureDescription}
+                                  {row.original.featureDescription}
                                 </div>
                               )}
-                            </TableCell>
-                            <TableCell>
+                            </div>
+                          ),
+                        },
+                        {
+                          id: "value",
+                          header: "Giá trị",
+                          cell: ({ row }) => {
+                            const value = formatFeatureValue(row.original.value);
+                            const showUnit =
+                              row.original.featureUnit &&
+                              value !== "Có" &&
+                              value !== "Không";
+                            return (
                               <Badge
                                 variant="secondary"
                                 className="font-medium"
                               >
                                 {value}
-                                {showUnit ? ` ${f.featureUnit}` : ""}
+                                {showUnit
+                                  ? ` ${row.original.featureUnit}`
+                                  : ""}
                               </Badge>
-                            </TableCell>
-                            <TableCell className="hidden text-sm text-muted-foreground md:table-cell">
-                              {f.note || "-"}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
+                            );
+                          },
+                        },
+                        {
+                          accessorKey: "note",
+                          header: "Ghi chú",
+                          cell: ({ row }) => (
+                            <span className="text-sm text-muted-foreground">
+                              {row.original.note || "-"}
+                            </span>
+                          ),
+                        },
+                      ] as ColumnDef<(typeof features)[number]>[]
+                    }
+                    data={features}
+                    emptyText="Không có tính năng."
+                  />
                 </div>
               )}
             </div>

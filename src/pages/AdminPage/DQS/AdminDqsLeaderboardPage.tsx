@@ -12,14 +12,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import { TIER_BADGE_CLASS, TIER_LABEL } from "@/constants/ticketQualityLabels";
 import { useDqsLeaderboard } from "@/queries/useDqs";
 import {
@@ -30,8 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   AlertCircle,
-  ChevronRight,
-  Loader2,
+  Eye,
   RefreshCw,
   Search,
   Trophy,
@@ -107,6 +100,112 @@ export default function AdminDqsLeaderboardPage() {
   }, [allRows, tierTab, searchInput]);
 
   const counts = useMemo(() => countByTier(allRows), [allRows]);
+
+  const ranked = useMemo(
+    () => filtered.map((row, idx) => ({ ...row, rank: idx + 1 })),
+    [filtered],
+  );
+
+  type RankedRow = LeaderboardRowType & { rank: number };
+
+  const columns = useMemo<ColumnDef<RankedRow>[]>(
+    () => [
+      {
+        accessorKey: "rank",
+        header: () => <div className="w-12">#</div>,
+        cell: ({ row }) => (
+          <span className="text-muted-foreground tabular-nums">
+            {row.original.rank}
+          </span>
+        ),
+      },
+      {
+        id: "doctor",
+        header: "Bác sĩ",
+        cell: ({ row }) => (
+          <div>
+            <div className="font-medium">
+              {row.original.doctorName ?? (
+                <span className="text-muted-foreground italic">
+                  (chưa có tên)
+                </span>
+              )}
+            </div>
+            <div className="font-mono text-xs text-muted-foreground">
+              {row.original.doctorId.slice(0, 8)}…
+            </div>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "tier",
+        header: "Hạng",
+        cell: ({ row }) => (
+          <Badge
+            variant="outline"
+            className={TIER_BADGE_CLASS[row.original.tier]}
+          >
+            {TIER_LABEL[row.original.tier]}
+          </Badge>
+        ),
+      },
+      {
+        accessorKey: "totalScore",
+        header: () => <div className="text-right">Tổng điểm</div>,
+        cell: ({ row }) => (
+          <div className="text-right font-semibold tabular-nums">
+            {row.original.totalScore.toFixed(1)}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "ratingScore",
+        header: () => <div className="text-right">Đánh giá</div>,
+        cell: ({ row }) => (
+          <div className="text-right text-sm tabular-nums">
+            {row.original.ratingScore.toFixed(1)}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "frequencyScore",
+        header: () => <div className="text-right">Tần suất</div>,
+        cell: ({ row }) => (
+          <div className="text-right text-sm tabular-nums">
+            {row.original.frequencyScore.toFixed(1)}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "slaScore",
+        header: () => <div className="text-right">Đúng hạn</div>,
+        cell: ({ row }) => (
+          <div className="text-right text-sm tabular-nums">
+            {row.original.slaScore.toFixed(1)}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "acceptanceScore",
+        header: () => <div className="text-right">Tỷ lệ nhận</div>,
+        cell: ({ row }) => (
+          <div className="text-right text-sm tabular-nums">
+            {row.original.acceptanceScore.toFixed(1)}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "onlineScore",
+        header: () => <div className="text-right">Trực tuyến</div>,
+        cell: ({ row }) => (
+          <div className="text-right text-sm tabular-nums">
+            {row.original.onlineScore.toFixed(1)}
+          </div>
+        ),
+      },
+    ],
+    [],
+  );
 
   return (
     <div className="p-6 space-y-6 animate-in fade-in duration-300">
@@ -217,11 +316,7 @@ export default function AdminDqsLeaderboardPage() {
             </div>
           </div>
 
-          {listQuery.isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : listQuery.isError ? (
+          {listQuery.isError ? (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Không tải được bảng xếp hạng</AlertTitle>
@@ -229,7 +324,7 @@ export default function AdminDqsLeaderboardPage() {
                 Vui lòng thử lại hoặc chọn ngày khác.
               </AlertDescription>
             </Alert>
-          ) : filtered.length === 0 ? (
+          ) : !listQuery.isLoading && filtered.length === 0 ? (
             <EmptyState
               icon={Trophy}
               title={
@@ -249,78 +344,26 @@ export default function AdminDqsLeaderboardPage() {
             />
           ) : (
             <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">#</TableHead>
-                    <TableHead>Bác sĩ</TableHead>
-                    <TableHead>Hạng</TableHead>
-                    <TableHead className="text-right">Tổng điểm</TableHead>
-                    <TableHead className="text-right">Đánh giá</TableHead>
-                    <TableHead className="text-right">Tần suất</TableHead>
-                    <TableHead className="text-right">Đúng hạn</TableHead>
-                    <TableHead className="text-right">Tỷ lệ nhận</TableHead>
-                    <TableHead className="text-right">Trực tuyến</TableHead>
-                    <TableHead className="w-12"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((row, idx) => (
-                    <TableRow
-                      key={row.doctorId}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() =>
-                        navigate(`/dashboard/admin/doctors/${row.doctorId}/dqs`)
-                      }
-                    >
-                      <TableCell className="text-muted-foreground tabular-nums">
-                        {idx + 1}
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium">
-                          {row.doctorName ?? (
-                            <span className="text-muted-foreground italic">
-                              (chưa có tên)
-                            </span>
-                          )}
-                        </div>
-                        <div className="font-mono text-xs text-muted-foreground">
-                          {row.doctorId.slice(0, 8)}…
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={TIER_BADGE_CLASS[row.tier]}
-                        >
-                          {TIER_LABEL[row.tier]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-semibold tabular-nums">
-                        {row.totalScore.toFixed(1)}
-                      </TableCell>
-                      <TableCell className="text-right text-sm tabular-nums">
-                        {row.ratingScore.toFixed(1)}
-                      </TableCell>
-                      <TableCell className="text-right text-sm tabular-nums">
-                        {row.frequencyScore.toFixed(1)}
-                      </TableCell>
-                      <TableCell className="text-right text-sm tabular-nums">
-                        {row.slaScore.toFixed(1)}
-                      </TableCell>
-                      <TableCell className="text-right text-sm tabular-nums">
-                        {row.acceptanceScore.toFixed(1)}
-                      </TableCell>
-                      <TableCell className="text-right text-sm tabular-nums">
-                        {row.onlineScore.toFixed(1)}
-                      </TableCell>
-                      <TableCell>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <DataTable
+                columns={columns}
+                data={ranked}
+                isLoading={listQuery.isLoading}
+                actions={[
+                  {
+                    key: "view",
+                    label: "Xem chi tiết",
+                    icon: Eye,
+                    onSelect: (row) =>
+                      navigate(
+                        `/dashboard/admin/doctors/${row.doctorId}/dqs`,
+                      ),
+                  },
+                ]}
+                onRowClick={(row) =>
+                  navigate(`/dashboard/admin/doctors/${row.doctorId}/dqs`)
+                }
+                emptyText="Không có bác sĩ phù hợp."
+              />
               <p className="text-xs text-muted-foreground pt-3">
                 Hiển thị {filtered.length}/{allRows.length} bác sĩ.
               </p>

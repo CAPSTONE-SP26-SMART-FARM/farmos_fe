@@ -16,14 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import { cn } from "@/lib/utils";
 import { getApiErrorMessageVi } from "@/lib/error-message";
 import { useOwnerMyQuota } from "@/queries/useSubscription";
@@ -345,65 +339,92 @@ function UsageTab({ enabled, featureCodes }: UsageTabProps) {
             />
           ) : (
             <div className="overflow-x-auto rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tính năng</TableHead>
-                    <TableHead>Phạm vi</TableHead>
-                    <TableHead className="text-right">Hạn mức</TableHead>
-                    <TableHead className="text-right">Đã dùng</TableHead>
-                    <TableHead className="text-right">Còn lại</TableHead>
-                    <TableHead className="w-40">Tiến độ</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rows.map((row) => {
-                    const tone =
-                      row.pct == null ? null : progressTone(row.pct);
-                    return (
-                      <TableRow key={row.key}>
-                        <TableCell className="font-medium">
-                          {formatFeatureLabel(row.featureCode)}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {row.scope}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums">
-                          {row.limit}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums">
-                          {row.used}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums">
-                          {row.remaining}
-                        </TableCell>
-                        <TableCell>
-                          {row.pct == null || tone == null ? (
-                            <span className="text-xs text-muted-foreground">
-                              —
+              <DataTable
+                columns={
+                  [
+                    {
+                      accessorKey: "featureCode",
+                      header: "Tính năng",
+                      cell: ({ row }) => (
+                        <span className="font-medium">
+                          {formatFeatureLabel(row.original.featureCode)}
+                        </span>
+                      ),
+                    },
+                    {
+                      accessorKey: "scope",
+                      header: "Phạm vi",
+                      cell: ({ row }) => (
+                        <span className="text-sm text-muted-foreground">
+                          {row.original.scope}
+                        </span>
+                      ),
+                    },
+                    {
+                      accessorKey: "limit",
+                      header: () => <div className="text-right">Hạn mức</div>,
+                      cell: ({ row }) => (
+                        <div className="text-right tabular-nums">
+                          {row.original.limit}
+                        </div>
+                      ),
+                    },
+                    {
+                      accessorKey: "used",
+                      header: () => <div className="text-right">Đã dùng</div>,
+                      cell: ({ row }) => (
+                        <div className="text-right tabular-nums">
+                          {row.original.used}
+                        </div>
+                      ),
+                    },
+                    {
+                      accessorKey: "remaining",
+                      header: () => <div className="text-right">Còn lại</div>,
+                      cell: ({ row }) => (
+                        <div className="text-right tabular-nums">
+                          {row.original.remaining}
+                        </div>
+                      ),
+                    },
+                    {
+                      id: "progress",
+                      header: "Tiến độ",
+                      cell: ({ row }) => {
+                        const tone =
+                          row.original.pct == null
+                            ? null
+                            : progressTone(row.original.pct);
+                        return row.original.pct == null || tone == null ? (
+                          <span className="text-xs text-muted-foreground">
+                            —
+                          </span>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Progress
+                              value={row.original.pct}
+                              className={cn(
+                                "h-1.5 flex-1",
+                                tone.barClass,
+                              )}
+                            />
+                            <span
+                              className={cn(
+                                "w-10 text-right text-xs font-medium tabular-nums",
+                                tone.pctClass,
+                              )}
+                            >
+                              {Math.round(row.original.pct)}%
                             </span>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <Progress
-                                value={row.pct}
-                                className={cn("h-1.5 flex-1", tone.barClass)}
-                              />
-                              <span
-                                className={cn(
-                                  "w-10 text-right text-xs font-medium tabular-nums",
-                                  tone.pctClass,
-                                )}
-                              >
-                                {Math.round(row.pct)}%
-                              </span>
-                            </div>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                          </div>
+                        );
+                      },
+                    },
+                  ] as ColumnDef<(typeof rows)[number]>[]
+                }
+                data={rows}
+                emptyText="Không có dữ liệu hạn mức."
+              />
             </div>
           )}
         </CardContent>

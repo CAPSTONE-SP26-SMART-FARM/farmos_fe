@@ -1,15 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import { useState } from "react";
 import { useManagerListRequests } from "@/queries/useCropSeason";
 import TrackingConfigPanel from "./TrackingConfigPanel";
@@ -26,6 +19,41 @@ export function RequestsHistoryTab({
   const requests = requestsQuery.data?.data.data ?? [];
   const [showTracking, setShowTracking] = useState(false);
 
+  type RequestRow = (typeof requests)[number];
+
+  const columns: ColumnDef<RequestRow>[] = [
+    {
+      accessorKey: "sentAt",
+      header: "Ngày gửi",
+      cell: ({ row }) => <span className="text-sm">{formatDate(row.original.sentAt)}</span>,
+    },
+    {
+      accessorKey: "status",
+      header: "Trạng thái",
+      cell: ({ row }) => {
+        const rs = REQUEST_STATUS_MAP[row.original.status] ?? {
+          label: row.original.status,
+          variant: "secondary" as const,
+        };
+        return <Badge variant={rs.variant}>{rs.label}</Badge>;
+      },
+    },
+    {
+      accessorKey: "repliedAt",
+      header: "Ngày phản hồi",
+      cell: ({ row }) => <span className="text-sm">{formatDate(row.original.repliedAt)}</span>,
+    },
+    {
+      accessorKey: "description",
+      header: "Ghi chú chủ vườn",
+      cell: ({ row }) => (
+        <span className="text-sm max-w-50 truncate block">
+          {row.original.description ?? "—"}
+        </span>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <div>
@@ -35,46 +63,18 @@ export function RequestsHistoryTab({
             <span className="text-muted-foreground font-normal">({requests.length})</span>
           )}
         </h3>
-        {requestsQuery.isLoading ? (
-          <div className="space-y-2">
-            {[1, 2].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
-          </div>
-        ) : requests.length === 0 ? (
+        {!requestsQuery.isLoading && requests.length === 0 ? (
           <p className="text-sm text-muted-foreground py-8 text-center bg-muted/20 rounded-md">
             Chưa có yêu cầu nào được gửi
           </p>
         ) : (
           <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Ngày gửi</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead>Ngày phản hồi</TableHead>
-                  <TableHead>Ghi chú chủ vườn</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {requests.map((r) => {
-                  const rs = REQUEST_STATUS_MAP[r.status] ?? {
-                    label: r.status,
-                    variant: "secondary" as const,
-                  };
-                  return (
-                    <TableRow key={r.id}>
-                      <TableCell className="text-sm">{formatDate(r.sentAt)}</TableCell>
-                      <TableCell>
-                        <Badge variant={rs.variant}>{rs.label}</Badge>
-                      </TableCell>
-                      <TableCell className="text-sm">{formatDate(r.repliedAt)}</TableCell>
-                      <TableCell className="text-sm max-w-[200px] truncate">
-                        {r.description ?? "—"}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <DataTable
+              columns={columns}
+              data={requests}
+              isLoading={requestsQuery.isLoading}
+              emptyText="Chưa có yêu cầu nào."
+            />
           </div>
         )}
       </div>

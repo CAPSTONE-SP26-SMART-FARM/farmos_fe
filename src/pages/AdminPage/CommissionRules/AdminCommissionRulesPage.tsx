@@ -24,15 +24,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
 import { getApiErrorMessageVi } from "@/lib/error-message";
@@ -53,7 +47,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { isAxiosError } from "axios";
 import { CalendarDays, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { format, isValid, parse } from "date-fns";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { useForm, Controller } from "react-hook-form";
 import { toast } from "sonner";
@@ -370,6 +364,75 @@ export default function AdminCommissionRulesPage() {
   const meta = listQuery.data?.data?.meta;
   const overlapping = hasOverlappingRules(rules);
 
+  const columns = useMemo<ColumnDef<CommissionRuleType>[]>(
+    () => [
+      {
+        accessorKey: "scope",
+        header: "Phạm vi",
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1">
+            <Badge variant="secondary">{SCOPE_LABELS[row.original.scope]}</Badge>
+            {overlapping.has(row.original.id) && (
+              <Badge
+                variant="outline"
+                className="border-yellow-300 text-yellow-700 text-xs"
+              >
+                ⚠ Trùng
+              </Badge>
+            )}
+          </div>
+        ),
+      },
+      {
+        id: "subject",
+        header: "Đối tượng",
+        cell: ({ row }) => {
+          const rule = row.original;
+          return (
+            <span className="text-sm">
+              {rule.scope === "CATEGORY_DEFAULT" &&
+                (rule.category?.name ?? rule.categoryId ?? "—")}
+              {rule.scope === "DOCTOR_TIER" && (rule.doctorTier ?? "—")}
+              {rule.scope === "DOCTOR" &&
+                (rule.doctor?.name ?? rule.doctorId ?? "—")}
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: "commissionPercent",
+        header: () => <div className="text-right">Hoa hồng</div>,
+        cell: ({ row }) => (
+          <div className="text-right font-semibold tabular-nums">
+            {row.original.commissionPercent}%
+          </div>
+        ),
+      },
+      {
+        id: "effective",
+        header: "Thời gian hiệu lực",
+        cell: ({ row }) => (
+          <span className="text-xs text-muted-foreground">
+            {formatDateRange(
+              row.original.effectiveFrom,
+              row.original.effectiveTo,
+            )}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "note",
+        header: "Ghi chú",
+        cell: ({ row }) => (
+          <span className="text-xs text-muted-foreground max-w-50 truncate block">
+            {row.original.note ?? "—"}
+          </span>
+        ),
+      },
+    ],
+    [overlapping],
+  );
+
   const handleDelete = async () => {
     if (!deleteTarget) return;
     try {
@@ -432,96 +495,30 @@ export default function AdminCommissionRulesPage() {
             </div>
           )}
 
-          {/* Table */}
-          {listQuery.isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Phạm vi</TableHead>
-                  <TableHead>Đối tượng</TableHead>
-                  <TableHead className="text-right">Hoa hồng</TableHead>
-                  <TableHead>Thời gian hiệu lực</TableHead>
-                  <TableHead>Ghi chú</TableHead>
-                  <TableHead className="text-right">Thao tác</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rules.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      className="py-8 text-center text-muted-foreground"
-                    >
-                      Chưa có quy tắc hoa hồng nào.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  rules.map((rule) => (
-                    <TableRow
-                      key={rule.id}
-                      className={overlapping.has(rule.id) ? "bg-yellow-50" : ""}
-                    >
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Badge variant="secondary">
-                            {SCOPE_LABELS[rule.scope]}
-                          </Badge>
-                          {overlapping.has(rule.id) && (
-                            <Badge
-                              variant="outline"
-                              className="border-yellow-300 text-yellow-700 text-xs"
-                            >
-                              ⚠ Trùng
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {rule.scope === "CATEGORY_DEFAULT" &&
-                          (rule.category?.name ?? rule.categoryId ?? "—")}
-                        {rule.scope === "DOCTOR_TIER" &&
-                          (rule.doctorTier ?? "—")}
-                        {rule.scope === "DOCTOR" &&
-                          (rule.doctor?.name ?? rule.doctorId ?? "—")}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold tabular-nums">
-                        {rule.commissionPercent}%
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {formatDateRange(rule.effectiveFrom, rule.effectiveTo)}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground max-w-50 truncate">
-                        {rule.note ?? "—"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => setEditTarget(rule)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => setDeleteTarget(rule)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          )}
+          <DataTable
+            columns={columns}
+            data={rules}
+            isLoading={listQuery.isLoading}
+            rowClassName={(rule) =>
+              overlapping.has(rule.id) ? "bg-yellow-50" : undefined
+            }
+            actions={[
+              {
+                key: "edit",
+                label: "Chỉnh sửa",
+                icon: Pencil,
+                onSelect: (rule) => setEditTarget(rule),
+              },
+              {
+                key: "delete",
+                label: "Xoá",
+                icon: Trash2,
+                variant: "destructive",
+                onSelect: (rule) => setDeleteTarget(rule),
+              },
+            ]}
+            emptyText="Chưa có quy tắc hoa hồng nào."
+          />
 
           {meta && meta.totalPages > 1 && (
             <div className="flex items-center justify-between pt-2">

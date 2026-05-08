@@ -1,22 +1,10 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Separator } from "@/components/ui/separator";
 import { useOwnerGetZoneDetail, useOwnerListZones } from "@/queries/useZone";
 import type { FarmResType } from "@/schemaValidatation/farmManagement";
@@ -28,7 +16,6 @@ import {
   Eye,
   FileText,
   Map as MapIcon,
-  MoreVertical,
   Pencil,
   Plus,
   Ruler,
@@ -167,36 +154,13 @@ function ZonesTable({ farm }: { farm: FarmResType }) {
           <CardTitle className="text-base">Danh sách khu vực</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tên khu vực</TableHead>
-                  <TableHead>Loại</TableHead>
-                  <TableHead>Diện tích</TableHead>
-                  <TableHead>Cập nhật</TableHead>
-                  <TableHead className="w-12.5"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <TableRow key={i}>
-                    {Array.from({ length: 5 }).map((__, j) => (
-                      <TableCell key={j}>
-                        <Skeleton className="h-4 w-full" />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : isError ? (
+          {isError ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <p className="text-sm text-muted-foreground">
                 Không thể tải danh sách khu vực. Vui lòng thử lại.
               </p>
             </div>
-          ) : zones.length === 0 ? (
+          ) : !isLoading && zones.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="rounded-full bg-muted p-4 mb-4">
                 <Sprout className="h-8 w-8 text-muted-foreground" />
@@ -212,73 +176,67 @@ function ZonesTable({ farm }: { farm: FarmResType }) {
             </div>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tên khu vực</TableHead>
-                    <TableHead>Loại</TableHead>
-                    <TableHead>Diện tích</TableHead>
-                    <TableHead>Cập nhật</TableHead>
-                    <TableHead className="w-12.5"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {zones.map((zone) => (
-                    <TableRow
-                      key={zone.id}
-                      className="transition-colors hover:bg-muted/40 cursor-pointer"
-                      onClick={() => setZoneId(zone.id)}
-                    >
-                      <TableCell className="font-medium">{zone.name}</TableCell>
-                      <TableCell>
+              <DataTable
+                columns={
+                  [
+                    {
+                      accessorKey: "name",
+                      header: "Tên khu vực",
+                      cell: ({ row }) => (
+                        <span className="font-medium">{row.original.name}</span>
+                      ),
+                    },
+                    {
+                      accessorKey: "zoneType",
+                      header: "Loại",
+                      cell: ({ row }) => (
                         <Badge variant="secondary">
-                          {ZONE_TYPE_LABELS[zone.zoneType] ?? zone.zoneType}
+                          {ZONE_TYPE_LABELS[row.original.zoneType] ??
+                            row.original.zoneType}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {zone.areaSqm != null ? `${zone.areaSqm} m²` : "—"}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {format(new Date(zone.updatedAt), "dd/MM/yyyy")}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex justify-end">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() => setZoneId(zone.id)}
-                              >
-                                <Eye className="h-4 w-4 mr-2" />
-                                Chi tiết và phân công quản lý
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  navigate(
-                                    `/dashboard/owner/crop-seasons?zoneId=${zone.id}`,
-                                  )
-                                }
-                              >
-                                <Sprout className="h-4 w-4 mr-2" />
-                                Mùa vụ
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                      ),
+                    },
+                    {
+                      accessorKey: "areaSqm",
+                      header: "Diện tích",
+                      cell: ({ row }) =>
+                        row.original.areaSqm != null
+                          ? `${row.original.areaSqm} m²`
+                          : "—",
+                    },
+                    {
+                      accessorKey: "updatedAt",
+                      header: "Cập nhật",
+                      cell: ({ row }) => (
+                        <span className="text-sm text-muted-foreground">
+                          {format(new Date(row.original.updatedAt), "dd/MM/yyyy")}
+                        </span>
+                      ),
+                    },
+                  ] as ColumnDef<(typeof zones)[number]>[]
+                }
+                data={zones}
+                isLoading={isLoading}
+                actions={[
+                  {
+                    key: "view",
+                    label: "Chi tiết và phân công quản lý",
+                    icon: Eye,
+                    onSelect: (zone) => setZoneId(zone.id),
+                  },
+                  {
+                    key: "crop-seasons",
+                    label: "Mùa vụ",
+                    icon: Sprout,
+                    onSelect: (zone) =>
+                      navigate(
+                        `/dashboard/owner/crop-seasons?zoneId=${zone.id}`,
+                      ),
+                  },
+                ]}
+                onRowClick={(zone) => setZoneId(zone.id)}
+                emptyText="Chưa có khu vực nào."
+              />
 
               {meta && meta.totalPages > 1 && (
                 <div className="flex items-center justify-between pt-4">

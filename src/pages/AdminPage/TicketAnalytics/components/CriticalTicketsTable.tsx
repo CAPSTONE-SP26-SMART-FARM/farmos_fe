@@ -6,20 +6,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/common/DataTable";
 import { formatDateTimeVi } from "@/lib/format";
 import type {
   CriticalTicketRow,
   IncidentSeverity,
   TicketStatus,
 } from "../_mocks/ticketAnalytics.mock";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Eye } from "lucide-react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router";
 
 const SEVERITY_LABEL: Record<IncidentSeverity, string> = {
@@ -61,6 +57,79 @@ interface CriticalTicketsTableProps {
 
 function CriticalTicketsTable({ rows, className }: CriticalTicketsTableProps) {
   const navigate = useNavigate();
+
+  const columns = useMemo<ColumnDef<CriticalTicketRow>[]>(
+    () => [
+      {
+        accessorKey: "ticketNumber",
+        header: "Mã vé",
+        cell: ({ row }) => (
+          <span className="font-medium">{row.original.ticketNumber}</span>
+        ),
+      },
+      {
+        accessorKey: "title",
+        header: "Tiêu đề",
+        cell: ({ row }) => (
+          <span className="max-w-xs truncate block">{row.original.title}</span>
+        ),
+      },
+      {
+        accessorKey: "severity",
+        header: "Mức độ",
+        cell: ({ row }) => (
+          <Badge className={SEVERITY_CLASS[row.original.severity]}>
+            {SEVERITY_LABEL[row.original.severity]}
+          </Badge>
+        ),
+      },
+      {
+        accessorKey: "status",
+        header: "Trạng thái",
+        cell: ({ row }) => (
+          <Badge
+            variant="outline"
+            className={STATUS_CLASS[row.original.status]}
+          >
+            {STATUS_LABEL[row.original.status]}
+          </Badge>
+        ),
+      },
+      {
+        accessorKey: "assignee",
+        header: "Bác sĩ",
+        cell: ({ row }) =>
+          row.original.assignee ? (
+            row.original.assignee
+          ) : (
+            <Badge
+              variant="outline"
+              className="text-muted-foreground"
+            >
+              Chưa gán
+            </Badge>
+          ),
+      },
+      {
+        accessorKey: "farmName",
+        header: "Trang trại",
+        cell: ({ row }) => (
+          <span className="text-muted-foreground">{row.original.farmName}</span>
+        ),
+      },
+      {
+        accessorKey: "createdAt",
+        header: "Tạo lúc",
+        cell: ({ row }) => (
+          <span className="text-muted-foreground tabular-nums">
+            {formatDateTimeVi(row.original.createdAt)}
+          </span>
+        ),
+      },
+    ],
+    [],
+  );
+
   return (
     <Card className={className}>
       <CardHeader>
@@ -71,66 +140,23 @@ function CriticalTicketsTable({ rows, className }: CriticalTicketsTableProps) {
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Mã vé</TableHead>
-                <TableHead>Tiêu đề</TableHead>
-                <TableHead>Mức độ</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Bác sĩ</TableHead>
-                <TableHead>Trang trại</TableHead>
-                <TableHead>Tạo lúc</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => navigate(`/dashboard/admin/tickets/${row.id}`)}
-                >
-                  <TableCell className="font-medium">
-                    {row.ticketNumber}
-                  </TableCell>
-                  <TableCell className="max-w-xs truncate">
-                    {row.title}
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={SEVERITY_CLASS[row.severity]}>
-                      {SEVERITY_LABEL[row.severity]}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={STATUS_CLASS[row.status]}
-                    >
-                      {STATUS_LABEL[row.status]}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {row.assignee ? (
-                      row.assignee
-                    ) : (
-                      <Badge
-                        variant="outline"
-                        className="text-muted-foreground"
-                      >
-                        Chưa gán
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {row.farmName}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground tabular-nums">
-                    {formatDateTimeVi(row.createdAt)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={columns}
+            data={rows}
+            actions={[
+              {
+                key: "view",
+                label: "Xem chi tiết",
+                icon: Eye,
+                onSelect: (ticket) =>
+                  navigate(`/dashboard/admin/tickets/${ticket.id}`),
+              },
+            ]}
+            onRowClick={(ticket) =>
+              navigate(`/dashboard/admin/tickets/${ticket.id}`)
+            }
+            emptyText="Không có vé ưu tiên."
+          />
         </div>
       </CardContent>
     </Card>

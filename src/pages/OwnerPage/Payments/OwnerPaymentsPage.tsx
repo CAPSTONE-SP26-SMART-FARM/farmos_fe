@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Eye } from "lucide-react";
 import InvoiceStatusBadge, {
   type InvoiceStatus,
 } from "@/components/common/InvoiceStatusBadge";
+import { DataTable } from "@/components/common/DataTable";
+import type { DataTableAction } from "@/components/common/DataTable/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,14 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useOwnerInvoices } from "@/queries/useInvoice";
 import { useRealtimeBilling } from "@/hooks/useRealtimeBilling";
 import type { ListInvoicesQueryType } from "@/schemaValidatation/invoice";
@@ -45,10 +41,17 @@ const REFERENCE_TYPE_LABEL: Record<string, string> = {
   IOT_KIT_ORDER: "Đơn Bộ Kit IoT",
 };
 
+type OwnerInvoiceRow = {
+  id: string;
+  invoiceNumber: string;
+  referenceType: string;
+  totalAmount: number;
+  status: string;
+};
+
 function OwnerPaymentsPage() {
   const navigate = useNavigate();
 
-  // Realtime: invalidate invoices / subscriptions khi BE push event billing.
   useRealtimeBilling();
 
   const [invoiceQuery, setInvoiceQuery] = useState<ListInvoicesQueryType>({
@@ -64,6 +67,54 @@ function OwnerPaymentsPage() {
 
   const invoices = ownerInvoicesQuery.data?.data?.data ?? [];
   const invoicesMeta = ownerInvoicesQuery.data?.data?.meta;
+
+  const columns = useMemo<ColumnDef<OwnerInvoiceRow>[]>(
+    () => [
+      {
+        accessorKey: "invoiceNumber",
+        header: "Mã hóa đơn",
+        cell: ({ row }) => (
+          <span className="font-medium">{row.original.invoiceNumber}</span>
+        ),
+      },
+      {
+        accessorKey: "referenceType",
+        header: "Loại",
+        cell: ({ row }) => (
+          <Badge variant="outline">
+            {REFERENCE_TYPE_LABEL[row.original.referenceType] ??
+              row.original.referenceType}
+          </Badge>
+        ),
+      },
+      {
+        accessorKey: "totalAmount",
+        header: "Tổng tiền",
+        cell: ({ row }) => formatCurrency(row.original.totalAmount),
+      },
+      {
+        accessorKey: "status",
+        header: "Trạng thái",
+        cell: ({ row }) => (
+          <InvoiceStatusBadge status={row.original.status as InvoiceStatus} />
+        ),
+      },
+    ],
+    [],
+  );
+
+  const actions: DataTableAction<OwnerInvoiceRow>[] = useMemo(
+    () => [
+      {
+        key: "view",
+        label: "Xem chi tiết",
+        icon: Eye,
+        onSelect: (invoice) =>
+          navigate(`/dashboard/owner/payments/${invoice.id}`),
+      },
+    ],
+    [navigate],
+  );
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -141,71 +192,16 @@ function OwnerPaymentsPage() {
           <CardTitle>Danh sách hóa đơn</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Mã hóa đơn</TableHead>
-                <TableHead>Loại</TableHead>
-                <TableHead>Tổng tiền</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead className="text-right">Hành động</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {ownerInvoicesQuery.isLoading && (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="py-6 text-center text-muted-foreground"
-                  >
-                    Đang tải danh sách hóa đơn...
-                  </TableCell>
-                </TableRow>
-              )}
-              {!ownerInvoicesQuery.isLoading && invoices.length === 0 && (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="py-6 text-center text-muted-foreground"
-                  >
-                    Không có hóa đơn phù hợp.
-                  </TableCell>
-                </TableRow>
-              )}
-              {invoices.map((invoice) => (
-                <TableRow key={invoice.id}>
-                  <TableCell className="font-medium">
-                    {invoice.invoiceNumber}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">
-                      {REFERENCE_TYPE_LABEL[invoice.referenceType] ??
-                        invoice.referenceType}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{formatCurrency(invoice.totalAmount)}</TableCell>
-                  <TableCell>
-                    <InvoiceStatusBadge
-                      status={invoice.status as InvoiceStatus}
-                    />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          navigate(`/dashboard/owner/payments/${invoice.id}`)
-                        }
-                      >
-                        Chi tiết
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={columns}
+            data={invoices}
+            isLoading={ownerInvoicesQuery.isLoading}
+            actions={actions}
+            onRowClick={(invoice) =>
+              navigate(`/dashboard/owner/payments/${invoice.id}`)
+            }
+            emptyText="Không có hóa đơn phù hợp."
+          />
 
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">

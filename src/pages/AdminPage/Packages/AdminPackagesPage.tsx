@@ -16,12 +16,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -31,15 +25,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import useDebounce from "@/hooks/useDebounce";
 import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
@@ -64,14 +52,7 @@ import {
   type UpdateServicePackageBodyType,
 } from "@/schemaValidatation/credit";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Archive,
-  ArchiveRestore,
-  Loader2,
-  MoreVertical,
-  Pencil,
-  Search,
-} from "lucide-react";
+import { Archive, ArchiveRestore, Loader2, Pencil, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -108,6 +89,62 @@ export default function AdminPackagesPage() {
 
   const packages = listQuery.data?.data.data ?? [];
   const meta = listQuery.data?.data.meta;
+
+  const columns: ColumnDef<ServicePackageType>[] = [
+    {
+      accessorKey: "code",
+      header: "Mã",
+      cell: ({ row }) => (
+        <span className="font-mono text-xs">{row.original.code}</span>
+      ),
+    },
+    {
+      accessorKey: "name",
+      header: "Tên gói",
+      cell: ({ row }) => (
+        <div>
+          <p className="font-medium">{row.original.name}</p>
+          <p className="text-xs text-muted-foreground line-clamp-1">
+            {row.original.description || "Không có mô tả"}
+          </p>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "creditType",
+      header: "Loại credit",
+      cell: ({ row }) => (
+        <Badge variant="outline">{row.original.creditType}</Badge>
+      ),
+    },
+    {
+      accessorKey: "creditAmount",
+      header: () => <div className="text-right">Số credit</div>,
+      cell: ({ row }) => (
+        <div className="text-right tabular-nums">
+          {row.original.creditAmount}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "price",
+      header: () => <div className="text-right">Giá (VND)</div>,
+      cell: ({ row }) => (
+        <div className="text-right tabular-nums">
+          {formatCurrencyVnd(row.original.price)}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "isActive",
+      header: "Trạng thái",
+      cell: ({ row }) => (
+        <Badge variant={row.original.isActive ? "default" : "secondary"}>
+          {row.original.isActive ? "Đang hoạt động" : "Đã lưu trữ"}
+        </Badge>
+      ),
+    },
+  ];
 
   // If current page becomes empty after delete/archive, step back one page.
   useEffect(() => {
@@ -220,109 +257,36 @@ export default function AdminPackagesPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Mã</TableHead>
-                  <TableHead>Tên gói</TableHead>
-                  <TableHead>Loại credit</TableHead>
-                  <TableHead className="text-right">Số credit</TableHead>
-                  <TableHead className="text-right">Giá (VND)</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead className="text-right">Thao tác</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {listQuery.isLoading && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={7}
-                      className="py-6 text-center text-muted-foreground"
-                    >
-                      Đang tải dữ liệu...
-                    </TableCell>
-                  </TableRow>
-                )}
-                {!listQuery.isLoading && packages.length === 0 && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={7}
-                      className="py-6 text-center text-muted-foreground"
-                    >
-                      Chưa có gói dịch vụ nào.
-                    </TableCell>
-                  </TableRow>
-                )}
-                {packages.map((pkg) => (
-                  <TableRow key={pkg.id}>
-                    <TableCell className="font-mono text-xs">
-                      {pkg.code}
-                    </TableCell>
-                    <TableCell>
-                      <p className="font-medium">{pkg.name}</p>
-                      <p className="text-xs text-muted-foreground line-clamp-1">
-                        {pkg.description || "Không có mô tả"}
-                      </p>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{pkg.creditType}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {pkg.creditAmount}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatCurrencyVnd(pkg.price)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={pkg.isActive ? "default" : "secondary"}
-                      >
-                        {pkg.isActive ? "Đang hoạt động" : "Đã lưu trữ"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openEdit(pkg)}>
-                            <Pencil className="h-4 w-4 mr-2" />
-                            Chỉnh sửa
-                          </DropdownMenuItem>
-                          {pkg.isActive ? (
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={() =>
-                                setConfirmState({ type: "archive", pkg })
-                              }
-                            >
-                              <Archive className="h-4 w-4 mr-2" />
-                              Lưu trữ
-                            </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem
-                              onClick={() =>
-                                setConfirmState({ type: "unarchive", pkg })
-                              }
-                            >
-                              <ArchiveRestore className="h-4 w-4 mr-2" />
-                              Khôi phục
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <DataTable
+              columns={columns}
+              data={packages}
+              isLoading={listQuery.isLoading}
+              actions={[
+                {
+                  key: "edit",
+                  label: "Chỉnh sửa",
+                  icon: Pencil,
+                  onSelect: (pkg) => openEdit(pkg),
+                },
+                {
+                  key: "archive",
+                  label: "Lưu trữ",
+                  icon: Archive,
+                  variant: "destructive",
+                  hidden: (pkg) => !pkg.isActive,
+                  onSelect: (pkg) => setConfirmState({ type: "archive", pkg }),
+                },
+                {
+                  key: "unarchive",
+                  label: "Khôi phục",
+                  icon: ArchiveRestore,
+                  hidden: (pkg) => pkg.isActive,
+                  onSelect: (pkg) =>
+                    setConfirmState({ type: "unarchive", pkg }),
+                },
+              ]}
+              emptyText="Chưa có gói dịch vụ nào."
+            />
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
                 Trang {meta?.page ?? query.page ?? 1}/{meta?.totalPages ?? 1}

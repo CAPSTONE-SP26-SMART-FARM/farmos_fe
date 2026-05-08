@@ -6,22 +6,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import { cn } from "@/lib/utils";
 import EmptyState from "@/components/common/EmptyState";
 import type {
   ManagerZoneOverview,
   ZoneStatus,
 } from "@/types/dashboard";
-import { ChevronRight, Map } from "lucide-react";
-import { Link } from "react-router";
+import { Eye, Map } from "lucide-react";
+import { useNavigate } from "react-router";
 
 const STATUS_META: Record<ZoneStatus, { label: string; tone: string }> = {
   healthy: {
@@ -57,10 +51,71 @@ interface ZonesOverviewCardProps {
 }
 
 function ZonesOverviewCard({ zones, className }: ZonesOverviewCardProps) {
-  // Sort worst-status first so manager prioritizes problem zones.
+  const navigate = useNavigate();
   const sorted = [...zones].sort(
     (a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status],
   );
+
+  const columns: ColumnDef<ManagerZoneOverview>[] = [
+    {
+      accessorKey: "zoneName",
+      header: "Khu vực",
+      cell: ({ row }) => (
+        <span className="font-medium">{row.original.zoneName}</span>
+      ),
+    },
+    {
+      accessorKey: "activeCropSeason",
+      header: "Mùa vụ",
+      cell: ({ row }) => {
+        const stageLabel = row.original.cropStage
+          ? CROP_STAGE_LABELS[row.original.cropStage] ?? row.original.cropStage
+          : null;
+        return (
+          <div className="text-sm">
+            {row.original.activeCropSeason ? (
+              <div className="space-y-0.5">
+                <p>{row.original.activeCropSeason}</p>
+                {stageLabel && (
+                  <p className="text-xs text-muted-foreground">{stageLabel}</p>
+                )}
+              </div>
+            ) : (
+              <span className="text-muted-foreground italic">Chưa có</span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "areaSqm",
+      header: "Diện tích",
+      cell: ({ row }) => (
+        <span className="text-sm tabular-nums">
+          {row.original.areaSqm.toLocaleString("vi-VN")} m²
+        </span>
+      ),
+    },
+    {
+      accessorKey: "tasksOpen",
+      header: () => <div className="text-right">Tasks</div>,
+      cell: ({ row }) => (
+        <div className="text-right tabular-nums">{row.original.tasksOpen}</div>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Trạng thái",
+      cell: ({ row }) => {
+        const meta = STATUS_META[row.original.status];
+        return (
+          <Badge variant="outline" className={cn(meta.tone)}>
+            {meta.label}
+          </Badge>
+        );
+      },
+    },
+  ];
 
   return (
     <Card className={className}>
@@ -79,75 +134,20 @@ function ZonesOverviewCard({ zones, className }: ZonesOverviewCardProps) {
           />
         ) : (
           <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Khu vực</TableHead>
-                  <TableHead>Mùa vụ</TableHead>
-                  <TableHead className="w-32">Diện tích</TableHead>
-                  <TableHead className="w-20 text-right">Tasks</TableHead>
-                  <TableHead className="w-32">Trạng thái</TableHead>
-                  <TableHead className="w-12"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sorted.map((zone) => {
-                  const meta = STATUS_META[zone.status];
-                  const stageLabel = zone.cropStage
-                    ? CROP_STAGE_LABELS[zone.cropStage] ?? zone.cropStage
-                    : null;
-                  return (
-                    <TableRow
-                      key={zone.zoneId}
-                      className="transition-colors hover:bg-muted/40"
-                    >
-                      <TableCell className="font-medium">
-                        {zone.zoneName}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {zone.activeCropSeason ? (
-                          <div className="space-y-0.5">
-                            <p>{zone.activeCropSeason}</p>
-                            {stageLabel && (
-                              <p className="text-xs text-muted-foreground">
-                                {stageLabel}
-                              </p>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground italic">
-                            Chưa có
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm tabular-nums">
-                        {zone.areaSqm.toLocaleString("vi-VN")} m²
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {zone.tasksOpen}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={cn(meta.tone)}
-                        >
-                          {meta.label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Link
-                          to={zone.href}
-                          className="flex items-center justify-end text-muted-foreground hover:text-foreground"
-                          aria-label={`Xem chi tiết ${zone.zoneName}`}
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Link>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <DataTable
+              columns={columns}
+              data={sorted}
+              actions={[
+                {
+                  key: "view",
+                  label: "Xem chi tiết",
+                  icon: Eye,
+                  onSelect: (zone) => navigate(zone.href),
+                },
+              ]}
+              onRowClick={(zone) => navigate(zone.href)}
+              emptyText="Chưa có khu vực."
+            />
           </div>
         )}
       </CardContent>
