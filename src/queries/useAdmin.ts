@@ -13,9 +13,16 @@ import type {
   ListMilestoneTemplatesQueryType,
   UpdateMilestoneTemplateBodyType,
 } from "@/schemaValidatation/milestoneTemplate";
+import type {
+  ListAdminWithdrawalsQueryType,
+  MarkPaidBodyType,
+  RejectWithdrawalBodyType,
+  ResolveNotReceivedBodyType,
+} from "@/schemaValidatation/doctorWithdrawal";
 import { QUERY_KEYS } from "@/constants";
 import adminService from "@/services/adminService";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export const useAdminListDoctorRequest = (
   query: ListDoctorRequestsQueryType,
@@ -159,6 +166,89 @@ export const useAdminDeleteMilestoneTemplate = () => {
       qc.removeQueries({
         queryKey: QUERY_KEYS.admin.milestoneTemplates.detail(id),
       });
+    },
+  });
+};
+
+// ── Doctor Withdrawals ────────────────────────────────────────────────────
+export const useAdminListWithdrawals = (
+  query: ListAdminWithdrawalsQueryType,
+) =>
+  useQuery({
+    queryKey: QUERY_KEYS.admin.withdrawals.list(query),
+    queryFn: () => adminService.listWithdrawals(query),
+  });
+
+export const useAdminWithdrawalDetail = (id: string, enabled: boolean) =>
+  useQuery({
+    queryKey: QUERY_KEYS.admin.withdrawals.detail(id),
+    queryFn: () => adminService.withdrawalDetail(id),
+    enabled,
+  });
+
+export const useAdminWithdrawalAudit = (id: string, enabled: boolean) =>
+  useQuery({
+    queryKey: QUERY_KEYS.admin.withdrawals.audit(id),
+    queryFn: () => adminService.withdrawalAudit(id),
+    enabled,
+  });
+
+const invalidateWithdrawals = (
+  qc: ReturnType<typeof useQueryClient>,
+  id: string,
+) => {
+  qc.invalidateQueries({ queryKey: QUERY_KEYS.admin.withdrawals.list() });
+  qc.invalidateQueries({ queryKey: QUERY_KEYS.admin.withdrawals.detail(id) });
+};
+
+export const useAdminApproveWithdrawal = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminService.approveWithdrawal(id),
+    onSuccess: (_res, id) => {
+      invalidateWithdrawals(qc, id);
+      toast.success("Đã duyệt yêu cầu rút tiền");
+    },
+  });
+};
+
+export const useAdminRejectWithdrawal = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: RejectWithdrawalBodyType }) =>
+      adminService.rejectWithdrawal(id, body),
+    onSuccess: (_res, { id }) => {
+      invalidateWithdrawals(qc, id);
+      toast.success("Đã từ chối yêu cầu rút tiền");
+    },
+  });
+};
+
+export const useAdminMarkPaidWithdrawal = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: MarkPaidBodyType }) =>
+      adminService.markPaidWithdrawal(id, body),
+    onSuccess: (_res, { id }) => {
+      invalidateWithdrawals(qc, id);
+      toast.success("Đã đánh dấu đã chuyển khoản");
+    },
+  });
+};
+
+export const useAdminResolveNotReceived = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      body,
+    }: {
+      id: string;
+      body: ResolveNotReceivedBodyType;
+    }) => adminService.resolveNotReceived(id, body),
+    onSuccess: (_res, { id }) => {
+      invalidateWithdrawals(qc, id);
+      toast.success("Đã xử lý yêu cầu chưa nhận tiền");
     },
   });
 };

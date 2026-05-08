@@ -21,6 +21,7 @@ import {
   Trophy,
   UserCheck,
   Users,
+  Wallet,
 } from "lucide-react";
 import type { SidebarData } from "./types";
 
@@ -172,6 +173,11 @@ export const sidebarData: SidebarData = {
           title: "Thống Kê Thuốc Tự Nhập",
           url: "/dashboard/admin/medicines/freetext-stats",
           icon: BarChart3,
+        },
+        {
+          title: "Rút Tiền Bác Sĩ",
+          url: "/dashboard/admin/doctor-withdrawals",
+          icon: Wallet,
         },
       ],
     },

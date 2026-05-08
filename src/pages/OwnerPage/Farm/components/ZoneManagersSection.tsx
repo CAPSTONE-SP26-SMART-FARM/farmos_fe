@@ -1,22 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import useDebounce from "@/hooks/useDebounce";
 import { isApiErrorResponse } from "@/lib/utils";
 import {
@@ -26,8 +13,6 @@ import {
 import type { ZoneManagerWithUserResType } from "@/schemaValidatation/zoneMember";
 import { format } from "date-fns";
 import {
-  Loader2,
-  MoreVertical,
   Search,
   Shield,
   Trash2,
@@ -96,6 +81,45 @@ export default function ZoneManagersSection({
     });
   };
 
+  const columns: ColumnDef<ZoneManagerWithUserResType>[] = [
+    {
+      id: "manager",
+      header: "Quản lý",
+      cell: ({ row }) => (
+        <div>
+          <p className="font-medium">{row.original.user.fullName}</p>
+          <p className="text-xs text-muted-foreground">
+            {row.original.user.email}
+          </p>
+        </div>
+      ),
+    },
+    {
+      id: "status",
+      header: "Trạng thái",
+      cell: ({ row }) => (
+        <Badge
+          variant={
+            row.original.user.status === "ACTIVE" ? "default" : "secondary"
+          }
+          className="capitalize"
+        >
+          {USER_STATUS_LABELS[row.original.user.status.toLowerCase()] ??
+            row.original.user.status.toLowerCase()}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "assignedAt",
+      header: "Ngày phân công",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">
+          {format(new Date(row.original.assignedAt), "dd/MM/yyyy")}
+        </span>
+      ),
+    },
+  ];
+
   return (
     <Card className="space-y-4">
       <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -132,35 +156,13 @@ export default function ZoneManagersSection({
       </CardHeader>
 
       <CardContent>
-        {isLoading ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Quản lý</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Ngày phân công</TableHead>
-                <TableHead className="w-12.5"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {Array.from({ length: 3 }).map((_, i) => (
-                <TableRow key={i}>
-                  {Array.from({ length: 5 }).map((_, j) => (
-                    <TableCell key={j}>
-                      <Skeleton className="h-4 w-24" />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : isError ? (
+        {isError ? (
           <CardContent className="flex items-center justify-center py-12 text-center">
             <p className="text-sm text-muted-foreground">
               Không tải được danh sách quản lý. Vui lòng thử lại.
             </p>
           </CardContent>
-        ) : managers.length === 0 ? (
+        ) : !isLoading && managers.length === 0 ? (
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <div className="rounded-full bg-muted p-4 mb-4">
               <Shield className="h-8 w-8 text-muted-foreground" />
@@ -181,73 +183,22 @@ export default function ZoneManagersSection({
           </CardContent>
         ) : (
           <>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Quản lý</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead>Ngày phân công</TableHead>
-                  <TableHead className="w-12.5"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {managers.map((m) => (
-                  <TableRow key={m.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div>
-                          <p className="font-medium">{m.user.fullName}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {m.user.email}
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          m.user.status === "ACTIVE" ? "default" : "secondary"
-                        }
-                        className="capitalize"
-                      >
-                        {USER_STATUS_LABELS[m.user.status.toLowerCase()] ??
-                          m.user.status.toLowerCase()}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {format(new Date(m.assignedAt), "dd/MM/yyyy")}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            disabled={removeMutation.isPending}
-                            onClick={() => handleRemove(m)}
-                          >
-                            {removeMutation.isPending ? (
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-4 w-4 mr-2" />
-                            )}
-                            Gỡ
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <DataTable
+              columns={columns}
+              data={managers}
+              isLoading={isLoading}
+              actions={[
+                {
+                  key: "remove",
+                  label: "Gỡ",
+                  icon: Trash2,
+                  variant: "destructive",
+                  disabled: () => removeMutation.isPending,
+                  onSelect: (m) => handleRemove(m),
+                },
+              ]}
+              emptyText="Chưa có quản lý nào."
+            />
 
             {meta && meta.totalPages > 1 && (
               <div className="flex items-center justify-between pt-2">

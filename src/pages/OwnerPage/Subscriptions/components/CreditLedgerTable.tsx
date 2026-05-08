@@ -1,6 +1,6 @@
 import EmptyState from "@/components/common/EmptyState";
 import ErrorState from "@/components/common/ErrorState";
-import TableSkeleton from "@/components/common/TableSkeleton";
+import { DataTable } from "@/components/common/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,14 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { formatCreditLabel } from "@/constants/creditLabel";
 import { formatDateTimeVi } from "@/lib/format";
 import { getApiErrorMessageVi } from "@/lib/error-message";
@@ -34,6 +26,7 @@ import type {
   CreditHistoryQueryType,
   CreditLedgerType,
 } from "@/schemaValidatation/credit";
+import type { ColumnDef } from "@tanstack/react-table";
 import { History } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -45,6 +38,62 @@ const TRANSACTION_TYPE_LABEL: Record<CreditLedgerType["transactionType"], string
     EXPIRED: "Hết hạn",
     ADJUSTMENT: "Điều chỉnh",
   };
+
+const columns: ColumnDef<CreditLedgerType>[] = [
+  {
+    accessorKey: "transactionType",
+    header: "Loại giao dịch",
+    cell: ({ row }) => (
+      <Badge variant="outline">
+        {TRANSACTION_TYPE_LABEL[row.original.transactionType]}
+      </Badge>
+    ),
+  },
+  {
+    accessorKey: "creditType",
+    header: "Loại credit",
+    cell: ({ row }) => (
+      <span className="text-sm text-muted-foreground">
+        {formatCreditLabel(row.original.creditType)}
+      </span>
+    ),
+  },
+  {
+    accessorKey: "amount",
+    header: "Biến động",
+    cell: ({ row }) => (
+      <span
+        className={cn(
+          "font-medium",
+          row.original.amount < 0 ? "text-red-600" : "text-emerald-600",
+        )}
+      >
+        {row.original.amount > 0 ? `+${row.original.amount}` : row.original.amount}
+      </span>
+    ),
+  },
+  {
+    accessorKey: "balanceAfter",
+    header: "Số dư sau",
+    cell: ({ row }) => row.original.balanceAfter.toLocaleString("vi-VN"),
+  },
+  {
+    accessorKey: "description",
+    header: "Mô tả",
+    cell: ({ row }) => (
+      <span className="text-sm">{row.original.description ?? "-"}</span>
+    ),
+  },
+  {
+    accessorKey: "createdAt",
+    header: "Thời gian",
+    cell: ({ row }) => (
+      <span className="text-sm text-muted-foreground">
+        {formatDateTimeVi(row.original.createdAt)}
+      </span>
+    ),
+  },
+];
 
 interface CreditLedgerTableProps {
   creditTypes: string[];
@@ -101,9 +150,7 @@ function CreditLedgerTable({ creditTypes }: CreditLedgerTableProps) {
         </Select>
       </CardHeader>
       <CardContent className="space-y-4">
-        {historyQuery.isLoading ? (
-          <TableSkeleton />
-        ) : historyQuery.isError ? (
+        {historyQuery.isError ? (
           <ErrorState
             message={getApiErrorMessageVi(
               historyQuery.error,
@@ -111,7 +158,7 @@ function CreditLedgerTable({ creditTypes }: CreditLedgerTableProps) {
             )}
             onRetry={() => historyQuery.refetch()}
           />
-        ) : rows.length === 0 ? (
+        ) : !historyQuery.isLoading && rows.length === 0 ? (
           <EmptyState
             icon={History}
             title="Chưa có lịch sử"
@@ -123,51 +170,12 @@ function CreditLedgerTable({ creditTypes }: CreditLedgerTableProps) {
           />
         ) : (
           <>
-            <div className="overflow-x-auto rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Loại giao dịch</TableHead>
-                    <TableHead>Loại credit</TableHead>
-                    <TableHead>Biến động</TableHead>
-                    <TableHead>Số dư sau</TableHead>
-                    <TableHead>Mô tả</TableHead>
-                    <TableHead>Thời gian</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rows.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {TRANSACTION_TYPE_LABEL[row.transactionType]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {formatCreditLabel(row.creditType)}
-                      </TableCell>
-                      <TableCell
-                        className={cn(
-                          "font-medium",
-                          row.amount < 0 ? "text-red-600" : "text-emerald-600",
-                        )}
-                      >
-                        {row.amount > 0 ? `+${row.amount}` : row.amount}
-                      </TableCell>
-                      <TableCell>
-                        {row.balanceAfter.toLocaleString("vi-VN")}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {row.description ?? "-"}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {formatDateTimeVi(row.createdAt)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <DataTable
+              columns={columns}
+              data={rows}
+              isLoading={historyQuery.isLoading}
+              emptyText="Chưa có lịch sử."
+            />
             {meta && meta.totalPages > 1 && (
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm text-muted-foreground">

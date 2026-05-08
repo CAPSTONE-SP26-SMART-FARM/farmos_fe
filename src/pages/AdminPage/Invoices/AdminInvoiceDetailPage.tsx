@@ -28,14 +28,8 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import { useInvoiceDetail } from "@/queries/useInvoice";
 import { useDynamicBreadcrumb } from "@/stores/breadcrumbStore";
 import {
@@ -433,54 +427,55 @@ function LineItemsCard({ invoice }: { invoice: InvoiceDetailResType }) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Mô tả</TableHead>
-                <TableHead className="w-24 text-right">Số lượng</TableHead>
-                <TableHead className="w-40 text-right">Đơn giá</TableHead>
-                <TableHead className="w-40 text-right">Thành tiền</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.length === 0 && (
-                <TableRow>
-                  <TableCell
-                    colSpan={4}
-                    className="py-6 text-center text-muted-foreground"
-                  >
-                    Hóa đơn này không có dòng chi tiết.
-                  </TableCell>
-                </TableRow>
-              )}
-              {items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
+          <DataTable
+            columns={
+              [
+                {
+                  accessorKey: "description",
+                  header: "Mô tả",
+                  cell: ({ row }) => (
                     <div className="space-y-0.5">
-                      <p className="font-medium">{item.description}</p>
-                      {item.refItemType && (
-                        <Badge
-                          variant="outline"
-                          className="font-normal"
-                        >
-                          {item.refItemType}
+                      <p className="font-medium">{row.original.description}</p>
+                      {row.original.refItemType && (
+                        <Badge variant="outline" className="font-normal">
+                          {row.original.refItemType}
                         </Badge>
                       )}
                     </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {item.quantity ?? "—"}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrencyVnd(item.unitPrice)}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {formatCurrencyVnd(item.amount)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  ),
+                },
+                {
+                  accessorKey: "quantity",
+                  header: () => <div className="text-right">Số lượng</div>,
+                  cell: ({ row }) => (
+                    <div className="text-right">
+                      {row.original.quantity ?? "—"}
+                    </div>
+                  ),
+                },
+                {
+                  accessorKey: "unitPrice",
+                  header: () => <div className="text-right">Đơn giá</div>,
+                  cell: ({ row }) => (
+                    <div className="text-right">
+                      {formatCurrencyVnd(row.original.unitPrice)}
+                    </div>
+                  ),
+                },
+                {
+                  accessorKey: "amount",
+                  header: () => <div className="text-right">Thành tiền</div>,
+                  cell: ({ row }) => (
+                    <div className="text-right font-medium">
+                      {formatCurrencyVnd(row.original.amount)}
+                    </div>
+                  ),
+                },
+              ] as ColumnDef<(typeof items)[number]>[]
+            }
+            data={items}
+            emptyText="Hóa đơn này không có dòng chi tiết."
+          />
         </div>
         <div className="space-y-2 border-t pt-4 text-sm">
           <div className="flex justify-between">
@@ -518,67 +513,82 @@ function TransactionsCard({
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Cổng</TableHead>
-                <TableHead>Loại</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead className="text-right">Số tiền</TableHead>
-                <TableHead>Mã giao dịch</TableHead>
-                <TableHead>Thời gian</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {transactions.length === 0 && (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="py-6 text-center text-muted-foreground"
-                  >
-                    Chưa có giao dịch.
-                  </TableCell>
-                </TableRow>
-              )}
-              {transactions.map((tx) => (
-                <TableRow key={tx.id}>
-                  <TableCell>
-                    <Badge variant="outline">{tx.gateway}</Badge>
-                  </TableCell>
-                  <TableCell>
+          <DataTable
+            columns={
+              [
+                {
+                  accessorKey: "gateway",
+                  header: "Cổng",
+                  cell: ({ row }) => (
+                    <Badge variant="outline">{row.original.gateway}</Badge>
+                  ),
+                },
+                {
+                  accessorKey: "type",
+                  header: "Loại",
+                  cell: ({ row }) => (
                     <Badge
-                      variant={tx.type === "REFUND" ? "secondary" : "outline"}
+                      variant={
+                        row.original.type === "REFUND"
+                          ? "secondary"
+                          : "outline"
+                      }
                     >
-                      {tx.type === "REFUND" ? "Hoàn tiền" : "Thu phí"}
+                      {row.original.type === "REFUND" ? "Hoàn tiền" : "Thu phí"}
                     </Badge>
-                  </TableCell>
-                  <TableCell>
+                  ),
+                },
+                {
+                  accessorKey: "status",
+                  header: "Trạng thái",
+                  cell: ({ row }) => (
                     <div className="space-y-1">
                       <TransactionStatusBadge
-                        status={tx.status as TransactionStatus}
+                        status={row.original.status as TransactionStatus}
                       />
-                      {tx.status === "FAILED" && tx.errorMessage && (
-                        <p className="text-xs text-destructive max-w-xs">
-                          {tx.errorMessage}
-                        </p>
-                      )}
+                      {row.original.status === "FAILED" &&
+                        row.original.errorMessage && (
+                          <p className="text-xs text-destructive max-w-xs">
+                            {row.original.errorMessage}
+                          </p>
+                        )}
                     </div>
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {formatCurrencyVnd(tx.amount)}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {tx.gatewayTransactionId
-                      ? shortId(tx.gatewayTransactionId)
-                      : "—"}
-                  </TableCell>
-                  <TableCell className="text-xs">
-                    {formatDateTimeVi(tx.createdAt)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  ),
+                },
+                {
+                  accessorKey: "amount",
+                  header: () => <div className="text-right">Số tiền</div>,
+                  cell: ({ row }) => (
+                    <div className="text-right font-medium">
+                      {formatCurrencyVnd(row.original.amount)}
+                    </div>
+                  ),
+                },
+                {
+                  accessorKey: "gatewayTransactionId",
+                  header: "Mã giao dịch",
+                  cell: ({ row }) => (
+                    <span className="text-xs text-muted-foreground">
+                      {row.original.gatewayTransactionId
+                        ? shortId(row.original.gatewayTransactionId)
+                        : "—"}
+                    </span>
+                  ),
+                },
+                {
+                  accessorKey: "createdAt",
+                  header: "Thời gian",
+                  cell: ({ row }) => (
+                    <span className="text-xs">
+                      {formatDateTimeVi(row.original.createdAt)}
+                    </span>
+                  ),
+                },
+              ] as ColumnDef<TransactionType>[]
+            }
+            data={transactions}
+            emptyText="Chưa có giao dịch."
+          />
         </div>
       </CardContent>
     </Card>

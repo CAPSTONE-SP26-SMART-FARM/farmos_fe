@@ -5,21 +5,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/common/DataTable";
 import type { DoctorPerformanceRow } from "../_mocks/ticketAnalytics.mock";
+import type { ColumnDef } from "@tanstack/react-table";
+import { useMemo } from "react";
 
 interface DoctorPerformanceTableProps {
   rows: DoctorPerformanceRow[];
   hideEscalated?: boolean;
   className?: string;
 }
+
+type Row = DoctorPerformanceRow & { __isTotal?: boolean };
 
 function DoctorPerformanceTable({
   rows,
@@ -36,6 +33,118 @@ function DoctorPerformanceTable({
     { processing: 0, resolved: 0, escalated: 0, aiFallback: 0 },
   );
 
+  const data: Row[] = useMemo(
+    () => [
+      ...rows,
+      {
+        doctorId: "__total__",
+        doctor: "Tổng",
+        processing: totals.processing,
+        resolved: totals.resolved,
+        escalated: totals.escalated,
+        aiFallback: totals.aiFallback,
+        avgResolutionHours: null,
+        satisfaction: null,
+        __isTotal: true,
+      } as Row,
+    ],
+    [
+      rows,
+      totals.processing,
+      totals.resolved,
+      totals.escalated,
+      totals.aiFallback,
+    ],
+  );
+
+  const columns = useMemo<ColumnDef<Row>[]>(() => {
+    const cols: ColumnDef<Row>[] = [
+      {
+        accessorKey: "doctor",
+        header: "Bác sĩ",
+        cell: ({ row }) => (
+          <span
+            className={
+              row.original.__isTotal ? "font-semibold" : "font-medium"
+            }
+          >
+            {row.original.doctor}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "processing",
+        header: () => <div className="text-right">Đang xử lý</div>,
+        cell: ({ row }) => (
+          <div className="text-right tabular-nums">
+            {row.original.processing}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "resolved",
+        header: () => <div className="text-right">Đã xử lý</div>,
+        cell: ({ row }) => (
+          <div className="text-right tabular-nums">
+            {row.original.resolved}
+          </div>
+        ),
+      },
+    ];
+
+    if (!hideEscalated) {
+      cols.push({
+        accessorKey: "escalated",
+        header: () => <div className="text-right">Đã chuyển cấp</div>,
+        cell: ({ row }) => (
+          <div className="text-right tabular-nums">
+            {row.original.escalated}
+          </div>
+        ),
+      });
+    }
+
+    cols.push(
+      {
+        accessorKey: "aiFallback",
+        header: () => <div className="text-right">AI hỗ trợ</div>,
+        cell: ({ row }) => (
+          <div className="text-right tabular-nums">
+            {row.original.aiFallback}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "avgResolutionHours",
+        header: () => <div className="text-right">TG xử lý TB</div>,
+        cell: ({ row }) => (
+          <div className="text-right tabular-nums">
+            {row.original.__isTotal
+              ? "—"
+              : row.original.avgResolutionHours != null
+                ? `${row.original.avgResolutionHours}h`
+                : "—"}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "satisfaction",
+        header: () => <div className="text-right">Hài lòng</div>,
+        cell: ({ row }) => (
+          <div className="text-right tabular-nums">
+            {row.original.__isTotal
+              ? "—"
+              : row.original.satisfaction != null
+                ? `${row.original.satisfaction.toFixed(1)} / 5`
+                : "—"}
+          </div>
+        ),
+      },
+    );
+
+    return cols;
+  }, [hideEscalated]);
+
   return (
     <Card className={className}>
       <CardHeader>
@@ -47,65 +156,14 @@ function DoctorPerformanceTable({
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Bác sĩ</TableHead>
-                <TableHead className="text-right">Đang xử lý</TableHead>
-                <TableHead className="text-right">Đã xử lý</TableHead>
-                {!hideEscalated && <TableHead className="text-right">Đã chuyển cấp</TableHead>}
-                <TableHead className="text-right">AI hỗ trợ</TableHead>
-                <TableHead className="text-right">TG xử lý TB</TableHead>
-                <TableHead className="text-right">Hài lòng</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((row) => (
-                <TableRow key={row.doctorId}>
-                  <TableCell className="font-medium">{row.doctor}</TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {row.processing}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {row.resolved}
-                  </TableCell>
-                  {!hideEscalated && (
-                    <TableCell className="text-right tabular-nums">
-                      {row.escalated}
-                    </TableCell>
-                  )}
-                  <TableCell className="text-right tabular-nums">
-                    {row.aiFallback}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {row.avgResolutionHours != null ? `${row.avgResolutionHours}h` : "—"}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {row.satisfaction != null ? `${row.satisfaction.toFixed(1)} / 5` : "—"}
-                  </TableCell>
-                </TableRow>
-              ))}
-              <TableRow className="bg-muted/40 font-semibold">
-                <TableCell>Tổng</TableCell>
-                <TableCell className="text-right tabular-nums">
-                  {totals.processing}
-                </TableCell>
-                <TableCell className="text-right tabular-nums">
-                  {totals.resolved}
-                </TableCell>
-                {!hideEscalated && (
-                  <TableCell className="text-right tabular-nums">
-                    {totals.escalated}
-                  </TableCell>
-                )}
-                <TableCell className="text-right tabular-nums">
-                  {totals.aiFallback}
-                </TableCell>
-                <TableCell className="text-right tabular-nums">—</TableCell>
-                <TableCell className="text-right tabular-nums">—</TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={columns}
+            data={data}
+            rowClassName={(row) =>
+              row.__isTotal ? "bg-muted/40 font-semibold" : undefined
+            }
+            emptyText="Không có dữ liệu."
+          />
         </div>
       </CardContent>
     </Card>

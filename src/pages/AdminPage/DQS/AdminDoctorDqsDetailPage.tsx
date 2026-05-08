@@ -19,14 +19,8 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   DQS_SUBSCORE_HINT,
@@ -330,11 +324,7 @@ export default function AdminDoctorDqsDetailPage() {
 
                 <Separator />
 
-                {historyQuery.isLoading ? (
-                  <div className="flex justify-center py-6">
-                    <LoadingCard />
-                  </div>
-                ) : sortedHistory.length === 0 ? (
+                {!historyQuery.isLoading && sortedHistory.length === 0 ? (
                   <EmptyState
                     icon={History}
                     title="Không có dữ liệu"
@@ -342,57 +332,96 @@ export default function AdminDoctorDqsDetailPage() {
                   />
                 ) : (
                   <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Ngày</TableHead>
-                          <TableHead>Hạng</TableHead>
-                          <TableHead className="text-right">Tổng điểm</TableHead>
-                          <TableHead className="text-right">Đánh giá</TableHead>
-                          <TableHead className="text-right">Tần suất</TableHead>
-                          <TableHead className="text-right">Đúng hạn</TableHead>
-                          <TableHead className="text-right">Tỷ lệ nhận</TableHead>
-                          <TableHead className="text-right">Trực tuyến</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {sortedHistory.map((s) => (
-                          <TableRow key={s.id}>
-                            <TableCell className="text-sm">
-                              {format(new Date(s.snapshotDate), "dd/MM/yyyy", {
-                                locale: vi,
-                              })}
-                            </TableCell>
-                            <TableCell>
+                    <DataTable
+                      columns={
+                        [
+                          {
+                            accessorKey: "snapshotDate",
+                            header: "Ngày",
+                            cell: ({ row }) => (
+                              <span className="text-sm">
+                                {format(
+                                  new Date(row.original.snapshotDate),
+                                  "dd/MM/yyyy",
+                                  { locale: vi },
+                                )}
+                              </span>
+                            ),
+                          },
+                          {
+                            accessorKey: "tier",
+                            header: "Hạng",
+                            cell: ({ row }) => (
                               <Badge
                                 variant="outline"
-                                className={TIER_BADGE_CLASS[s.tier]}
+                                className={TIER_BADGE_CLASS[row.original.tier]}
                               >
-                                {TIER_LABEL[s.tier]}
+                                {TIER_LABEL[row.original.tier]}
                               </Badge>
-                            </TableCell>
-                            <TableCell className="text-right font-semibold tabular-nums">
-                              {s.totalScore.toFixed(1)}
-                            </TableCell>
-                            <TableCell className="text-right text-sm tabular-nums">
-                              {s.ratingScore.toFixed(1)}
-                            </TableCell>
-                            <TableCell className="text-right text-sm tabular-nums">
-                              {s.frequencyScore.toFixed(1)}
-                            </TableCell>
-                            <TableCell className="text-right text-sm tabular-nums">
-                              {s.slaScore.toFixed(1)}
-                            </TableCell>
-                            <TableCell className="text-right text-sm tabular-nums">
-                              {s.acceptanceScore.toFixed(1)}
-                            </TableCell>
-                            <TableCell className="text-right text-sm tabular-nums">
-                              {s.onlineScore.toFixed(1)}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                            ),
+                          },
+                          {
+                            accessorKey: "totalScore",
+                            header: () => (
+                              <div className="text-right">Tổng điểm</div>
+                            ),
+                            cell: ({ row }) => (
+                              <div className="text-right font-semibold tabular-nums">
+                                {row.original.totalScore.toFixed(1)}
+                              </div>
+                            ),
+                          },
+                          {
+                            accessorKey: "ratingScore",
+                            header: () => <div className="text-right">Đánh giá</div>,
+                            cell: ({ row }) => (
+                              <div className="text-right text-sm tabular-nums">
+                                {row.original.ratingScore.toFixed(1)}
+                              </div>
+                            ),
+                          },
+                          {
+                            accessorKey: "frequencyScore",
+                            header: () => <div className="text-right">Tần suất</div>,
+                            cell: ({ row }) => (
+                              <div className="text-right text-sm tabular-nums">
+                                {row.original.frequencyScore.toFixed(1)}
+                              </div>
+                            ),
+                          },
+                          {
+                            accessorKey: "slaScore",
+                            header: () => <div className="text-right">Đúng hạn</div>,
+                            cell: ({ row }) => (
+                              <div className="text-right text-sm tabular-nums">
+                                {row.original.slaScore.toFixed(1)}
+                              </div>
+                            ),
+                          },
+                          {
+                            accessorKey: "acceptanceScore",
+                            header: () => <div className="text-right">Tỷ lệ nhận</div>,
+                            cell: ({ row }) => (
+                              <div className="text-right text-sm tabular-nums">
+                                {row.original.acceptanceScore.toFixed(1)}
+                              </div>
+                            ),
+                          },
+                          {
+                            accessorKey: "onlineScore",
+                            header: () => <div className="text-right">Trực tuyến</div>,
+                            cell: ({ row }) => (
+                              <div className="text-right text-sm tabular-nums">
+                                {row.original.onlineScore.toFixed(1)}
+                              </div>
+                            ),
+                          },
+                        ] as ColumnDef<(typeof sortedHistory)[number]>[]
+                      }
+                      data={sortedHistory}
+                      isLoading={historyQuery.isLoading}
+                      emptyText="Không có dữ liệu."
+                    />
                     <p className="text-xs text-muted-foreground pt-3">
                       {sortedHistory.length} bản ghi.
                     </p>

@@ -16,18 +16,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import EmptyState from "@/components/common/EmptyState";
 import ErrorState from "@/components/common/ErrorState";
 import ProPagination from "@/components/common/pro-pagination";
-import TableSkeleton from "@/components/common/TableSkeleton";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import { useManagerDailyLogsByZone } from "@/queries/useDailyLog";
 import { useManagerListAssignedZones } from "@/queries/useZone";
 import { formatDateTimeVi, formatDateVi } from "@/lib/format";
@@ -103,6 +96,77 @@ function ManagerDailyLogsPage() {
     if (activeZoneId) next.set("zoneId", activeZoneId);
     setSearchParams(next);
   };
+
+  type DailyLogRow = (typeof logs)[number];
+
+  const columns: ColumnDef<DailyLogRow>[] = [
+    {
+      id: "farmer",
+      header: "Nông dân",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Avatar size="sm">
+            {row.original.farmer.avatarUrl && (
+              <AvatarImage
+                src={row.original.farmer.avatarUrl}
+                alt={row.original.farmer.fullName}
+              />
+            )}
+            <AvatarFallback>
+              {getInitials(row.original.farmer.fullName)}
+            </AvatarFallback>
+          </Avatar>
+          <span className="text-sm font-medium truncate">
+            {row.original.farmer.fullName}
+          </span>
+        </div>
+      ),
+    },
+    {
+      id: "zone",
+      header: "Khu vực",
+      cell: ({ row }) => (
+        <Badge variant="secondary">{row.original.zone.name}</Badge>
+      ),
+    },
+    {
+      id: "task",
+      header: "Công việc",
+      cell: ({ row }) => (
+        <span className="text-sm">
+          {row.original.task?.title ?? (
+            <span className="text-muted-foreground italic">—</span>
+          )}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "activities",
+      header: "Hoạt động",
+      cell: ({ row }) => (
+        <div className="text-sm max-w-md">
+          <p className="line-clamp-2">{row.original.activities}</p>
+          {row.original.notes && (
+            <p className="text-xs italic text-muted-foreground line-clamp-1">
+              Ghi chú: {row.original.notes}
+            </p>
+          )}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "logDate",
+      header: "Ngày ghi",
+      cell: ({ row }) => (
+        <span
+          className="text-xs text-muted-foreground"
+          title={formatDateTimeVi(row.original.createdAt)}
+        >
+          {formatDateVi(row.original.logDate)}
+        </span>
+      ),
+    },
+  ];
 
   const handleSelectZone = (zoneId: string) => {
     const next = new URLSearchParams(searchParams);
@@ -209,22 +273,7 @@ function ManagerDailyLogsPage() {
               message="Không thể tải nhật ký."
               onRetry={() => logsQuery.refetch()}
             />
-          ) : logsQuery.isLoading ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nông dân</TableHead>
-                  <TableHead>Khu vực</TableHead>
-                  <TableHead>Công việc</TableHead>
-                  <TableHead>Hoạt động</TableHead>
-                  <TableHead className="w-32">Ngày ghi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableSkeleton />
-              </TableBody>
-            </Table>
-          ) : logs.length === 0 ? (
+          ) : !logsQuery.isLoading && logs.length === 0 ? (
             <EmptyState
               icon={NotebookPen}
               title="Chưa có nhật ký"
@@ -237,68 +286,12 @@ function ManagerDailyLogsPage() {
           ) : (
             <>
               <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nông dân</TableHead>
-                      <TableHead>Khu vực</TableHead>
-                      <TableHead>Công việc</TableHead>
-                      <TableHead>Hoạt động</TableHead>
-                      <TableHead className="w-32">Ngày ghi</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {logs.map((log) => (
-                      <TableRow
-                        key={log.id}
-                        className="transition-colors hover:bg-muted/40"
-                      >
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Avatar size="sm">
-                              {log.farmer.avatarUrl && (
-                                <AvatarImage
-                                  src={log.farmer.avatarUrl}
-                                  alt={log.farmer.fullName}
-                                />
-                              )}
-                              <AvatarFallback>
-                                {getInitials(log.farmer.fullName)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm font-medium truncate">
-                              {log.farmer.fullName}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">{log.zone.name}</Badge>
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {log.task?.title ?? (
-                            <span className="text-muted-foreground italic">
-                              —
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm max-w-md">
-                          <p className="line-clamp-2">{log.activities}</p>
-                          {log.notes && (
-                            <p className="text-xs italic text-muted-foreground line-clamp-1">
-                              Ghi chú: {log.notes}
-                            </p>
-                          )}
-                        </TableCell>
-                        <TableCell
-                          className="text-xs text-muted-foreground"
-                          title={formatDateTimeVi(log.createdAt)}
-                        >
-                          {formatDateVi(log.logDate)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <DataTable
+                  columns={columns}
+                  data={logs}
+                  isLoading={logsQuery.isLoading}
+                  emptyText="Chưa có nhật ký."
+                />
               </div>
 
               {meta && meta.totalPages > 1 && (

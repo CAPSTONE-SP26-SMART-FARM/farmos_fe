@@ -24,19 +24,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import { getApiErrorMessageVi } from "@/lib/error-message";
 import {
   useActivateSeasonTemplate,
@@ -103,6 +92,91 @@ export default function AdminSeasonTemplatesPage() {
 
   const items = listQuery.data?.data?.data ?? [];
   const meta = listQuery.data?.data?.meta;
+
+  const columns: ColumnDef<SeasonTemplateResT>[] = [
+    {
+      accessorKey: "name",
+      header: "Tên mẫu",
+      cell: ({ row }) => (
+        <div>
+          <div className="font-medium">{row.original.name ?? "(không tên)"}</div>
+          {row.original.description && (
+            <div className="text-xs text-muted-foreground line-clamp-1">
+              {row.original.description}
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "farmType",
+      header: "Loại",
+      cell: ({ row }) => (
+        <Badge variant="secondary">
+          {row.original.farmType
+            ? FARM_TYPE_LABEL[row.original.farmType as FarmTypeT]
+            : "—"}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "version",
+      header: () => <div className="text-center">Phiên bản</div>,
+      cell: ({ row }) => (
+        <div className="text-center font-mono text-xs">
+          v{row.original.version ?? 1}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "itemCount",
+      header: () => <div className="text-center">Số mục</div>,
+      cell: ({ row }) => (
+        <div className="text-center tabular-nums">
+          <Badge
+            variant="outline"
+            className="bg-blue-500/10 text-blue-700 border-blue-200"
+          >
+            <Layers className="mr-1 h-3 w-3" />
+            {row.original.itemCount}
+          </Badge>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "isActive",
+      header: "Trạng thái",
+      cell: ({ row }) =>
+        row.original.deletedAt ? (
+          <Badge
+            variant="outline"
+            className="text-muted-foreground"
+          >
+            Đã xoá
+          </Badge>
+        ) : row.original.isActive ? (
+          <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-200">
+            Hoạt động
+          </Badge>
+        ) : (
+          <Badge
+            variant="outline"
+            className="text-muted-foreground"
+          >
+            Vô hiệu
+          </Badge>
+        ),
+    },
+    {
+      accessorKey: "updatedAt",
+      header: "Cập nhật",
+      cell: ({ row }) => (
+        <span className="text-xs text-muted-foreground">
+          {new Date(row.original.updatedAt).toLocaleDateString("vi-VN")}
+        </span>
+      ),
+    },
+  ];
 
   const applyFilter = () => {
     setQuery({
@@ -229,12 +303,7 @@ export default function AdminSeasonTemplatesPage() {
             </Button>
           </div>
 
-          {/* Table */}
-          {listQuery.isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : items.length === 0 ? (
+          {!listQuery.isLoading && items.length === 0 ? (
             <EmptyState
               icon={Sprout}
               title={isFiltered ? "Không có mẫu phù hợp" : "Chưa có mẫu nào"}
@@ -251,164 +320,63 @@ export default function AdminSeasonTemplatesPage() {
             />
           ) : (
             <div className="overflow-x-auto rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tên mẫu</TableHead>
-                    <TableHead>Loại</TableHead>
-                    <TableHead className="text-center">Phiên bản</TableHead>
-                    <TableHead className="text-center">Số mục</TableHead>
-                    <TableHead>Trạng thái</TableHead>
-                    <TableHead>Cập nhật</TableHead>
-                    <TableHead className="text-right">Thao tác</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((t) => (
-                    <TableRow
-                      key={t.id}
-                      className={t.deletedAt ? "opacity-50" : ""}
-                    >
-                      <TableCell>
-                        <div className="font-medium">
-                          {t.name ?? "(không tên)"}
-                        </div>
-                        {t.description && (
-                          <div className="text-xs text-muted-foreground line-clamp-1">
-                            {t.description}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {t.farmType
-                            ? FARM_TYPE_LABEL[t.farmType as FarmTypeT]
-                            : "—"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center font-mono text-xs">
-                        v{t.version ?? 1}
-                      </TableCell>
-                      <TableCell className="text-center tabular-nums">
-                        <Badge
-                          variant="outline"
-                          className="bg-blue-500/10 text-blue-700 border-blue-200"
-                        >
-                          <Layers className="mr-1 h-3 w-3" />
-                          {t.itemCount}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {t.deletedAt ? (
-                          <Badge
-                            variant="outline"
-                            className="text-muted-foreground"
-                          >
-                            Đã xoá
-                          </Badge>
-                        ) : t.isActive ? (
-                          <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-200">
-                            Hoạt động
-                          </Badge>
-                        ) : (
-                          <Badge
-                            variant="outline"
-                            className="text-muted-foreground"
-                          >
-                            Vô hiệu
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {new Date(t.updatedAt).toLocaleDateString("vi-VN")}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() =>
-                                  navigate(
-                                    `/dashboard/admin/season-templates/${t.id}`,
-                                  )
-                                }
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Xem chi tiết</TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() =>
-                                  navigate(
-                                    `/dashboard/admin/season-templates/${t.id}/usage`,
-                                  )
-                                }
-                              >
-                                <BarChart3 className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Lịch sử sử dụng</TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                disabled={Boolean(t.deletedAt)}
-                                onClick={() => handleOpenEdit(t.id)}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Chỉnh sửa</TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                disabled={Boolean(t.deletedAt)}
-                                onClick={() => setToggleTarget(t)}
-                              >
-                                <Power
-                                  className={
-                                    t.isActive
-                                      ? "h-4 w-4 text-destructive"
-                                      : "h-4 w-4 text-emerald-600"
-                                  }
-                                />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {t.isActive ? "Vô hiệu" : "Kích hoạt"}
-                            </TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                disabled={Boolean(t.deletedAt)}
-                                onClick={() => setDeleteTarget(t)}
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Xoá mẫu</TooltipContent>
-                          </Tooltip>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <DataTable
+                columns={columns}
+                data={items}
+                isLoading={listQuery.isLoading}
+                rowClassName={(t) =>
+                  t.deletedAt ? "opacity-50" : undefined
+                }
+                actions={[
+                  {
+                    key: "view",
+                    label: "Xem chi tiết",
+                    icon: Eye,
+                    onSelect: (t) =>
+                      navigate(`/dashboard/admin/season-templates/${t.id}`),
+                  },
+                  {
+                    key: "usage",
+                    label: "Lịch sử sử dụng",
+                    icon: BarChart3,
+                    onSelect: (t) =>
+                      navigate(
+                        `/dashboard/admin/season-templates/${t.id}/usage`,
+                      ),
+                  },
+                  {
+                    key: "edit",
+                    label: "Chỉnh sửa",
+                    icon: Pencil,
+                    disabled: (t) => Boolean(t.deletedAt),
+                    onSelect: (t) => handleOpenEdit(t.id),
+                  },
+                  {
+                    key: "deactivate",
+                    label: "Vô hiệu",
+                    icon: Power,
+                    variant: "destructive",
+                    hidden: (t) => !t.isActive || Boolean(t.deletedAt),
+                    onSelect: (t) => setToggleTarget(t),
+                  },
+                  {
+                    key: "activate",
+                    label: "Kích hoạt",
+                    icon: Power,
+                    hidden: (t) => t.isActive || Boolean(t.deletedAt),
+                    onSelect: (t) => setToggleTarget(t),
+                  },
+                  {
+                    key: "delete",
+                    label: "Xoá mẫu",
+                    icon: Trash2,
+                    variant: "destructive",
+                    disabled: (t) => Boolean(t.deletedAt),
+                    onSelect: (t) => setDeleteTarget(t),
+                  },
+                ]}
+                emptyText="Chưa có mẫu nào."
+              />
             </div>
           )}
 

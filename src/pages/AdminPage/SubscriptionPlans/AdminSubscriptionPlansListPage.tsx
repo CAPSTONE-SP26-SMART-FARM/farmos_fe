@@ -24,12 +24,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Field,
   FieldContent,
   FieldError,
@@ -49,17 +43,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import EmptyState from "@/components/common/EmptyState";
-import TableSkeleton from "@/components/common/TableSkeleton";
 import useDebounce from "@/hooks/useDebounce";
 import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
@@ -85,7 +72,6 @@ import {
   Archive,
   CircleCheckBig,
   CircleSlash,
-  Ellipsis,
   Eye,
   Info,
   Package,
@@ -331,111 +317,102 @@ function AdminSubscriptionPlansListPage() {
           </CardAction>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Mã gói</TableHead>
-                <TableHead>Tên gói</TableHead>
-                <TableHead>Thời hạn</TableHead>
-                <TableHead>Giá niêm yết</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead className="w-[80px] text-right">Hành động</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {listPlansQuery.isLoading ? (
-                <TableSkeleton />
-              ) : plans.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="py-0"
-                  >
-                    <EmptyState
-                      icon={Package}
-                      title={
-                        isFiltered
-                          ? "Không tìm thấy gói nào phù hợp"
-                          : "Chưa có gói đăng ký nào"
-                      }
-                      description={
-                        isFiltered
-                          ? "Thử xoá bộ lọc để xem tất cả gói."
-                          : "Bắt đầu bằng cách tạo gói đăng ký đầu tiên."
-                      }
-                      action={
-                        isFiltered
-                          ? { label: "Xoá bộ lọc", onClick: clearFilters }
-                          : {
-                              label: "Tạo gói đăng ký",
-                              onClick: openCreatePlanDialog,
-                            }
-                      }
-                    />
-                  </TableCell>
-                </TableRow>
-              ) : (
-                plans.map((plan) => (
-                  <TableRow key={plan.id}>
-                    <TableCell className="font-medium">{plan.code}</TableCell>
-                    <TableCell>{plan.name}</TableCell>
-                    <TableCell>{plan.durationMonths} tháng</TableCell>
-                    <TableCell>{formatCurrency(plan.listPrice)}</TableCell>
-                    <TableCell>
+          {!listPlansQuery.isLoading && plans.length === 0 ? (
+            <EmptyState
+              icon={Package}
+              title={
+                isFiltered
+                  ? "Không tìm thấy gói nào phù hợp"
+                  : "Chưa có gói đăng ký nào"
+              }
+              description={
+                isFiltered
+                  ? "Thử xoá bộ lọc để xem tất cả gói."
+                  : "Bắt đầu bằng cách tạo gói đăng ký đầu tiên."
+              }
+              action={
+                isFiltered
+                  ? { label: "Xoá bộ lọc", onClick: clearFilters }
+                  : {
+                      label: "Tạo gói đăng ký",
+                      onClick: openCreatePlanDialog,
+                    }
+              }
+            />
+          ) : (
+            <DataTable
+              columns={
+                [
+                  {
+                    accessorKey: "code",
+                    header: "Mã gói",
+                    cell: ({ row }) => (
+                      <span className="font-medium">{row.original.code}</span>
+                    ),
+                  },
+                  {
+                    accessorKey: "name",
+                    header: "Tên gói",
+                    cell: ({ row }) => row.original.name,
+                  },
+                  {
+                    accessorKey: "durationMonths",
+                    header: "Thời hạn",
+                    cell: ({ row }) => `${row.original.durationMonths} tháng`,
+                  },
+                  {
+                    accessorKey: "listPrice",
+                    header: "Giá niêm yết",
+                    cell: ({ row }) => formatCurrency(row.original.listPrice),
+                  },
+                  {
+                    accessorKey: "status",
+                    header: "Trạng thái",
+                    cell: ({ row }) => (
                       <Badge
                         variant={getSubscriptionPlanStatusBadgeVariant(
-                          plan.status,
+                          row.original.status,
                         )}
                         className="gap-1"
                       >
-                        {plan.status === "ACTIVE" ? (
+                        {row.original.status === "ACTIVE" ? (
                           <CircleCheckBig className="h-3 w-3" />
                         ) : (
                           <CircleSlash className="h-3 w-3" />
                         )}
-                        {PLAN_STATUS_LABEL[plan.status]}
+                        {PLAN_STATUS_LABEL[row.original.status]}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label="Mở menu hành động"
-                          >
-                            <Ellipsis className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() =>
-                              navigate(
-                                `/dashboard/admin/subscription-plans/${plan.id}`,
-                              )
-                            }
-                          >
-                            <Eye className="mr-2 h-4 w-4" />
-                            Chi tiết gói
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setActivePlan(plan);
-                              setIsArchiveConfirmOpen(true);
-                            }}
-                            disabled={plan.status === "ARCHIVED"}
-                          >
-                            <Archive className="mr-2 h-4 w-4" />
-                            Lưu trữ gói
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                    ),
+                  },
+                ] as ColumnDef<(typeof plans)[number]>[]
+              }
+              data={plans}
+              isLoading={listPlansQuery.isLoading}
+              actions={[
+                {
+                  key: "view",
+                  label: "Chi tiết gói",
+                  icon: Eye,
+                  onSelect: (plan) =>
+                    navigate(
+                      `/dashboard/admin/subscription-plans/${plan.id}`,
+                    ),
+                },
+                {
+                  key: "archive",
+                  label: "Lưu trữ gói",
+                  icon: Archive,
+                  variant: "destructive",
+                  disabled: (plan) => plan.status === "ARCHIVED",
+                  onSelect: (plan) => {
+                    setActivePlan(plan);
+                    setIsArchiveConfirmOpen(true);
+                  },
+                },
+              ]}
+              emptyText="Chưa có gói nào."
+            />
+          )}
 
           {!listPlansQuery.isLoading && plans.length > 0 && (
             <div className="flex flex-wrap items-center justify-between gap-3">

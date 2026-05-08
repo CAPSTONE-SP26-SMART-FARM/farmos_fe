@@ -1,37 +1,71 @@
-import {
-  flexRender,
-  getCoreRowModel,
-  getPaginationRowModel,
-  useReactTable,
-  type ColumnDef,
-} from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import type { FarmWithOwnerResType } from "@/schemaValidatation/farmManagement";
-import { Button } from "@/components/ui/button";
 import { Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import ProPagination from "@/components/common/pro-pagination";
+import { DataTable } from "@/components/common/DataTable";
+import { DataTablePagination } from "@/components/common/DataTable/DataTablePagination";
+import type { DataTableAction } from "@/components/common/DataTable/types";
 import useDebounce from "@/hooks/useDebounce";
-import TableSkeleton from "@/components/common/TableSkeleton";
+import usePageParam from "@/hooks/usePageParam";
 import { useAdminListFarms } from "@/queries/useAdmin";
 
 interface FarmTableProps {
   onViewDetail: (id: string) => void;
 }
 
+const columns: ColumnDef<FarmWithOwnerResType>[] = [
+  {
+    accessorKey: "code",
+    header: "Mã",
+    cell: ({ row }) => (
+      <div className="font-medium">{row.getValue("code")}</div>
+    ),
+  },
+  {
+    accessorKey: "name",
+    header: "Tên",
+    cell: ({ row }) => <div>{row.getValue("name")}</div>,
+  },
+  {
+    accessorKey: "farmType",
+    header: "Loại",
+    cell: ({ row }) => (
+      <div className="capitalize">{row.getValue("farmType")}</div>
+    ),
+  },
+  {
+    accessorKey: "address",
+    header: "Địa chỉ",
+    cell: ({ row }) => <div>{row.getValue("address") ?? "—"}</div>,
+  },
+  {
+    accessorKey: "areaSqm",
+    header: "Diện tích (m²)",
+    cell: ({ row }) => <div>{row.getValue("areaSqm") ?? "—"}</div>,
+  },
+  {
+    accessorKey: "owner",
+    header: "Chủ vườn",
+    cell: ({ row }) => (
+      <div>{row.original.owner.fullName ?? row.original.owner.email}</div>
+    ),
+  },
+  {
+    accessorKey: "createdAt",
+    header: "Ngày tạo",
+    cell: ({ row }) => (
+      <div>
+        {new Date(row.getValue("createdAt") as string).toLocaleDateString()}
+      </div>
+    ),
+  },
+];
+
 const FarmTable = ({ onViewDetail }: FarmTableProps) => {
-  const [searchParam] = useSearchParams();
-  const page = searchParam.get("page") ? Number(searchParam.get("page")) : 1;
-  const pageIndex = page - 1;
+  const { page } = usePageParam();
+  const [searchParam, setSearchParam] = useSearchParams();
 
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
@@ -46,102 +80,26 @@ const FarmTable = ({ onViewDetail }: FarmTableProps) => {
   const totalPages = listResult.data?.data.meta.totalPages ?? 0;
   const totalRecords = listResult.data?.data.meta.totalItems ?? 0;
 
-  const columns: ColumnDef<FarmWithOwnerResType>[] = [
-    {
-      accessorKey: "code",
-      header: "Mã",
-      cell: ({ row }) => (
-        <div className="font-medium">{row.getValue("code")}</div>
-      ),
-    },
-    {
-      accessorKey: "name",
-      header: "Tên",
-      cell: ({ row }) => <div>{row.getValue("name")}</div>,
-    },
-    {
-      accessorKey: "farmType",
-      header: "Loại",
-      cell: ({ row }) => (
-        <div className="capitalize">{row.getValue("farmType")}</div>
-      ),
-    },
-    {
-      accessorKey: "address",
-      header: "Địa chỉ",
-      cell: ({ row }) => <div>{row.getValue("address") ?? "—"}</div>,
-    },
-    {
-      accessorKey: "areaSqm",
-      header: "Diện tích (m²)",
-      cell: ({ row }) => <div>{row.getValue("areaSqm") ?? "—"}</div>,
-    },
-    {
-      accessorKey: "owner",
-      header: "Chủ vườn",
-      cell: ({ row }) => (
-        <div>{row.original.owner.fullName ?? row.original.owner.email}</div>
-      ),
-    },
-    {
-      accessorKey: "createdAt",
-      header: "Ngày tạo",
-      cell: ({ row }) => (
-        <div>
-          {new Date(row.getValue("createdAt") as string).toLocaleDateString()}
-        </div>
-      ),
-    },
-    {
-      id: "actions",
-      header: "Thao tác",
-      cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onViewDetail(row.original.id)}
-        >
-          <Info className="h-4 w-4" />
-        </Button>
-      ),
-    },
-  ];
-
-  const [pagination, setPagination] = useState({
-    pageIndex,
-    pageSize: 10,
-  });
-
-  useEffect(() => {
-    setPagination({ pageIndex, pageSize: 10 });
-  }, [pageIndex]);
-
-  // Reset to page 1 when search changes
   useEffect(() => {
     if (page > 1 && debouncedSearch) {
       const params = new URLSearchParams(searchParam);
       params.set("page", "1");
-      window.history.replaceState(
-        {},
-        "",
-        `${location.pathname}?${params.toString()}`,
-      );
+      setSearchParam(params, { replace: true });
     }
-  }, [debouncedSearch, page, searchParam]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]);
 
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    onPaginationChange: setPagination,
-    manualPagination: true,
-    autoResetPageIndex: false,
-    pageCount: totalPages,
-    state: {
-      pagination,
-    },
-  });
+  const actions: DataTableAction<FarmWithOwnerResType>[] = useMemo(
+    () => [
+      {
+        key: "view",
+        label: "Xem chi tiết",
+        icon: Info,
+        onSelect: (row) => onViewDetail(row.id),
+      },
+    ],
+    [onViewDetail],
+  );
 
   return (
     <div className="w-full">
@@ -153,78 +111,20 @@ const FarmTable = ({ onViewDetail }: FarmTableProps) => {
           className="max-w-sm"
         />
       </div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {listResult.isLoading && <TableSkeleton />}
-            {!listResult.isLoading && table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : !listResult.isLoading ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  Không có kết quả.
-                </TableCell>
-              </TableRow>
-            ) : null}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="text-xs text-muted-foreground py-4 flex-1">
-          Hiển thị <strong>{table.getPaginationRowModel().rows.length}</strong>{" "}
-          trên <strong>{totalRecords}</strong> kết quả
-        </div>
-        {totalPages > 1 && (
-          <div>
-            <ProPagination
-              currentPage={page}
-              totalPages={totalPages}
-              buildHref={(p: number | null | undefined) => {
-                const params = new URLSearchParams(searchParam);
-                if (p) {
-                  params.set("page", String(p));
-                } else {
-                  params.delete("page");
-                }
-                return {
-                  pathname: location.pathname,
-                  search: params.toString(),
-                };
-              }}
-            />
-          </div>
-        )}
-      </div>
+
+      <DataTable
+        columns={columns}
+        data={data}
+        isLoading={listResult.isLoading}
+        actions={actions}
+      />
+
+      <DataTablePagination
+        currentPage={page}
+        totalPages={totalPages}
+        totalItems={totalRecords}
+        rowCount={data.length}
+      />
     </div>
   );
 };

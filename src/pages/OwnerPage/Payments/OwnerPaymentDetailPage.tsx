@@ -22,14 +22,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import { getApiErrorMessageVi } from "@/lib/error-message";
 import { useInvoiceCheckout, useInvoiceDetail } from "@/queries/useInvoice";
 import { useDynamicBreadcrumb } from "@/stores/breadcrumbStore";
@@ -231,36 +225,34 @@ function OwnerPaymentDetailPage() {
           <CardTitle>Chi tiết dòng tiền</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Mô tả</TableHead>
-                <TableHead>Số lượng</TableHead>
-                <TableHead>Đơn giá</TableHead>
-                <TableHead>Thành tiền</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {invoice?.items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.description}</TableCell>
-                  <TableCell>{item.quantity ?? "-"}</TableCell>
-                  <TableCell>{formatCurrency(item.unitPrice)}</TableCell>
-                  <TableCell>{formatCurrency(item.amount)}</TableCell>
-                </TableRow>
-              ))}
-              {!invoice?.items.length && (
-                <TableRow>
-                  <TableCell
-                    colSpan={4}
-                    className="py-6 text-center text-muted-foreground"
-                  >
-                    Không có dòng tiền.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={
+              [
+                {
+                  accessorKey: "description",
+                  header: "Mô tả",
+                  cell: ({ row }) => row.original.description,
+                },
+                {
+                  accessorKey: "quantity",
+                  header: "Số lượng",
+                  cell: ({ row }) => row.original.quantity ?? "-",
+                },
+                {
+                  accessorKey: "unitPrice",
+                  header: "Đơn giá",
+                  cell: ({ row }) => formatCurrency(row.original.unitPrice),
+                },
+                {
+                  accessorKey: "amount",
+                  header: "Thành tiền",
+                  cell: ({ row }) => formatCurrency(row.original.amount),
+                },
+              ] as ColumnDef<NonNullable<typeof invoice>["items"][number]>[]
+            }
+            data={invoice?.items ?? []}
+            emptyText="Không có dòng tiền."
+          />
         </CardContent>
       </Card>
 
@@ -269,42 +261,45 @@ function OwnerPaymentDetailPage() {
           <CardTitle>Lịch sử giao dịch</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Cổng</TableHead>
-                <TableHead>Loại</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Số tiền</TableHead>
-                <TableHead>Thời gian</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {invoice?.transactions.map((transaction) => (
-                <TableRow key={transaction.id}>
-                  <TableCell>{transaction.gateway}</TableCell>
-                  <TableCell>{transaction.type}</TableCell>
-                  <TableCell>
+          <DataTable
+            columns={
+              [
+                {
+                  accessorKey: "gateway",
+                  header: "Cổng",
+                  cell: ({ row }) => row.original.gateway,
+                },
+                {
+                  accessorKey: "type",
+                  header: "Loại",
+                  cell: ({ row }) => row.original.type,
+                },
+                {
+                  accessorKey: "status",
+                  header: "Trạng thái",
+                  cell: ({ row }) => (
                     <TransactionStatusBadge
-                      status={transaction.status as TransactionStatus}
+                      status={row.original.status as TransactionStatus}
                     />
-                  </TableCell>
-                  <TableCell>{formatCurrency(transaction.amount)}</TableCell>
-                  <TableCell>{formatDateTime(transaction.createdAt)}</TableCell>
-                </TableRow>
-              ))}
-              {!invoice?.transactions.length && (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="py-6 text-center text-muted-foreground"
-                  >
-                    Chưa có giao dịch nào.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                  ),
+                },
+                {
+                  accessorKey: "amount",
+                  header: "Số tiền",
+                  cell: ({ row }) => formatCurrency(row.original.amount),
+                },
+                {
+                  accessorKey: "createdAt",
+                  header: "Thời gian",
+                  cell: ({ row }) => formatDateTime(row.original.createdAt),
+                },
+              ] as ColumnDef<
+                NonNullable<typeof invoice>["transactions"][number]
+              >[]
+            }
+            data={invoice?.transactions ?? []}
+            emptyText="Chưa có giao dịch nào."
+          />
         </CardContent>
       </Card>
 

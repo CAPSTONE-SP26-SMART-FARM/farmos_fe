@@ -18,15 +18,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { DataTable } from "@/components/common/DataTable";
 import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
 import { getApiErrorMessageVi } from "@/lib/error-message";
@@ -44,7 +37,8 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isAxiosError } from "axios";
 import { Loader2, Pencil, Plus, Power, Search } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router";
 import { useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
@@ -322,6 +316,89 @@ export default function AdminTicketCategoriesPage() {
     setQuery((prev) => ({ ...prev, page: 1, search }));
   };
 
+  const columns = useMemo<ColumnDef<TicketCategoryType>[]>(
+    () => [
+      {
+        accessorKey: "code",
+        header: "Mã",
+        cell: ({ row }) => (
+          <span className="font-mono text-xs">{row.original.code}</span>
+        ),
+      },
+      {
+        accessorKey: "name",
+        header: "Tên danh mục",
+        cell: ({ row }) => (
+          <span className="font-medium">{row.original.name}</span>
+        ),
+      },
+      {
+        accessorKey: "unitPrice",
+        header: () => <div className="text-right">Đơn giá</div>,
+        cell: ({ row }) => (
+          <div className="text-right tabular-nums">
+            {formatVnd(row.original.unitPrice)}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "defaultCommissionPercent",
+        header: () => <div className="text-right">Hoa hồng</div>,
+        cell: ({ row }) => (
+          <div className="text-right tabular-nums">
+            {row.original.defaultCommissionPercent}%
+          </div>
+        ),
+      },
+      {
+        accessorKey: "creditType",
+        header: "Credit type",
+        cell: ({ row }) => (
+          <span className="text-xs text-muted-foreground">
+            {row.original.creditType ?? "—"}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "eligibleForSubscriptionGrant",
+        header: "Gói đăng ký",
+        cell: ({ row }) =>
+          row.original.eligibleForSubscriptionGrant ? (
+            <Badge variant="secondary">Có</Badge>
+          ) : (
+            <span className="text-muted-foreground text-xs">Không</span>
+          ),
+      },
+      {
+        accessorKey: "eligibleForPurchase",
+        header: "Mua lẻ",
+        cell: ({ row }) =>
+          row.original.eligibleForPurchase ? (
+            <Badge variant="secondary">Có</Badge>
+          ) : (
+            <span className="text-muted-foreground text-xs">Không</span>
+          ),
+      },
+      {
+        accessorKey: "isActive",
+        header: "Trạng thái",
+        cell: ({ row }) => (
+          <Badge
+            variant={row.original.isActive ? "default" : "outline"}
+            className={
+              row.original.isActive
+                ? "bg-green-100 text-green-800 border-green-200"
+                : "text-muted-foreground"
+            }
+          >
+            {row.original.isActive ? "Hoạt động" : "Vô hiệu"}
+          </Badge>
+        ),
+      },
+    ],
+    [],
+  );
+
   const handleToggle = async (category: TicketCategoryType) => {
     try {
       await toggleMutation.mutateAsync({
@@ -383,111 +460,37 @@ export default function AdminTicketCategoriesPage() {
             </Button>
           </div>
 
-          {/* Table */}
-          {listQuery.isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Mã</TableHead>
-                  <TableHead>Tên danh mục</TableHead>
-                  <TableHead className="text-right">Đơn giá</TableHead>
-                  <TableHead className="text-right">Hoa hồng</TableHead>
-                  <TableHead>Credit type</TableHead>
-                  <TableHead>Gói đăng ký</TableHead>
-                  <TableHead>Mua lẻ</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead className="text-right">Thao tác</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {categories.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={9}
-                      className="py-8 text-center text-muted-foreground"
-                    >
-                      Không có danh mục nào.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  categories.map((cat) => (
-                    <TableRow key={cat.id}>
-                      <TableCell className="font-mono text-xs">
-                        {cat.code}
-                      </TableCell>
-                      <TableCell className="font-medium">{cat.name}</TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {formatVnd(cat.unitPrice)}
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">
-                        {cat.defaultCommissionPercent}%
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {cat.creditType ?? "—"}
-                      </TableCell>
-                      <TableCell>
-                        {cat.eligibleForSubscriptionGrant ? (
-                          <Badge variant="secondary">Có</Badge>
-                        ) : (
-                          <span className="text-muted-foreground text-xs">
-                            Không
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {cat.eligibleForPurchase ? (
-                          <Badge variant="secondary">Có</Badge>
-                        ) : (
-                          <span className="text-muted-foreground text-xs">
-                            Không
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={cat.isActive ? "default" : "outline"}
-                          className={
-                            cat.isActive
-                              ? "bg-green-100 text-green-800 border-green-200"
-                              : "text-muted-foreground"
-                          }
-                        >
-                          {cat.isActive ? "Hoạt động" : "Vô hiệu"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => setEditTarget(cat)}
-                            title="Chỉnh sửa"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => handleToggle(cat)}
-                            disabled={toggleMutation.isPending}
-                            title={cat.isActive ? "Vô hiệu hoá" : "Kích hoạt"}
-                          >
-                            <Power
-                              className={`h-4 w-4 ${cat.isActive ? "text-destructive" : "text-green-600"}`}
-                            />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          )}
+          <DataTable
+            columns={columns}
+            data={categories}
+            isLoading={listQuery.isLoading}
+            actions={[
+              {
+                key: "edit",
+                label: "Chỉnh sửa",
+                icon: Pencil,
+                onSelect: (cat) => setEditTarget(cat),
+              },
+              {
+                key: "toggle",
+                label: "Vô hiệu hoá",
+                icon: Power,
+                hidden: (cat) => !cat.isActive,
+                disabled: () => toggleMutation.isPending,
+                variant: "destructive",
+                onSelect: (cat) => handleToggle(cat),
+              },
+              {
+                key: "activate",
+                label: "Kích hoạt",
+                icon: Power,
+                hidden: (cat) => cat.isActive,
+                disabled: () => toggleMutation.isPending,
+                onSelect: (cat) => handleToggle(cat),
+              },
+            ]}
+            emptyText="Không có danh mục nào."
+          />
 
           {/* Pagination */}
           {meta && meta.totalPages > 1 && (

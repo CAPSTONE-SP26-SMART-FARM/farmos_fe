@@ -12,14 +12,8 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import { formatCurrencyVnd, formatDateVi } from "@/lib/format";
 import { cn, isApiErrorResponse } from "@/lib/utils";
 import { useMyIotTracking } from "@/queries/useIotKit";
@@ -381,37 +375,44 @@ function DeviceTable({
     );
   }
 
+  const columns: ColumnDef<ProvisionedDeviceSummaryType>[] = [
+    {
+      accessorKey: "deviceName",
+      header: "Tên thiết bị",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Cpu className="h-4 w-4 text-muted-foreground" />
+          <span className="font-medium">{row.original.deviceName}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Trạng thái",
+      cell: ({ row }) => (
+        <Badge variant="outline">
+          {DEVICE_STATUS_LABEL[row.original.status] ?? row.original.status}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "provisionedAt",
+      header: "Gán lúc",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">
+          {formatDateVi(row.original.provisionedAt)}
+        </span>
+      ),
+    },
+  ];
+
   return (
     <div className={cn(!compact && "overflow-x-auto rounded-lg border")}>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Tên thiết bị</TableHead>
-            <TableHead>Trạng thái</TableHead>
-            <TableHead>Gán lúc</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {devices.map((d) => (
-            <TableRow key={d.id}>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <Cpu className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">{d.deviceName}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge variant="outline">
-                  {DEVICE_STATUS_LABEL[d.status] ?? d.status}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-sm text-muted-foreground">
-                {formatDateVi(d.provisionedAt)}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <DataTable
+        columns={columns}
+        data={devices}
+        emptyText={emptyText}
+      />
     </div>
   );
 }

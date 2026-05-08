@@ -1,12 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -15,29 +9,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/common/DataTable";
 import useDebounce from "@/hooks/useDebounce";
 import { useOwnerListFarmMembers } from "@/queries/useOwner";
 import type { FarmMemberResType } from "@/schemaValidatation/farmMember";
+import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import {
   Eye,
-  MoreVertical,
   Search,
   Tractor,
   UserCog,
   UserPlus,
   Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 interface Props {
   farmId: string;
@@ -83,6 +69,62 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
     setRoleFilter(value as "all" | "farmer" | "manager");
     setPage(1);
   };
+
+  const columns = useMemo<ColumnDef<FarmMemberResType>[]>(
+    () => [
+      {
+        id: "user",
+        header: "Tài khoản",
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <RoleIcon role={row.original.role} />
+            <div>
+              <p className="font-medium">{row.original.user.fullName}</p>
+              <p className="text-xs text-muted-foreground">
+                {row.original.user.email}
+              </p>
+            </div>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "role",
+        header: "Vai trò",
+        cell: ({ row }) => (
+          <Badge
+            variant="secondary"
+            className="capitalize"
+          >
+            {row.original.role}
+          </Badge>
+        ),
+      },
+      {
+        id: "phone",
+        header: "Số điện thoại",
+        cell: ({ row }) => (
+          <span className="text-sm">{row.original.user.phone ?? "—"}</span>
+        ),
+      },
+      {
+        id: "farm",
+        header: "Nông trại",
+        cell: ({ row }) => (
+          <span className="text-sm">{row.original.farm.name}</span>
+        ),
+      },
+      {
+        accessorKey: "assignedAt",
+        header: "Ngày gán",
+        cell: ({ row }) => (
+          <span className="text-muted-foreground text-sm">
+            {format(new Date(row.original.assignedAt), "dd/MM/yyyy")}
+          </span>
+        ),
+      },
+    ],
+    [],
+  );
 
   return (
     <div className="space-y-4">
@@ -134,46 +176,7 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
         </div>
       </div>
 
-      {isLoading ? (
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Tài khoản</TableHead>
-                <TableHead>Vai trò</TableHead>
-                <TableHead>Số điện thoại</TableHead>
-                <TableHead>Nông trại</TableHead>
-                <TableHead>Ngày gán</TableHead>
-                <TableHead className="w-12.5"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell>
-                    <Skeleton className="h-4 w-40" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-5 w-24" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-28" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-28" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-24" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-8 w-8 mx-auto" />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
-      ) : isError ? (
+      {isError ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <p className="text-sm text-muted-foreground">
@@ -181,7 +184,7 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
             </p>
           </CardContent>
         </Card>
-      ) : members.length === 0 ? (
+      ) : !isLoading && members.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <div className="rounded-full bg-muted p-4 mb-4">
@@ -203,73 +206,21 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
       ) : (
         <>
           <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tài khoản</TableHead>
-                  <TableHead>Vai trò</TableHead>
-                  <TableHead>Số điện thoại</TableHead>
-                  <TableHead>Nông trại</TableHead>
-                  <TableHead>Ngày gán</TableHead>
-                  <TableHead className="w-12.5"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {members.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <RoleIcon role={member.role} />
-                        <div>
-                          <p className="font-medium">{member.user.fullName}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {member.user.email}
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="secondary"
-                        className="capitalize"
-                      >
-                        {member.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {member.user.phone ?? "—"}
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm">{member.farm.name}</span>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
-                      {format(new Date(member.assignedAt), "dd/MM/yyyy")}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => onViewMember(member)}
-                          >
-                            <Eye className="h-4 w-4 mr-2" />
-                            Xem
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <DataTable
+              columns={columns}
+              data={members}
+              isLoading={isLoading}
+              actions={[
+                {
+                  key: "view",
+                  label: "Xem",
+                  icon: Eye,
+                  onSelect: (member) => onViewMember(member),
+                },
+              ]}
+              onRowClick={(member) => onViewMember(member)}
+              emptyText="Chưa có tài khoản nào."
+            />
           </Card>
 
           {meta && meta.totalPages > 1 && (

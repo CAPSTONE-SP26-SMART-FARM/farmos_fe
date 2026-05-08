@@ -17,14 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import useDebounce from "@/hooks/useDebounce";
 import { getApiErrorMessageVi } from "@/lib/error-message";
 import {
@@ -37,7 +31,7 @@ import type {
   FeatureMenuType,
   ListFeaturesQueryType,
 } from "@/schemaValidatation/feature";
-import { Search } from "lucide-react";
+import { Pencil, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   type FormState,
@@ -80,6 +74,38 @@ export default function AdminFeaturesPage() {
 
   const features = listQuery.data?.data.data ?? [];
   const meta = listQuery.data?.data.meta;
+
+  const columns: ColumnDef<FeatureMenuType>[] = [
+    {
+      accessorKey: "code",
+      header: "Mã",
+      cell: ({ row }) => (
+        <span className="font-medium">{row.original.code}</span>
+      ),
+    },
+    {
+      accessorKey: "name",
+      header: "Tên tính năng",
+      cell: ({ row }) => (
+        <div>
+          <p className="font-medium">{row.original.name}</p>
+          <p className="text-xs text-muted-foreground">
+            {row.original.description || "Không có mô tả"}
+          </p>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "defaultValue",
+      header: "Giá trị mặc định",
+      cell: ({ row }) => row.original.defaultValue ?? "-",
+    },
+    {
+      accessorKey: "unit",
+      header: "Đơn vị",
+      cell: ({ row }) => row.original.unit ?? "-",
+    },
+  ];
 
   useEffect(() => {
     if (
@@ -210,65 +236,28 @@ export default function AdminFeaturesPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Mã</TableHead>
-                  <TableHead>Tên tính năng</TableHead>
-                  <TableHead>Giá trị mặc định</TableHead>
-                  <TableHead>Đơn vị</TableHead>
-                  <TableHead className="text-right">Thao tác</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {listQuery.isLoading && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="py-6 text-center text-muted-foreground"
-                    >
-                      Đang tải dữ liệu...
-                    </TableCell>
-                  </TableRow>
-                )}
-                {!listQuery.isLoading && features.length === 0 && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="py-6 text-center text-muted-foreground"
-                    >
-                      Không có tính năng phù hợp bộ lọc.
-                    </TableCell>
-                  </TableRow>
-                )}
-                {features.map((feature) => (
-                  <TableRow key={feature.code}>
-                    <TableCell className="font-medium">
-                      {feature.code}
-                    </TableCell>
-                    <TableCell>
-                      <p className="font-medium">{feature.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {feature.description || "Không có mô tả"}
-                      </p>
-                    </TableCell>
-                    <TableCell>{feature.defaultValue ?? "-"}</TableCell>
-                    <TableCell>{feature.unit ?? "-"}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onEdit(feature)}
-                        >
-                          Sửa
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <DataTable
+              columns={columns}
+              data={features}
+              isLoading={listQuery.isLoading}
+              actions={[
+                {
+                  key: "edit",
+                  label: "Chỉnh sửa",
+                  icon: Pencil,
+                  onSelect: (feature) => onEdit(feature),
+                },
+                {
+                  key: "delete",
+                  label: "Xoá",
+                  icon: Trash2,
+                  variant: "destructive",
+                  onSelect: (feature) =>
+                    setDeletingFeatureCode(feature.code),
+                },
+              ]}
+              emptyText="Không có tính năng phù hợp bộ lọc."
+            />
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
                 Trang {meta?.page ?? query.page ?? 1}/{meta?.totalPages ?? 1}

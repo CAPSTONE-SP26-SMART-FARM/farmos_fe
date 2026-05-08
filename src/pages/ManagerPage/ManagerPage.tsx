@@ -9,33 +9,20 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import { useManagerListAssignedZones } from "@/queries/useZone";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 import type { ZoneType } from "@/types/zone";
 import { format } from "date-fns";
-import { MoreVertical, Sprout } from "lucide-react";
+import { Sprout } from "lucide-react";
 import ManagerDashboardSection from "./Dashboard/ManagerDashboardSection";
 
 type ManagerView = {
@@ -315,36 +302,13 @@ function AssignedZonesSection() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {zonesQuery.isLoading ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tên khu vực</TableHead>
-                  <TableHead>Loại</TableHead>
-                  <TableHead>Diện tích</TableHead>
-                  <TableHead>Cập nhật</TableHead>
-                  <TableHead className="text-right">Thao tác</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <TableRow key={i}>
-                    {Array.from({ length: 5 }).map((__, j) => (
-                      <TableCell key={j}>
-                        <Skeleton className="h-4 w-full" />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : zonesQuery.isError ? (
+          {zonesQuery.isError ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <p className="text-sm text-muted-foreground">
                 Không thể tải danh sách khu vực. Vui lòng thử lại.
               </p>
             </div>
-          ) : zones.length === 0 ? (
+          ) : !zonesQuery.isLoading && zones.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="rounded-full bg-muted p-4 mb-4">
                 <Sprout className="h-8 w-8 text-muted-foreground" />
@@ -362,66 +326,60 @@ function AssignedZonesSection() {
             </div>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tên khu vực</TableHead>
-                    <TableHead>Loại</TableHead>
-                    <TableHead>Diện tích</TableHead>
-                    <TableHead>Cập nhật</TableHead>
-                    <TableHead className="w-12.5"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {zones.map((zone: ZoneType) => (
-                    <TableRow
-                      key={zone.id}
-                      className="transition-colors hover:bg-muted/40"
-                    >
-                      <TableCell className="font-medium">{zone.name}</TableCell>
-                      <TableCell>
+              <DataTable
+                columns={
+                  [
+                    {
+                      accessorKey: "name",
+                      header: "Tên khu vực",
+                      cell: ({ row }) => (
+                        <span className="font-medium">{row.original.name}</span>
+                      ),
+                    },
+                    {
+                      accessorKey: "zoneType",
+                      header: "Loại",
+                      cell: ({ row }) => (
                         <Badge variant="secondary">
-                          {ZONE_TYPE_LABELS[zone.zoneType]}
+                          {ZONE_TYPE_LABELS[row.original.zoneType]}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {zone.areaSqm != null ? `${zone.areaSqm} m²` : "—"}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {formatDate(zone.updatedAt)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex justify-end">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                              >
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  navigate({
-                                    pathname: "/dashboard/manager/crop-seasons",
-                                    search: `zoneId=${zone.id}`,
-                                  })
-                                }
-                              >
-                                <Sprout className="h-4 w-4 mr-2" />
-                                Mùa vụ
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                      ),
+                    },
+                    {
+                      accessorKey: "areaSqm",
+                      header: "Diện tích",
+                      cell: ({ row }) =>
+                        row.original.areaSqm != null
+                          ? `${row.original.areaSqm} m²`
+                          : "—",
+                    },
+                    {
+                      accessorKey: "updatedAt",
+                      header: "Cập nhật",
+                      cell: ({ row }) => (
+                        <span className="text-sm text-muted-foreground">
+                          {formatDate(row.original.updatedAt)}
+                        </span>
+                      ),
+                    },
+                  ] as ColumnDef<ZoneType>[]
+                }
+                data={zones}
+                isLoading={zonesQuery.isLoading}
+                actions={[
+                  {
+                    key: "crop-seasons",
+                    label: "Mùa vụ",
+                    icon: Sprout,
+                    onSelect: (zone) =>
+                      navigate({
+                        pathname: "/dashboard/manager/crop-seasons",
+                        search: `zoneId=${zone.id}`,
+                      }),
+                  },
+                ]}
+                emptyText="Chưa có khu vực được giao."
+              />
 
               {meta && meta.totalPages > 1 && (
                 <div className="flex items-center justify-between pt-4">

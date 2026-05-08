@@ -1,14 +1,7 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
   Select,
   SelectContent,
@@ -16,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronRight, Inbox } from "lucide-react";
+import { Eye, Inbox } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useOwnerListRequests } from "@/queries/useCropSeason";
 import {
@@ -160,58 +153,61 @@ export function OwnerRequestsHistoryTab({
         ) : (
           // Full table when nothing is selected
           <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Mã</TableHead>
-                  <TableHead>Ngày gửi</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead>Ngày phản hồi</TableHead>
-                  <TableHead className="w-10"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {requests.map((r) => {
-                  const meta = REQUEST_STATUS_MAP[r.status] ?? {
-                    label: r.status,
-                    variant: "secondary" as const,
-                  };
-                  return (
-                    <TableRow
-                      key={r.id}
-                      className="cursor-pointer hover:bg-muted/40"
-                      onClick={() => setSelectedId(r.id)}
-                    >
-                      <TableCell className="font-mono text-xs">
-                        #{r.id.slice(0, 8)}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {formatDate(r.sentAt)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={meta.variant}>{meta.label}</Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {formatDate(r.repliedAt)}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedId(r.id);
-                          }}
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <DataTable
+              columns={
+                [
+                  {
+                    accessorKey: "id",
+                    header: "Mã",
+                    cell: ({ row }) => (
+                      <span className="font-mono text-xs">
+                        #{row.original.id.slice(0, 8)}
+                      </span>
+                    ),
+                  },
+                  {
+                    accessorKey: "sentAt",
+                    header: "Ngày gửi",
+                    cell: ({ row }) => (
+                      <span className="text-sm">
+                        {formatDate(row.original.sentAt)}
+                      </span>
+                    ),
+                  },
+                  {
+                    accessorKey: "status",
+                    header: "Trạng thái",
+                    cell: ({ row }) => {
+                      const meta = REQUEST_STATUS_MAP[row.original.status] ?? {
+                        label: row.original.status,
+                        variant: "secondary" as const,
+                      };
+                      return <Badge variant={meta.variant}>{meta.label}</Badge>;
+                    },
+                  },
+                  {
+                    accessorKey: "repliedAt",
+                    header: "Ngày phản hồi",
+                    cell: ({ row }) => (
+                      <span className="text-sm text-muted-foreground">
+                        {formatDate(row.original.repliedAt)}
+                      </span>
+                    ),
+                  },
+                ] as ColumnDef<(typeof requests)[number]>[]
+              }
+              data={requests}
+              actions={[
+                {
+                  key: "view",
+                  label: "Xem chi tiết",
+                  icon: Eye,
+                  onSelect: (r) => setSelectedId(r.id),
+                },
+              ]}
+              onRowClick={(r) => setSelectedId(r.id)}
+              emptyText="Không có yêu cầu nào."
+            />
           </div>
         )}
       </div>

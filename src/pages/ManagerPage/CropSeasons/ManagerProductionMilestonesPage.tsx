@@ -16,14 +16,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import { useManagerListCropSeasons } from "@/queries/useCropSeason";
 import { useManagerListAssignedZones } from "@/queries/useZone";
 import { useNavigate, useSearchParams } from "react-router";
@@ -88,41 +82,6 @@ function Field({
 
 // ── Season row ────────────────────────────────────────────────────────────
 
-function SeasonRow({
-  season,
-  onMilestones,
-}: {
-  season: CropSeasonType;
-  onMilestones: () => void;
-}) {
-  return (
-    <TableRow>
-      <TableCell className="font-medium">
-        {season.cropName}
-        {season.variety ? (
-          <span className="ml-1 text-muted-foreground text-xs">
-            ({season.variety})
-          </span>
-        ) : null}
-      </TableCell>
-      <TableCell>{formatDate(season.plantDate)}</TableCell>
-      <TableCell>{formatDate(season.expectedHarvestDate)}</TableCell>
-      <TableCell>
-        <StatusBadge status={season.status} />
-      </TableCell>
-      <TableCell className="text-right">
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={onMilestones}
-        >
-          <Milestone className="h-3 w-3 mr-1" />
-          Quản lý mốc
-        </Button>
-      </TableCell>
-    </TableRow>
-  );
-}
 
 // ── Main Page ─────────────────────────────────────────────────────────────
 
@@ -285,36 +244,64 @@ export default function ManagerProductionMilestonesPage() {
                     {totalItems} mùa vụ
                   </span>
                 </div>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tên cây trồng</TableHead>
-                      <TableHead>Ngày trồng</TableHead>
-                      <TableHead>Thu hoạch dự kiến</TableHead>
-                      <TableHead>Trạng thái</TableHead>
-                      <TableHead className="text-right">Thao tác</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {seasons.map((s) => (
-                      <SeasonRow
-                        key={s.id}
-                        season={s}
-                        onMilestones={() => {
-                          const next = new URLSearchParams();
-                          if (zoneId) {
-                            next.set("zoneId", zoneId);
-                          }
-                          const search = next.toString();
-                          navigate({
-                            pathname: `/dashboard/manager/crop-seasons/${s.id}/milestones`,
-                            search: search ? `?${search}` : "",
-                          });
-                        }}
-                      />
-                    ))}
-                  </TableBody>
-                </Table>
+                <DataTable
+                  columns={
+                    [
+                      {
+                        accessorKey: "cropName",
+                        header: "Tên cây trồng",
+                        cell: ({ row }) => (
+                          <span className="font-medium">
+                            {row.original.cropName}
+                            {row.original.variety && (
+                              <span className="ml-1 text-muted-foreground text-xs">
+                                ({row.original.variety})
+                              </span>
+                            )}
+                          </span>
+                        ),
+                      },
+                      {
+                        accessorKey: "plantDate",
+                        header: "Ngày trồng",
+                        cell: ({ row }) => formatDate(row.original.plantDate),
+                      },
+                      {
+                        accessorKey: "expectedHarvestDate",
+                        header: "Thu hoạch dự kiến",
+                        cell: ({ row }) =>
+                          formatDate(row.original.expectedHarvestDate),
+                      },
+                      {
+                        accessorKey: "status",
+                        header: "Trạng thái",
+                        cell: ({ row }) => (
+                          <StatusBadge status={row.original.status} />
+                        ),
+                      },
+                    ] as ColumnDef<CropSeasonType>[]
+                  }
+                  data={seasons}
+                  actions={[
+                    {
+                      key: "milestones",
+                      label: "Quản lý mốc",
+                      icon: Milestone,
+                      onSelect: (s) => {
+                        const next = new URLSearchParams();
+                        if (zoneId) {
+                          next.set("zoneId", zoneId);
+                        }
+                        const search = next.toString();
+                        navigate({
+                          pathname: `/dashboard/manager/crop-seasons/${s.id}/milestones`,
+                          search: search ? `?${search}` : "",
+                        });
+                      },
+                    },
+                  ]}
+                  emptyText="Chưa có mùa vụ nào."
+                />
                 {totalPages > 1 && (
                   <div className="p-4 flex justify-center border-t">
                     <ProPagination

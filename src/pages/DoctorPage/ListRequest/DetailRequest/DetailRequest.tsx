@@ -24,7 +24,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { statusIcon } from "@/components/common/TableRequestShell/columns";
+import { statusIcon } from "@/constants/registrationStatusIcon";
 
 interface Props {
   id?: string;

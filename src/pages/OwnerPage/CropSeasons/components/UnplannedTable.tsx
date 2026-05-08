@@ -1,15 +1,9 @@
 // src/pages/OwnerPage/CropSeasons/components/UnplannedTable.tsx
 import { useMemo } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataTable } from "@/components/common/DataTable";
+import type { ColumnDef } from "@tanstack/react-table";
 import { Sparkles } from "lucide-react";
 import {
   getEntityTypeLabel,
@@ -21,6 +15,7 @@ import { useOwnerListFarmMembers } from "@/queries/useOwner";
 import type { TrackingDiffResType } from "@/schemaValidatation/tracking";
 
 type UnplannedSection = TrackingDiffResType["unplanned"][number];
+type UnplannedEntity = UnplannedSection["entities"][number];
 
 interface UnplannedTableProps {
   unplanned: UnplannedSection[];
@@ -34,6 +29,13 @@ const USER_REF_FIELDS = new Set([
   "approvedBy",
   "completedBy",
 ]);
+
+type FlattenedEntityRow = {
+  key: string;
+  entity: UnplannedEntity;
+  entityType: UnplannedSection["entityType"];
+  entityIndex: number;
+};
 
 export default function UnplannedTable({ unplanned }: UnplannedTableProps) {
   const total = unplanned.reduce((sum, s) => sum + s.entities.length, 0);
@@ -53,8 +55,8 @@ export default function UnplannedTable({ unplanned }: UnplannedTableProps) {
   }, [membersData]);
 
   const renderFieldValue = (
-    section: UnplannedSection,
-    f: UnplannedSection["entities"][number]["fields"][number],
+    entityType: UnplannedSection["entityType"],
+    f: UnplannedEntity["fields"][number],
   ) => {
     if (
       USER_REF_FIELDS.has(f.fieldName) &&
@@ -64,10 +66,80 @@ export default function UnplannedTable({ unplanned }: UnplannedTableProps) {
       return userNameById.get(f.actualValue)!;
     }
     return formatTrackingValue(f.actualValue, f.dataType, {
-      entityType: section.entityType,
+      entityType,
       fieldName: f.fieldName,
     });
   };
+
+  const flattened: FlattenedEntityRow[] = useMemo(
+    () =>
+      unplanned.flatMap((section) =>
+        section.entities.map((entity, entityIndex) => ({
+          key: entity.entityId,
+          entity,
+          entityType: section.entityType,
+          entityIndex,
+        })),
+      ),
+    [unplanned],
+  );
+
+  const columns = useMemo<ColumnDef<FlattenedEntityRow>[]>(
+    () => [
+      {
+        id: "entityType",
+        header: "Thực thể",
+        cell: ({ row }) => (
+          <div className="flex flex-col gap-1">
+            <Badge
+              variant="outline"
+              className="bg-amber-50 text-amber-800 border-amber-200 text-xs w-fit"
+            >
+              {getEntityTypeLabel(row.original.entityType)}
+            </Badge>
+            <p className="text-sm font-medium">
+              {getEntityTypeLabel(row.original.entityType)} #
+              {row.original.entityIndex + 1}
+            </p>
+          </div>
+        ),
+      },
+      {
+        id: "createdAt",
+        header: "Ngày tạo",
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground tabular-nums">
+            {row.original.entity.createdAt
+              ? format(parseISO(row.original.entity.createdAt), "dd/MM/yyyy HH:mm")
+              : "—"}
+          </span>
+        ),
+      },
+      {
+        id: "fields",
+        header: "Chi tiết phát sinh",
+        cell: ({ row }) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5">
+            {row.original.entity.fields.map((f) => (
+              <div
+                key={f.fieldName}
+                className="text-xs flex items-baseline gap-1.5 min-w-0"
+              >
+                <span className="text-muted-foreground shrink-0">
+                  {getFieldLabel(f.fieldName)}:
+                </span>
+                <span className="font-medium truncate">
+                  {renderFieldValue(row.original.entityType, f)}
+                </span>
+              </div>
+            ))}
+          </div>
+        ),
+      },
+    ],
+    // renderFieldValue depends on userNameById; keep deps narrow
+    [userNameById],
+  );
 
   return (
     <Card>
@@ -82,62 +154,11 @@ export default function UnplannedTable({ unplanned }: UnplannedTableProps) {
       </CardHeader>
       <CardContent className="p-0">
         <div className="overflow-hidden border-t">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/40">
-                <TableHead className="w-56">Thực thể</TableHead>
-                <TableHead className="w-44">Ngày tạo</TableHead>
-                <TableHead>Chi tiết phát sinh</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {unplanned.flatMap((section) =>
-                section.entities.map((entity, entityIndex) => (
-                  <TableRow
-                    key={entity.entityId}
-                    className="hover:bg-muted/30 align-top"
-                  >
-                    <TableCell>
-                      <div className="flex flex-col gap-1">
-                        <Badge
-                          variant="outline"
-                          className="bg-amber-50 text-amber-800 border-amber-200 text-xs w-fit"
-                        >
-                          {getEntityTypeLabel(section.entityType)}
-                        </Badge>
-                        <p className="text-sm font-medium">
-                          {getEntityTypeLabel(section.entityType)} #
-                          {entityIndex + 1}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground tabular-nums">
-                      {entity.createdAt
-                        ? format(parseISO(entity.createdAt), "dd/MM/yyyy HH:mm")
-                        : "—"}
-                    </TableCell>
-                    <TableCell>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5">
-                        {entity.fields.map((f) => (
-                          <div
-                            key={f.fieldName}
-                            className="text-xs flex items-baseline gap-1.5 min-w-0"
-                          >
-                            <span className="text-muted-foreground shrink-0">
-                              {getFieldLabel(f.fieldName)}:
-                            </span>
-                            <span className="font-medium truncate">
-                              {renderFieldValue(section, f)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )),
-              )}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={columns}
+            data={flattened}
+            emptyText="Không có dữ liệu phát sinh."
+          />
         </div>
       </CardContent>
     </Card>
