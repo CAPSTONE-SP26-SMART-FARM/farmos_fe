@@ -45,28 +45,26 @@ const STATUS_OPTIONS: Array<{
   label: string;
 }> = [
   { value: "ALL", label: "Tất cả trạng thái" },
-  { value: "DRAFT", label: "Nháp" },
   { value: "OPEN", label: "Chờ thanh toán" },
   { value: "PAID", label: "Đã thanh toán" },
   { value: "VOID", label: "Đã hủy" },
-  { value: "UNCOLLECTIBLE", label: "Không thu được" },
 ];
+
+const REFERENCE_TYPE_LABEL: Record<InvoiceReferenceType, string> = {
+  SUBSCRIPTION: "Gói đăng ký",
+  SERVICE_PACKAGE: "Gói dịch vụ",
+  IOT_KIT_ORDER: "Đơn Bộ Kit IoT",
+};
 
 const REFERENCE_TYPE_OPTIONS: Array<{
   value: "ALL" | InvoiceReferenceType;
   label: string;
 }> = [
   { value: "ALL", label: "Tất cả loại" },
-  { value: "SUBSCRIPTION", label: "Subscription" },
-  { value: "SERVICE_PACKAGE", label: "Service Package" },
-  { value: "IOT_KIT_ORDER", label: "IoT Kit Order" },
+  { value: "SUBSCRIPTION", label: REFERENCE_TYPE_LABEL.SUBSCRIPTION },
+  { value: "SERVICE_PACKAGE", label: REFERENCE_TYPE_LABEL.SERVICE_PACKAGE },
+  { value: "IOT_KIT_ORDER", label: REFERENCE_TYPE_LABEL.IOT_KIT_ORDER },
 ];
-
-const REFERENCE_TYPE_LABEL: Record<InvoiceReferenceType, string> = {
-  SUBSCRIPTION: "Subscription",
-  SERVICE_PACKAGE: "Gói dịch vụ",
-  IOT_KIT_ORDER: "IoT Kit",
-};
 
 function LatestTransactionCell({
   tx,

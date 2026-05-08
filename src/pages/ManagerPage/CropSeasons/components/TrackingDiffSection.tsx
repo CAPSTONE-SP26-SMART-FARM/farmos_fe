@@ -69,10 +69,20 @@ export function TrackingDiffSection({
                         {getFieldLabel(field.fieldName)}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {formatTrackingValue(field.planValue, field.dataType)}
+                        {formatTrackingValue(field.planValue, field.dataType, {
+                          entityType: section.entityType,
+                          fieldName: field.fieldName,
+                        })}
                       </TableCell>
                       <TableCell className="text-sm">
-                        {formatTrackingValue(field.actualValue, field.dataType)}
+                        {formatTrackingValue(
+                          field.actualValue,
+                          field.dataType,
+                          {
+                            entityType: section.entityType,
+                            fieldName: field.fieldName,
+                          },
+                        )}
                       </TableCell>
                       <TableCell className="text-sm">
                         {formatVariance(field.variance)}

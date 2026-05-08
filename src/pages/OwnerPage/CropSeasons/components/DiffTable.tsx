@@ -1,5 +1,5 @@
 // src/pages/OwnerPage/CropSeasons/components/DiffTable.tsx
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, History, Inbox } from "lucide-react";
+import { History, Inbox } from "lucide-react";
 import VarianceBadge from "./VarianceBadge";
 import FieldHistoryModal from "./FieldHistoryModal";
 import {
@@ -32,12 +32,10 @@ import type {
 } from "@/schemaValidatation/tracking";
 
 type TrackedSection = TrackingDiffResType["tracked"][number];
-type FilterKey = "all" | "late" | "ontime" | "early";
 
 interface DiffTableProps {
   tracked: TrackedSection[];
   cropSeasonId: string;
-  filter: FilterKey;
 }
 
 interface FieldHistoryTarget {
@@ -45,15 +43,6 @@ interface FieldHistoryTarget {
   entityId: string;
   fieldName: string;
   dataType: TrackingDataType;
-}
-
-function matchesFilter(variance: VarianceType, filter: FilterKey) {
-  if (filter === "all") return true;
-  const dir = variance?.direction;
-  if (filter === "late") return dir === "late" || dir === "higher";
-  if (filter === "ontime") return dir === "on-time" || dir === "equal";
-  if (filter === "early") return dir === "early" || dir === "lower";
-  return true;
 }
 
 function actualToneClass(variance: VarianceType) {
@@ -66,27 +55,10 @@ function actualToneClass(variance: VarianceType) {
 export default function DiffTable({
   tracked,
   cropSeasonId,
-  filter,
 }: DiffTableProps) {
   const [historyTarget, setHistoryTarget] = useState<FieldHistoryTarget | null>(
     null,
   );
-
-  const filteredSections = useMemo(() => {
-    return tracked
-      .map((section) => ({
-        ...section,
-        entities: section.entities
-          .map((entity) => ({
-            ...entity,
-            fields: entity.fields.filter((f) =>
-              matchesFilter(f.variance, filter),
-            ),
-          }))
-          .filter((e) => e.fields.length > 0),
-      }))
-      .filter((s) => s.entities.length > 0);
-  }, [tracked, filter]);
 
   if (!tracked.length) {
     return (
@@ -99,25 +71,14 @@ export default function DiffTable({
     );
   }
 
-  if (!filteredSections.length) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Inbox className="h-8 w-8 text-muted-foreground mb-2" />
-        <p className="text-sm text-muted-foreground">
-          Không có trường nào khớp bộ lọc hiện tại.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <>
       <Accordion
         type="multiple"
-        defaultValue={filteredSections.map((s) => s.entityType)}
+        defaultValue={tracked.map((s) => s.entityType)}
         className="space-y-3"
       >
-        {filteredSections.map((section) => {
+        {tracked.map((section) => {
           const fieldCount = section.entities.reduce(
             (sum, e) => sum + e.fields.length,
             0,
@@ -141,15 +102,16 @@ export default function DiffTable({
               </AccordionTrigger>
               <AccordionContent className="pt-1">
                 <div className="overflow-hidden rounded-md border">
-                  <Table>
+                  <Table className="table-fixed w-full">
                     <TableHeader>
                       <TableRow className="bg-muted/40">
-                        <TableHead className="w-45">Thực thể</TableHead>
-                        <TableHead className="w-40">Trường</TableHead>
-                        <TableHead>Kế hoạch → Thực tế</TableHead>
-                        <TableHead className="w-30">Sai số</TableHead>
-                        <TableHead className="w-27.5">Thay đổi</TableHead>
-                        <TableHead className="w-20" />
+                        <TableHead className="w-[14%]">Thực thể</TableHead>
+                        <TableHead className="w-[14%]">Trường</TableHead>
+                        <TableHead className="w-[22%]">Kế hoạch</TableHead>
+                        <TableHead className="w-[22%]">Thực tế</TableHead>
+                        <TableHead className="w-[10%]">Sai số</TableHead>
+                        <TableHead className="w-[8%]">Thay đổi</TableHead>
+                        <TableHead className="w-[10%]" />
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -157,7 +119,7 @@ export default function DiffTable({
                         entity.fields.map((field, fi) => (
                           <TableRow
                             key={`${entity.entityId}-${field.fieldName}`}
-                            className="cursor-pointer hover:bg-muted/40"
+                            className="cursor-pointer hover:bg-muted/40 align-top"
                             onClick={() =>
                               setHistoryTarget({
                                 entityType: section.entityType,
@@ -170,44 +132,38 @@ export default function DiffTable({
                             {fi === 0 ? (
                               <TableCell
                                 rowSpan={entity.fields.length}
-                                className="align-top"
+                                className="whitespace-normal wrap-anywhere"
                               >
                                 <p className="text-sm font-medium">
                                   {getEntityTypeLabel(section.entityType)} #
                                   {entityIndex + 1}
                                 </p>
-                                <p className="font-mono text-[11px] text-muted-foreground">
-                                  {entity.entityId.slice(0, 8)}…
-                                </p>
                               </TableCell>
                             ) : null}
-                            <TableCell className="text-sm font-medium">
+                            <TableCell className="text-sm font-medium whitespace-normal wrap-anywhere">
                               {getFieldLabel(field.fieldName)}
                             </TableCell>
-                            <TableCell className="min-w-0 max-w-md">
-                              <div className="flex items-center gap-2 text-sm min-w-0">
-                                <span className="text-muted-foreground line-through decoration-muted-foreground/40 truncate basis-1/2 min-w-0">
-                                  {formatTrackingValue(
-                                    field.planValue,
-                                    field.dataType,
-                                  )}
-                                </span>
-                                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                                <span
-                                  className={`font-semibold tabular-nums truncate basis-1/2 min-w-0 ${actualToneClass(field.variance)}`}
-                                  title={String(
-                                    formatTrackingValue(
-                                      field.actualValue,
-                                      field.dataType,
-                                    ),
-                                  )}
-                                >
-                                  {formatTrackingValue(
-                                    field.actualValue,
-                                    field.dataType,
-                                  )}
-                                </span>
-                              </div>
+                            <TableCell className="text-sm text-muted-foreground line-through decoration-muted-foreground/40 whitespace-normal wrap-anywhere">
+                              {formatTrackingValue(
+                                field.planValue,
+                                field.dataType,
+                                {
+                                  entityType: section.entityType,
+                                  fieldName: field.fieldName,
+                                },
+                              )}
+                            </TableCell>
+                            <TableCell
+                              className={`text-sm font-semibold whitespace-normal wrap-anywhere ${actualToneClass(field.variance)}`}
+                            >
+                              {formatTrackingValue(
+                                field.actualValue,
+                                field.dataType,
+                                {
+                                  entityType: section.entityType,
+                                  fieldName: field.fieldName,
+                                },
+                              )}
                             </TableCell>
                             <TableCell>
                               <VarianceBadge

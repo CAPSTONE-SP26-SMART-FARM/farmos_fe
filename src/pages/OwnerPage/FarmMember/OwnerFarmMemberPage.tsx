@@ -1,26 +1,12 @@
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOwnerGetMyFarm } from "@/queries/useOwner";
 import type { FarmMemberResType } from "@/schemaValidatation/farmMember";
-import { UserPlus, Users, UserCog, Tractor } from "lucide-react";
 import { useState } from "react";
 import AddMemberPanel from "./components/AddMemberPanel";
 import MemberDetailPanel from "./components/MemberDetailPanel";
 import MemberListSection from "./components/MemberListSection";
-
-const MEMBER_SUMMARY_CARDS = [
-  { title: "Tổng nhân sự", value: "--", icon: Users },
-  { title: "Quản lý viên", value: "--", icon: UserCog },
-  { title: "Nông dân", value: "--", icon: Tractor },
-  { title: "Mới trong tháng", value: "--", icon: UserPlus },
-] as const;
 
 function OwnerFarmMemberPage() {
   const [showAdd, setShowAdd] = useState(false);
@@ -54,30 +40,11 @@ function OwnerFarmMemberPage() {
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <Badge className="mb-2">Cổng chủ trang trại</Badge>
-          <h1 className="text-2xl font-bold">Quản lý nhân sự</h1>
+          <h1 className="text-2xl font-bold">Quản lý tài khoản</h1>
           <p className="text-muted-foreground">
-            Quản lý nhân sự được phân công cho trang trại của bạn.
+            Quản lý tài khoản được phân công cho trang trại của bạn.
           </p>
         </div>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {MEMBER_SUMMARY_CARDS.map((card) => (
-          <Card key={card.title}>
-            <CardHeader className="pb-2">
-              <CardDescription className="flex items-center gap-1.5">
-                <card.icon className="h-3.5 w-3.5" />
-                {card.title}
-              </CardDescription>
-              <CardTitle className="text-2xl">{card.value}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">
-                Khối hiển thị tạm cho chỉ số nhân sự.
-              </p>
-            </CardContent>
-          </Card>
-        ))}
       </div>
 
       {isLoading ? (

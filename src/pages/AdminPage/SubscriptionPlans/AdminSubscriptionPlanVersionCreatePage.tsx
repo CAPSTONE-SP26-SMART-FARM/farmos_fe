@@ -35,6 +35,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
 import { getApiErrorMessageVi } from "@/lib/error-message";
@@ -104,10 +109,23 @@ function AdminSubscriptionPlanVersionCreatePage() {
 
   useClearServerFieldErrors(form);
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, prepend, remove } = useFieldArray({
     control: form.control,
     name: "features",
   });
+
+  const featureLimit = features.length;
+  const isLimitReached = featureLimit > 0 && fields.length >= featureLimit;
+
+  const handleAddRow = () => {
+    if (isLimitReached) {
+      toast.warning(
+        `Đã đạt số lượng tối đa (${featureLimit} tính năng). Không thể thêm dòng mới.`,
+      );
+      return;
+    }
+    prepend({ featureCode: "", value: "", note: "" });
+  };
 
   const featureMap = useMemo(
     () => new Map(features.map((feature) => [feature.code, feature])),
@@ -285,19 +303,52 @@ function AdminSubscriptionPlanVersionCreatePage() {
             />
 
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium">Danh sách tính năng</h3>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    append({ featureCode: "", value: "", note: "" })
-                  }
-                >
-                  <Plus className="mr-1 h-4 w-4" />
-                  Thêm dòng
-                </Button>
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <h3 className="text-sm font-medium">Danh sách tính năng</h3>
+                  {featureLimit > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Đã chọn {fields.length}/{featureLimit} tính năng
+                      {isLimitReached
+                        ? " — đã đạt tối đa"
+                        : ""}
+                    </p>
+                  )}
+                </div>
+                {isLimitReached ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span
+                        tabIndex={0}
+                        className="inline-flex cursor-not-allowed"
+                      >
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled
+                          className="pointer-events-none"
+                        >
+                          <Plus className="mr-1 h-4 w-4" />
+                          Thêm dòng
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      Đã đạt số lượng tối đa ({featureLimit} tính năng).
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddRow}
+                  >
+                    <Plus className="mr-1 h-4 w-4" />
+                    Thêm dòng
+                  </Button>
+                )}
               </div>
 
               {fields.map((item, index) => {

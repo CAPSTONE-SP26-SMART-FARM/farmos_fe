@@ -109,7 +109,7 @@ export default function MemberDetailPanel({ member, onBack }: Props) {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <Badge className="mb-1">Chi tiết nhân sự</Badge>
+            <Badge className="mb-1">Chi tiết tài khoản</Badge>
             <h1 className="text-2xl font-bold">{detail.user.fullName}</h1>
           </div>
         </div>
@@ -138,7 +138,7 @@ export default function MemberDetailPanel({ member, onBack }: Props) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               {RoleIcon}
-              Thông tin nhân sự
+              Thông tin tài khoản
             </CardTitle>
           </CardHeader>
           <Separator />

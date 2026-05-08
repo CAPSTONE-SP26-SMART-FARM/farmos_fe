@@ -11,7 +11,6 @@ import {
   Layers,
   Radio,
   Send,
-  SlidersHorizontal,
   Sprout,
   Wheat,
 } from "lucide-react";
@@ -25,7 +24,6 @@ import { OwnerMilestonesWithDetailTab } from "./components/OwnerMilestonesWithDe
 import { OwnerRequestsHistoryTab } from "./components/OwnerRequestsHistoryTab";
 import { OwnerSensorOverviewTab } from "./components/OwnerSensorOverviewTab";
 import { OwnerIncidentTab } from "./components/OwnerIncidentTab";
-import { OwnerTrackingLogTab } from "./components/OwnerTrackingLogTab";
 import HarvestRecordTab from "@/components/common/HarvestRecord/HarvestRecordTab";
 import { ZoneSwitcherCombobox } from "@/pages/ManagerPage/CropSeasons/components/ZoneSwitcherCombobox";
 import { ZoneLanding } from "@/pages/ManagerPage/CropSeasons/components/ZoneLanding";
@@ -138,13 +136,6 @@ function NowSeasonContent({
               Sự cố
             </TabsTrigger>
             <TabsTrigger
-              value="tracking"
-              className="flex items-center gap-1.5"
-            >
-              <SlidersHorizontal className="h-3.5 w-3.5" />
-              Nhật ký thay đổi
-            </TabsTrigger>
-            <TabsTrigger
               value="harvest"
               className="flex items-center gap-1.5"
             >
@@ -167,9 +158,6 @@ function NowSeasonContent({
           </TabsContent>
           <TabsContent value="incidents" className="mt-4">
             <OwnerIncidentTab cropSeason={season} />
-          </TabsContent>
-          <TabsContent value="tracking" className="mt-4">
-            <OwnerTrackingLogTab cropSeasonId={season.id} />
           </TabsContent>
           <TabsContent value="harvest" className="mt-4">
             <HarvestRecordTab cropSeason={season} />

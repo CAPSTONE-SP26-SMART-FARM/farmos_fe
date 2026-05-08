@@ -88,9 +88,9 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Nhân sự</h2>
+          <h2 className="text-lg font-semibold">Tài khoản</h2>
           <p className="text-sm text-muted-foreground">
-            Xem và quản lý nhân sự của nông trại.
+            Xem và quản lý tài khoản của nông trại.
           </p>
         </div>
         <div className="flex gap-2 shrink-0">
@@ -129,7 +129,7 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
             className="gap-1.5"
           >
             <UserPlus className="h-4 w-4" />
-            Thêm nhân sự
+            Thêm tài khoản
           </Button>
         </div>
       </div>
@@ -139,7 +139,7 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nhân sự</TableHead>
+                <TableHead>Tài khoản</TableHead>
                 <TableHead>Vai trò</TableHead>
                 <TableHead>Số điện thoại</TableHead>
                 <TableHead>Nông trại</TableHead>
@@ -177,7 +177,7 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <p className="text-sm text-muted-foreground">
-              Không tải được danh sách nhân sự. Vui lòng thử lại.
+              Không tải được danh sách tài khoản. Vui lòng thử lại.
             </p>
           </CardContent>
         </Card>
@@ -187,16 +187,16 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
             <div className="rounded-full bg-muted p-4 mb-4">
               <Users className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold mb-1">Chưa có nhân sự</h3>
+            <h3 className="text-lg font-semibold mb-1">Chưa có tài khoản</h3>
             <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-              Hãy thêm nhân sự để hỗ trợ vận hành nông trại hàng ngày.
+              Hãy thêm tài khoản để hỗ trợ vận hành nông trại hàng ngày.
             </p>
             <Button
               onClick={onAddMember}
               className="gap-1.5"
             >
               <UserPlus className="h-4 w-4" />
-              Thêm nhân sự đầu tiên
+              Thêm tài khoản đầu tiên
             </Button>
           </CardContent>
         </Card>
@@ -206,7 +206,7 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nhân sự</TableHead>
+                  <TableHead>Tài khoản</TableHead>
                   <TableHead>Vai trò</TableHead>
                   <TableHead>Số điện thoại</TableHead>
                   <TableHead>Nông trại</TableHead>
@@ -276,7 +276,7 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
             <div className="flex items-center justify-between pt-2">
               <p className="text-sm text-muted-foreground">
                 Trang {meta.page}/{meta.totalPages} &bull; {meta.totalItems}{" "}
-                nhân sự
+                tài khoản
               </p>
               <div className="flex gap-2">
                 <Button

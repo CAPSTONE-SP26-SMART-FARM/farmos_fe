@@ -70,7 +70,7 @@ import {
   useSubscriptionCancel,
   useSubscriptionDetail,
   useSubscriptionEntitlements,
-  useSubscriptionUsageLedger,
+  useSubscriptionQuota,
 } from "@/queries/useSubscription";
 import {
   CancelSubscriptionBodySchema,
@@ -78,7 +78,6 @@ import {
   type ListSubscriptionsQueryType,
   type SubscriptionStatusType,
   ToggleAutoRenewBodySchema,
-  type UsageLedgerQueryType,
 } from "@/schemaValidatation/subscription";
 import type { ListInvoicesQueryType } from "@/schemaValidatation/invoice";
 import type {
@@ -182,13 +181,6 @@ function SubscriptionLifecyclePanel({
       search: undefined,
     });
 
-  const [usageQuery, setUsageQuery] = useState<UsageLedgerQueryType>({
-    page: 1,
-    limit: 5,
-    search: undefined,
-    featureCode: undefined,
-  });
-
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState("");
   const [invoiceQuery] = useState<ListInvoicesQueryType>({
@@ -271,12 +263,6 @@ function SubscriptionLifecyclePanel({
 
   useEffect(() => {
     setEntitlementQuery({ page: 1, limit: 5, search: undefined });
-    setUsageQuery({
-      page: 1,
-      limit: 5,
-      search: undefined,
-      featureCode: undefined,
-    });
   }, [selectedSubscriptionId]);
 
   const selectedSubscriptionDetail = useSubscriptionDetail(
@@ -290,9 +276,8 @@ function SubscriptionLifecyclePanel({
     shouldFetchDetail || shouldFetchOwnerPanels,
   );
 
-  const usageLedgerQuery = useSubscriptionUsageLedger(
+  const quotaQuery = useSubscriptionQuota(
     selectedSubscriptionId,
-    usageQuery,
     shouldFetchDetail || shouldFetchOwnerPanels,
   );
 
@@ -348,7 +333,7 @@ function SubscriptionLifecyclePanel({
       ? ownerMySubscription.isLoading
       : selectedSubscriptionDetail.isLoading;
   const entitlementData = entitlementsQuery.data?.data;
-  const usageData = usageLedgerQuery.data?.data;
+  const quotaData = quotaQuery.data?.data;
   const invoices = invoicesQuery.data?.data?.data ?? [];
   const selectedInvoice =
     invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? invoices[0];
@@ -561,7 +546,6 @@ function SubscriptionLifecyclePanel({
                       <TableHead>Chủ trại</TableHead>
                       <TableHead>Gói</TableHead>
                       <TableHead>Trạng thái</TableHead>
-                      <TableHead>Tự động gia hạn</TableHead>
                       <TableHead className="text-right">Chi tiết</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -569,7 +553,7 @@ function SubscriptionLifecyclePanel({
                     {adminListSubscriptions.isLoading && (
                       <TableRow>
                         <TableCell
-                          colSpan={6}
+                          colSpan={5}
                           className="py-5 text-center text-muted-foreground"
                         >
                           Đang tải danh sách đăng ký...
@@ -581,7 +565,7 @@ function SubscriptionLifecyclePanel({
                       !subscriptions.length && (
                         <TableRow>
                           <TableCell
-                            colSpan={6}
+                            colSpan={5}
                             className="py-5 text-center text-muted-foreground"
                           >
                             Không có dữ liệu đăng ký.
@@ -605,7 +589,6 @@ function SubscriptionLifecyclePanel({
                             {SUBSCRIPTION_STATUS_LABEL[item.status]}
                           </Badge>
                         </TableCell>
-                        <TableCell>{item.autoRenew ? "Bật" : "Tắt"}</TableCell>
                         <TableCell className="text-right">
                           <Button
                             size="sm"
@@ -741,15 +724,7 @@ function SubscriptionLifecyclePanel({
                 {detail && (
                   <>
                     <div className="space-y-4 rounded-lg border p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="text-xs text-muted-foreground">
-                            Mã đăng ký
-                          </p>
-                          <p className="font-mono text-sm break-all">
-                            {detail.id}
-                          </p>
-                        </div>
+                      <div className="flex items-start justify-end gap-3">
                         <Badge
                           variant={getSubscriptionStatusBadgeVariant(
                             detail.status,
@@ -928,8 +903,8 @@ function SubscriptionLifecyclePanel({
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Tính năng</TableHead>
-                        <TableHead>Giá trị</TableHead>
+                        <TableHead>Tên tính năng</TableHead>
+                        <TableHead>Mã tính năng</TableHead>
                         <TableHead>Kỳ áp dụng</TableHead>
                         <TableHead>Tạo lúc</TableHead>
                       </TableRow>
@@ -960,8 +935,12 @@ function SubscriptionLifecyclePanel({
 
                       {entitlementData?.data.map((item) => (
                         <TableRow key={item.id}>
-                          <TableCell>{item.featureCode}</TableCell>
-                          <TableCell>{item.value}</TableCell>
+                          <TableCell className="font-medium">
+                            {item.featureName ?? "-"}
+                          </TableCell>
+                          <TableCell className="font-mono text-xs text-muted-foreground">
+                            {item.featureCode}
+                          </TableCell>
                           <TableCell>
                             {item.periodStart ?? "-"} - {item.periodEnd ?? "-"}
                           </TableCell>
@@ -975,34 +954,24 @@ function SubscriptionLifecyclePanel({
                 </div>
 
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <h4 className="text-sm font-semibold">Lịch sử sử dụng</h4>
-                    <Input
-                      className="max-w-xs"
-                      placeholder="Lọc theo mã tính năng"
-                      value={usageQuery.featureCode ?? ""}
-                      onChange={(event) =>
-                        setUsageQuery((prev) => ({
-                          ...prev,
-                          page: 1,
-                          featureCode: event.target.value || undefined,
-                        }))
-                      }
-                    />
-                  </div>
+                  <h4 className="text-sm font-semibold">Lịch sử sử dụng</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Tổng hợp mức sử dụng hiện tại theo từng quyền lợi: hạn mức từ gói,
+                    số đã dùng và số còn lại được tính toán theo dữ liệu thực tế.
+                  </p>
 
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Tính năng</TableHead>
-                        <TableHead>Biến động</TableHead>
-                        <TableHead>Ngữ cảnh</TableHead>
-                        <TableHead>Ghi chú</TableHead>
-                        <TableHead>Thời gian</TableHead>
+                        <TableHead>Tên tính năng</TableHead>
+                        <TableHead>Mã tính năng</TableHead>
+                        <TableHead className="text-right">Hạn mức</TableHead>
+                        <TableHead className="text-right">Đã dùng</TableHead>
+                        <TableHead className="text-right">Còn lại</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {usageLedgerQuery.isLoading && (
+                      {quotaQuery.isLoading && (
                         <TableRow>
                           <TableCell
                             colSpan={5}
@@ -1013,34 +982,126 @@ function SubscriptionLifecyclePanel({
                         </TableRow>
                       )}
 
-                      {!usageLedgerQuery.isLoading &&
-                        !usageData?.data.length && (
+                      {!quotaQuery.isLoading &&
+                        !quotaData?.features.length && (
                           <TableRow>
                             <TableCell
                               colSpan={5}
                               className="py-5 text-center text-muted-foreground"
                             >
-                              Không có lịch sử sử dụng.
+                              Không có dữ liệu sử dụng.
                             </TableCell>
                           </TableRow>
                         )}
 
-                      {usageData?.data.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell>{item.featureCode}</TableCell>
-                          <TableCell>{item.delta}</TableCell>
-                          <TableCell>
-                            {item.contextEntity ?? "-"}
-                            {item.contextId ? ` (${item.contextId})` : ""}
-                          </TableCell>
-                          <TableCell>{item.note ?? "-"}</TableCell>
-                          <TableCell>
-                            {formatDateTime(item.createdAt)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {quotaData?.features.flatMap((feature) => {
+                        const baseRow = (
+                          <TableRow key={feature.featureCode}>
+                            <TableCell className="font-medium">
+                              {feature.featureName ?? "-"}
+                            </TableCell>
+                            <TableCell className="font-mono text-xs text-muted-foreground">
+                              {feature.featureCode}
+                            </TableCell>
+                            {feature.kind === "numeric" && (
+                              <>
+                                <TableCell className="text-right">
+                                  {feature.limit}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {feature.used}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {feature.remaining}
+                                </TableCell>
+                              </>
+                            )}
+                            {feature.kind === "numeric_per_farm" && (
+                              <>
+                                <TableCell className="text-right">
+                                  {feature.limit}
+                                </TableCell>
+                                <TableCell
+                                  colSpan={2}
+                                  className="text-right text-xs text-muted-foreground"
+                                >
+                                  Tính theo từng trang trại
+                                </TableCell>
+                              </>
+                            )}
+                            {feature.kind === "boolean" && (
+                              <TableCell
+                                colSpan={3}
+                                className="text-right"
+                              >
+                                <Badge
+                                  variant={
+                                    feature.enabled ? "default" : "outline"
+                                  }
+                                >
+                                  {feature.enabled ? "Bật" : "Tắt"}
+                                </Badge>
+                              </TableCell>
+                            )}
+                            {feature.kind === "raw" && (
+                              <TableCell
+                                colSpan={3}
+                                className="text-right text-sm"
+                              >
+                                {feature.value}
+                              </TableCell>
+                            )}
+                          </TableRow>
+                        );
+
+                        if (feature.kind === "numeric_per_farm") {
+                          return [
+                            baseRow,
+                            ...feature.perFarm.map((row) => (
+                              <TableRow
+                                key={`${feature.featureCode}-${row.farmId}`}
+                                className="bg-muted/30"
+                              >
+                                <TableCell
+                                  colSpan={2}
+                                  className="pl-8 text-xs text-muted-foreground"
+                                >
+                                  ↳ {row.farmName}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {feature.limit}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {row.used}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {row.remaining}
+                                </TableCell>
+                              </TableRow>
+                            )),
+                          ];
+                        }
+                        return [baseRow];
+                      })}
                     </TableBody>
                   </Table>
+
+                  {quotaData?.iotDevices && (
+                    <div className="rounded-md border bg-muted/20 p-3 text-xs text-muted-foreground">
+                      <p className="font-semibold text-foreground">
+                        Thiết bị IoT
+                      </p>
+                      <p>
+                        Hạn mức từ gói: {quotaData.iotDevices.subscriptionMax}
+                        {quotaData.iotDevices.kitBonus > 0 &&
+                          ` + ${quotaData.iotDevices.kitBonus} từ gói bổ trợ`}
+                      </p>
+                      <p>
+                        Đã dùng: {quotaData.iotDevices.used} · Còn lại:{" "}
+                        {quotaData.iotDevices.remaining}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {!isAdmin && (
