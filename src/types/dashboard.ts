@@ -1,11 +1,11 @@
-// Dashboard API response types — mirrors BE dashboard.model.ts Zod schemas.
-// Components import from here instead of the _mocks files.
+// Dashboard API response types — mirrors BE `dashboard.model.ts` Zod schemas.
+// Components import from here; we never re-derive the contract elsewhere.
 
 import type { DailyLogResType } from "@/schemaValidatation/dailyLog";
 
 // ── Shared ────────────────────────────────────────────────────────────────
 
-export type DashboardPeriod = "7d" | "30d" | "90d";
+export type DashboardPeriod = "1d" | "7d" | "30d" | "90d";
 
 export interface DailyPoint {
   date: string; // yyyy-MM-dd UTC
@@ -14,58 +14,37 @@ export interface DailyPoint {
 
 // ── Admin ─────────────────────────────────────────────────────────────────
 
+/**
+ * KPI strip rendered on the admin overview. Currency values are VND
+ * (no decimals). `*Delta` is the period-over-period absolute difference,
+ * i.e. `value(period) − value(previous period of equal length)`.
+ */
 export interface AdminKpiSummary {
   totalUsers: number;
   totalUsersDelta: number;
-  totalFarms: number;
-  totalFarmsDelta: number;
-  activeSubscriptions: number;
-  activeSubscriptionsDelta: number;
-  mrrVnd: number;
-  mrrVndDelta: number;
+  totalRevenueVnd: number;
+  totalRevenueVndDelta: number;
+  totalSubscriptionsRegistered: number;
+  totalSubscriptionsRegisteredDelta: number;
+  totalTicketsRecorded: number;
+  totalTicketsRecordedDelta: number;
   pendingDoctorApps: number;
-  openCriticalTickets: number;
+  pendingDoctorAppsDelta: number;
+  doctorPayoutVnd: number;
+  doctorPayoutVndDelta: number;
 }
 
-export type ActionQueueItemType =
-  | "doctor-application"
-  | "overdue-invoice"
-  | "critical-ticket";
-
-export interface ActionQueueItem {
-  id: string;
-  type: ActionQueueItemType;
-  title: string;
-  subtitle: string;
-  href: string;
-  ageHours: number;
-}
-
-export type ActivityType =
-  | "user-signup"
-  | "farm-created"
-  | "payment-received"
-  | "doctor-approved"
-  | "subscription-cancelled";
-
-export interface AdminActivityItem {
-  id: string;
-  type: ActivityType;
-  title: string;
-  subtitle: string;
-  createdAt: string;
+/** Lifetime money flow surfaced in the "Ví tiền nền tảng" donut. */
+export interface PlatformWallet {
+  revenueVnd: number;
+  costVnd: number;
+  netVnd: number;
 }
 
 export interface SubscriptionPlanShare {
   planName: string;
   count: number;
   color: string;
-}
-
-export interface UserRoleShare {
-  role: "admin" | "owner" | "manager" | "farmer" | "rancher" | "doctor";
-  label: string;
-  count: number;
 }
 
 export type IotFleetStatus =
@@ -86,17 +65,11 @@ export interface IotFleetSlice {
 export interface AdminDashboardPayload {
   period: DashboardPeriod;
   kpis: AdminKpiSummary;
-  actionQueue: {
-    pendingDoctorApps: ActionQueueItem[];
-    overdueInvoices: ActionQueueItem[];
-    criticalTickets: ActionQueueItem[];
-  };
-  activityFeed: AdminActivityItem[];
+  platformWallet: PlatformWallet;
   revenueTrend: DailyPoint[];
   newUsersTrend: DailyPoint[];
   subscriptionDistribution: SubscriptionPlanShare[];
-  userRoleDistribution: UserRoleShare[];
-  iotFleet: IotFleetSlice[];
+  iotFleetBoards: IotFleetSlice[];
 }
 
 // ── Owner ─────────────────────────────────────────────────────────────────

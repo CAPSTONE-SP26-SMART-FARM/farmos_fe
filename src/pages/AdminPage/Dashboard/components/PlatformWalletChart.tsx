@@ -6,7 +6,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatCurrencyVnd } from "@/lib/format";
-import type { PlatformWallet } from "../_mocks/adminDashboardOverlay";
+import type { PlatformWallet } from "@/types/dashboard";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
 const REVENUE_COLOR = "#10b981";
