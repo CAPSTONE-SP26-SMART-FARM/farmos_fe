@@ -21,6 +21,7 @@ import {
   Trophy,
   UserCheck,
   Users,
+  Wallet,
 } from "lucide-react";
 import type { SidebarData } from "./types";
 
@@ -173,6 +174,11 @@ export const sidebarData: SidebarData = {
           url: "/dashboard/admin/medicines/freetext-stats",
           icon: BarChart3,
         },
+        {
+          title: "Rút Tiền Bác Sĩ",
+          url: "/dashboard/admin/doctor-withdrawals",
+          icon: Wallet,
+        },
       ],
     },
   ],
@@ -229,16 +235,6 @@ export const sidebarData: SidebarData = {
           title: "Quản Lý Tài Khoản",
           url: "/dashboard/owner/managers",
           icon: Users,
-        },
-      ],
-    },
-    {
-      label: "Vận hành",
-      items: [
-        {
-          title: "Mẫu Nhiệm Vụ",
-          url: "/dashboard/owner/employee-task-templates",
-          icon: ClipboardList,
         },
       ],
     },

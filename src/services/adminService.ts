@@ -1,6 +1,15 @@
 import { API_ENDPOINTS } from "@/constants";
 import { api } from "@/lib/axios";
 import type {
+  ListAdminWithdrawalsQueryType,
+  ListWithdrawalsAdminResType,
+  MarkPaidBodyType,
+  RejectWithdrawalBodyType,
+  ResolveNotReceivedBodyType,
+  WithdrawalAuditResType,
+  WithdrawalRequestResType,
+} from "@/schemaValidatation/doctorWithdrawal";
+import type {
   AssignmentDetailAdminResType,
   AssignmentResType,
   CreateAssignmentBodyType,
@@ -105,5 +114,35 @@ const adminService = {
     ),
   deleteMilestoneTemplate: (id: string) =>
     api.delete<MessageResType>(ADMIN.MILESTONE_TEMPLATES.DELETE(id)),
+
+  // ── Doctor Withdrawals ──────────────────────────────────────────────
+  listWithdrawals: (query: ListAdminWithdrawalsQueryType) =>
+    api.get<ListWithdrawalsAdminResType>(
+      ADMIN.WITHDRAWALS.LIST + "?" + queryString.stringify({ ...query }),
+    ),
+  withdrawalDetail: (id: string) =>
+    api.get<WithdrawalRequestResType>(ADMIN.WITHDRAWALS.DETAIL(id)),
+  withdrawalAudit: (id: string) =>
+    api.get<WithdrawalAuditResType>(ADMIN.WITHDRAWALS.AUDIT(id)),
+  approveWithdrawal: (id: string) =>
+    api.post<WithdrawalRequestResType, Record<string, never>>(
+      ADMIN.WITHDRAWALS.APPROVE(id),
+      {},
+    ),
+  rejectWithdrawal: (id: string, body: RejectWithdrawalBodyType) =>
+    api.post<WithdrawalRequestResType, RejectWithdrawalBodyType>(
+      ADMIN.WITHDRAWALS.REJECT(id),
+      body,
+    ),
+  markPaidWithdrawal: (id: string, body: MarkPaidBodyType) =>
+    api.post<WithdrawalRequestResType, MarkPaidBodyType>(
+      ADMIN.WITHDRAWALS.MARK_PAID(id),
+      body,
+    ),
+  resolveNotReceived: (id: string, body: ResolveNotReceivedBodyType) =>
+    api.post<WithdrawalRequestResType, ResolveNotReceivedBodyType>(
+      ADMIN.WITHDRAWALS.RESOLVE_NOT_RECEIVED(id),
+      body,
+    ),
 };
 export default adminService;

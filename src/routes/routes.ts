@@ -38,6 +38,8 @@ import AdminDqsLeaderboardPage from "@/pages/AdminPage/DQS/AdminDqsLeaderboardPa
 import AdminDoctorDqsDetailPage from "@/pages/AdminPage/DQS/AdminDoctorDqsDetailPage";
 import AdminTicketDetailPage from "@/pages/AdminPage/Tickets/AdminTicketDetailPage";
 import AdminPackagesPage from "@/pages/AdminPage/Packages/AdminPackagesPage";
+import AdminDoctorWithdrawalsPage from "@/pages/AdminPage/DoctorWithdrawals/AdminDoctorWithdrawalsPage";
+import AdminDoctorWithdrawalDetailPage from "@/pages/AdminPage/DoctorWithdrawals/AdminDoctorWithdrawalDetailPage";
 import AdminUsersPage from "@/pages/AdminPage/Users/AdminUsersPage";
 import DoctorPage from "@/pages/DoctorPage/DoctorPage";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage/ForgotPasswordPage";
@@ -313,6 +315,16 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/admin/tickets/:id",
         component: AdminTicketDetailPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/doctor-withdrawals",
+        component: AdminDoctorWithdrawalsPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/doctor-withdrawals/:id",
+        component: AdminDoctorWithdrawalDetailPage,
         allowedRoles: [RoleName.Admin],
       },
       {

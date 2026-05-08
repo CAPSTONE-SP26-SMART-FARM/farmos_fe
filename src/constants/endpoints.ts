@@ -172,6 +172,16 @@ export const API_ENDPOINTS = {
         "/iot-device-provisioning/admin/provision/assign-from-kit",
       UNASSIGN_OWNER: "/iot-device-provisioning/admin/provision/unassign-owner",
     },
+    WITHDRAWALS: {
+      LIST: "/admin/withdrawals",
+      DETAIL: (id: string) => `/admin/withdrawals/${id}`,
+      AUDIT: (id: string) => `/admin/withdrawals/${id}/audit`,
+      APPROVE: (id: string) => `/admin/withdrawals/${id}/approve`,
+      REJECT: (id: string) => `/admin/withdrawals/${id}/reject`,
+      MARK_PAID: (id: string) => `/admin/withdrawals/${id}/mark-paid`,
+      RESOLVE_NOT_RECEIVED: (id: string) =>
+        `/admin/withdrawals/${id}/resolve-not-received`,
+    },
   },
   MANAGER: {
     ZONES: {
@@ -780,6 +790,16 @@ export const QUERY_KEYS = {
         ...(query !== undefined ? [query] : []),
       ],
       detail: (deviceId: string) => ["admin", "iot-devices", deviceId],
+    },
+    withdrawals: {
+      list: (query?: Record<string, unknown>) => [
+        "admin",
+        "withdrawals",
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ],
+      detail: (id: string) => ["admin", "withdrawals", id],
+      audit: (id: string) => ["admin", "withdrawals", id, "audit"],
     },
   },
   manager: {
