@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router";
 import routes from "./routes";
 import type { RouteChild, RouteConfig } from "./types";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { OwnerSubscriptionGuard } from "@/components/auth/OwnerSubscriptionGuard";
 import NotFound from "@/components/layout/NotFound/NotFound";
 
 const AppRoutes = () => {
@@ -22,7 +23,13 @@ const AppRoutes = () => {
 											isRestricted={route.isRestricted}
 											allowedRoles={item?.allowedRoles}
 										>
-											<Component />
+											{item.requiresActiveSubscription ? (
+												<OwnerSubscriptionGuard>
+													<Component />
+												</OwnerSubscriptionGuard>
+											) : (
+												<Component />
+											)}
 										</ProtectedRoute>
 									}
 								/>

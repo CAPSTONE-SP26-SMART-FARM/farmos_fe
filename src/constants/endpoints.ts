@@ -35,6 +35,7 @@ export const API_ENDPOINTS = {
     RENEW: (id: string) => `/subscriptions/${id}/renew`,
     CANCEL: (id: string) => `/subscriptions/${id}/cancel`,
     AUTO_RENEW: (id: string) => `/subscriptions/${id}/auto-renew`,
+    UPGRADE: "/subscriptions/upgrade",
     PLAN_VERSION: (id: string) => `/subscriptions/${id}/plan-version`,
     ENTITLEMENTS: (id: string) => `/subscriptions/${id}/entitlements`,
     USAGE: (id: string) => `/subscriptions/${id}/usage`,

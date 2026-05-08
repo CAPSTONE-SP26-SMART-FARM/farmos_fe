@@ -132,7 +132,8 @@ const META: Partial<Record<RealtimeEventName, EventMeta>> = {
     severity: "info",
     title: "Thông báo",
     shouldToast: false,
-    buildHref: (p) => strField(p, "href"),
+    buildHref: (p) =>
+      strField(p, "redirectUrl") ?? strField(p, "href"),
     buildDedupId: (event, p) => strField(p, "id") ?? fallbackId(event, p),
   },
   [RealtimeEvents.IncidentTicketCreated]: {
@@ -271,14 +272,23 @@ export function buildNotificationFromEvent(
   const id =
     meta.buildDedupId?.(args.event, args.payload) ??
     fallbackId(args.event, args.payload);
-  const href = meta.buildHref?.(args.payload, args.role);
-  const description = strField(args.payload, "message");
+
+  const title = strField(args.payload, "title") ?? meta.title;
+  const description =
+    strField(args.payload, "content") ??
+    strField(args.payload, "message") ??
+    meta.description;
+
+  const href =
+    meta.buildHref?.(args.payload, args.role) ??
+    strField(args.payload, "redirectUrl") ??
+    strField(args.payload, "href");
 
   return {
     id,
     kind: meta.kind,
     event: args.event,
-    title: meta.title,
+    title,
     description: description ?? meta.description,
     href,
     severity: meta.severity,
@@ -288,6 +298,15 @@ export function buildNotificationFromEvent(
   };
 }
 
-export function shouldToast(event: RealtimeEventName): boolean {
+export function shouldToast(
+  event: RealtimeEventName,
+  payload?: Record<string, unknown>,
+): boolean {
+  if (
+    event === RealtimeEvents.NotificationCreated &&
+    strField(payload ?? {}, "type") === "invoice_expired"
+  ) {
+    return true;
+  }
   return META[event]?.shouldToast ?? false;
 }

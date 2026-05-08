@@ -15,7 +15,7 @@ import {
   SENSOR_TYPE_LABEL_VI,
   type IotDeviceKitResType,
 } from "@/schemaValidatation/iotKit";
-import { Boxes, Cpu, Sprout } from "lucide-react";
+import { Boxes, Cpu, PackageX, Sprout } from "lucide-react";
 
 interface IotKitCardProps {
   kit: IotDeviceKitResType;
@@ -53,7 +53,15 @@ export default function IotKitCard({
               Mã: {kit.code} · Phủ ~{coverageM2} m²
             </CardDescription>
           </div>
-          {highlighted && <Badge>Khuyến nghị</Badge>}
+          <div className="flex flex-col items-end gap-1">
+            {highlighted && <Badge>Khuyến nghị</Badge>}
+            {!kit.inStock && (
+              <Badge variant="destructive" className="gap-1">
+                <PackageX className="h-3 w-3" />
+                Hết hàng
+              </Badge>
+            )}
+          </div>
         </div>
         <p className="mt-3 text-2xl font-bold">{formatCurrencyVnd(kit.price)}</p>
         <p className="text-xs text-muted-foreground">
@@ -105,8 +113,8 @@ export default function IotKitCard({
         <Button
           className="flex-1"
           onClick={onPurchase ?? onSelect}
-          disabled={disabled}
-          title={disabled ? disabledReason : undefined}
+          disabled={disabled || !kit.inStock}
+          title={!kit.inStock ? "Kho thiết bị tạm hết, không thể mua ngay" : disabled ? disabledReason : undefined}
         >
           Mua ngay
         </Button>

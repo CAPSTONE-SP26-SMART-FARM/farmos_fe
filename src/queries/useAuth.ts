@@ -29,7 +29,7 @@ export const useLogin = () => {
 			// Use login action to set both user and tokens atomically
 			setTokens(data.data);
 
-			toast.success("Login successful!");
+			toast.success("Đăng nhập thành công!");
 		},
 	});
 };
@@ -43,7 +43,7 @@ export const useRegister = () => {
 	return useMutation({
 		mutationFn: (data: RegisterBodyType) => authService.register(data),
 		onSuccess: () => {
-			toast.success("Registration successful! Please log in.");
+			toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
 			navigate("/login");
 		},
 	});
@@ -70,7 +70,7 @@ export const useLogout = () => {
 			// Clear all cached queries
 			queryClient.clear();
 
-			toast.success("Logged out successfully");
+			toast.success("Đã đăng xuất thành công.");
 			navigate("/login");
 		},
 	});
@@ -131,10 +131,10 @@ export const useForgotPassword = () => {
 		mutationFn: (data: ForgotPasswordBodyType) =>
 			authService.forgotPassword(data),
 		onSuccess: () => {
-			toast.success("Password reset link sent to your email!");
+			toast.success("Đã gửi link đặt lại mật khẩu về email của bạn!");
 		},
 		onError: () => {
-			toast.error("Failed to send password reset link. Please try again.");
+			toast.error("Gửi link đặt lại mật khẩu thất bại. Vui lòng thử lại.");
 		},
 	});
 };

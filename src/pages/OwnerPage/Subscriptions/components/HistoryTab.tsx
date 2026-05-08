@@ -18,12 +18,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatDateTimeVi } from "@/lib/format";
 import { getSubscriptionStatusBadgeVariant } from "@/lib/utils";
 import { useOwnerSubscriptionHistory } from "@/queries/useSubscription";
 import type {
   ListSubscriptionsQueryType,
   SubscriptionStatusType,
 } from "@/schemaValidatation/subscription";
+import SubscriptionDetailDialog from "./SubscriptionDetailDialog";
 
 const SUBSCRIPTION_STATUS_LABEL: Record<SubscriptionStatusType, string> = {
   PENDING: "Chờ kích hoạt",
@@ -42,19 +44,6 @@ const STATUS_OPTIONS: Array<{ value: "ALL" | SubscriptionStatusType; label: stri
   { value: "EXPIRED", label: "Hết hạn" },
 ];
 
-const formatDateTime = (value?: string | null) => {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return new Intl.DateTimeFormat("vi-VN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-};
-
 function HistoryTab() {
   const [query, setQuery] = useState<ListSubscriptionsQueryType>({
     page: 1,
@@ -63,10 +52,22 @@ function HistoryTab() {
     status: undefined,
     ownerSearch: undefined,
   });
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const subscriptionHistoryQuery = useOwnerSubscriptionHistory(query, true);
   const subscriptions = subscriptionHistoryQuery.data?.data?.data ?? [];
   const meta = subscriptionHistoryQuery.data?.data?.meta;
+
+  const handleOpenDetail = (id: string) => {
+    setSelectedId(id);
+    setDialogOpen(true);
+  };
+
+  const handleDialogChange = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open) setSelectedId(null);
+  };
 
   return (
     <div className="space-y-4">
@@ -119,7 +120,7 @@ function HistoryTab() {
                 <TableHead>Trạng thái</TableHead>
                 <TableHead>Bắt đầu</TableHead>
                 <TableHead>Hết hạn</TableHead>
-                <TableHead>Tự động gia hạn</TableHead>
+                <TableHead className="text-right">Chi tiết</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -154,9 +155,17 @@ function HistoryTab() {
                       {SUBSCRIPTION_STATUS_LABEL[subscription.status]}
                     </Badge>
                   </TableCell>
-                  <TableCell>{formatDateTime(subscription.startedAt)}</TableCell>
-                  <TableCell>{formatDateTime(subscription.expiresAt)}</TableCell>
-                  <TableCell>{subscription.autoRenew ? "Bật" : "Tắt"}</TableCell>
+                  <TableCell>{formatDateTimeVi(subscription.startedAt)}</TableCell>
+                  <TableCell>{formatDateTimeVi(subscription.expiresAt)}</TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleOpenDetail(subscription.id)}
+                    >
+                      Xem
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -189,6 +198,12 @@ function HistoryTab() {
           </div>
         </CardContent>
       </Card>
+
+      <SubscriptionDetailDialog
+        subscriptionId={selectedId}
+        open={dialogOpen}
+        onOpenChange={handleDialogChange}
+      />
     </div>
   );
 }

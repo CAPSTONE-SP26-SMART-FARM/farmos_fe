@@ -12,6 +12,7 @@ export interface NavItem {
 export interface NavGroup {
   label: string;
   items: NavItem[];
+  requiresSubscription?: boolean;
 }
 
 export interface SidebarData {

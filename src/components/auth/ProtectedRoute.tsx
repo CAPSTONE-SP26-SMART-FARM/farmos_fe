@@ -1,6 +1,5 @@
 import { Navigate } from "react-router";
 import { useAuthStore } from "@/stores/authStore";
-import { toast } from "sonner";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -33,7 +32,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Protected routes: require auth + role check
   if (allowedRoles) {
     if (!user || !isAuth) {
-      toast.error("Bạn cần đăng nhập để truy cập trang này");
       return (
         <Navigate
           to="/login"
@@ -42,7 +40,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       );
     }
     if (!allowedRoles.includes(user.role)) {
-      toast.error("Bạn không có quyền truy cập trang này");
       return (
         <Navigate
           to={`/dashboard/${user.role}`}

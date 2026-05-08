@@ -148,11 +148,13 @@ function OwnerPaymentDetailPage() {
                 Loại hóa đơn:{" "}
                 {invoice.referenceType === "SUBSCRIPTION"
                   ? "Gói đăng ký"
-                  : invoice.referenceType === "SERVICE_PACKAGE"
-                    ? "Gói dịch vụ"
-                    : invoice.referenceType === "IOT_KIT_ORDER"
-                      ? "Đơn Bộ Kit IoT"
-                      : invoice.referenceType}
+                  : invoice.referenceType === "SUBSCRIPTION_RENEWAL"
+                    ? "Gia hạn gói"
+                    : invoice.referenceType === "SERVICE_PACKAGE"
+                      ? "Gói dịch vụ"
+                      : invoice.referenceType === "IOT_KIT_ORDER"
+                        ? "Đơn Bộ Kit IoT"
+                        : invoice.referenceType}
               </p>
               <p>Tổng tiền: {formatCurrency(invoice.totalAmount)}</p>
               <p>Ngày phát hành: {formatDateTime(invoice.issueDate)}</p>
