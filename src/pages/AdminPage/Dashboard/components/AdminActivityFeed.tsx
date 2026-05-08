@@ -62,23 +62,26 @@ function relativeVi(value: string): string {
 
 interface AdminActivityFeedProps {
   items: AdminActivityItem[];
+  /** Hard cap on rendered events (default 30 — the most recent 30 logs). */
   maxItems?: number;
   className?: string;
 }
 
 function AdminActivityFeed({
   items,
-  maxItems,
+  maxItems = 30,
   className,
 }: AdminActivityFeedProps) {
-  const visible = maxItems ? items.slice(0, maxItems) : items;
+  const visible = items.slice(0, maxItems);
 
   return (
     <Card className={className}>
       <CardHeader>
         <CardTitle className="text-base">Hoạt động gần đây</CardTitle>
         <CardDescription>
-          Các sự kiện mới nhất trên toàn nền tảng.
+          {visible.length > 0
+            ? `${visible.length} sự kiện mới nhất trên toàn nền tảng`
+            : "Các sự kiện mới nhất trên toàn nền tảng"}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -90,7 +93,7 @@ function AdminActivityFeed({
           />
         ) : (
           <ul
-            className="space-y-4"
+            className="max-h-105 space-y-4 overflow-y-auto pr-2"
             aria-label="Danh sách hoạt động"
           >
             {visible.map((item) => {

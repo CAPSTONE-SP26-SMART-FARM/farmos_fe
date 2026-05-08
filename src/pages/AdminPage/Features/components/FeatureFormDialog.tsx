@@ -91,30 +91,31 @@ export function FeatureFormDialog({
               placeholder="VD: Số trang trại tối đa"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="feature-value-type">Kiểu dữ liệu</Label>
-            <Select
-              value={form.valueType}
-              disabled={Boolean(editingFeatureCode)}
-              onValueChange={(value) =>
-                setForm((prev) => ({
-                  ...prev,
-                  valueType: value as CreateFeatureBodyType["valueType"],
-                }))
-              }
-            >
-              <SelectTrigger id="feature-value-type">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="BOOLEAN">BOOLEAN</SelectItem>
-                <SelectItem value="INT">INT</SelectItem>
-                <SelectItem value="DECIMAL">DECIMAL</SelectItem>
-                <SelectItem value="JSON">JSON</SelectItem>
-                <SelectItem value="TEXT">TEXT</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {!editingFeatureCode && (
+            <div className="space-y-2">
+              <Label htmlFor="feature-value-type">Kiểu dữ liệu</Label>
+              <Select
+                value={form.valueType}
+                onValueChange={(value) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    valueType: value as CreateFeatureBodyType["valueType"],
+                  }))
+                }
+              >
+                <SelectTrigger id="feature-value-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="BOOLEAN">BOOLEAN</SelectItem>
+                  <SelectItem value="INT">INT</SelectItem>
+                  <SelectItem value="DECIMAL">DECIMAL</SelectItem>
+                  <SelectItem value="JSON">JSON</SelectItem>
+                  <SelectItem value="TEXT">TEXT</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="feature-default">Giá trị mặc định</Label>
             <Input

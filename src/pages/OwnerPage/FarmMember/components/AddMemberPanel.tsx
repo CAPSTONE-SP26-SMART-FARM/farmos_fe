@@ -82,7 +82,7 @@ const AddMemberPanel = ({ farmCode, onBack }: Props) => {
     try {
       const res = await mutateAsync(data);
       setGeneratedPassword(res.data.generatedPassword);
-      toast.success("Đã thêm nhân sự thành công");
+      toast.success("Đã thêm tài khoản thành công");
     } catch (error) {
       if (isApiErrorUnprocessableEntityResponse(error)) {
         handleApiErrorUnprocessentity(
@@ -93,7 +93,7 @@ const AddMemberPanel = ({ farmCode, onBack }: Props) => {
         return;
       }
       if (isApiErrorResponse(error)) {
-        toast.error(error.response?.data.message ?? "Không thể thêm nhân sự");
+        toast.error(error.response?.data.message ?? "Không thể thêm tài khoản");
       }
     }
   };
@@ -114,12 +114,12 @@ const AddMemberPanel = ({ farmCode, onBack }: Props) => {
             className="mb-2 -ml-2 gap-1 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            Quay lại danh sách nhân sự
+            Quay lại danh sách tài khoản
           </Button>
           <Badge className="mb-2 block w-fit">Cổng chủ vườn</Badge>
-          <h1 className="text-2xl font-bold">Thêm nhân sự</h1>
+          <h1 className="text-2xl font-bold">Thêm tài khoản</h1>
           <p className="text-muted-foreground">
-            Tạo tài khoản nhân sự và gán vào nông trại của bạn.
+            Tạo tài khoản và gán vào nông trại của bạn.
           </p>
         </div>
 
@@ -127,10 +127,10 @@ const AddMemberPanel = ({ farmCode, onBack }: Props) => {
           <Card>
             <CardHeader>
               <CardTitle className="text-green-600">
-                Tạo nhân sự thành công
+                Tạo tài khoản thành công
               </CardTitle>
               <CardDescription>
-                Hãy gửi thông tin đăng nhập này cho nhân sự.
+                Hãy gửi thông tin đăng nhập này cho người dùng.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -166,16 +166,16 @@ const AddMemberPanel = ({ farmCode, onBack }: Props) => {
                 onClick={handleBack}
                 className="w-full"
               >
-                Quay lại danh sách nhân sự
+                Quay lại danh sách tài khoản
               </Button>
             </CardContent>
           </Card>
         ) : (
           <Card>
             <CardHeader>
-              <CardTitle>Thông tin nhân sự</CardTitle>
+              <CardTitle>Thông tin tài khoản</CardTitle>
               <CardDescription>
-                Nhập thông tin cho nhân sự mới. Mật khẩu sẽ được tạo tự động.
+                Nhập thông tin cho tài khoản mới. Mật khẩu sẽ được tạo tự động.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -194,7 +194,7 @@ const AddMemberPanel = ({ farmCode, onBack }: Props) => {
                           {...field}
                           id="member-email"
                           type="email"
-                          placeholder="nhansu@example.com"
+                          placeholder="taikhoan@example.com"
                         />
                         {fieldState.invalid && (
                           <FieldError errors={[fieldState.error]} />
@@ -274,7 +274,7 @@ const AddMemberPanel = ({ farmCode, onBack }: Props) => {
                         Đang tạo...
                       </>
                     ) : (
-                      "Thêm nhân sự"
+                      "Thêm tài khoản"
                     )}
                   </Button>
                 </div>

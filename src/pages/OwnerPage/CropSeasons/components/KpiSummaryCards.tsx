@@ -5,6 +5,7 @@ import {
   TrendingDown,
   Sparkles,
   Activity,
+  RefreshCw,
 } from "lucide-react";
 import {
   Card,
@@ -13,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
@@ -26,6 +28,8 @@ import type { TrackingDiffResType } from "@/schemaValidatation/tracking";
 
 interface KpiSummaryCardsProps {
   diff: TrackingDiffResType;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
 const HEADLINE_TONE_CLASS: Record<
@@ -96,7 +100,11 @@ function LegendDot({
   );
 }
 
-export default function KpiSummaryCards({ diff }: KpiSummaryCardsProps) {
+export default function KpiSummaryCards({
+  diff,
+  onRefresh,
+  isRefreshing,
+}: KpiSummaryCardsProps) {
   const k = computeTrackingStats(diff);
   const tone = healthTone(k.onTimePct, k.total > 0);
 
@@ -105,7 +113,24 @@ export default function KpiSummaryCards({ diff }: KpiSummaryCardsProps) {
       <CardHeader className="pb-3">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div className="min-w-0">
-            <CardTitle className="text-base">Tổng quan tiến độ</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-base">Tổng quan tiến độ</CardTitle>
+              {onRefresh && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2.5 gap-1.5 border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 hover:border-emerald-400 shadow-sm"
+                  onClick={onRefresh}
+                  disabled={isRefreshing}
+                  aria-label="Làm mới"
+                >
+                  <RefreshCw
+                    className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`}
+                  />
+                  <span className="text-xs font-semibold">Làm mới</span>
+                </Button>
+              )}
+            </div>
             <CardDescription>
               {k.total > 0
                 ? `${k.total} trường đã so sánh — ${k.onTime} đúng, ${k.late} trễ/vượt, ${k.early} sớm/thấp`

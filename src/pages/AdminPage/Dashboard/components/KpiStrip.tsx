@@ -1,11 +1,11 @@
 import StatCard from "@/components/common/StatCard";
 import { formatCurrencyVnd } from "@/lib/format";
-import type { AdminKpiSummary } from "@/types/dashboard";
+import type { AdminKpiSummaryV2 } from "../_mocks/adminDashboardOverlay";
 import {
-  AlertOctagon,
-  Building2,
   CreditCard,
+  HandCoins,
   Stethoscope,
+  Ticket,
   TrendingUp,
   Users,
 } from "lucide-react";
@@ -23,12 +23,12 @@ function deltaCurrencyText(vnd: number): string {
 }
 
 interface KpiStripProps {
-  data: AdminKpiSummary;
+  data: AdminKpiSummaryV2;
 }
 
 function KpiStrip({ data }: KpiStripProps) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       <StatCard
         label="Tổng người dùng"
         value={data.totalUsers.toLocaleString("vi-VN")}
@@ -37,25 +37,25 @@ function KpiStrip({ data }: KpiStripProps) {
         tone={data.totalUsersDelta > 0 ? "success" : "default"}
       />
       <StatCard
-        label="Tổng nông trại"
-        value={data.totalFarms.toLocaleString("vi-VN")}
-        hint={deltaText(data.totalFarmsDelta)}
-        icon={Building2}
-        tone={data.totalFarmsDelta > 0 ? "success" : "default"}
-      />
-      <StatCard
-        label="Đăng ký đang hoạt động"
-        value={data.activeSubscriptions.toLocaleString("vi-VN")}
-        hint={deltaText(data.activeSubscriptionsDelta)}
-        icon={CreditCard}
-        tone="default"
-      />
-      <StatCard
-        label="Doanh thu định kỳ (MRR)"
-        value={formatCurrencyVnd(data.mrrVnd)}
-        hint={deltaCurrencyText(data.mrrVndDelta)}
+        label="Tổng doanh thu"
+        value={formatCurrencyVnd(data.totalRevenueVnd)}
+        hint={deltaCurrencyText(data.totalRevenueVndDelta)}
         icon={TrendingUp}
-        tone={data.mrrVndDelta > 0 ? "success" : "default"}
+        tone={data.totalRevenueVndDelta > 0 ? "success" : "default"}
+      />
+      <StatCard
+        label="Tổng gói đã đăng ký"
+        value={data.totalSubscriptionsRegistered.toLocaleString("vi-VN")}
+        hint={deltaText(data.totalSubscriptionsRegisteredDelta)}
+        icon={CreditCard}
+        tone={data.totalSubscriptionsRegisteredDelta > 0 ? "success" : "default"}
+      />
+      <StatCard
+        label="Tổng số ticket ghi nhận"
+        value={data.totalTicketsRecorded.toLocaleString("vi-VN")}
+        hint={deltaText(data.totalTicketsRecordedDelta)}
+        icon={Ticket}
+        tone="default"
       />
       <StatCard
         label="Hồ sơ bác sĩ chờ duyệt"
@@ -69,13 +69,11 @@ function KpiStrip({ data }: KpiStripProps) {
         tone={data.pendingDoctorApps > 0 ? "warning" : "default"}
       />
       <StatCard
-        label="Ticket nghiêm trọng đang mở"
-        value={data.openCriticalTickets}
-        hint={
-          data.openCriticalTickets > 0 ? "Cần can thiệp" : "Không có ticket P1"
-        }
-        icon={AlertOctagon}
-        tone={data.openCriticalTickets > 0 ? "danger" : "success"}
+        label="Tổng chi phí chi trả bác sĩ"
+        value={formatCurrencyVnd(data.doctorPayoutVnd)}
+        hint={deltaCurrencyText(data.doctorPayoutVndDelta)}
+        icon={HandCoins}
+        tone="default"
       />
     </div>
   );

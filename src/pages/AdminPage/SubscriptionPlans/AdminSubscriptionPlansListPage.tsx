@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -262,20 +263,11 @@ function AdminSubscriptionPlansListPage() {
       </section>
 
       <Card>
-        <CardHeader className="gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <CardTitle>Bộ lọc danh sách</CardTitle>
-            <CardDescription>
-              Tìm nhanh theo tên/mã gói và lọc theo trạng thái.
-            </CardDescription>
-          </div>
-          <Button
-            onClick={openCreatePlanDialog}
-            className="w-full md:w-auto"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Tạo gói đăng ký
-          </Button>
+        <CardHeader>
+          <CardTitle>Bộ lọc danh sách</CardTitle>
+          <CardDescription>
+            Tìm nhanh theo tên/mã gói và lọc theo trạng thái.
+          </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-2">
           <InputGroup>
@@ -328,6 +320,15 @@ function AdminSubscriptionPlansListPage() {
             Mỗi gói có menu hành động để xem chi tiết hoặc lưu trữ. Thay đổi
             tính năng và giá thực hiện qua tạo phiên bản mới.
           </CardDescription>
+          <CardAction>
+            <Button
+              onClick={openCreatePlanDialog}
+              size="sm"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Tạo gói đăng ký
+            </Button>
+          </CardAction>
         </CardHeader>
         <CardContent className="space-y-4">
           <Table>

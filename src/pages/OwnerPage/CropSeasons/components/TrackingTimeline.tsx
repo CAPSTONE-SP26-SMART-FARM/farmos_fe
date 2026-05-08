@@ -185,11 +185,17 @@ export default function TrackingTimeline({
                   </span>
                   <div className="mt-1 flex items-center gap-2">
                     <span className="text-muted-foreground text-xs">
-                      {formatTrackingValue(item.oldValueJson, item.dataType)}
+                      {formatTrackingValue(item.oldValueJson, item.dataType, {
+                        entityType: item.entityType,
+                        fieldName: item.fieldName,
+                      })}
                     </span>
                     <span className="text-xs">→</span>
                     <span className="font-medium text-xs">
-                      {formatTrackingValue(item.newValueJson, item.dataType)}
+                      {formatTrackingValue(item.newValueJson, item.dataType, {
+                        entityType: item.entityType,
+                        fieldName: item.fieldName,
+                      })}
                     </span>
                   </div>
                 </div>
@@ -201,7 +207,11 @@ export default function TrackingTimeline({
                 >
                   {item.source === "manual"
                     ? "Thủ công"
-                    : (item.source ?? "Hệ thống")}
+                    : item.source === "system"
+                      ? "Hệ thống"
+                      : item.source === "iot"
+                        ? "Cảm biến"
+                        : (item.source ?? "Hệ thống")}
                 </Badge>
               </div>
               {idx < items.length - 1 && <Separator className="mt-3" />}

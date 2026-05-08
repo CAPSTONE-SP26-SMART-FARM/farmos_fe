@@ -40,6 +40,14 @@ export const useOwnerMyQuota = (enabled = true) => {
   });
 };
 
+export const useSubscriptionQuota = (id: string, enabled: boolean) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.subscriptions.quota(id),
+    queryFn: () => subscriptionService.getSubscriptionQuota(id),
+    enabled,
+  });
+};
+
 export const useOwnerMySubscription = (enabled = true) => {
   return useQuery({
     queryKey: QUERY_KEYS.subscriptions.my(),

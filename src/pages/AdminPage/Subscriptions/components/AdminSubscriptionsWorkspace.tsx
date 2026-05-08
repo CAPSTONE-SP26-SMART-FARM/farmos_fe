@@ -223,7 +223,6 @@ function AdminSubscriptionsWorkspace() {
                       <TableHead>Trạng thái</TableHead>
                       <TableHead>Hết hạn</TableHead>
                       <TableHead>Ngày đăng ký</TableHead>
-                      <TableHead>Tự động gia hạn</TableHead>
                       <TableHead className="text-right">Hành động</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -257,13 +256,6 @@ function AdminSubscriptionsWorkspace() {
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {formatDateVi(sub.createdAt)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={sub.autoRenew ? "default" : "outline"}
-                          >
-                            {sub.autoRenew ? "Bật" : "Tắt"}
-                          </Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <Button

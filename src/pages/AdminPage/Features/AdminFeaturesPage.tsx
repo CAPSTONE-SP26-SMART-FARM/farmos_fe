@@ -215,7 +215,6 @@ export default function AdminFeaturesPage() {
                 <TableRow>
                   <TableHead>Mã</TableHead>
                   <TableHead>Tên tính năng</TableHead>
-                  <TableHead>Kiểu dữ liệu</TableHead>
                   <TableHead>Giá trị mặc định</TableHead>
                   <TableHead>Đơn vị</TableHead>
                   <TableHead className="text-right">Thao tác</TableHead>
@@ -225,7 +224,7 @@ export default function AdminFeaturesPage() {
                 {listQuery.isLoading && (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={5}
                       className="py-6 text-center text-muted-foreground"
                     >
                       Đang tải dữ liệu...
@@ -235,7 +234,7 @@ export default function AdminFeaturesPage() {
                 {!listQuery.isLoading && features.length === 0 && (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={5}
                       className="py-6 text-center text-muted-foreground"
                     >
                       Không có tính năng phù hợp bộ lọc.
@@ -252,9 +251,6 @@ export default function AdminFeaturesPage() {
                       <p className="text-xs text-muted-foreground">
                         {feature.description || "Không có mô tả"}
                       </p>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{feature.valueType}</Badge>
                     </TableCell>
                     <TableCell>{feature.defaultValue ?? "-"}</TableCell>
                     <TableCell>{feature.unit ?? "-"}</TableCell>

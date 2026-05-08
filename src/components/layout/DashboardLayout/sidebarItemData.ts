@@ -1,5 +1,4 @@
 import {
-  Activity,
   BarChart3,
   Blocks,
   Building2,
@@ -9,7 +8,6 @@ import {
   LayoutDashboard,
   Map,
   Milestone,
-  NotebookPen,
   Package,
   PackagePlus,
   Pill,
@@ -228,7 +226,7 @@ export const sidebarData: SidebarData = {
           icon: Sprout,
         },
         {
-          title: "Quản Lý Nhân sự",
+          title: "Quản Lý Tài Khoản",
           url: "/dashboard/owner/managers",
           icon: Users,
         },
@@ -241,11 +239,6 @@ export const sidebarData: SidebarData = {
           title: "Mẫu Nhiệm Vụ",
           url: "/dashboard/owner/employee-task-templates",
           icon: ClipboardList,
-        },
-        {
-          title: "Nhật Ký Công Việc",
-          url: "/dashboard/owner/daily-logs",
-          icon: NotebookPen,
         },
       ],
     },
@@ -313,11 +306,6 @@ export const sidebarData: SidebarData = {
           title: "Cấu Hình IoT",
           url: "/dashboard/manager/iot-config",
           icon: Settings,
-        },
-        {
-          title: "Tổng Quan Cảm Biến",
-          url: "/dashboard/manager/sensor-dashboard",
-          icon: Activity,
         },
       ],
     },

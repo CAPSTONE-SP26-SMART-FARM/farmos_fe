@@ -1,5 +1,6 @@
 // src/pages/OwnerPage/CropSeasons/components/VarianceBadge.tsx
 import { Badge } from "@/components/ui/badge";
+import { getEnumValueLabel } from "@/lib/tracking-display";
 import type { VarianceType } from "@/schemaValidatation/tracking";
 
 interface VarianceBadgeProps {
@@ -63,12 +64,14 @@ function buildValueDisplay(
   }
   switch (type) {
     case "days":
-      return `${prefix}${value}d`;
+      return `${prefix}${value} ngày`;
     case "percent":
       return `${prefix}${value}%`;
     case "absolute":
       return `${prefix}${value}`;
+    case "label":
+      return getEnumValueLabel(String(value));
     default:
-      return String(value);
+      return getEnumValueLabel(String(value));
   }
 }

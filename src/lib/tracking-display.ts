@@ -100,8 +100,104 @@ export function resolveEntityName(
   }
 }
 
+// ── Per-entity, per-field enum value → Vietnamese label ───────────────────
+// Same raw enum value can mean different things in different contexts:
+// e.g. milestone.status="pending" → "Chưa diễn ra", but task.status="pending"
+// → "Chờ xử lý". Use this lookup before falling back to the generic map.
+const ENTITY_FIELD_VALUE_LABEL: Partial<
+  Record<TrackingEntityType, Record<string, Record<string, string>>>
+> = {
+  crop_season: {
+    status: {
+      planning: "Lên kế hoạch",
+      sent: "Đã gửi",
+      approved: "Đã duyệt",
+      rejected: "Bị từ chối",
+      active: "Đang hoạt động",
+      completed: "Hoàn thành",
+      cancelled: "Đã hủy",
+    },
+  },
+  production_milestone: {
+    status: {
+      pending: "Chưa diễn ra",
+      in_progress: "Đang thực hiện",
+      completed: "Hoàn thành",
+      cancelled: "Đã hủy",
+    },
+  },
+  employee_task: {
+    status: {
+      pending: "Chờ xử lý",
+      in_progress: "Đang thực hiện",
+      completed: "Hoàn thành",
+      cancelled: "Đã hủy",
+    },
+    priority: {
+      low: "Thấp",
+      normal: "Bình thường",
+      medium: "Trung bình",
+      high: "Cao",
+      urgent: "Khẩn cấp",
+    },
+  },
+};
+
+// ── Generic enum value → Vietnamese label (fallback) ──────────────────────
+export const ENUM_VALUE_LABEL: Record<string, string> = {
+  // Common statuses
+  planning: "Lên kế hoạch",
+  sent: "Đã gửi",
+  approved: "Đã duyệt",
+  rejected: "Bị từ chối",
+  active: "Đang hoạt động",
+  completed: "Hoàn thành",
+  cancelled: "Đã hủy",
+  pending: "Chờ xử lý",
+  in_progress: "Đang thực hiện",
+  // Priority
+  low: "Thấp",
+  normal: "Bình thường",
+  medium: "Trung bình",
+  high: "Cao",
+  urgent: "Khẩn cấp",
+  // Source / origin
+  manual: "Thủ công",
+  system: "Hệ thống",
+  iot: "Cảm biến",
+  api: "API",
+  import: "Nhập liệu",
+  // Boolean-ish strings
+  true: "Có",
+  false: "Không",
+  yes: "Có",
+  no: "Không",
+};
+
+export interface EnumLookupContext {
+  entityType?: TrackingEntityType;
+  fieldName?: string;
+}
+
+export function getEnumValueLabel(
+  value: string,
+  ctx?: EnumLookupContext,
+): string {
+  const key = value.toLowerCase();
+  if (ctx?.entityType && ctx?.fieldName) {
+    const scoped =
+      ENTITY_FIELD_VALUE_LABEL[ctx.entityType]?.[ctx.fieldName]?.[key];
+    if (scoped) return scoped;
+  }
+  return ENUM_VALUE_LABEL[key] ?? value;
+}
+
 // ── Format raw plan/actual value by dataType ──────────────────────────────
-export function formatTrackingValue(value: unknown, dataType: string): string {
+export function formatTrackingValue(
+  value: unknown,
+  dataType: string,
+  ctx?: EnumLookupContext,
+): string {
   if (value === null || value === undefined) return "—";
 
   switch (dataType) {
@@ -121,6 +217,7 @@ export function formatTrackingValue(value: unknown, dataType: string): string {
       return value ? "Có" : "Không";
     case "enum":
     case "string":
+      return getEnumValueLabel(String(value), ctx);
     case "uuid":
     case "int":
     case "decimal":

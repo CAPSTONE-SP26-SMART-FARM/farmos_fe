@@ -27,7 +27,23 @@ import { format, parseISO } from "date-fns";
 import type {
   TrackingEntityType,
   TrackingDataType,
+  TrackingChangeType,
 } from "@/schemaValidatation/tracking";
+
+const CHANGE_TYPE_LABEL: Record<TrackingChangeType, string> = {
+  snapshot: "Khởi tạo",
+  create: "Tạo mới",
+  update: "Cập nhật",
+  delete: "Đã xoá",
+};
+
+const SOURCE_LABEL: Record<string, string> = {
+  manual: "Thủ công",
+  system: "Hệ thống",
+  iot: "Cảm biến",
+  api: "API",
+  import: "Nhập liệu",
+};
 
 interface FieldHistoryModalProps {
   cropSeasonId: string;
@@ -64,7 +80,7 @@ export default function FieldHistoryModal({
       open
       onOpenChange={(open) => !open && onClose()}
     >
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="w-[95vw] sm:max-w-[min(1200px,95vw)] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>
             Lịch sử thay đổi:{" "}
@@ -83,47 +99,90 @@ export default function FieldHistoryModal({
           </p>
         ) : (
           <>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Thời điểm</TableHead>
-                  <TableHead>Giá trị cũ</TableHead>
-                  <TableHead>Giá trị mới</TableHead>
-                  <TableHead>Loại thay đổi</TableHead>
-                  <TableHead>Nguồn</TableHead>
-                  <TableHead>Người thực hiện</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="text-sm">
-                      {format(parseISO(item.changedAt), "dd/MM/yyyy HH:mm")}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatTrackingValue(item.oldValueJson, target.dataType)}
-                    </TableCell>
-                    <TableCell className="text-sm font-medium">
-                      {formatTrackingValue(item.newValueJson, target.dataType)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className="text-xs capitalize"
-                      >
-                        {item.changeType}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {item.source ?? "—"}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {item.changedBy ? item.changedBy.slice(0, 8) + "…" : "—"}
-                    </TableCell>
+            <div className="flex-1 overflow-auto rounded-md border">
+              <Table className="table-fixed w-full">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-32.5 whitespace-nowrap">
+                      Thời điểm
+                    </TableHead>
+                    <TableHead className="w-[26%]">Giá trị cũ</TableHead>
+                    <TableHead className="w-[26%]">Giá trị mới</TableHead>
+                    <TableHead className="w-27.5 whitespace-nowrap">
+                      Loại thay đổi
+                    </TableHead>
+                    <TableHead className="w-25 whitespace-nowrap">
+                      Nguồn
+                    </TableHead>
+                    <TableHead className="w-45 whitespace-nowrap">
+                      Người thực hiện
+                    </TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {items.map((item) => {
+                    const performerName =
+                      item.changedByUser?.fullName ??
+                      item.changedByName ??
+                      item.changedByUser?.email ??
+                      null;
+                    const sourceKey = item.source?.toLowerCase() ?? "";
+                    const sourceLabel = item.source
+                      ? (SOURCE_LABEL[sourceKey] ?? item.source)
+                      : "—";
+                    return (
+                      <TableRow
+                        key={item.id}
+                        className="align-top"
+                      >
+                        <TableCell className="text-sm whitespace-nowrap">
+                          {format(parseISO(item.changedAt), "dd/MM/yyyy HH:mm")}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground whitespace-normal wrap-anywhere">
+                          {formatTrackingValue(
+                            item.oldValueJson,
+                            target.dataType,
+                            {
+                              entityType: target.entityType,
+                              fieldName: target.fieldName,
+                            },
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm font-medium whitespace-normal wrap-anywhere">
+                          {formatTrackingValue(
+                            item.newValueJson,
+                            target.dataType,
+                            {
+                              entityType: target.entityType,
+                              fieldName: target.fieldName,
+                            },
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className="text-xs whitespace-nowrap"
+                          >
+                            {CHANGE_TYPE_LABEL[item.changeType] ??
+                              item.changeType}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground whitespace-normal wrap-anywhere">
+                          {sourceLabel}
+                        </TableCell>
+                        <TableCell className="text-sm whitespace-normal wrap-anywhere">
+                          {performerName ? (
+                            <span className="font-medium">{performerName}</span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
 
             {meta && meta.totalPages > 1 && (
               <div className="flex justify-center gap-2 pt-2">
