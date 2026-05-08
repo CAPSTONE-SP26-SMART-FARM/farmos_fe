@@ -4,7 +4,9 @@ import {
   Building2,
   ChartColumnIncreasing,
   ClipboardList,
+  Coins,
   Cpu,
+  HandCoins,
   LayoutDashboard,
   Map,
   Milestone,
@@ -78,6 +80,21 @@ export const sidebarData: SidebarData = {
           title: "Hóa Đơn",
           url: "/dashboard/admin/invoices",
           icon: ReceiptText,
+        },
+      ],
+    },
+    {
+      label: "Tài chính",
+      items: [
+        {
+          title: "Quản Lý Doanh Thu",
+          url: "/dashboard/admin/revenue",
+          icon: Coins,
+        },
+        {
+          title: "Thanh Toán Bác Sĩ",
+          url: "/dashboard/admin/doctor-payouts",
+          icon: HandCoins,
         },
       ],
     },
@@ -175,7 +192,7 @@ export const sidebarData: SidebarData = {
           icon: BarChart3,
         },
         {
-          title: "Rút Tiền Bác Sĩ",
+          title: "Yêu Cầu Rút Tiền Bác Sĩ",
           url: "/dashboard/admin/doctor-withdrawals",
           icon: Wallet,
         },
