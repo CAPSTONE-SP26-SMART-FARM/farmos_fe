@@ -71,10 +71,18 @@ export type SensorTimeoutPayloadType = z.infer<
 export const NotificationCreatedPayloadSchema = z
   .object({
     id: z.string().optional(),
+    type: z.string().optional(),
     title: z.string().optional(),
+    content: z.string().optional(),
     message: z.string().optional(),
     severity: z.string().optional(),
     href: z.string().optional(),
+    redirectUrl: z.string().optional(),
+    invoiceId: z.string().optional(),
+    invoiceNumber: z.string().optional(),
+    referenceType: z.string().optional(),
+    referenceId: z.string().optional(),
+    createdAt: z.string().optional(),
   })
   .passthrough();
 export type NotificationCreatedPayloadType = z.infer<
@@ -164,6 +172,9 @@ export type InvoiceCheckoutPayloadType = z.infer<
 export const InvoicePaidPayloadSchema = z
   .object({
     invoiceId: z.string(),
+    status: z.string().optional(),
+    referenceType: z.string().optional(),
+    referenceId: z.string().optional(),
     totalAmount: z.number().optional(),
   })
   .passthrough();
@@ -172,8 +183,8 @@ export type InvoicePaidPayloadType = z.infer<typeof InvoicePaidPayloadSchema>;
 export const IotKitOrderPaidPayloadSchema = z
   .object({
     orderId: z.string(),
-    orderNumber: z.string(),
-    totalAmount: z.number(),
+    orderNumber: z.string().optional(),
+    totalAmount: z.union([z.number(), z.string()]).optional(),
   })
   .passthrough();
 export type IotKitOrderPaidPayloadType = z.infer<
@@ -189,6 +200,24 @@ export const IotKitOrderCancelledPayloadSchema = z
 export type IotKitOrderCancelledPayloadType = z.infer<
   typeof IotKitOrderCancelledPayloadSchema
 >;
+
+/** BE: auto-assign boards after kit invoice paid */
+export const IotKitDevicesAutoAssignedPayloadSchema = z
+  .object({
+    orderId: z.string().optional(),
+    assigned: z.number().optional(),
+    total: z.number().optional(),
+  })
+  .passthrough();
+
+/** BE: auto-assign boards after subscription activated */
+export const SubscriptionDevicesAutoAssignedPayloadSchema = z
+  .object({
+    subscriptionId: z.string().optional(),
+    assigned: z.number().optional(),
+    total: z.number().optional(),
+  })
+  .passthrough();
 
 // ── Module 3 — Ticket Quality & DQS realtime payloads ─────────────────────
 // Shape pending decision 9.8 (BE chia sẻ TS type/OpenAPI). Hiện đặt field

@@ -16,12 +16,15 @@ import {
   RotateCcw,
   ShoppingBag,
   Sparkle,
+  Zap,
 } from "lucide-react";
 
 interface SubscriptionHeroCardProps {
   subscription: SubscriptionResType;
   onRenew?: () => void;
   renewLoading?: boolean;
+  onUpgrade?: () => void;
+  upgradeLoading?: boolean;
   onResubscribe?: () => void;
   onPayPending?: () => void;
   onContactSupport?: () => void;
@@ -31,6 +34,8 @@ function SubscriptionHeroCard({
   subscription,
   onRenew,
   renewLoading,
+  onUpgrade,
+  upgradeLoading,
   onResubscribe,
   onPayPending,
   onContactSupport,
@@ -39,17 +44,31 @@ function SubscriptionHeroCard({
   const isActiveOrPending = status === "ACTIVE" || status === "PENDING";
 
   const renderActions = () => {
-    if (status === "ACTIVE" && onRenew) {
+    if (status === "ACTIVE") {
       return (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={onRenew}
-          disabled={renewLoading}
-        >
-          <RotateCcw className="mr-2 h-4 w-4" />
-          {renewLoading ? "Đang gia hạn..." : "Gia hạn ngay"}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {onUpgrade && (
+            <Button
+              size="sm"
+              onClick={onUpgrade}
+              disabled={upgradeLoading}
+            >
+              <Zap className="mr-2 h-4 w-4" />
+              {upgradeLoading ? "Đang kiểm tra..." : "Nâng gói"}
+            </Button>
+          )}
+          {onRenew && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onRenew}
+              disabled={renewLoading}
+            >
+              <RotateCcw className="mr-2 h-4 w-4" />
+              {renewLoading ? "Đang gia hạn..." : "Gia hạn ngay"}
+            </Button>
+          )}
+        </div>
       );
     }
 

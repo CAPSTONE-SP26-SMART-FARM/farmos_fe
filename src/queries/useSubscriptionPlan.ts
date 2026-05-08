@@ -8,7 +8,7 @@ import type {
   UpdatePlanBodyType,
 } from "@/schemaValidatation/subscriptionPlan";
 import subscriptionPlanService from "@/services/subscriptionPlanService";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const useListSubscriptionPlans = (query: ListPlansQueryType) => {
   return useQuery({
@@ -34,6 +34,7 @@ export const useListSubscriptionPlanVersions = (
     queryKey: QUERY_KEYS.subscriptionPlans.versions(planId, query),
     queryFn: () => subscriptionPlanService.listPlanVersions(planId, query),
     enabled,
+    placeholderData: keepPreviousData,
   });
 };
 

@@ -19,6 +19,8 @@ import {
   useSubscriptionDetail,
   useSubscriptionEntitlements,
 } from "@/queries/useSubscription";
+import { useListSubscriptionPlans } from "@/queries/useSubscriptionPlan";
+import type { PlanResType } from "@/schemaValidatation/subscriptionPlan";
 import { useOwnerInvoices, useSubscriptionPaymentStatus } from "@/queries/useInvoice";
 import type { SubscriptionResType } from "@/schemaValidatation/subscription";
 import { ArrowLeft, Package } from "lucide-react";
@@ -32,9 +34,10 @@ import HistoryTab from "./HistoryTab";
 import OverviewTab from "./OverviewTab";
 import SubscriptionBannerCascade from "./SubscriptionBannerCascade";
 import SubscriptionHeroCard from "./SubscriptionHeroCard";
+import UpgradePlanDialog from "./UpgradePlanDialog";
 import UsageTab from "./UsageTab";
 
-const TAB_VALUES = ["overview", "usage", "credits", "history"] as const;
+const TAB_VALUES = ["overview", "usage", "credits"] as const;
 type TabValue = (typeof TAB_VALUES)[number];
 
 function isTabValue(value: string | null): value is TabValue {
@@ -63,6 +66,9 @@ function OwnerSubscriptionDashboard({
     : "overview";
 
   const [isCancelOpen, setIsCancelOpen] = useState(false);
+  const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = useState(false);
+  const [isCheckingUpgrade, setIsCheckingUpgrade] = useState(false);
+  const [higherPlans, setHigherPlans] = useState<PlanResType[]>([]);
 
   const isDetailMode = Boolean(subscriptionIdFromProps);
 
@@ -132,6 +138,8 @@ function OwnerSubscriptionDashboard({
     setSearchParams(params, { replace: false });
   };
 
+  const plansQuery = useListSubscriptionPlans({ page: 1, limit: 100, status: "ACTIVE" });
+
   const renewMutation = useOwnerRenewSubscription();
 
   const handleRenew = async () => {
@@ -144,6 +152,29 @@ function OwnerSubscriptionDashboard({
       navigate(`/dashboard/owner/payments/${result.data.invoiceId}`);
     } catch (error) {
       toast.error(getApiErrorMessageVi(error, "Gia hạn đăng ký thất bại."));
+    }
+  };
+
+  const handleUpgrade = async () => {
+    if (!subscription) return;
+    setIsCheckingUpgrade(true);
+    try {
+      const allPlans = plansQuery.data?.data?.data ?? [];
+      const currentPlan = allPlans.find((p) => p.id === subscription.planId);
+      const currentPrice = currentPlan?.listPrice ?? 0;
+      const filtered = allPlans
+        .filter((p) => p.listPrice > currentPrice)
+        .sort((a, b) => a.listPrice - b.listPrice);
+
+      if (filtered.length === 0) {
+        toast.info("Bạn đang sử dụng gói cao nhất rồi.");
+        return;
+      }
+
+      setHigherPlans(filtered);
+      setIsUpgradeDialogOpen(true);
+    } finally {
+      setIsCheckingUpgrade(false);
     }
   };
 
@@ -253,6 +284,7 @@ function OwnerSubscriptionDashboard({
             onClick: () => navigate(PLANS_PATH),
           }}
         />
+        {!isDetailMode && <HistoryTab />}
       </div>
     );
   }
@@ -272,6 +304,8 @@ function OwnerSubscriptionDashboard({
         subscription={subscription}
         onRenew={handleRenew}
         renewLoading={renewMutation.isPending}
+        onUpgrade={handleUpgrade}
+        upgradeLoading={isCheckingUpgrade}
         onResubscribe={handleResubscribe}
         onPayPending={handlePayPending}
         onContactSupport={handleContactSupport}
@@ -296,41 +330,24 @@ function OwnerSubscriptionDashboard({
           <TabsTrigger value="overview">Tổng quan</TabsTrigger>
           <TabsTrigger value="usage">Sử dụng</TabsTrigger>
           <TabsTrigger value="credits">Credit &amp; Bổ trợ</TabsTrigger>
-          <TabsTrigger value="history">Lịch sử</TabsTrigger>
         </TabsList>
 
-        <TabsContent
-          value="overview"
-          className="mt-4"
-        >
+        <TabsContent value="overview" className="mt-4">
           <OverviewTab
             subscriptionId={subscriptionId}
             enabled={Boolean(subscriptionId)}
           />
         </TabsContent>
 
-        <TabsContent
-          value="usage"
-          className="mt-4"
-        >
+        <TabsContent value="usage" className="mt-4">
           <UsageTab
             enabled={Boolean(subscriptionId)}
             featureCodes={featureCodes}
           />
         </TabsContent>
 
-        <TabsContent
-          value="credits"
-          className="mt-4"
-        >
+        <TabsContent value="credits" className="mt-4">
           <CreditsAddonsTab />
-        </TabsContent>
-
-        <TabsContent
-          value="history"
-          className="mt-4"
-        >
-          <HistoryTab />
         </TabsContent>
       </Tabs>
 
@@ -345,6 +362,14 @@ function OwnerSubscriptionDashboard({
         subscriptionId={subscriptionId}
         onCancelled={() => navigate(PLANS_PATH)}
       />
+
+      <UpgradePlanDialog
+        open={isUpgradeDialogOpen}
+        onOpenChange={setIsUpgradeDialogOpen}
+        higherPlans={higherPlans}
+      />
+
+      {!isDetailMode && <HistoryTab />}
     </div>
   );
 }

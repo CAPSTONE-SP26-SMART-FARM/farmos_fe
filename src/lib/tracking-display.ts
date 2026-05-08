@@ -1,5 +1,32 @@
 import { format, parseISO } from "date-fns";
-import type { TrackingEntityType } from "@/schemaValidatation/tracking";
+import type {
+  TrackingEntityType,
+  TrackingLogItemType,
+} from "@/schemaValidatation/tracking";
+
+/**
+ * Lines to show for audit actor (B8 timeline, B9 modal) — name then optional email.
+ */
+export function getTrackingActorLines(
+  item: Pick<
+    TrackingLogItemType,
+    "changedByUser" | "changedByName" | "changedByEmail"
+  >,
+): { primary: string | null; secondary: string | null } {
+  const nameFromUser = item.changedByUser?.fullName?.trim();
+  const named = item.changedByName?.trim();
+  const emailFromUser = item.changedByUser?.email?.trim();
+  const emailFlat = item.changedByEmail?.trim();
+
+  const primary =
+    nameFromUser || named || emailFromUser || emailFlat || null;
+
+  const secondaryEmail = emailFromUser || emailFlat || null;
+  const secondary =
+    secondaryEmail && secondaryEmail !== primary ? secondaryEmail : null;
+
+  return { primary, secondary };
+}
 
 // ── Field name → Vietnamese label ─────────────────────────────────────────
 export const FIELD_LABEL_MAP: Record<string, string> = {

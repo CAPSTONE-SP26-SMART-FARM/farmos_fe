@@ -22,6 +22,7 @@ import {
   getFieldLabel,
   getEntityTypeLabel,
   formatTrackingValue,
+  getTrackingActorLines,
 } from "@/lib/tracking-display";
 import { format, parseISO } from "date-fns";
 import type {
@@ -121,11 +122,7 @@ export default function FieldHistoryModal({
                 </TableHeader>
                 <TableBody>
                   {items.map((item) => {
-                    const performerName =
-                      item.changedByUser?.fullName ??
-                      item.changedByName ??
-                      item.changedByUser?.email ??
-                      null;
+                    const actor = getTrackingActorLines(item);
                     const sourceKey = item.source?.toLowerCase() ?? "";
                     const sourceLabel = item.source
                       ? (SOURCE_LABEL[sourceKey] ?? item.source)
@@ -171,8 +168,15 @@ export default function FieldHistoryModal({
                           {sourceLabel}
                         </TableCell>
                         <TableCell className="text-sm whitespace-normal wrap-anywhere">
-                          {performerName ? (
-                            <span className="font-medium">{performerName}</span>
+                          {actor.primary ? (
+                            <div>
+                              <span className="font-medium">{actor.primary}</span>
+                              {actor.secondary && (
+                                <span className="block text-xs text-muted-foreground mt-0.5">
+                                  {actor.secondary}
+                                </span>
+                              )}
+                            </div>
                           ) : (
                             <span className="text-muted-foreground">—</span>
                           )}

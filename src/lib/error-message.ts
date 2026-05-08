@@ -307,6 +307,12 @@ const BACKEND_ERROR_MAP: Record<string, string> = {
   "error.plancodealreadyexists": "Mã gói đăng ký đã tồn tại.",
   "error.planversionnotfound": "Không tìm thấy phiên bản gói.",
   "error.invalidfeaturecode": "Mã tính năng không tồn tại trong hệ thống.",
+  "error.insufficientiotdevices":
+    "Thiết bị IoT hiện đã hết hàng. Vui lòng thử lại sau hoặc chọn gói khác.",
+  "error.insufficientiotdevicesforkit":
+    "Kho không đủ thiết bị cho đơn Kit IoT lúc thanh toán (có thể đã có người thanh toán trước). Vui lòng thử sau hoặc chờ hóa đơn tự hủy sau 24h.",
+  "error.cannotdowngradeplan":
+    "Không thể đăng ký gói thấp hơn gói đã sử dụng trước đó.",
 
   // ── IoT Kit Add-on ──────────────────────────────────────────────────
   "error.iotkitnotfound": "Không tìm thấy bộ Kit IoT.",

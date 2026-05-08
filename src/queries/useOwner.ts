@@ -96,9 +96,12 @@ export const useOwnerUpdateFarmMember = () => {
       id: string;
       data: UpdateFarmMemberBodyType;
     }) => ownerService.updateFarmMember(id, data),
-    onSuccess: () => {
+    onSuccess: (_result, variables) => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.farmMembers.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.farmMembers.detail(variables.id),
       });
     },
   });

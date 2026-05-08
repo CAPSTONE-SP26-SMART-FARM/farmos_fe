@@ -250,7 +250,7 @@ function PlanVsActualPage() {
                   className="gap-1.5"
                 >
                   <History className="h-3.5 w-3.5" />
-                  Timeline thay đổi
+                  Timeline & người thực hiện
                 </TabsTrigger>
               </TabsList>
 
@@ -265,8 +265,12 @@ function PlanVsActualPage() {
                         Chi tiết so sánh theo trường
                       </CardTitle>
                       <CardDescription>
-                        Mỗi hàng hiển thị giá trị kế hoạch và thực tế cạnh
-                        nhau, kèm sai số.
+                        Mỗi hàng hiển thị giá trị kế hoạch và thực tế cạnh nhau,
+                        kèm sai số, số lần đổi và thời điểm chỉnh sửa cuối. Chọn{" "}
+                        <strong className="font-medium text-foreground">
+                          Lịch sử
+                        </strong>{" "}
+                        để xem chi tiết từng bước kèm người thực hiện.
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -293,7 +297,11 @@ function PlanVsActualPage() {
                       Lịch sử thay đổi
                     </CardTitle>
                     <CardDescription>
-                      Toàn bộ thay đổi được ghi nhận theo thời gian.
+                      Theo dõi từng chỉnh sửa theo thời gian, kèm{" "}
+                      <strong className="font-medium text-foreground">
+                        người thực hiện
+                      </strong>{" "}
+                      và nguồn gốc (thủ công / hệ thống / cảm biến…).
                     </CardDescription>
                   </CardHeader>
                   <CardContent>

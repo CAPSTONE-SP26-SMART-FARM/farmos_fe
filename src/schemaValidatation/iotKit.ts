@@ -45,6 +45,7 @@ export const IotDeviceKitResSchema = z.object({
   includedModules: z.array(KitModuleNameEnum).nullable(),
   deviceCount: z.number().int().positive(),
   isActive: z.boolean(),
+  inStock: z.boolean(),
   thumbnailUrl: z.string().nullable(),
   metadata: z.unknown().nullable(),
   createdAt: z.string(),

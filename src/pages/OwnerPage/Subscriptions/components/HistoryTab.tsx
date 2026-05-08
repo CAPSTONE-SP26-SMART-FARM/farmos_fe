@@ -12,12 +12,14 @@ import {
 } from "@/components/ui/select";
 import { DataTable } from "@/components/common/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
+import { formatDateTimeVi } from "@/lib/format";
 import { getSubscriptionStatusBadgeVariant } from "@/lib/utils";
 import { useOwnerSubscriptionHistory } from "@/queries/useSubscription";
 import type {
   ListSubscriptionsQueryType,
   SubscriptionStatusType,
 } from "@/schemaValidatation/subscription";
+import SubscriptionDetailDialog from "./SubscriptionDetailDialog";
 
 const SUBSCRIPTION_STATUS_LABEL: Record<SubscriptionStatusType, string> = {
   PENDING: "Chờ kích hoạt",
@@ -36,19 +38,6 @@ const STATUS_OPTIONS: Array<{ value: "ALL" | SubscriptionStatusType; label: stri
   { value: "EXPIRED", label: "Hết hạn" },
 ];
 
-const formatDateTime = (value?: string | null) => {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return new Intl.DateTimeFormat("vi-VN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-};
-
 type SubscriptionRow = {
   id: string;
   plan?: { name?: string | null; code?: string | null } | null;
@@ -66,11 +55,23 @@ function HistoryTab() {
     status: undefined,
     ownerSearch: undefined,
   });
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const subscriptionHistoryQuery = useOwnerSubscriptionHistory(query, true);
   const subscriptions = (subscriptionHistoryQuery.data?.data?.data ??
     []) as SubscriptionRow[];
   const meta = subscriptionHistoryQuery.data?.data?.meta;
+
+  const handleOpenDetail = (id: string) => {
+    setSelectedId(id);
+    setDialogOpen(true);
+  };
+
+  const handleDialogChange = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open) setSelectedId(null);
+  };
 
   const columns = useMemo<ColumnDef<SubscriptionRow>[]>(
     () => [
@@ -100,17 +101,32 @@ function HistoryTab() {
       {
         accessorKey: "startedAt",
         header: "Bắt đầu",
-        cell: ({ row }) => formatDateTime(row.original.startedAt),
+        cell: ({ row }) => formatDateTimeVi(row.original.startedAt),
       },
       {
         accessorKey: "expiresAt",
         header: "Hết hạn",
-        cell: ({ row }) => formatDateTime(row.original.expiresAt),
+        cell: ({ row }) => formatDateTimeVi(row.original.expiresAt),
       },
       {
         accessorKey: "autoRenew",
         header: "Tự động gia hạn",
         cell: ({ row }) => (row.original.autoRenew ? "Bật" : "Tắt"),
+      },
+      {
+        id: "actions",
+        header: () => <div className="text-right">Chi tiết</div>,
+        cell: ({ row }) => (
+          <div className="text-right">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleOpenDetail(row.original.id)}
+            >
+              Xem
+            </Button>
+          </div>
+        ),
       },
     ],
     [],
@@ -194,6 +210,12 @@ function HistoryTab() {
           </div>
         </CardContent>
       </Card>
+
+      <SubscriptionDetailDialog
+        subscriptionId={selectedId}
+        open={dialogOpen}
+        onOpenChange={handleDialogChange}
+      />
     </div>
   );
 }

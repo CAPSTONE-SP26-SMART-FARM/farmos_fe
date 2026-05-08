@@ -83,4 +83,8 @@ export const zoneService = {
 
   removeManager: (zoneId: string, managerId: string) =>
     api.delete<MessageResType>(ZONES.MANAGERS.REMOVE(zoneId, managerId)),
+
+  /** Owner: soft-delete staff user tied to zone's farm (backend validates farm membership). */
+  softDeleteFarmStaffUser: (zoneId: string, userId: string) =>
+    api.delete<MessageResType>(ZONES.MEMBERS.SOFT_DELETE(zoneId, userId)),
 };

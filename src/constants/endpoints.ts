@@ -35,6 +35,7 @@ export const API_ENDPOINTS = {
     RENEW: (id: string) => `/subscriptions/${id}/renew`,
     CANCEL: (id: string) => `/subscriptions/${id}/cancel`,
     AUTO_RENEW: (id: string) => `/subscriptions/${id}/auto-renew`,
+    UPGRADE: "/subscriptions/upgrade",
     PLAN_VERSION: (id: string) => `/subscriptions/${id}/plan-version`,
     ENTITLEMENTS: (id: string) => `/subscriptions/${id}/entitlements`,
     USAGE: (id: string) => `/subscriptions/${id}/usage`,
@@ -408,6 +409,11 @@ export const API_ENDPOINTS = {
       REMOVE: (zoneId: string, managerId: string) =>
         `/zones/${zoneId}/managers/${managerId}`,
       REMOVE_BULK: (zoneId: string) => `/zones/${zoneId}/managers/bulk`,
+    },
+    /** Soft-delete farm staff user (`users.deleted_at`); any zone under the farm may be used. */
+    MEMBERS: {
+      SOFT_DELETE: (zoneId: string, userId: string) =>
+        `/zones/${zoneId}/members/${userId}`,
     },
   },
   // ── Ticket v2 ─────────────────────────────────────────────────────────

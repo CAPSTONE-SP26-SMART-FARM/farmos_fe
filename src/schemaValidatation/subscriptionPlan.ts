@@ -124,7 +124,9 @@ export const ListPlanVersionsQuerySchema = PagingRequestSchema.extend({
 // Response schemas
 // ============================================================
 
-export const PlanResSchema = SubscriptionPlanSchema;
+export const PlanResSchema = SubscriptionPlanSchema.extend({
+  inStock: z.boolean(),
+});
 
 export const ListPlansResSchema = PagingResponseSchema(PlanResSchema);
 

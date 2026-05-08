@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DataTable } from "@/components/common/DataTable";
+import { formatDateTimeVi } from "@/lib/format";
 import { getSubscriptionStatusBadgeVariant } from "@/lib/utils";
 import { useOwnerSubscriptionHistory } from "@/queries/useSubscription";
 import type {
@@ -46,19 +47,6 @@ const STATUS_OPTIONS: Array<{
   { value: "CANCELLED", label: "Đã hủy" },
   { value: "EXPIRED", label: "Hết hạn" },
 ];
-
-const formatDateTime = (value?: string | null) => {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return new Intl.DateTimeFormat("vi-VN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-};
 
 type SubscriptionRow = {
   id: string;
@@ -114,12 +102,12 @@ function OwnerSubscriptionHistoryPage() {
       {
         accessorKey: "startedAt",
         header: "Bắt đầu",
-        cell: ({ row }) => formatDateTime(row.original.startedAt),
+        cell: ({ row }) => formatDateTimeVi(row.original.startedAt),
       },
       {
         accessorKey: "expiresAt",
         header: "Hết hạn",
-        cell: ({ row }) => formatDateTime(row.original.expiresAt),
+        cell: ({ row }) => formatDateTimeVi(row.original.expiresAt),
       },
       {
         accessorKey: "autoRenew",
@@ -170,10 +158,7 @@ function OwnerSubscriptionHistoryPage() {
             </SelectTrigger>
             <SelectContent>
               {STATUS_OPTIONS.map((status) => (
-                <SelectItem
-                  key={status.value}
-                  value={status.value}
-                >
+                <SelectItem key={status.value} value={status.value}>
                   {status.label}
                 </SelectItem>
               ))}

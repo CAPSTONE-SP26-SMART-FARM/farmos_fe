@@ -25,7 +25,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useOwnerInvoices } from "@/queries/useInvoice";
-import { useRealtimeBilling } from "@/hooks/useRealtimeBilling";
 import type { ListInvoicesQueryType } from "@/schemaValidatation/invoice";
 
 const formatCurrency = (value: number) =>
@@ -37,6 +36,7 @@ const formatCurrency = (value: number) =>
 
 const REFERENCE_TYPE_LABEL: Record<string, string> = {
   SUBSCRIPTION: "Gói đăng ký",
+  SUBSCRIPTION_RENEWAL: "Gia hạn gói",
   SERVICE_PACKAGE: "Gói dịch vụ",
   IOT_KIT_ORDER: "Đơn Bộ Kit IoT",
 };
@@ -51,8 +51,6 @@ type OwnerInvoiceRow = {
 
 function OwnerPaymentsPage() {
   const navigate = useNavigate();
-
-  useRealtimeBilling();
 
   const [invoiceQuery, setInvoiceQuery] = useState<ListInvoicesQueryType>({
     page: 1,

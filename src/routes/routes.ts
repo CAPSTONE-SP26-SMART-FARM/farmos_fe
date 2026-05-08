@@ -338,16 +338,7 @@ const routes: AppRoutes = [
   {
     layout: DashboardLayout,
     children: [
-      {
-        path: "/dashboard/owner",
-        component: OwnerPage,
-        allowedRoles: [RoleName.Owner],
-      },
-      {
-        path: "/dashboard/owner/farm",
-        component: OwnerFarmPage,
-        allowedRoles: [RoleName.Owner],
-      },
+      // ── Free routes (no active subscription required) ──
       {
         path: "/dashboard/owner/subscription-plans",
         component: OwnerSubscriptionPlansPage,
@@ -384,79 +375,106 @@ const routes: AppRoutes = [
         allowedRoles: [RoleName.Owner],
       },
       {
+        path: "/dashboard/owner/profile",
+        component: Profile,
+        allowedRoles: [RoleName.Owner],
+      },
+      // ── Gated routes (require active subscription) ──
+      {
+        path: "/dashboard/owner",
+        component: OwnerPage,
+        allowedRoles: [RoleName.Owner],
+        requiresActiveSubscription: true,
+      },
+      {
+        path: "/dashboard/owner/farm",
+        component: OwnerFarmPage,
+        allowedRoles: [RoleName.Owner],
+        requiresActiveSubscription: true,
+      },
+      {
         path: "/dashboard/owner/my-doctor",
         component: OwnerMyDoctorsPage,
         allowedRoles: [RoleName.Owner],
+        requiresActiveSubscription: true,
       },
       {
         path: "/dashboard/owner/employee-task-templates",
         component: OwnerEmployeeTaskTemplatesPage,
         allowedRoles: [RoleName.Owner],
+        requiresActiveSubscription: true,
       },
       {
         path: "/dashboard/owner/crop-seasons",
         component: OwnerCropSeasonsPage,
         allowedRoles: [RoleName.Owner],
+        requiresActiveSubscription: true,
       },
       {
         path: "/dashboard/owner/crop-seasons/:id/plan-vs-actual",
         component: PlanVsActualPage,
         allowedRoles: [RoleName.Owner, RoleName.Manager],
+        requiresActiveSubscription: true,
       },
       {
         path: "/dashboard/owner/iot",
         component: OwnerIotHubPage,
         allowedRoles: [RoleName.Owner],
+        requiresActiveSubscription: true,
       },
       {
         path: "/dashboard/owner/iot-devices",
         component: RedirectToIotDevicesTab,
         allowedRoles: [RoleName.Owner],
+        requiresActiveSubscription: true,
       },
       {
         path: "/dashboard/owner/iot-tracking",
         component: RedirectToIotOverviewTab,
         allowedRoles: [RoleName.Owner],
+        requiresActiveSubscription: true,
       },
       {
         path: "/dashboard/owner/iot-kits",
         component: OwnerIotKitsPage,
         allowedRoles: [RoleName.Owner],
+        requiresActiveSubscription: true,
       },
       {
         path: "/dashboard/owner/iot-kits/orders/:orderId",
         component: OwnerIotKitOrderStatusPage,
         allowedRoles: [RoleName.Owner],
+        requiresActiveSubscription: true,
       },
       {
         path: "/dashboard/owner/iot-kits/:kitId",
         component: OwnerIotKitDetailPage,
         allowedRoles: [RoleName.Owner],
+        requiresActiveSubscription: true,
       },
       {
         path: "/dashboard/owner/sensor-readings/:assignmentId",
         component: OwnerSensorReadingPage,
         allowedRoles: [RoleName.Owner],
+        requiresActiveSubscription: true,
       },
       {
         path: "/dashboard/owner/tickets",
         component: OwnerTicketsPage,
         allowedRoles: [RoleName.Owner],
+        requiresActiveSubscription: true,
       },
       {
         path: "/dashboard/owner/daily-logs",
         component: OwnerDailyLogsPage,
         allowedRoles: [RoleName.Owner],
+        requiresActiveSubscription: true,
       },
       {
         path: "/dashboard/owner/*",
         component: OwnerPage,
         allowedRoles: [RoleName.Owner],
-      },
-      {
-        path: "/dashboard/owner/profile",
-        component: Profile,
-        allowedRoles: [RoleName.Owner],
+        requiresActiveSubscription: true,
       },
     ],
   },

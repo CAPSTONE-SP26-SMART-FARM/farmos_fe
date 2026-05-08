@@ -18,8 +18,12 @@ export const RealtimeEvents = {
   SubscriptionActivated: "subscription.activated",
   InvoiceCheckoutCreated: "invoice.checkout.created",
   InvoicePaid: "invoice.paid",
-  IotKitOrderPaid: "iot_kit_order.paid",
-  IotKitOrderCancelled: "iot_kit_order.cancelled",
+  /** Must match BE `RealtimeEvents.IotKitOrderPaid` */
+  IotKitOrderPaid: "iot-kit.order.paid",
+  /** Must match BE `RealtimeEvents.IotKitOrderCancelled` */
+  IotKitOrderCancelled: "iot-kit.order.cancelled",
+  IotKitDevicesAutoAssigned: "iot-kit.devices.auto-assigned",
+  SubscriptionDevicesAutoAssigned: "subscription.devices.auto-assigned",
   // ── Module 3 — Ticket Quality & DQS ──
   // QUAN TRỌNG: BE realtime.events.ts hiện CHƯA emit 5 event ticket-lifecycle
   // bên dưới (chỉ định nghĩa trên FE để chuẩn bị). Khi BE Module 3 ship

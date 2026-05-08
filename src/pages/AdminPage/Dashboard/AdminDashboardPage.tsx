@@ -2,47 +2,28 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAdminDashboard } from "@/queries/useDashboard";
 import type { DashboardPeriod } from "@/types/dashboard";
-import { useMemo, useState } from "react";
-import AdminActivityFeed from "./components/AdminActivityFeed";
+import { useState } from "react";
 import IotFleetStatusCard from "./components/IotFleetStatusCard";
 import KpiStrip from "./components/KpiStrip";
 import NewUsersChart from "./components/NewUsersChart";
+import PendingActionsSection from "./components/PendingActionsSection";
 import PeriodFilter from "./components/PeriodFilter";
 import PlatformWalletChart from "./components/PlatformWalletChart";
 import RevenueTrendChart from "./components/RevenueTrendChart";
 import SubscriptionDistributionCard from "./components/SubscriptionDistributionCard";
-import TicketsByTypeCard from "./components/TicketsByTypeCard";
-import {
-  buildAdminDashboardOverlay,
-  type DashboardPeriodExtended,
-} from "./_mocks/adminDashboardOverlay";
 
-/**
- * Map the FE-only "today" filter onto a BE-supported period. The BE schema
- * still rejects "today", so we use 7d as the data fetch and let the overlay
- * scale numbers down for KPI display only.
- */
-function toBackendPeriod(period: DashboardPeriodExtended): DashboardPeriod {
-  if (period === "today") return "7d";
-  return period;
-}
+const PERIOD_HINT: Record<DashboardPeriod, string> = {
+  "1d": "Hôm nay",
+  "7d": "7 ngày gần nhất",
+  "30d": "30 ngày gần nhất",
+  "90d": "90 ngày gần nhất",
+};
 
 function AdminDashboardPage() {
-  const [kpiPeriod, setKpiPeriod] = useState<DashboardPeriodExtended>("today");
-  const [chartsPeriod, setChartsPeriod] =
-    useState<DashboardPeriodExtended>("today");
+  const [period, setPeriod] = useState<DashboardPeriod>("30d");
 
-  const query = useAdminDashboard(toBackendPeriod(kpiPeriod));
+  const query = useAdminDashboard(period);
   const data = query.data?.data;
-
-  const kpiOverlay = useMemo(
-    () => buildAdminDashboardOverlay(data, kpiPeriod),
-    [data, kpiPeriod],
-  );
-  const chartsOverlay = useMemo(
-    () => buildAdminDashboardOverlay(data, chartsPeriod),
-    [data, chartsPeriod],
-  );
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -55,7 +36,10 @@ function AdminDashboardPage() {
       </div>
 
       {/* ── KPI section ─────────────────────────────────────────────── */}
-      <section aria-labelledby="kpi-section-heading" className="space-y-3">
+      <section
+        aria-labelledby="kpi-section-heading"
+        className="space-y-3"
+      >
         <div className="flex items-center justify-between gap-2">
           <h2
             id="kpi-section-heading"
@@ -64,64 +48,68 @@ function AdminDashboardPage() {
             Chỉ số chính
           </h2>
           <PeriodFilter
-            value={kpiPeriod}
-            onChange={setKpiPeriod}
-            ariaLabel="Khoảng thời gian cho chỉ số chính"
+            value={period}
+            onChange={setPeriod}
+            ariaLabel="Khoảng thời gian áp dụng cho dashboard"
           />
         </div>
 
-        {query.isLoading ? (
+        {query.isLoading || !data ? (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-24 rounded-xl" />
+              <Skeleton
+                key={i}
+                className="h-24 rounded-xl"
+              />
             ))}
           </div>
         ) : (
-          <KpiStrip data={kpiOverlay.kpis} />
+          <KpiStrip data={data.kpis} />
         )}
       </section>
 
-      {/* ── Distribution charts (2×2) ───────────────────────────────── */}
-      <section aria-labelledby="charts-section-heading" className="space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <h2
-            id="charts-section-heading"
-            className="text-sm font-semibold text-muted-foreground"
-          >
-            Cơ cấu nền tảng
-          </h2>
-          <PeriodFilter
-            value={chartsPeriod}
-            onChange={setChartsPeriod}
-            ariaLabel="Khoảng thời gian cho biểu đồ cơ cấu (không áp dụng cho Ví tiền nền tảng)"
-          />
-        </div>
+      {/* ── Distribution charts ─────────────────────────────────────── */}
+      <section
+        aria-labelledby="charts-section-heading"
+        className="space-y-3"
+      >
+        <h2
+          id="charts-section-heading"
+          className="text-sm font-semibold text-muted-foreground"
+        >
+          Cơ cấu nền tảng
+        </h2>
 
-        {query.isLoading ? (
-          <div className="grid gap-4 lg:grid-cols-2">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-72 rounded-xl" />
+        {query.isLoading || !data ? (
+          <div className="grid gap-4 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton
+                key={i}
+                className="h-72 rounded-xl"
+              />
             ))}
           </div>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-2">
-            <PlatformWalletChart data={kpiOverlay.platformWallet} />
+          <div className="grid gap-4 lg:grid-cols-3">
+            <PlatformWalletChart data={data.platformWallet} />
             <SubscriptionDistributionCard
-              data={chartsOverlay.subscriptionDistribution}
+              data={data.subscriptionDistribution}
             />
-            <IotFleetStatusCard data={chartsOverlay.iotFleetBoardOnly} />
-            <TicketsByTypeCard data={chartsOverlay.ticketsByType} />
+            <IotFleetStatusCard data={data.iotFleetBoards} />
           </div>
         )}
       </section>
 
-      {/* ── Trend charts (one per row to keep all 30 days visible) ─── */}
-      <section aria-labelledby="trend-section-heading" className="space-y-3">
+      {/* ── Trend charts (one per row to keep all data points visible) */}
+      <section
+        aria-labelledby="trend-section-heading"
+        className="space-y-3"
+      >
         <h2
           id="trend-section-heading"
           className="text-sm font-semibold text-muted-foreground"
         >
-          Xu hướng 30 ngày gần nhất
+          Xu hướng {PERIOD_HINT[period]}
         </h2>
         {query.isLoading || !data ? (
           <div className="space-y-4">
@@ -136,20 +124,8 @@ function AdminDashboardPage() {
         )}
       </section>
 
-      {/* ── Recent activity ─────────────────────────────────────────── */}
-      <section aria-labelledby="activity-section-heading" className="space-y-3">
-        <h2
-          id="activity-section-heading"
-          className="text-sm font-semibold text-muted-foreground"
-        >
-          Hoạt động gần đây
-        </h2>
-        {query.isLoading || !data ? (
-          <Skeleton className="h-96 rounded-xl" />
-        ) : (
-          <AdminActivityFeed items={data.activityFeed} maxItems={30} />
-        )}
-      </section>
+      {/* ── Pending actions (separate APIs, not part of /dashboard/admin) */}
+      <PendingActionsSection />
     </div>
   );
 }
