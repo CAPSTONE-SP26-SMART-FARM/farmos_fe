@@ -66,7 +66,6 @@ import {
   useAdminListSubscriptions,
   useOwnerMySubscription,
   useOwnerRenewSubscription,
-  useOwnerToggleAutoRenew,
   useSubscriptionCancel,
   useSubscriptionDetail,
   useSubscriptionEntitlements,
@@ -77,7 +76,6 @@ import {
   type EntitlementsQueryType,
   type ListSubscriptionsQueryType,
   type SubscriptionStatusType,
-  ToggleAutoRenewBodySchema,
   type UsageLedgerQueryType,
 } from "@/schemaValidatation/subscription";
 import type { ListInvoicesQueryType } from "@/schemaValidatation/invoice";
@@ -92,7 +90,6 @@ import {
   MoreVertical,
   RefreshCw,
   Shield,
-  Sparkle,
   User,
 } from "lucide-react";
 import {
@@ -298,7 +295,6 @@ function SubscriptionLifecyclePanel({
 
   const renewSubscriptionMutation = useOwnerRenewSubscription();
   const cancelSubscriptionMutation = useSubscriptionCancel();
-  const toggleAutoRenewMutation = useOwnerToggleAutoRenew();
   const invoicesQuery = useOwnerInvoices(
     {
       ...invoiceQuery,
@@ -323,15 +319,7 @@ function SubscriptionLifecyclePanel({
     },
   });
 
-  const toggleAutoRenewForm = useForm({
-    resolver: zodResolver(ToggleAutoRenewBodySchema),
-    defaultValues: {
-      autoRenew: false,
-    },
-  });
-
   useClearServerFieldErrors(cancelForm);
-  useClearServerFieldErrors(toggleAutoRenewForm);
 
   const selectedSubscriptionFromList = subscriptions.find(
     (item) => item.id === selectedSubscriptionId,
@@ -355,12 +343,6 @@ function SubscriptionLifecyclePanel({
   const ownerCredits = ownerCreditsQuery.data?.data?.data ?? [];
   const ownerCreditHistory = ownerCreditHistoryQuery.data?.data?.data ?? [];
   const servicePackages = servicePackagesQuery.data?.data?.data ?? [];
-
-  useEffect(() => {
-    if (detail) {
-      toggleAutoRenewForm.reset({ autoRenew: detail.autoRenew });
-    }
-  }, [detail, toggleAutoRenewForm]);
 
   useEffect(() => {
     if (!selectedInvoiceId && invoices[0]?.id) {
@@ -392,29 +374,6 @@ function SubscriptionLifecyclePanel({
     }
   };
 
-  const handleToggleAutoRenew = async (values: { autoRenew: boolean }) => {
-    if (!selectedSubscriptionId) return;
-
-    try {
-      await toggleAutoRenewMutation.mutateAsync({
-        id: selectedSubscriptionId,
-        data: values,
-      });
-      toast.success("Cập nhật tự động gia hạn thành công.");
-    } catch (error) {
-      if (isApiErrorUnprocessableEntityResponse(error)) {
-        handleApiErrorUnprocessentity(
-          error.response!.data.errors,
-          toggleAutoRenewForm.setError,
-          { getValues: toggleAutoRenewForm.getValues },
-        );
-        return;
-      }
-      toast.error(
-        getApiErrorMessageVi(error, "Cập nhật tự động gia hạn thất bại."),
-      );
-    }
-  };
 
   const handleCancelSubscription = async (values: {
     cancelReason?: string;
@@ -561,7 +520,6 @@ function SubscriptionLifecyclePanel({
                       <TableHead>Chủ trại</TableHead>
                       <TableHead>Gói</TableHead>
                       <TableHead>Trạng thái</TableHead>
-                      <TableHead>Tự động gia hạn</TableHead>
                       <TableHead className="text-right">Chi tiết</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -569,7 +527,7 @@ function SubscriptionLifecyclePanel({
                     {adminListSubscriptions.isLoading && (
                       <TableRow>
                         <TableCell
-                          colSpan={6}
+                          colSpan={5}
                           className="py-5 text-center text-muted-foreground"
                         >
                           Đang tải danh sách đăng ký...
@@ -605,7 +563,6 @@ function SubscriptionLifecyclePanel({
                             {SUBSCRIPTION_STATUS_LABEL[item.status]}
                           </Badge>
                         </TableCell>
-                        <TableCell>{item.autoRenew ? "Bật" : "Tắt"}</TableCell>
                         <TableCell className="text-right">
                           <Button
                             size="sm"
@@ -694,7 +651,7 @@ function SubscriptionLifecyclePanel({
                     <CardDescription>
                       {isAdmin
                         ? "Theo dõi và quản lý đăng ký của khách hàng."
-                        : "Chủ trang trại có thể gia hạn, bật/tắt tự động gia hạn và hủy đăng ký."}
+                        : "Chủ trang trại có thể gia hạn và hủy đăng ký."}
                     </CardDescription>
                   </div>
                   {isAdmin && detail && detail.status !== "CANCELLED" && (
@@ -793,16 +750,6 @@ function SubscriptionLifecyclePanel({
                         </div>
                         <div>
                           <p className="text-xs text-muted-foreground">
-                            Tự động gia hạn
-                          </p>
-                          <Badge
-                            variant={detail.autoRenew ? "default" : "outline"}
-                          >
-                            {detail.autoRenew ? "Bật" : "Tắt"}
-                          </Badge>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">
                             Ngày đăng ký
                           </p>
                           <p className="text-sm">
@@ -855,49 +802,6 @@ function SubscriptionLifecyclePanel({
                           <RefreshCw className="mr-2 h-4 w-4" />
                           Gia hạn đăng ký
                         </Button>
-
-                        <form
-                          className="space-y-2 rounded-lg border p-3"
-                          onSubmit={toggleAutoRenewForm.handleSubmit(
-                            handleToggleAutoRenew,
-                          )}
-                        >
-                          <Controller
-                            name="autoRenew"
-                            control={toggleAutoRenewForm.control}
-                            render={({ field, fieldState }) => (
-                              <Field data-invalid={fieldState.invalid}>
-                                <FieldLabel>Bật tự động gia hạn</FieldLabel>
-                                <FieldContent>
-                                  <Select
-                                    value={field.value ? "true" : "false"}
-                                    onValueChange={(value) =>
-                                      field.onChange(value === "true")
-                                    }
-                                  >
-                                    <SelectTrigger className="w-full">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="true">Bật</SelectItem>
-                                      <SelectItem value="false">Tắt</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                  <FieldError errors={[fieldState.error]} />
-                                </FieldContent>
-                              </Field>
-                            )}
-                          />
-
-                          <Button
-                            type="submit"
-                            size="sm"
-                            disabled={toggleAutoRenewMutation.isPending}
-                          >
-                            <Sparkle className="mr-2 h-4 w-4" />
-                            Cập nhật tự động gia hạn
-                          </Button>
-                        </form>
 
                         <Button
                           variant="destructive"

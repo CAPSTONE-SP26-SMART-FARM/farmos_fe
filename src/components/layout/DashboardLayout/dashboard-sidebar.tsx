@@ -20,6 +20,7 @@ import type { NavGroup } from "./types";
 import type { ComponentPropsWithoutRef } from "react";
 import type { RoleNameType } from "@/constants/role";
 import { useCurrentUser } from "@/queries";
+import { useOwnerMySubscription } from "@/queries/useSubscription";
 
 const STORAGE_KEY = "dashboard-item";
 const DEFAULT_ITEM = "Dashboard";
@@ -48,11 +49,19 @@ export function DashboardSidebar(props: DashboardSidebarProps) {
   const user = useAuthStore((state) => state.user);
   // TODO: Uncomment when theme-provider is set up
   // const { theme } = useTheme();
+
+  const isOwner = user?.role === "owner";
+  const mySubQuery = useOwnerMySubscription(isOwner);
+  const hasActiveSubscription = mySubQuery.data?.data?.status === "ACTIVE";
+
   if (!user) {
     return null;
   }
 
-  const navGroups = getNavGroupsByRole(user.role as RoleNameType);
+  const allNavGroups = getNavGroupsByRole(user.role as RoleNameType);
+  const navGroups: NavGroup[] = isOwner && !hasActiveSubscription
+    ? allNavGroups.filter((g) => !g.requiresSubscription)
+    : allNavGroups;
 
   return (
     <Sidebar

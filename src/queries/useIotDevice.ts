@@ -17,6 +17,7 @@ import type {
 } from "@/schemaValidatation/iotDevice";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { onMutationError } from "@/lib/axios";
+import { toast } from "sonner";
 
 // ── Admin hooks (provisioning write authority) ───────────────────────
 
@@ -56,6 +57,7 @@ export const useAdminCreateIotDeviceBatch = () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.admin.iotDevices.list(),
       });
+      toast.success("Tạo thiết bị IoT thành công!");
     },
     onError: (error) =>
       onMutationError(error, "Tạo batch thiết bị IoT thất bại"),
@@ -79,6 +81,7 @@ export const useAdminUpdateIotDevice = () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.admin.iotDevices.detail(deviceId),
       });
+      toast.success("Cập nhật thiết bị IoT thành công!");
     },
     onError: (error) =>
       onMutationError(error, "Cập nhật thiết bị IoT thất bại"),

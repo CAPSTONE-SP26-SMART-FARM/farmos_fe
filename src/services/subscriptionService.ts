@@ -63,6 +63,12 @@ const subscriptionService = {
       data,
     ),
 
+  upgradeSubscription: (data: UpgradePlanVersionBodyType) =>
+    api.post<SubscriptionCheckoutResType, UpgradePlanVersionBodyType>(
+      SUBSCRIPTIONS.UPGRADE,
+      data,
+    ),
+
   forceUpgradePlanVersion: (id: string, data: UpgradePlanVersionBodyType) =>
     api.patch<SubscriptionResType, UpgradePlanVersionBodyType>(
       SUBSCRIPTIONS.PLAN_VERSION(id),

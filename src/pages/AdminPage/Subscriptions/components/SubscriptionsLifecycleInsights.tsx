@@ -10,7 +10,6 @@ import type { SubscriptionSummaryResType } from "@/schemaValidatation/subscripti
 import {
   AlarmClock,
   Award,
-  RefreshCw,
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
@@ -54,12 +53,6 @@ function MetricTile({
 function SubscriptionsLifecycleInsights({ summary, loading }: Props) {
   const newLast30Days = summary?.newLast30Days ?? 0;
   const expiringNext7Days = summary?.expiringNext7Days ?? 0;
-  const autoRenewEnabled = summary?.autoRenewEnabled ?? 0;
-  const activeTotal = summary?.statusCounts.active ?? 0;
-  const autoRenewShare =
-    activeTotal > 0
-      ? Math.round((autoRenewEnabled / activeTotal) * 100)
-      : 0;
   const topPlans = summary?.topPlans ?? [];
   const topMaxCount = topPlans[0]?.activeCount ?? 0;
 
@@ -72,7 +65,7 @@ function SubscriptionsLifecycleInsights({ summary, loading }: Props) {
             Các tín hiệu vận hành cho admin theo dõi tăng trưởng và rủi ro.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-3">
+        <CardContent className="grid gap-3 sm:grid-cols-2">
           <MetricTile
             icon={Sparkles}
             label="Đăng ký mới"
@@ -87,18 +80,6 @@ function SubscriptionsLifecycleInsights({ summary, loading }: Props) {
             value={expiringNext7Days}
             description="Hết hạn trong 7 ngày"
             accent="bg-amber-100 text-amber-700"
-            loading={loading}
-          />
-          <MetricTile
-            icon={RefreshCw}
-            label="Tự động gia hạn"
-            value={autoRenewEnabled}
-            description={
-              activeTotal > 0
-                ? `${autoRenewShare}% đăng ký đang hoạt động`
-                : "Trên các đăng ký đang hoạt động"
-            }
-            accent="bg-blue-100 text-blue-700"
             loading={loading}
           />
         </CardContent>

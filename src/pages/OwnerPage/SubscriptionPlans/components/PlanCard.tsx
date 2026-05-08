@@ -12,7 +12,7 @@ import { formatCurrencyVnd } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useListSubscriptionPlanVersions } from "@/queries/useSubscriptionPlan";
 import type { PlanResType } from "@/schemaValidatation/subscriptionPlan";
-import { Check, Sparkle } from "lucide-react";
+import { Check, PackageX, Sparkles } from "lucide-react";
 
 interface PlanCardProps {
   plan: PlanResType;
@@ -29,12 +29,11 @@ interface PlanCardProps {
 const FEATURE_PREVIEW_LIMIT = 5;
 
 function formatFeatureValue(value: string): string {
-  const trimmed = value.trim();
-  const lower = trimmed.toLowerCase();
+  const lower = value.trim().toLowerCase();
   if (lower === "true") return "Có";
   if (lower === "false") return "Không";
   if (lower === "unlimited" || lower === "-1") return "Không giới hạn";
-  return trimmed;
+  return value.trim();
 }
 
 function PlanCard({
@@ -56,50 +55,74 @@ function PlanCard({
   const activeVersion = versionsQuery.data?.data?.data?.find((v) => v.isActive);
   const features = activeVersion?.features ?? [];
   const previewFeatures = features.slice(0, FEATURE_PREVIEW_LIMIT);
-  const extraFeatureCount = Math.max(
-    0,
-    features.length - previewFeatures.length,
-  );
+  const extraFeatureCount = Math.max(0, features.length - previewFeatures.length);
+
+  const outOfStock = !plan.inStock;
+  const canSubscribe = !isCurrent && !disableSubscribe && !outOfStock;
 
   return (
     <Card
       className={cn(
-        "relative overflow-hidden border-2 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg",
+        "relative flex flex-col overflow-hidden border-2 transition-all duration-300",
+        canSubscribe && "hover:-translate-y-1 hover:shadow-lg",
         isCurrent && "ring-2 ring-primary",
-        recommended && "border-primary",
+        recommended && !outOfStock ? "border-primary" : !outOfStock && "border-border",
+        outOfStock && "border-muted",
       )}
     >
+      {/* Top accent bar */}
       <div
         className={cn(
           "pointer-events-none absolute inset-x-0 top-0 h-1",
-          isCurrent || recommended ? "bg-primary" : "bg-primary/40",
+          outOfStock ? "bg-muted-foreground/30" :
+          isCurrent || recommended ? "bg-primary" : "bg-primary/30",
         )}
       />
-      {recommended && (
-        <Badge className="absolute right-3 top-3 gap-1">
-          <Sparkle className="h-3 w-3" />
-          Đề xuất
-        </Badge>
-      )}
-      <CardHeader className="space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-lg">{plan.name}</CardTitle>
-          {isCurrent && <Badge>Gói hiện tại</Badge>}
-        </div>
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-          {plan.code}
-        </p>
+
+      <CardHeader className="space-y-3 pt-5">
+        {/* Status badges — inline, không absolute để tránh overlap */}
+        {(recommended || isCurrent || outOfStock) && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {recommended && (
+              <Badge className="gap-1 text-xs">
+                <Sparkles className="h-3 w-3" />
+                Đề xuất
+              </Badge>
+            )}
+            {isCurrent && (
+              <Badge variant="outline" className="text-xs text-primary border-primary">
+                Gói hiện tại
+              </Badge>
+            )}
+            {outOfStock && (
+              <Badge variant="outline" className="gap-1 text-xs border-destructive/40 text-destructive">
+                <PackageX className="h-3 w-3" />
+                Tạm hết hàng
+              </Badge>
+            )}
+          </div>
+        )}
+
         <div>
-          <p className="text-3xl font-bold text-primary">
+          <CardTitle className="text-lg">{plan.name}</CardTitle>
+          <p className="mt-0.5 text-xs uppercase tracking-widest text-muted-foreground">
+            {plan.code}
+          </p>
+        </div>
+
+        <div>
+          <p className={cn(
+            "text-3xl font-bold",
+            outOfStock ? "text-muted-foreground" : "text-primary",
+          )}>
             {formatCurrencyVnd(plan.listPrice)}
           </p>
-          <p className="text-xs text-muted-foreground">
-            / {plan.durationMonths} tháng
-          </p>
+          <p className="text-xs text-muted-foreground">/ {plan.durationMonths} tháng</p>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4 flex-1">
-        <p className="min-h-12 text-sm text-muted-foreground">
+
+      <CardContent className="flex-1 space-y-4">
+        <p className="min-h-10 text-sm text-muted-foreground">
           {plan.description || "Gói tiêu chuẩn cho nhu cầu vận hành nông trại."}
         </p>
 
@@ -120,19 +143,16 @@ function PlanCard({
                 const label = f.featureName ?? f.featureCode;
                 const unit = f.featureUnit;
                 const formattedValue = formatFeatureValue(f.value);
-                const isBoolean =
-                  formattedValue === "Có" || formattedValue === "Không";
+                const isBoolean = formattedValue === "Có" || formattedValue === "Không";
                 return (
-                  <li
-                    key={f.id}
-                    className="flex items-start gap-2 text-sm"
-                  >
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <li key={f.id} className="flex items-start gap-2 text-sm">
+                    <Check className={cn(
+                      "mt-0.5 h-4 w-4 shrink-0",
+                      outOfStock ? "text-muted-foreground" : "text-primary",
+                    )} />
                     <span>
                       <span className="font-medium">
-                        {isBoolean
-                          ? label
-                          : `${formattedValue}${unit ? ` ${unit}` : ""}`}
+                        {isBoolean ? label : `${formattedValue}${unit ? ` ${unit}` : ""}`}
                       </span>
                       {!isBoolean && (
                         <span className="text-muted-foreground"> {label}</span>
@@ -151,22 +171,28 @@ function PlanCard({
         </div>
       </CardContent>
 
-      <CardFooter className="flex-col gap-2">
+      <CardFooter className="flex-col gap-2 pt-4">
         {isCurrent ? (
           <p className="w-full text-center text-xs font-medium text-primary">
             Đây là gói bạn đang sử dụng.
           </p>
+        ) : outOfStock ? (
+          <div className="w-full space-y-1.5 text-center">
+            <Button className="w-full" variant="outline" disabled>
+              <PackageX className="mr-2 h-4 w-4" />
+              Tạm hết hàng
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Kho thiết bị IoT đang hết, vui lòng thử lại sau.
+            </p>
+          </div>
         ) : disableSubscribe ? (
-          <div className="w-full space-y-1">
-            <Button
-              className="w-full"
-              variant="secondary"
-              disabled
-            >
+          <div className="w-full space-y-1.5">
+            <Button className="w-full" variant="secondary" disabled>
               Không thể đăng ký
             </Button>
             {disabledHint && (
-              <p className="text-xs text-muted-foreground">{disabledHint}</p>
+              <p className="text-center text-xs text-muted-foreground">{disabledHint}</p>
             )}
           </div>
         ) : (

@@ -122,12 +122,6 @@ function SubscriptionStatusCard({
             >
               Còn {subscription.daysRemaining} ngày
             </span>
-            <span className="text-muted-foreground">
-              Tự động gia hạn:{" "}
-              <span className="font-medium text-foreground">
-                {subscription.autoRenew ? "Bật" : "Tắt"}
-              </span>
-            </span>
           </div>
         </div>
 

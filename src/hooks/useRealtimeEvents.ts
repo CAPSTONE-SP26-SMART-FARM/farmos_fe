@@ -16,6 +16,8 @@ import {
   InvoicePaidPayloadSchema,
   IotKitOrderCancelledPayloadSchema,
   IotKitOrderPaidPayloadSchema,
+  IotKitDevicesAutoAssignedPayloadSchema,
+  SubscriptionDevicesAutoAssignedPayloadSchema,
   MilestoneStartReminderPayloadSchema,
   NotificationCreatedPayloadSchema,
   SensorAlertRecoveredPayloadSchema,
@@ -58,6 +60,9 @@ const EVENT_SCHEMAS: Partial<Record<RealtimeEventName, ZodSchema>> = {
   [RealtimeEvents.InvoicePaid]: InvoicePaidPayloadSchema,
   [RealtimeEvents.IotKitOrderPaid]: IotKitOrderPaidPayloadSchema,
   [RealtimeEvents.IotKitOrderCancelled]: IotKitOrderCancelledPayloadSchema,
+  [RealtimeEvents.IotKitDevicesAutoAssigned]: IotKitDevicesAutoAssignedPayloadSchema,
+  [RealtimeEvents.SubscriptionDevicesAutoAssigned]:
+    SubscriptionDevicesAutoAssignedPayloadSchema,
 };
 
 /** Những event muốn surface lên bell / toast. `TicketMessageCreated` không
@@ -132,14 +137,23 @@ function invalidateByEvent(
     case RealtimeEvents.SubscriptionActivated:
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["iot-kits"] });
       return;
     case RealtimeEvents.InvoiceCheckoutCreated:
     case RealtimeEvents.InvoicePaid:
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["iot-kits"] });
       return;
     case RealtimeEvents.IotKitOrderPaid:
     case RealtimeEvents.IotKitOrderCancelled:
       queryClient.invalidateQueries({ queryKey: ["iot-kits"] });
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      return;
+    case RealtimeEvents.IotKitDevicesAutoAssigned:
+    case RealtimeEvents.SubscriptionDevicesAutoAssigned:
+      queryClient.invalidateQueries({ queryKey: ["iot-kits"] });
+      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
       return;
     case RealtimeEvents.MilestoneStartReminder:
@@ -186,7 +200,7 @@ function handleEvent(
 
   ctx.add(item);
 
-  if (shouldToast(event)) {
+  if (shouldToast(event, payload)) {
     toastBySeverity(item.severity, item.title, {
       description: item.description,
       action: item.href
@@ -223,6 +237,8 @@ export function useRealtimeEvents(): void {
       ...NOTIFY_EVENTS,
       RealtimeEvents.SensorReadingChanged,
       RealtimeEvents.TicketMessageCreated,
+      RealtimeEvents.IotKitDevicesAutoAssigned,
+      RealtimeEvents.SubscriptionDevicesAutoAssigned,
     ];
 
     for (const event of allEvents) {

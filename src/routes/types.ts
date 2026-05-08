@@ -5,6 +5,7 @@ export interface RouteChild {
 	path: string;
 	component: ComponentType;
 	allowedRoles?: RoleNameType[];
+	requiresActiveSubscription?: boolean;
 }
 
 export interface RouteConfig {

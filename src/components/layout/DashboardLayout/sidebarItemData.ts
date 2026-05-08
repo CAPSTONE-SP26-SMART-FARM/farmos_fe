@@ -185,6 +185,7 @@ export const sidebarData: SidebarData = {
   navOwner: [
     {
       label: "Tổng quan",
+      requiresSubscription: true,
       items: [
         {
           title: "Tổng Quan",
@@ -216,6 +217,7 @@ export const sidebarData: SidebarData = {
     },
     {
       label: "Trang trại",
+      requiresSubscription: true,
       items: [
         {
           title: "Quản Lý Trang Trại",
@@ -235,22 +237,8 @@ export const sidebarData: SidebarData = {
       ],
     },
     {
-      label: "Vận hành",
-      items: [
-        {
-          title: "Mẫu Nhiệm Vụ",
-          url: "/dashboard/owner/employee-task-templates",
-          icon: ClipboardList,
-        },
-        {
-          title: "Nhật Ký Công Việc",
-          url: "/dashboard/owner/daily-logs",
-          icon: NotebookPen,
-        },
-      ],
-    },
-    {
       label: "IoT & Cảm biến",
+      requiresSubscription: true,
       items: [
         {
           title: "Thiết Bị & Hạn Mức IoT",
@@ -266,6 +254,7 @@ export const sidebarData: SidebarData = {
     },
     {
       label: "Hỗ trợ",
+      requiresSubscription: true,
       items: [
         {
           title: "Giám Sát Sự Cố",
