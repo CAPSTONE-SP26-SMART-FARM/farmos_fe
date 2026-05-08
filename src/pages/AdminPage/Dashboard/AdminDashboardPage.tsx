@@ -3,7 +3,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAdminDashboard } from "@/queries/useDashboard";
 import type { DashboardPeriod } from "@/types/dashboard";
 import { useMemo, useState } from "react";
-import AdminActivityFeed from "./components/AdminActivityFeed";
 import IotFleetStatusCard from "./components/IotFleetStatusCard";
 import KpiStrip from "./components/KpiStrip";
 import NewUsersChart from "./components/NewUsersChart";
@@ -11,7 +10,7 @@ import PeriodFilter from "./components/PeriodFilter";
 import PlatformWalletChart from "./components/PlatformWalletChart";
 import RevenueTrendChart from "./components/RevenueTrendChart";
 import SubscriptionDistributionCard from "./components/SubscriptionDistributionCard";
-import TicketsByTypeCard from "./components/TicketsByTypeCard";
+import PendingActionsSection from "./components/PendingActionsSection";
 import {
   buildAdminDashboardOverlay,
   type DashboardPeriodExtended,
@@ -55,7 +54,10 @@ function AdminDashboardPage() {
       </div>
 
       {/* ── KPI section ─────────────────────────────────────────────── */}
-      <section aria-labelledby="kpi-section-heading" className="space-y-3">
+      <section
+        aria-labelledby="kpi-section-heading"
+        className="space-y-3"
+      >
         <div className="flex items-center justify-between gap-2">
           <h2
             id="kpi-section-heading"
@@ -73,7 +75,10 @@ function AdminDashboardPage() {
         {query.isLoading ? (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-24 rounded-xl" />
+              <Skeleton
+                key={i}
+                className="h-24 rounded-xl"
+              />
             ))}
           </div>
         ) : (
@@ -82,7 +87,10 @@ function AdminDashboardPage() {
       </section>
 
       {/* ── Distribution charts (2×2) ───────────────────────────────── */}
-      <section aria-labelledby="charts-section-heading" className="space-y-3">
+      <section
+        aria-labelledby="charts-section-heading"
+        className="space-y-3"
+      >
         <div className="flex items-center justify-between gap-2">
           <h2
             id="charts-section-heading"
@@ -99,8 +107,11 @@ function AdminDashboardPage() {
 
         {query.isLoading ? (
           <div className="grid gap-4 lg:grid-cols-2">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-72 rounded-xl" />
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton
+                key={i}
+                className="h-72 rounded-xl"
+              />
             ))}
           </div>
         ) : (
@@ -110,13 +121,15 @@ function AdminDashboardPage() {
               data={chartsOverlay.subscriptionDistribution}
             />
             <IotFleetStatusCard data={chartsOverlay.iotFleetBoardOnly} />
-            <TicketsByTypeCard data={chartsOverlay.ticketsByType} />
           </div>
         )}
       </section>
 
       {/* ── Trend charts (one per row to keep all 30 days visible) ─── */}
-      <section aria-labelledby="trend-section-heading" className="space-y-3">
+      <section
+        aria-labelledby="trend-section-heading"
+        className="space-y-3"
+      >
         <h2
           id="trend-section-heading"
           className="text-sm font-semibold text-muted-foreground"
@@ -136,20 +149,8 @@ function AdminDashboardPage() {
         )}
       </section>
 
-      {/* ── Recent activity ─────────────────────────────────────────── */}
-      <section aria-labelledby="activity-section-heading" className="space-y-3">
-        <h2
-          id="activity-section-heading"
-          className="text-sm font-semibold text-muted-foreground"
-        >
-          Hoạt động gần đây
-        </h2>
-        {query.isLoading || !data ? (
-          <Skeleton className="h-96 rounded-xl" />
-        ) : (
-          <AdminActivityFeed items={data.activityFeed} maxItems={30} />
-        )}
-      </section>
+      {/* ── Pending actions ──────────────────────────────────────── */}
+      <PendingActionsSection />
     </div>
   );
 }
