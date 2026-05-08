@@ -25,12 +25,15 @@ import { useManagerListAssignedZones } from "@/queries/useZone";
 import {
   useManagerTicketList,
   useManagerTicketDetail,
-  useCreateIncidentTicket,
   useEndIncidentTicket,
   useTicketMessages,
   useCreateTicketMessage,
   useTicketPrescriptions,
 } from "@/queries/useTicket";
+import {
+  useCreateTicketV2,
+  useOwnerTicketBalance,
+} from "@/queries/useTicketV2";
 import { useRealtimeTicket } from "@/hooks/useRealtimeTicket";
 import { useTicketSubscription } from "@/hooks/useTicketSubscription";
 import { useTicketQualityFlag } from "@/hooks/useTicketQualityFlag";
@@ -38,9 +41,9 @@ import TicketDetailPanelV2 from "@/components/ticket-quality/TicketDetailPanelV2
 import { RoleName } from "@/constants/role";
 import type { TicketIncidentResType } from "@/schemaValidatation/ticket";
 import {
-  CreateIncidentTicketBodySchema,
-  type CreateIncidentTicketBodyType,
-} from "@/schemaValidatation/ticket";
+  CreateTicketV2BodySchema,
+  type CreateTicketV2BodyType,
+} from "@/schemaValidatation/ticketV2";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import {
@@ -453,7 +456,15 @@ function CreateTicketPanel({
   const [selectedZoneId, setSelectedZoneId] = useState(initialZoneId ?? "");
   const [selectedCropSeasonId, setSelectedCropSeasonId] = useState("");
 
-  const createMutation = useCreateIncidentTicket();
+  // V2 mutation — POST /tickets với categoryConfigId. Manager tạo ticket dùng
+  // chung endpoint với owner; BE tự resolve owner = farm.ownerId, trừ quota
+  // vào ví owner. Dùng `useOwnerTicketBalance` (alias /me/ticket-balance) —
+  // BE filter theo user hiện tại; với manager response sẽ trả balance của owner
+  // farm tương ứng (xem walkthrough Bước 1).
+  const createMutation = useCreateTicketV2();
+  const balanceQuery = useOwnerTicketBalance();
+  const balanceItems = balanceQuery.data?.data.data ?? [];
+  const eligibleCategories = balanceItems.filter((b) => b.total > 0);
 
   const zonesQuery = useManagerListAssignedZones({ page: 1, limit: 100 });
   const zones = zonesQuery.data?.data.data ?? [];
@@ -470,10 +481,11 @@ function CreateTicketPanel({
   );
   const milestones = milestonesQuery.data?.data.data ?? [];
 
-  const form = useForm<CreateIncidentTicketBodyType>({
-    resolver: zodResolver(CreateIncidentTicketBodySchema),
+  const form = useForm<CreateTicketV2BodyType>({
+    resolver: zodResolver(CreateTicketV2BodySchema),
     defaultValues: {
       milestoneId: initialMilestoneId ?? "",
+      categoryConfigId: "",
       title: "",
       description: "",
       severity: "low",
@@ -491,18 +503,15 @@ function CreateTicketPanel({
     setTimeout(onBack, 300);
   };
 
-  const onSubmit = async (data: CreateIncidentTicketBodyType) => {
+  const onSubmit = async (data: CreateTicketV2BodyType) => {
     try {
       await createMutation.mutateAsync(data);
+      toast.success("Đã tạo ticket sự cố thành công.");
       onCreated();
       handleBack();
     } catch (error) {
-      if (
-        isApiErrorUnprocessableEntityResponse<CreateIncidentTicketBodyType>(
-          error,
-        )
-      ) {
-        handleApiErrorUnprocessentity<CreateIncidentTicketBodyType>(
+      if (isApiErrorUnprocessableEntityResponse<CreateTicketV2BodyType>(error)) {
+        handleApiErrorUnprocessentity<CreateTicketV2BodyType>(
           error.response!.data.errors,
           form.setError,
           { getValues: form.getValues },
@@ -554,6 +563,47 @@ function CreateTicketPanel({
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-4"
           >
+            {/* Category selector — V2 yêu cầu categoryConfigId */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Loại ticket *</label>
+              <Select
+                value={form.watch("categoryConfigId")}
+                onValueChange={(v) =>
+                  form.setValue("categoryConfigId", v, {
+                    shouldValidate: true,
+                  })
+                }
+                disabled={balanceQuery.isLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={
+                      balanceQuery.isLoading
+                        ? "Đang tải quota..."
+                        : eligibleCategories.length === 0
+                          ? "Hết quota — chủ vườn cần nạp thêm"
+                          : "Chọn loại ticket"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {eligibleCategories.map((c) => (
+                    <SelectItem
+                      key={c.categoryConfigId}
+                      value={c.categoryConfigId}
+                    >
+                      {c.categoryName} — còn {c.total}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {form.formState.errors.categoryConfigId && (
+                <p className="text-xs text-destructive">
+                  {form.formState.errors.categoryConfigId.message}
+                </p>
+              )}
+            </div>
+
             {/* Milestone selector */}
             {initialMilestoneId ? (
               <div className="rounded-md border p-3 bg-muted/30">
@@ -634,8 +684,12 @@ function CreateTicketPanel({
                   <div className="space-y-1">
                     <label className="text-sm font-medium">Mốc sản xuất</label>
                     <Select
-                      value={form.watch("milestoneId")}
-                      onValueChange={(v) => form.setValue("milestoneId", v)}
+                      value={form.watch("milestoneId") ?? ""}
+                      onValueChange={(v) =>
+                        form.setValue("milestoneId", v, {
+                          shouldValidate: true,
+                        })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue
@@ -697,11 +751,12 @@ function CreateTicketPanel({
             <div className="space-y-1">
               <label className="text-sm font-medium">Mức độ nghiêm trọng</label>
               <Select
-                defaultValue="low"
+                value={form.watch("severity")}
                 onValueChange={(v) =>
                   form.setValue(
                     "severity",
-                    v as CreateIncidentTicketBodyType["severity"],
+                    v as CreateTicketV2BodyType["severity"],
+                    { shouldValidate: true },
                   )
                 }
               >

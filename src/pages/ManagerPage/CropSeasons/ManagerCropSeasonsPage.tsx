@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertTriangle,
   ArrowLeft,
+  BarChart3,
   BookOpen,
   History,
   Layers,
@@ -18,7 +19,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useManagerListCropSeasons } from "@/queries/useCropSeason";
 import { useManagerListAssignedZones } from "@/queries/useZone";
 import { ProductionStatusName } from "@/types/cropSeason";
@@ -28,7 +29,7 @@ import { MilestonesWithDetailTab } from "./components/MilestonesWithDetailTab";
 import { RequestsHistoryTab } from "./components/RequestsHistoryTab";
 import { SensorOverviewTab } from "./components/SensorOverviewTab";
 import { IncidentTab } from "./components/IncidentTab";
-import { TrackingLogTab } from "./components/TrackingOperationalView";
+import TrackingConfigPanel from "./components/TrackingConfigPanel";
 import HarvestRecordTab from "@/components/common/HarvestRecord/HarvestRecordTab";
 import { DailyLogsTab } from "./components/DailyLogsTab";
 import { HistoryView } from "./components/HistoryView";
@@ -39,6 +40,7 @@ const HISTORY_STATUSES = new Set(["completed", "cancelled"]);
 
 export default function ManagerCropSeasonsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [showCreate, setShowCreate] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<"now" | "history">("now");
   const zoneId = searchParams.get("zoneId")?.trim() ?? "";
@@ -232,6 +234,20 @@ export default function ManagerCropSeasonsPage() {
                 <CropSeasonSummaryCard
                   season={nowSeason}
                   zoneId={zoneId}
+                  actions={
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        navigate(
+                          `/dashboard/manager/crop-seasons/${nowSeason.id}/plan-vs-actual`,
+                        )
+                      }
+                    >
+                      <BarChart3 className="h-3 w-3 mr-1.5" />
+                      Kế hoạch vs Thực tế
+                    </Button>
+                  }
                 />
 
                 {isPlanningState ? (
@@ -243,6 +259,13 @@ export default function ManagerCropSeasonsPage() {
                       >
                         <Layers className="h-3.5 w-3.5" />
                         Mốc công việc
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="tracking-config"
+                        className="flex items-center gap-1.5"
+                      >
+                        <SlidersHorizontal className="h-3.5 w-3.5" />
+                        Cấu hình theo dõi
                       </TabsTrigger>
                       <TabsTrigger
                         value="requests"
@@ -263,6 +286,20 @@ export default function ManagerCropSeasonsPage() {
                         <MilestonesWithDetailTab
                           cropSeason={nowSeason}
                           zoneId={zoneId}
+                        />
+                      </motion.div>
+                    </TabsContent>
+                    <TabsContent
+                      value="tracking-config"
+                      className="mt-4"
+                    >
+                      <motion.div
+                        key="tracking-config"
+                        {...tabMotion}
+                      >
+                        <TrackingConfigPanel
+                          cropSeasonId={nowSeason.id}
+                          readOnly={false}
                         />
                       </motion.div>
                     </TabsContent>
@@ -313,11 +350,11 @@ export default function ManagerCropSeasonsPage() {
                         Nhiệm vụ
                       </TabsTrigger>
                       <TabsTrigger
-                        value="tracking"
+                        value="tracking-config"
                         className="flex items-center gap-1.5"
                       >
                         <SlidersHorizontal className="h-3.5 w-3.5" />
-                        Nhật ký thay đổi
+                        Cấu hình theo dõi
                       </TabsTrigger>
                       <TabsTrigger
                         value="harvest"
@@ -386,14 +423,20 @@ export default function ManagerCropSeasonsPage() {
                       </motion.div>
                     </TabsContent>
                     <TabsContent
-                      value="tracking"
+                      value="tracking-config"
                       className="mt-4"
                     >
                       <motion.div
-                        key="tracking"
+                        key="tracking-config-op"
                         {...tabMotion}
                       >
-                        <TrackingLogTab cropSeason={nowSeason} />
+                        {/* BE PUT chỉ cho phép khi cropSeason.status=planning
+                          (xem `tracking.controller.ts:54`). Ở state khác →
+                          read-only để Manager vẫn xem được cấu hình hiện tại. */}
+                        <TrackingConfigPanel
+                          cropSeasonId={nowSeason.id}
+                          readOnly={true}
+                        />
                       </motion.div>
                     </TabsContent>
                     <TabsContent

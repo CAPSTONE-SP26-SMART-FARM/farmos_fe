@@ -1,6 +1,7 @@
 import { API_ENDPOINTS } from "@/constants";
 import { api } from "@/lib/axios";
 import type {
+  ClawbackTicketBodyType,
   DoctorCommissionReportQueryType,
   DoctorCommissionReportResType,
   TicketRevenueReportQueryType,
@@ -22,8 +23,13 @@ const ticketAdminOpsService = {
       `${TV2.ADMIN_REPORT_DOCTOR_COMMISSION}?${queryString.stringify({ ...query }, { skipNull: true, skipEmptyString: true })}`,
     ),
 
-  clawback: (ticketId: string) =>
-    api.post<MessageResType>(TV2.ADMIN_CLAWBACK(ticketId)),
+  // B16 — Admin clawback. BE body `{reason?: string}` (optional ở schema BE,
+  // nhưng FE form bắt buộc nhập để phục vụ audit).
+  clawback: (ticketId: string, body: ClawbackTicketBodyType) =>
+    api.post<MessageResType, ClawbackTicketBodyType>(
+      TV2.ADMIN_CLAWBACK(ticketId),
+      body,
+    ),
 };
 
 export default ticketAdminOpsService;

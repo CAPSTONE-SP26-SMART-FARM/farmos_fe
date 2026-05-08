@@ -109,11 +109,6 @@ function OwnerSubscriptionHistoryPage() {
         header: "Hết hạn",
         cell: ({ row }) => formatDateTimeVi(row.original.expiresAt),
       },
-      {
-        accessorKey: "autoRenew",
-        header: "Tự động gia hạn",
-        cell: ({ row }) => (row.original.autoRenew ? "Bật" : "Tắt"),
-      },
     ],
     [],
   );
@@ -158,7 +153,10 @@ function OwnerSubscriptionHistoryPage() {
             </SelectTrigger>
             <SelectContent>
               {STATUS_OPTIONS.map((status) => (
-                <SelectItem key={status.value} value={status.value}>
+                <SelectItem
+                  key={status.value}
+                  value={status.value}
+                >
                   {status.label}
                 </SelectItem>
               ))}
@@ -182,9 +180,7 @@ function OwnerSubscriptionHistoryPage() {
                 label: "Xem chi tiết",
                 icon: Eye,
                 onSelect: (subscription) =>
-                  navigate(
-                    `/dashboard/owner/subscriptions/${subscription.id}`,
-                  ),
+                  navigate(`/dashboard/owner/subscriptions/${subscription.id}`),
               },
             ]}
             onRowClick={(subscription) =>

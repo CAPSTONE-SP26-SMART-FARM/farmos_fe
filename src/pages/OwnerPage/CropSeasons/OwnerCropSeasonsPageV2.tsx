@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   BarChart3,
+  BookOpen,
   History,
   Layers,
   Radio,
@@ -24,6 +25,7 @@ import { OwnerMilestonesWithDetailTab } from "./components/OwnerMilestonesWithDe
 import { OwnerRequestsHistoryTab } from "./components/OwnerRequestsHistoryTab";
 import { OwnerSensorOverviewTab } from "./components/OwnerSensorOverviewTab";
 import { OwnerIncidentTab } from "./components/OwnerIncidentTab";
+import { OwnerDailyLogsTab } from "./components/OwnerDailyLogsTab";
 import HarvestRecordTab from "@/components/common/HarvestRecord/HarvestRecordTab";
 import { ZoneSwitcherCombobox } from "@/pages/ManagerPage/CropSeasons/components/ZoneSwitcherCombobox";
 import { ZoneLanding } from "@/pages/ManagerPage/CropSeasons/components/ZoneLanding";
@@ -37,10 +39,14 @@ const HISTORY_STATUSES = new Set(["completed", "cancelled"]);
 // asks to open a specific request, default-select the requests tab.
 function NowSeasonContent({
   season,
+  zoneId,
+  zoneName,
   openRequestId,
   onRequestOpened,
 }: {
   season: import("@/types/cropSeason").CropSeasonType;
+  zoneId: string;
+  zoneName?: string;
   openRequestId?: string;
   onRequestOpened?: () => void;
 }) {
@@ -136,6 +142,13 @@ function NowSeasonContent({
               Sự cố
             </TabsTrigger>
             <TabsTrigger
+              value="daily-logs"
+              className="flex items-center gap-1.5"
+            >
+              <BookOpen className="h-3.5 w-3.5" />
+              Nhiệm vụ
+            </TabsTrigger>
+            <TabsTrigger
               value="harvest"
               className="flex items-center gap-1.5"
             >
@@ -158,6 +171,13 @@ function NowSeasonContent({
           </TabsContent>
           <TabsContent value="incidents" className="mt-4">
             <OwnerIncidentTab cropSeason={season} />
+          </TabsContent>
+          <TabsContent value="daily-logs" className="mt-4">
+            <OwnerDailyLogsTab
+              zoneId={zoneId}
+              zoneName={zoneName}
+              cropSeason={season}
+            />
           </TabsContent>
           <TabsContent value="harvest" className="mt-4">
             <HarvestRecordTab cropSeason={season} />
@@ -352,6 +372,8 @@ export default function OwnerCropSeasonsPageV2() {
             ) : (
               <NowSeasonContent
                 season={nowSeason}
+                zoneId={zoneId}
+                zoneName={selectedZoneName}
                 openRequestId={openRequestId}
                 onRequestOpened={() => {
                   if (openRequestId) {

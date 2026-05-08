@@ -575,6 +575,7 @@ function TaskDetailSheet({
   canEdit,
   farmers,
   getAssigneeLabel,
+  lockComplete = false,
 }: {
   task: EmployeeTaskResType | null;
   milestoneId: string;
@@ -582,6 +583,13 @@ function TaskDetailSheet({
   canEdit: boolean;
   farmers: Array<{ id: string; label: string }>;
   getAssigneeLabel: (assigneeId: string | null | undefined) => string;
+  /**
+   * Khi `true` (vd cropSeason đang ở planning):
+   *   - Ẩn nút "Hoàn thành"
+   *   - Khoá Select trạng thái về read-only
+   * Vì tasks chưa được phép tiến triển khi vụ mùa chưa được phê duyệt.
+   */
+  lockComplete?: boolean;
 }) {
   const updateMutation = useManagerUpdateEmployeeTask(milestoneId);
   const assignMutation = useManagerAssignFarmerToTask(milestoneId);
@@ -742,22 +750,23 @@ function TaskDetailSheet({
                       <Pencil className="h-3.5 w-3.5 mr-1" />
                       Chỉnh sửa
                     </Button>
-                    {(task.status === "pending" ||
-                      task.status === "in_progress") && (
-                      <Button
-                        size="sm"
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                        disabled={completeMutation.isPending}
-                        onClick={() =>
-                          completeMutation.mutate(task.id, {
-                            onSuccess: () => onClose(),
-                          })
-                        }
-                      >
-                        <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                        Hoàn thành
-                      </Button>
-                    )}
+                    {!lockComplete &&
+                      (task.status === "pending" ||
+                        task.status === "in_progress") && (
+                        <Button
+                          size="sm"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                          disabled={completeMutation.isPending}
+                          onClick={() =>
+                            completeMutation.mutate(task.id, {
+                              onSuccess: () => onClose(),
+                            })
+                          }
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                          Hoàn thành
+                        </Button>
+                      )}
                     {!task.assignedTo ? (
                       <Button
                         size="sm"
@@ -842,6 +851,7 @@ function TaskDetailSheet({
                           status: v as TaskStatusType,
                         }))
                       }
+                      disabled={lockComplete}
                     >
                       <SelectTrigger className="mt-1 h-8 text-xs">
                         <SelectValue />
@@ -856,6 +866,12 @@ function TaskDetailSheet({
                         <SelectItem value="cancelled">Đã hủy</SelectItem>
                       </SelectContent>
                     </Select>
+                    {lockComplete && (
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Vụ mùa đang lập kế hoạch — không thay đổi trạng thái
+                        nhiệm vụ.
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="flex gap-2 pt-2">
@@ -1393,9 +1409,17 @@ export function ManagerMilestoneTaskAssignmentScreen({
 export default function ManagerMilestoneTasksSection({
   milestoneId,
   canEdit = true,
+  lockComplete = false,
 }: {
   milestoneId: string;
   canEdit?: boolean;
+  /**
+   * Khi cropSeason ở planning (chưa được phê duyệt), task chưa nên tiến triển.
+   * `lockComplete=true` → ẩn DropdownMenuItem "Hoàn thành" trên list, ẩn nút
+   * "Hoàn thành" trong TaskDetailSheet, và khoá Select trạng thái về read-only
+   * khi user bấm "Chỉnh sửa".
+   */
+  lockComplete?: boolean;
 }) {
   const [query, setQuery] = useState<ListEmployeeTasksQueryType>({
     page: 1,
@@ -1753,20 +1777,21 @@ export default function ManagerMilestoneTasksSection({
                             <Eye className="h-4 w-4 mr-2" />
                             Xem chi tiết
                           </DropdownMenuItem>
-                          {(task.status === "pending" ||
-                            task.status === "in_progress") && (
-                            <DropdownMenuItem
-                              disabled={completeMutation.isPending}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                completeMutation.mutate(task.id);
-                              }}
-                              className="text-emerald-600 focus:text-emerald-600"
-                            >
-                              <CheckCircle2 className="h-4 w-4 mr-2" />
-                              Hoàn thành
-                            </DropdownMenuItem>
-                          )}
+                          {!lockComplete &&
+                            (task.status === "pending" ||
+                              task.status === "in_progress") && (
+                              <DropdownMenuItem
+                                disabled={completeMutation.isPending}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  completeMutation.mutate(task.id);
+                                }}
+                                className="text-emerald-600 focus:text-emerald-600"
+                              >
+                                <CheckCircle2 className="h-4 w-4 mr-2" />
+                                Hoàn thành
+                              </DropdownMenuItem>
+                            )}
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1899,6 +1924,7 @@ export default function ManagerMilestoneTasksSection({
         canEdit={canEdit}
         farmers={farmers}
         getAssigneeLabel={getAssigneeLabel}
+        lockComplete={lockComplete}
       />
 
       <ConfirmDialog

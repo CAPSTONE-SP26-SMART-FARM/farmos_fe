@@ -505,6 +505,14 @@ const routes: AppRoutes = [
         allowedRoles: [RoleName.Manager],
       },
       {
+        // Reuse PlanVsActualPage cho manager — BE tracking endpoints accept
+        // owner+manager roles. Page detect prefix URL để fallback nav đúng
+        // role. Tham số `:id` là cropSeasonId.
+        path: "/dashboard/manager/crop-seasons/:id/plan-vs-actual",
+        component: PlanVsActualPage,
+        allowedRoles: [RoleName.Manager],
+      },
+      {
         path: "/dashboard/manager/milestones",
         component: ManagerProductionMilestonesPage,
         allowedRoles: [RoleName.Manager],

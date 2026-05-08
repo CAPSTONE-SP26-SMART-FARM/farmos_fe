@@ -46,6 +46,7 @@ import AbandonResolutionModal from "./AbandonResolutionModal";
 import AddendumList from "./AddendumList";
 import AutoCloseCountdown from "./AutoCloseCountdown";
 import BroadcastTimeline from "./BroadcastTimeline";
+import CancelTicketModal from "./CancelTicketModal";
 import CloseAndRateModal from "./CloseAndRateModal";
 import PrescriptionItemsCard from "./PrescriptionItemsCard";
 import RatingDisplay from "./RatingDisplay";
@@ -107,9 +108,13 @@ export default function TicketDetailPanelV2({
 
   // Modal state.
   const [closeModalOpen, setCloseModalOpen] = useState(false);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [abandonModalOpen, setAbandonModalOpen] = useState(false);
   const [abandonTriggeredByFallback, setAbandonTriggeredByFallback] =
     useState(false);
+  // Đảm bảo chỉ auto-mở Abandon modal 1 lần cho mỗi flag bật từ BE
+  // (`pendingFallbackChoice=true`). Tránh re-mở mỗi lần invalidate.
+  const [autoOpenedFallback, setAutoOpenedFallback] = useState(false);
 
   // Chat input.
   const [msgText, setMsgText] = useState("");
@@ -124,7 +129,8 @@ export default function TicketDetailPanelV2({
   const role: RoleNameType =
     viewerRole === "owner" ? RoleName.Owner : RoleName.Manager;
   // useRealtimeTicket cần farmId/zoneId để filter scope. Lấy từ ticket data.
-  const ticket = fullQuery.data?.data?.ticket;
+  const fullData = fullQuery.data?.data;
+  const ticket = fullData?.ticket;
   useRealtimeTicket(role, {
     farmId: ticket?.farmId ?? undefined,
     zoneId: ticket?.zoneId ?? undefined,
@@ -147,6 +153,31 @@ export default function TicketDetailPanelV2({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
+
+  // P2-2 — Auto-open Abandon modal khi BE đánh cờ pendingFallbackChoice (worker
+  // đã reset ticket về OPEN, đang chờ creator chọn FALLBACK_AI/REFUND_TICKET).
+  // Pattern derive-state-during-render (React docs §"You Might Not Need an
+  // Effect" → "Adjusting state when a prop changes"): compare prev pending
+  // flag với current; nếu chuyển từ false→true thì tự mở modal. Tránh
+  // useEffect + setState để pass `react-hooks/set-state-in-effect`.
+  const isCreatorEarly = ticket ? viewerUserId === ticket.createdBy : false;
+  // `pendingFallbackChoice` nằm ở TOP-LEVEL của FullRes (xem schema) — đọc
+  // từ `fullData`, không phải từ `ticket`.
+  const pendingFallback = fullData?.pendingFallbackChoice === true;
+  const [prevPendingFallback, setPrevPendingFallback] = useState(false);
+  if (pendingFallback !== prevPendingFallback) {
+    setPrevPendingFallback(pendingFallback);
+    if (
+      pendingFallback &&
+      isCreatorEarly &&
+      !abandonModalOpen &&
+      !autoOpenedFallback
+    ) {
+      setAbandonTriggeredByFallback(true);
+      setAbandonModalOpen(true);
+      setAutoOpenedFallback(true);
+    }
+  }
 
   // Loading / error guard.
   if (fullQuery.isLoading) {
@@ -181,6 +212,7 @@ export default function TicketDetailPanelV2({
   const full = fullQuery.data.data;
   const t = full.ticket;
   const isCreator = viewerUserId === t.createdBy;
+  const isOpen = t.status === "OPEN";
   const isResolved = t.status === "RESOLVED";
   const isClosed = t.status === "CLOSED" || t.status === "CANCELLED";
   const isActiveChat =
@@ -273,6 +305,32 @@ export default function TicketDetailPanelV2({
             )}
           </AlertDescription>
         </Alert>
+      )}
+
+      {/* Action header — creator + status OPEN: cho huỷ + refund quota */}
+      {isOpen && isCreator && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <XCircle className="h-4 w-4 text-destructive" />
+              Đang chờ bác sĩ tiếp nhận
+            </CardTitle>
+            <CardDescription>
+              Có thể huỷ ticket khi chưa có bác sĩ tiếp nhận. Quota sẽ được
+              hoàn trả về tài khoản chủ vườn.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => setCancelModalOpen(true)}
+            >
+              <XCircle className="mr-2 h-4 w-4" />
+              Huỷ ticket
+            </Button>
+          </CardContent>
+        </Card>
       )}
 
       {/* Action header — chỉ creator + state RESOLVED */}
@@ -513,7 +571,13 @@ export default function TicketDetailPanelV2({
         </div>
       </div>
 
-      {/* Modals */}
+      {/* Modals — render-conditional bug fix:
+        - CloseAndRate chỉ valid khi status=RESOLVED
+        - AbandonResolution có thể trigger ở mọi state non-terminal (OPEN sau
+          worker-reset, ASSIGNED/IN_PROGRESS, RESOLVED). Phải LUÔN mount khi
+          isCreator để callback `onFallbackRequired` từ WS thực sự mở modal,
+          và effect auto-open từ `pendingFallbackChoice` hoạt động.
+        - CancelTicketModal chỉ valid khi status=OPEN. */}
       {isResolved && isCreator && (
         <CloseAndRateModal
           open={closeModalOpen}
@@ -522,7 +586,7 @@ export default function TicketDetailPanelV2({
           ticketFull={full}
         />
       )}
-      {isResolved && isCreator && (
+      {isCreator && !isClosed && (
         <AbandonResolutionModal
           open={abandonModalOpen}
           onOpenChange={(o) => {
@@ -531,6 +595,14 @@ export default function TicketDetailPanelV2({
           }}
           ticketId={ticketId}
           triggeredByFallback={abandonTriggeredByFallback}
+        />
+      )}
+      {isOpen && isCreator && (
+        <CancelTicketModal
+          open={cancelModalOpen}
+          onOpenChange={setCancelModalOpen}
+          ticketId={ticketId}
+          onCancelled={() => onBack()}
         />
       )}
     </div>

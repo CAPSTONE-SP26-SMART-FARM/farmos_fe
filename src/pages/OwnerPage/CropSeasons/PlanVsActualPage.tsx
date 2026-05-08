@@ -1,6 +1,6 @@
 // src/pages/OwnerPage/CropSeasons/PlanVsActualPage.tsx
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useLocation, useNavigate, useParams } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/endpoints";
 import {
@@ -57,7 +57,16 @@ const HEALTH_PILL_CLASS: Record<
 function PlanVsActualPage() {
   const { id: cropSeasonId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
+  // BE tracking endpoints (`tracking-log`, `tracking/diff`, ...) accept cả
+  // role `owner` lẫn `manager` (xem `tracking.controller.ts`). Page dùng chung
+  // cho 2 role; chỉ khác fallback nav khi không có history. Detect prefix URL
+  // để biết role hiện tại.
+  const isManagerRoute = location.pathname.startsWith("/dashboard/manager/");
+  const fallbackListPath = isManagerRoute
+    ? "/dashboard/manager/crop-seasons"
+    : "/dashboard/owner/crop-seasons";
   const [show, setShow] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -97,7 +106,7 @@ function PlanVsActualPage() {
 
   const handleBack = () => {
     if (window.history.length > 1) navigate(-1);
-    else navigate("/dashboard/owner/crop-seasons");
+    else navigate(fallbackListPath);
   };
 
   if (loadingDiff) return <LoadingCard />;

@@ -193,6 +193,10 @@ export const TicketBasicResSchema = z.object({
   updatedAt: z.string().datetime(),
 });
 
+// P2-2 — `pendingFallbackChoice` ở TOP-LEVEL của FullRes (sibling của `ticket`,
+// không phải nested trong `ticket`). Khớp BE
+// `farm_os_be/src/modules/ticket-lifecycle/ticket-lifecycle.model.ts:265-269`.
+// Optional để backward-compat nếu BE cũ chưa rollout flag này.
 export const TicketFullResSchema = z.object({
   ticket: TicketBasicResSchema,
   solution: SolutionResSchema.nullable(),
@@ -201,6 +205,7 @@ export const TicketFullResSchema = z.object({
   rating: RatingResSchema.nullable(),
   broadcasts: z.array(BroadcastResSchema),
   abandonLogs: z.array(AbandonLogResSchema),
+  pendingFallbackChoice: z.boolean().optional(),
 });
 
 // ── Body schemas — Module 3 actions ──────────────────────────────────────

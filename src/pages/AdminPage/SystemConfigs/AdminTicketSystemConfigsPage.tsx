@@ -25,9 +25,23 @@ import {
   type TicketSystemConfigFormType,
 } from "@/schemaValidatation/systemConfig";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, Loader2, Save, Settings, Undo2 } from "lucide-react";
-import { useEffect, useMemo } from "react";
-import { useForm, type Path, type UseFormRegister } from "react-hook-form";
+import {
+  AlertCircle,
+  Loader2,
+  Lock,
+  Pencil,
+  Save,
+  Settings,
+  Undo2,
+  X,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  useForm,
+  useWatch,
+  type Path,
+  type UseFormRegister,
+} from "react-hook-form";
 import { toast } from "sonner";
 
 // ── Page Admin — Cấu hình quy trình ticket (B18) ─────────────────────────
@@ -40,18 +54,30 @@ interface FieldDef {
   unit: string;
   helperText?: string;
   step?: number;
+  /** Format helper text dựa trên giá trị hiện tại (vd "300 giây ≈ 5 phút"). */
+  liveHelper?: (value: number) => string;
+}
+
+// Helpers chuyển seconds → human readable.
+function formatSecondsHuman(s: number): string {
+  if (!Number.isFinite(s) || s <= 0) return "";
+  if (s < 60) return `≈ ${s} giây`;
+  if (s < 3600) return `≈ ${(s / 60).toFixed(s % 60 === 0 ? 0 : 1)} phút`;
+  if (s < 86400) return `≈ ${(s / 3600).toFixed(s % 3600 === 0 ? 0 : 1)} giờ`;
+  return `≈ ${(s / 86400).toFixed(s % 86400 === 0 ? 0 : 1)} ngày`;
 }
 
 const GROUP_LIFECYCLE: FieldDef[] = [
   {
-    key: "auto_close_hours",
+    key: "auto_close_window_seconds",
     label: "Thời gian tự đóng ticket",
-    unit: "giờ",
+    unit: "giây",
     helperText:
       "Sau khi bác sĩ giải quyết, nếu người tạo không xác nhận trong khoảng này, hệ thống tự đóng và thanh toán hoa hồng.",
+    liveHelper: formatSecondsHuman,
   },
   {
-    key: "auto_close_notify_at_fraction",
+    key: "auto_close_reminder_fraction",
     label: "Thời điểm gửi nhắc đóng ticket",
     unit: "tỉ lệ",
     helperText:
@@ -59,60 +85,53 @@ const GROUP_LIFECYCLE: FieldDef[] = [
     step: 0.001,
   },
   {
-    key: "doctor_silence_minutes",
+    key: "doctor_inactivity_timeout_seconds",
     label: "Ngưỡng im lặng của bác sĩ",
-    unit: "phút",
+    unit: "giây",
     helperText:
       "Bác sĩ đã nhận ticket nhưng không xử lý quá thời gian này, hệ thống sẽ hỏi người tạo chuyển sang AI xử lý hoặc hoàn ticket.",
+    liveHelper: formatSecondsHuman,
   },
   {
-    key: "ai_fallback_minutes",
+    key: "ai_fallback_timeout_seconds",
     label: "Thời gian chờ AI tiếp nhận",
-    unit: "phút",
+    unit: "giây",
     helperText:
       "Sau thời gian này nếu không bác sĩ nào nhận ticket, AI sẽ tự xử lý.",
+    liveHelper: formatSecondsHuman,
   },
 ];
 
 const GROUP_PRIORITY_WINDOW: FieldDef[] = [
   {
-    key: "priority_window_platinum_sec",
-    label: "Cửa sổ ưu tiên Bạch kim",
+    key: "broadcast_tier1_delay_seconds",
+    label: "Cửa sổ Bạch kim (tier 1)",
     unit: "giây",
     helperText:
-      "Gửi ticket đầu tiên cho bác sĩ hạng Bạch kim đang trực tuyến.",
+      "Gửi ticket đầu tiên cho bác sĩ hạng Bạch kim đang trực tuyến (BR-67, mặc định 0).",
+    liveHelper: formatSecondsHuman,
   },
   {
-    key: "priority_window_gold_sec",
-    label: "Cửa sổ ưu tiên Vàng",
+    key: "broadcast_tier2_delay_seconds",
+    label: "Cửa sổ Vàng (tier 2)",
     unit: "giây",
     helperText:
       "Sau khoảng này, nếu chưa bác sĩ nào nhận, hệ thống mở rộng cho hạng Vàng. Phải lớn hơn hoặc bằng cửa sổ Bạch kim.",
+    liveHelper: formatSecondsHuman,
   },
   {
-    key: "priority_window_fanout_sec",
-    label: "Mở cho toàn bộ bác sĩ",
+    key: "broadcast_tier3_delay_seconds",
+    label: "Cửa sổ Bạc + Đồng (tier 3)",
     unit: "giây",
     helperText:
       "Sau khoảng này, hệ thống gửi cho tất cả bác sĩ trực tuyến (kể cả Bạc và Đồng). Phải lớn hơn hoặc bằng cửa sổ Vàng.",
+    liveHelper: formatSecondsHuman,
   },
 ];
 
-const GROUP_COMMISSION: FieldDef[] = [
-  {
-    key: "commission_max_percent",
-    label: "Trần hoa hồng",
-    unit: "%",
-    helperText: "Giới hạn % hoa hồng tối đa cho mọi quy tắc.",
-    step: 0.5,
-  },
-  {
-    key: "rating_max_stars",
-    label: "Thang điểm đánh giá",
-    unit: "sao",
-    helperText: "Số sao tối đa người tạo có thể chấm cho bác sĩ.",
-  },
-];
+// `GROUP_QUALITY` (prescription_usage_min_chars + solution_field_min_chars) đã
+// ẩn khỏi UI theo yêu cầu — schema vẫn parse field từ API để form không lỗi,
+// nhưng admin không sửa qua UI này. Nếu cần chỉnh, gọi API trực tiếp.
 
 // Helper: lookup BE config item theo FE form key.
 function findConfigItem(
@@ -143,17 +162,27 @@ function buildDefaultsFromConfigs(
 }
 
 // Render 1 field number với suffix unit (pattern từ AdminTicketCategoriesPage).
+// `readOnly` true → input disabled, không nhập được; dùng cho chế độ xem.
+// `currentValue` truyền vào `liveHelper` để show "= X giờ" động dưới input.
 function NumberField({
   field,
   register,
   errors,
+  readOnly,
+  currentValue,
 }: {
   field: FieldDef;
   register: UseFormRegister<TicketSystemConfigFormType>;
   errors: Partial<Record<TicketSystemConfigFormKey, { message?: string }>>;
+  readOnly: boolean;
+  currentValue?: number;
 }) {
   const inputId = `cfg-${field.key}`;
   const err = errors[field.key];
+  const liveText =
+    field.liveHelper && typeof currentValue === "number"
+      ? field.liveHelper(currentValue)
+      : "";
   return (
     <div className="space-y-1.5">
       <Label htmlFor={inputId}>{field.label}</Label>
@@ -162,6 +191,7 @@ function NumberField({
           id={inputId}
           type="number"
           step={field.step ?? 1}
+          disabled={readOnly}
           {...register(field.key as Path<TicketSystemConfigFormType>, {
             valueAsNumber: true,
           })}
@@ -174,9 +204,12 @@ function NumberField({
       </div>
       {err?.message ? (
         <p className="text-destructive text-xs">{err.message}</p>
-      ) : field.helperText ? (
-        <p className="text-xs text-muted-foreground">{field.helperText}</p>
-      ) : null}
+      ) : (
+        <div className="text-xs text-muted-foreground space-y-0.5">
+          {field.helperText && <p>{field.helperText}</p>}
+          {liveText && <p className="font-medium">{liveText}</p>}
+        </div>
+      )}
     </div>
   );
 }
@@ -186,6 +219,10 @@ export default function AdminTicketSystemConfigsPage() {
   const upsertMutation = useUpsertSystemConfig();
 
   const items = configsQuery.data?.data?.data;
+
+  // Mặc định trang ở chế độ XEM (read-only). Bấm "Chỉnh sửa" mới mở form.
+  // "Hủy" hoặc lưu thành công → quay về read-only.
+  const [isEditing, setIsEditing] = useState(false);
 
   const defaultValues = useMemo(
     () => buildDefaultsFromConfigs(items),
@@ -210,10 +247,16 @@ export default function AdminTicketSystemConfigsPage() {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isSubmitting, isDirty, dirtyFields },
   } = form;
 
+  // Watch toàn bộ form để truyền `currentValue` vào NumberField — cho phép
+  // hiển thị live helper text ("= X phút", "= X giờ").
+  const watchedValues = useWatch({ control });
+
   const isPending = upsertMutation.isPending || isSubmitting;
+  const readOnly = !isEditing;
 
   const onSubmit = async (data: TicketSystemConfigFormType) => {
     // Chỉ gửi các key user đã đổi (giảm risk + race với config khác).
@@ -259,6 +302,8 @@ export default function AdminTicketSystemConfigsPage() {
 
     if (failures.length === 0) {
       toast.success(`Đã cập nhật ${successCount} cấu hình.`);
+      // Lưu thành công → quay về chế độ xem.
+      setIsEditing(false);
     } else if (successCount === 0) {
       toast.error(
         `Cập nhật thất bại. ${failures[0].key}: ${failures[0].message}`,
@@ -277,6 +322,16 @@ export default function AdminTicketSystemConfigsPage() {
     toast.info("Đã khôi phục về giá trị đang lưu trên hệ thống.");
   };
 
+  const handleEnterEdit = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    // Bỏ chỉnh sửa → revert về giá trị BE và đóng edit mode.
+    reset(defaultValues as TicketSystemConfigFormType);
+    setIsEditing(false);
+  };
+
   return (
     <div className="p-6 space-y-6 animate-in fade-in duration-300">
       <Card>
@@ -286,9 +341,9 @@ export default function AdminTicketSystemConfigsPage() {
             Cấu Hình Quy Trình Ticket
           </CardTitle>
           <CardDescription>
-            Tham số vận hành của vòng đời ticket — thời gian tự đóng, ngưỡng
-            im lặng của bác sĩ, thứ tự ưu tiên gửi ticket, thời gian chờ AI
-            tiếp nhận, trần hoa hồng và thang điểm đánh giá.
+            Tham số vận hành vòng đời ticket — thời gian tự đóng, ngưỡng im
+            lặng của bác sĩ, thứ tự ưu tiên gửi ticket, thời gian chờ AI tiếp
+            nhận và ngưỡng chất lượng nội dung bác sĩ.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -314,6 +369,32 @@ export default function AdminTicketSystemConfigsPage() {
               onSubmit={handleSubmit(onSubmit)}
               className="space-y-6"
             >
+              {/* Banner chỉ thị mode hiện tại */}
+              {readOnly ? (
+                <Alert>
+                  <Lock className="h-4 w-4" />
+                  <AlertTitle className="text-sm font-semibold">
+                    Chế độ xem
+                  </AlertTitle>
+                  <AlertDescription className="text-xs">
+                    Đang hiển thị giá trị đang được áp dụng trên hệ thống. Bấm
+                    "Chỉnh sửa" để thay đổi.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <Alert className="border-amber-200 bg-amber-500/10">
+                  <Pencil className="h-4 w-4 text-amber-700" />
+                  <AlertTitle className="text-sm font-semibold text-amber-900">
+                    Đang chỉnh sửa
+                  </AlertTitle>
+                  <AlertDescription className="text-xs text-amber-900/80">
+                    Sau khi lưu, các giá trị mới sẽ áp dụng cho ticket được
+                    tạo sau thời điểm này. Ticket đang chạy vẫn dùng giá trị
+                    cũ.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {/* Group 1: Lifecycle */}
               <fieldset className="space-y-4">
                 <legend className="text-sm font-semibold mb-2">
@@ -326,6 +407,10 @@ export default function AdminTicketSystemConfigsPage() {
                       field={field}
                       register={register}
                       errors={errors}
+                      readOnly={readOnly}
+                      currentValue={
+                        watchedValues[field.key] as number | undefined
+                      }
                     />
                   ))}
                 </div>
@@ -354,6 +439,10 @@ export default function AdminTicketSystemConfigsPage() {
                       field={field}
                       register={register}
                       errors={errors}
+                      readOnly={readOnly}
+                      currentValue={
+                        watchedValues[field.key] as number | undefined
+                      }
                     />
                   ))}
                 </div>
@@ -361,47 +450,49 @@ export default function AdminTicketSystemConfigsPage() {
 
               <Separator />
 
-              {/* Group 3: Commission & rating */}
-              <fieldset className="space-y-4">
-                <legend className="text-sm font-semibold mb-2">
-                  Hoa hồng &amp; đánh giá
-                </legend>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {GROUP_COMMISSION.map((field) => (
-                    <NumberField
-                      key={field.key}
-                      field={field}
-                      register={register}
-                      errors={errors}
-                    />
-                  ))}
-                </div>
-              </fieldset>
-
-              <Separator />
-
-              {/* Footer actions */}
+              {/* Footer actions — đổi theo edit-mode */}
               <div className="flex items-center justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleResetToServer}
-                  disabled={isPending || !isDirty}
-                >
-                  <Undo2 className="mr-2 h-4 w-4" />
-                  Khôi phục
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isPending || !isDirty}
-                >
-                  {isPending ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Save className="mr-2 h-4 w-4" />
-                  )}
-                  Lưu cấu hình
-                </Button>
+                {readOnly ? (
+                  <Button
+                    type="button"
+                    onClick={handleEnterEdit}
+                  >
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Chỉnh sửa
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleCancelEdit}
+                      disabled={isPending}
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Hủy
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleResetToServer}
+                      disabled={isPending || !isDirty}
+                    >
+                      <Undo2 className="mr-2 h-4 w-4" />
+                      Khôi phục
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={isPending || !isDirty}
+                    >
+                      {isPending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="mr-2 h-4 w-4" />
+                      )}
+                      Lưu cấu hình
+                    </Button>
+                  </>
+                )}
               </div>
             </form>
           )}

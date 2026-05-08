@@ -26,7 +26,7 @@ import { formatCurrencyVnd, formatDateTimeVi } from "@/lib/format";
 import { useAdminTicketFull } from "@/queries/useTicket";
 import { TierSchema } from "@/schemaValidatation/dqs";
 import { type TicketStatusUpperType } from "@/schemaValidatation/ticket";
-import { ArrowLeft, ShieldOff, Ticket, UserRound } from "lucide-react";
+import { ArrowLeft, ShieldOff, Ticket, Undo2, UserRound } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
@@ -35,6 +35,7 @@ import BroadcastTimeline from "@/components/ticket-quality/BroadcastTimeline";
 import PrescriptionItemsCard from "@/components/ticket-quality/PrescriptionItemsCard";
 import RatingDisplay from "@/components/ticket-quality/RatingDisplay";
 import SolutionViewCard from "@/components/ticket-quality/SolutionViewCard";
+import ClawbackModal from "@/components/ticket-quality/admin/ClawbackModal";
 import InvalidateRatingModal from "@/components/ticket-quality/admin/InvalidateRatingModal";
 
 const STATUS_LABEL: Record<TicketStatusUpperType, string> = {
@@ -82,6 +83,7 @@ export default function AdminTicketDetailPage() {
 
   const fullQuery = useAdminTicketFull(ticketId);
   const [invalidateOpen, setInvalidateOpen] = useState(false);
+  const [clawbackOpen, setClawbackOpen] = useState(false);
   const full = fullQuery.data?.data;
   const t = full?.ticket;
 
@@ -352,7 +354,7 @@ export default function AdminTicketDetailPage() {
                   Ticket xử lý bởi AI — không có thanh toán.
                 </div>
               ) : t.payoutAt ? (
-                <div className="space-y-2 text-sm">
+                <div className="space-y-3 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">
                       Thanh toán lúc
@@ -393,6 +395,22 @@ export default function AdminTicketDetailPage() {
                       </Badge>
                     </div>
                   )}
+
+                  <Separator />
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      Phát hiện sai sót sau payout? Có thể thu hồi để tạo
+                      PENALTY transaction.
+                    </span>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setClawbackOpen(true)}
+                    >
+                      <Undo2 className="mr-2 h-4 w-4" />
+                      Thu hồi hoa hồng
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="text-sm text-muted-foreground">
@@ -409,6 +427,14 @@ export default function AdminTicketDetailPage() {
         onOpenChange={setInvalidateOpen}
         ticketId={ticketId}
         rating={full.rating}
+      />
+
+      <ClawbackModal
+        open={clawbackOpen}
+        onOpenChange={setClawbackOpen}
+        ticketId={ticketId}
+        ticketNumber={t.ticketNumber}
+        commissionAmount={payout?.amount ?? null}
       />
     </div>
   );

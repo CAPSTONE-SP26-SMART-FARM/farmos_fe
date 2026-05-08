@@ -29,7 +29,10 @@ const SUBSCRIPTION_STATUS_LABEL: Record<SubscriptionStatusType, string> = {
   EXPIRED: "Hết hạn",
 };
 
-const STATUS_OPTIONS: Array<{ value: "ALL" | SubscriptionStatusType; label: string }> = [
+const STATUS_OPTIONS: Array<{
+  value: "ALL" | SubscriptionStatusType;
+  label: string;
+}> = [
   { value: "ALL", label: "Tất cả trạng thái" },
   { value: "PENDING", label: "Chờ kích hoạt" },
   { value: "ACTIVE", label: "Đang hoạt động" },
@@ -93,7 +96,9 @@ function HistoryTab() {
         accessorKey: "status",
         header: "Trạng thái",
         cell: ({ row }) => (
-          <Badge variant={getSubscriptionStatusBadgeVariant(row.original.status)}>
+          <Badge
+            variant={getSubscriptionStatusBadgeVariant(row.original.status)}
+          >
             {SUBSCRIPTION_STATUS_LABEL[row.original.status]}
           </Badge>
         ),
@@ -107,11 +112,6 @@ function HistoryTab() {
         accessorKey: "expiresAt",
         header: "Hết hạn",
         cell: ({ row }) => formatDateTimeVi(row.original.expiresAt),
-      },
-      {
-        accessorKey: "autoRenew",
-        header: "Tự động gia hạn",
-        cell: ({ row }) => (row.original.autoRenew ? "Bật" : "Tắt"),
       },
       {
         id: "actions",
@@ -153,7 +153,10 @@ function HistoryTab() {
               setQuery((prev) => ({
                 ...prev,
                 page: 1,
-                status: value === "ALL" ? undefined : (value as SubscriptionStatusType),
+                status:
+                  value === "ALL"
+                    ? undefined
+                    : (value as SubscriptionStatusType),
               }))
             }
           >
@@ -162,7 +165,10 @@ function HistoryTab() {
             </SelectTrigger>
             <SelectContent>
               {STATUS_OPTIONS.map((status) => (
-                <SelectItem key={status.value} value={status.value}>
+                <SelectItem
+                  key={status.value}
+                  value={status.value}
+                >
                   {status.label}
                 </SelectItem>
               ))}
@@ -193,7 +199,10 @@ function HistoryTab() {
                 size="sm"
                 disabled={!meta?.hasPreviousPage}
                 onClick={() =>
-                  setQuery((prev) => ({ ...prev, page: Math.max(1, prev.page - 1) }))
+                  setQuery((prev) => ({
+                    ...prev,
+                    page: Math.max(1, prev.page - 1),
+                  }))
                 }
               >
                 Trang trước
@@ -202,7 +211,9 @@ function HistoryTab() {
                 variant="outline"
                 size="sm"
                 disabled={!meta?.hasNextPage}
-                onClick={() => setQuery((prev) => ({ ...prev, page: prev.page + 1 }))}
+                onClick={() =>
+                  setQuery((prev) => ({ ...prev, page: prev.page + 1 }))
+                }
               >
                 Trang sau
               </Button>

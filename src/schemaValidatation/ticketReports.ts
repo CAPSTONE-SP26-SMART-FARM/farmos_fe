@@ -97,3 +97,17 @@ export type DoctorCommissionItemType = z.infer<
 export type DoctorCommissionReportResType = z.infer<
   typeof DoctorCommissionReportResSchema
 >;
+
+// ── Clawback ────────────────────────────────────────────────────────────────
+// B16 — POST /admin/tickets/:id/clawback. BE accept body `{reason?: string}`
+// (xem `farm_os_be/src/modules/admin-ticket-ops/admin-ticket-ops.model.ts`).
+// FE bắt buộc nhập reason để phục vụ audit — gửi nguyên text về BE.
+export const ClawbackTicketBodySchema = z.object({
+  reason: z
+    .string()
+    .trim()
+    .min(10, "Lý do tối thiểu 10 ký tự để phục vụ audit.")
+    .max(500, "Lý do không quá 500 ký tự."),
+});
+
+export type ClawbackTicketBodyType = z.infer<typeof ClawbackTicketBodySchema>;

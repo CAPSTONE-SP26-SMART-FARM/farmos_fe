@@ -5,6 +5,7 @@ import { Eye } from "lucide-react";
 import InvoiceStatusBadge, {
   type InvoiceStatus,
 } from "@/components/common/InvoiceStatusBadge";
+import TransactionStatusBadge from "@/components/common/TransactionStatusBadge";
 import { DataTable } from "@/components/common/DataTable";
 import type { DataTableAction } from "@/components/common/DataTable/types";
 import { Badge } from "@/components/ui/badge";
@@ -34,14 +35,20 @@ import type {
 } from "@/schemaValidatation/invoice";
 import { formatCurrencyVnd, formatDateVi } from "@/lib/format";
 
+// Khớp đầy đủ enum BE `InvoiceStatus` (xem `prisma/schema.prisma:294-302`):
+//   DRAFT · OPEN · PAID · VOID · UNCOLLECTIBLE
+// Label tiếng Việt đồng bộ với `InvoiceStatusBadge` để filter và badge nhất
+// quán cho user.
 const STATUS_OPTIONS: Array<{
   value: "ALL" | InvoiceStatusType;
   label: string;
 }> = [
   { value: "ALL", label: "Tất cả trạng thái" },
-  { value: "OPEN", label: "Chờ thanh toán" },
+  { value: "DRAFT", label: "Bản nháp" },
+  { value: "OPEN", label: "Chưa thanh toán" },
   { value: "PAID", label: "Đã thanh toán" },
   { value: "VOID", label: "Đã hủy" },
+  { value: "UNCOLLECTIBLE", label: "Không thu được" },
 ];
 
 const REFERENCE_TYPE_LABEL: Record<InvoiceReferenceType, string> = {
@@ -67,21 +74,12 @@ function LatestTransactionCell({
 }) {
   if (!tx) return <span className="text-muted-foreground">—</span>;
 
-  const variant: "default" | "secondary" | "destructive" =
-    tx.status === "SUCCESS"
-      ? "default"
-      : tx.status === "FAILED"
-        ? "destructive"
-        : "secondary";
-
   return (
     <div className="flex flex-col gap-0.5">
-      <Badge
-        variant={variant}
+      <TransactionStatusBadge
+        status={tx.status}
         className="w-fit"
-      >
-        {tx.status}
-      </Badge>
+      />
       <span className="text-xs text-muted-foreground">
         {tx.gateway} · {formatDateVi(tx.createdAt)}
       </span>
