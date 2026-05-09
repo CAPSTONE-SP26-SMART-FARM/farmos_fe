@@ -40,10 +40,10 @@ export const useClawback = () => {
       body: ClawbackTicketBodyType;
     }) => ticketAdminOpsService.clawback(ticketId, body),
     onSuccess: (_res, { ticketId }) => {
-      // Invalidate report caches, admin ticket list, và detail full payload
+      // Invalidate report caches + ticket list (legacy) + detail full payload
       // để payout tab refresh state (PENALTY transaction vừa được tạo).
       qc.invalidateQueries({ queryKey: QUERY_KEYS.adminTicketReports.root });
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.ticketV2.root });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.tickets.all });
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.ticketsExt.adminFull(ticketId),
       });

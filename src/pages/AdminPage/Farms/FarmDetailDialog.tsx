@@ -32,7 +32,7 @@ const FarmDetailDialog = ({ id, onClose }: FarmDetailDialogProps) => {
         <DialogHeader>
           <DialogTitle>Farm Detail</DialogTitle>
           <DialogDescription>
-            View farm information and owner details.
+            Xem thông tin nông trại và Chủ trang trại.
           </DialogDescription>
         </DialogHeader>
 
@@ -145,7 +145,7 @@ const FarmDetailDialog = ({ id, onClose }: FarmDetailDialogProps) => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Owner Information</CardTitle>
+                <CardTitle>Thông tin Chủ trang trại</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <div className="space-y-1">

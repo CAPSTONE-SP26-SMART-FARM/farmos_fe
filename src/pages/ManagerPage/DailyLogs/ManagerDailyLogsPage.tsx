@@ -266,7 +266,7 @@ function ManagerDailyLogsPage() {
             <EmptyState
               icon={MapIcon}
               title="Chưa có khu vực"
-              description="Bạn chưa được phân công khu vực. Liên hệ chủ vườn để bắt đầu."
+              description="Bạn chưa được phân công khu vực. Liên hệ chủ trang trại để bắt đầu."
             />
           ) : logsQuery.isError ? (
             <ErrorState

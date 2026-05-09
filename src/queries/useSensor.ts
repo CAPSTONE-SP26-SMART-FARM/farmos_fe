@@ -151,7 +151,7 @@ export const useManagerCreateSensors = () => {
     onError: (error, { iotDeviceId }) => {
       onMutationError(
         error,
-        "Manager không thể tạo cảm biến ở luồng provisioning",
+        "Quản lý không thể tạo cảm biến ở luồng provisioning",
       );
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.manager.sensors.list(iotDeviceId),
@@ -180,7 +180,7 @@ export const useManagerUpdateSensor = () => {
     onError: (error, { iotDeviceId }) => {
       onMutationError(
         error,
-        "Manager không thể cập nhật cảm biến ở luồng provisioning",
+        "Quản lý không thể cập nhật cảm biến ở luồng provisioning",
       );
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.manager.sensors.list(iotDeviceId),
@@ -206,7 +206,7 @@ export const useManagerDeleteSensor = () => {
     onError: (error, { iotDeviceId }) => {
       onMutationError(
         error,
-        "Manager không thể xóa cảm biến ở luồng provisioning",
+        "Quản lý không thể xóa cảm biến ở luồng provisioning",
       );
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.manager.sensors.list(iotDeviceId),

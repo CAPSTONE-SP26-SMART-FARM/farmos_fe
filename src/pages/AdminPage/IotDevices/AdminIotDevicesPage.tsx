@@ -217,7 +217,7 @@ export default function AdminIotDevicesPage() {
 													variant="outline"
 													className="border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300"
 												>
-													Chưa gán owner
+													Chưa gán Chủ trang trại
 												</Badge>
 											)}
 										</div>

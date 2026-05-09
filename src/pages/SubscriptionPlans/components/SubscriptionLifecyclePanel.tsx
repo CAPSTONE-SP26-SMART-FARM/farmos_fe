@@ -481,7 +481,7 @@ function SubscriptionLifecyclePanel({
                 </Select>
 
                 <Input
-                  placeholder="Lọc theo ID chủ trại (UUID)"
+                  placeholder="Lọc theo ID Chủ trang trại (UUID)"
                   value={ownerIdInput}
                   onChange={(event) => setOwnerIdInput(event.target.value)}
                 />
@@ -502,7 +502,7 @@ function SubscriptionLifecyclePanel({
                   <TableHeader>
                     <TableRow>
                       <TableHead>Mã đăng ký</TableHead>
-                      <TableHead>Chủ trại</TableHead>
+                      <TableHead>Chủ trang trại</TableHead>
                       <TableHead>Gói</TableHead>
                       <TableHead>Trạng thái</TableHead>
                       <TableHead className="text-right">Chi tiết</TableHead>
@@ -697,7 +697,7 @@ function SubscriptionLifecyclePanel({
                         <div className="rounded-md bg-muted/50 p-3">
                           <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                             <User className="h-3.5 w-3.5" />
-                            Chủ trại
+                            Chủ trang trại
                           </p>
                           <p className="text-sm font-medium">
                             {detail.owner.fullName}
@@ -799,7 +799,7 @@ function SubscriptionLifecyclePanel({
               <CardHeader>
                 <CardTitle>Quyền lợi & Lịch sử sử dụng</CardTitle>
                 <CardDescription>
-                  Cả Admin và Owner đều có quyền xem quyền lợi và lịch sử sử
+                  Cả Quản trị viên và Chủ trang trại đều có quyền xem quyền lợi và lịch sử sử
                   dụng của đăng ký hợp lệ.
                 </CardDescription>
               </CardHeader>

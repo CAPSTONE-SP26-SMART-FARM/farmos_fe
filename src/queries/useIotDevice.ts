@@ -177,7 +177,7 @@ export const useAdminAssignIotOwner = () => {
       });
     },
     onError: (error) =>
-      onMutationError(error, "Gán owner cho thiết bị thất bại"),
+      onMutationError(error, "Gán Chủ trang trại cho thiết bị thất bại"),
   });
 };
 
@@ -214,7 +214,7 @@ export const useAdminUnassignIotOwner = () => {
       });
     },
     onError: (error) =>
-      onMutationError(error, "Thu hồi owner khỏi thiết bị thất bại"),
+      onMutationError(error, "Thu hồi Chủ trang trại khỏi thiết bị thất bại"),
   });
 };
 
@@ -412,7 +412,7 @@ export const useManagerCreateIotDevices = () => {
     onError: (error) => {
       onMutationError(
         error,
-        "Manager không thể tạo thiết bị ở luồng provisioning",
+        "Quản lý không thể tạo thiết bị ở luồng provisioning",
       );
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.manager.iotDevices.list(),
@@ -441,7 +441,7 @@ export const useManagerUpdateIotDevice = () => {
     onError: (error) => {
       onMutationError(
         error,
-        "Manager không thể cập nhật thiết bị ở luồng provisioning",
+        "Quản lý không thể cập nhật thiết bị ở luồng provisioning",
       );
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.manager.iotDevices.list(),
@@ -467,7 +467,7 @@ export const useManagerDeleteIotDevice = () => {
     onError: (error) => {
       onMutationError(
         error,
-        "Manager không thể xóa thiết bị ở luồng provisioning",
+        "Quản lý không thể xóa thiết bị ở luồng provisioning",
       );
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.manager.iotDevices.list(),
@@ -493,7 +493,7 @@ export const useManagerLockSensors = () => {
     onError: (error) => {
       onMutationError(
         error,
-        "Manager không thể khóa cảm biến ở luồng provisioning",
+        "Quản lý không thể khóa cảm biến ở luồng provisioning",
       );
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.manager.iotDevices.list(),

@@ -108,7 +108,7 @@ export default function CancelTicketModal({
           <DialogDescription>
             Ticket sẽ chuyển sang trạng thái <strong>đã huỷ</strong> và quota
             (gói đăng ký hoặc credit mua lẻ) sẽ được hoàn về tài khoản của
-            chủ vườn.
+            chủ trang trại.
           </DialogDescription>
         </DialogHeader>
 

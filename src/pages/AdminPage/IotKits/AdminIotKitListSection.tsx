@@ -188,7 +188,7 @@ export default function AdminIotKitListSection({
           Danh mục bộ Kit IoT
         </CardTitle>
         <CardDescription>
-          Bộ Kit bán lẻ giúp Owner mở rộng hạn mức thiết bị, đồng pha hạn với
+          Bộ Kit bán lẻ giúp Chủ trang trại mở rộng hạn mức thiết bị, đồng pha hạn với
           gói đăng ký.
         </CardDescription>
 
@@ -245,7 +245,7 @@ export default function AdminIotKitListSection({
           <EmptyState
             icon={PackageOpen}
             title="Chưa có bộ Kit nào"
-            description="Tạo bộ Kit đầu tiên để Owner có thể mua thêm hạn mức thiết bị."
+            description="Tạo bộ Kit đầu tiên để Chủ trang trại có thể mua thêm hạn mức thiết bị."
           />
         ) : (
           <div className="overflow-x-auto">

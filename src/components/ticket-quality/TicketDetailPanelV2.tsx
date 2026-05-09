@@ -317,7 +317,7 @@ export default function TicketDetailPanelV2({
             </CardTitle>
             <CardDescription>
               Có thể huỷ ticket khi chưa có bác sĩ tiếp nhận. Quota sẽ được
-              hoàn trả về tài khoản chủ vườn.
+              hoàn trả về tài khoản chủ trang trại.
             </CardDescription>
           </CardHeader>
           <CardContent>

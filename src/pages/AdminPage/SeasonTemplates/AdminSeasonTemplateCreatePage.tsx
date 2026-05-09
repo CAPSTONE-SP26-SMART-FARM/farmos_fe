@@ -162,7 +162,7 @@ export default function AdminSeasonTemplateCreatePage() {
             Tạo Mẫu Vụ Mùa Mới
           </h1>
           <p className="text-sm text-muted-foreground max-w-2xl">
-            Mẫu (template) là <strong>blueprint khởi tạo</strong> — Manager/Owner
+            Mẫu (template) là <strong>blueprint khởi tạo</strong> — Quản lý/Chủ trang trại
             có thể prefill khi tạo vụ và chỉnh sửa tự do trước khi lưu. Vụ đã tạo
             từ mẫu sẽ KHÔNG bị ảnh hưởng nếu sau này mẫu thay đổi (BR-115).
           </p>
@@ -312,7 +312,7 @@ export default function AdminSeasonTemplateCreatePage() {
           <p className="text-xs text-muted-foreground">
             {showErrors && errors.length > 0
               ? `Có ${errors.length} lỗi cần sửa trước khi tạo mẫu.`
-              : "Sau khi tạo, mẫu sẽ ở phiên bản 1 và sẵn sàng cho Manager/Owner áp dụng."}
+              : "Sau khi tạo, mẫu sẽ ở phiên bản 1 và sẵn sàng cho Quản lý/Chủ trang trại áp dụng."}
           </p>
           <div className="flex gap-2">
             <Button

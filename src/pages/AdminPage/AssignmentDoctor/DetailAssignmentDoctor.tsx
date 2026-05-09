@@ -50,7 +50,7 @@ const DetailAssignmentDoctor = ({ id, setId }: Props) => {
         <DialogHeader>
           <DialogTitle>Chi tiết phân công</DialogTitle>
           <DialogDescription>
-            Thông tin phân công bác sĩ và chủ vườn dành cho quản trị.
+            Thông tin phân công bác sĩ và chủ trang trại dành cho quản trị.
           </DialogDescription>
         </DialogHeader>
 
@@ -155,7 +155,7 @@ const DetailAssignmentDoctor = ({ id, setId }: Props) => {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Chủ vườn</CardTitle>
+                  <CardTitle>Chủ trang trại</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm">
                   <div>

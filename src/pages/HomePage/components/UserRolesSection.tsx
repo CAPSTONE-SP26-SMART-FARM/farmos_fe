@@ -13,7 +13,7 @@ import { useState } from "react";
 const roles = [
   {
     icon: Building2,
-    title: "Chủ sở hữu",
+    title: "Chủ trang trại",
     subtitle: "Chủ đầu tư",
     description:
       "Theo dõi tổng quan KPIs, báo cáo tài chính, phê duyệt ngân sách và giám sát từ xa qua camera.",
@@ -48,7 +48,7 @@ const roles = [
     title: "Quản trị viên",
     subtitle: "Quản trị nền tảng",
     description:
-      "Quản lý gói subscription, duyệt Doctor, cấu hình template IoT và theo dõi hiệu suất xử lý ticket.",
+      "Quản lý gói subscription, duyệt Bác sĩ, cấu hình template IoT và theo dõi hiệu suất xử lý ticket.",
     features: [
       "Quản lý gói dịch vụ",
       "Duyệt bác sĩ",

@@ -96,7 +96,7 @@ function CropSeasonDetailContent({ season }: { season: CropSeasonType }) {
                   },
                   {
                     accessorKey: "description",
-                    header: "Ghi chú chủ vườn",
+                    header: "Ghi chú chủ trang trại",
                     cell: ({ row }) => (
                       <span className="text-sm max-w-50 truncate block">
                         {row.original.description ?? "—"}

@@ -114,7 +114,7 @@ export default function AdminSeasonTemplateUsagePage() {
             <EmptyState
               icon={BarChart3}
               title="Chưa có vụ nào áp dụng mẫu này"
-              description="Khi Manager/Owner duyệt một vụ tạo từ mẫu này, vụ đó sẽ xuất hiện ở đây."
+              description="Khi Quản lý/Chủ trang trại duyệt một vụ tạo từ mẫu này, vụ đó sẽ xuất hiện ở đây."
             />
           ) : (
             <>

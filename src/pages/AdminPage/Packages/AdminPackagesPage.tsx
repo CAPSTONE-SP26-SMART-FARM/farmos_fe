@@ -203,7 +203,7 @@ export default function AdminPackagesPage() {
                 Gói dịch vụ bổ sung
               </h1>
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
-                Quản lý các gói credit (vé bác sĩ, ...) mà chủ vườn có thể mua
+                Quản lý các gói credit (vé bác sĩ, ...) mà chủ trang trại có thể mua
                 thêm ngoài gói đăng ký chính.
               </p>
             </div>
@@ -334,7 +334,7 @@ export default function AdminPackagesPage() {
       <ConfirmDialog
         open={confirmState?.type === "archive"}
         title="Lưu trữ gói dịch vụ?"
-        description="Gói sẽ không còn hiển thị cho chủ vườn mua. Có thể khôi phục lại sau."
+        description="Gói sẽ không còn hiển thị cho chủ trang trại mua. Có thể khôi phục lại sau."
         confirmLabel={
           archiveMutation.isPending ? "Đang lưu trữ..." : "Lưu trữ"
         }
@@ -347,7 +347,7 @@ export default function AdminPackagesPage() {
       <ConfirmDialog
         open={confirmState?.type === "unarchive"}
         title="Khôi phục gói dịch vụ?"
-        description="Gói sẽ hiển thị trở lại cho chủ vườn mua thêm."
+        description="Gói sẽ hiển thị trở lại cho chủ trang trại mua thêm."
         confirmLabel={
           unarchiveMutation.isPending ? "Đang khôi phục..." : "Khôi phục"
         }
@@ -480,7 +480,7 @@ function ServicePackageFormDialog({
           <DialogDescription>
             {isEdit
               ? "Cập nhật thông tin gói. Mã gói không thay đổi được."
-              : "Tạo gói credit để chủ vườn có thể mua thêm."}
+              : "Tạo gói credit để chủ trang trại có thể mua thêm."}
           </DialogDescription>
         </DialogHeader>
 

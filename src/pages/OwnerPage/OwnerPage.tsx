@@ -153,7 +153,7 @@ function OwnerPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              Phần table/chart/filter sẽ bổ sung theo backlog API của Owner.
+              Phần table/chart/filter sẽ bổ sung theo backlog API của Chủ trang trại.
             </CardContent>
           </Card>
         </>

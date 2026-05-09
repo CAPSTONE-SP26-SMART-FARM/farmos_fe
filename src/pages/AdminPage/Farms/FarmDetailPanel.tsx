@@ -76,7 +76,7 @@ const FarmDetailPanel = ({ id, onBack }: FarmDetailPanelProps) => {
           </Button>
           <h2 className="text-2xl font-bold">Chi tiết nông trại</h2>
           <p className="text-muted-foreground">
-            Xem thông tin nông trại và chủ vườn.
+            Xem thông tin nông trại và chủ trang trại.
           </p>
         </div>
 
@@ -177,7 +177,7 @@ const FarmDetailPanel = ({ id, onBack }: FarmDetailPanelProps) => {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Thông tin chủ vườn</CardTitle>
+                  <CardTitle>Thông tin chủ trang trại</CardTitle>
                   <Badge
                     variant={farm.owner.isActive ? "default" : "secondary"}
                   >

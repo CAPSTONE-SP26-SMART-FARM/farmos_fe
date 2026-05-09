@@ -433,13 +433,7 @@ export const API_ENDPOINTS = {
     ADMIN_DELETE: (id: string) => `/admin/commission-rules/${id}`,
   },
   TICKET_V2: {
-    CREATE: "/tickets",
-    LIST: "/tickets",
-    DETAIL: (id: string) => `/tickets/${id}`,
     CANCEL: (id: string) => `/tickets/${id}/cancel`,
-    OWNER_BALANCE: "/me/ticket-balance",
-    ADMIN_LIST: "/admin/tickets",
-    ADMIN_DETAIL: (id: string) => `/admin/tickets/${id}`,
     ADMIN_CLAWBACK: (id: string) => `/admin/tickets/${id}/clawback`,
     ADMIN_REPORT_REVENUE: "/admin/reports/ticket-revenue",
     ADMIN_REPORT_DOCTOR_COMMISSION: "/admin/reports/doctor-commission",
@@ -1315,24 +1309,6 @@ export const QUERY_KEYS = {
         ...(query !== undefined ? [query] : []),
       ] as const,
     detail: (id: string) => ["commission-rules-v2", id] as const,
-  },
-  ticketV2: {
-    root: ["ticket-v2"] as const,
-    list: (query?: Record<string, unknown>) =>
-      ["ticket-v2", "list", ...(query !== undefined ? [query] : [])] as const,
-    detail: (id: string) => ["ticket-v2", id] as const,
-    adminList: (query?: Record<string, unknown>) =>
-      [
-        "ticket-v2",
-        "admin",
-        "list",
-        ...(query !== undefined ? [query] : []),
-      ] as const,
-    adminDetail: (id: string) => ["ticket-v2", "admin", id] as const,
-  },
-  ticketBalance: {
-    root: ["ticket-balance-v2"] as const,
-    owner: () => ["ticket-balance-v2", "owner"] as const,
   },
   adminTicketReports: {
     root: ["admin-ticket-reports-v2"] as const,

@@ -89,7 +89,7 @@ function OwnerEmployeeTaskTemplatesPage() {
         <div className="pointer-events-none absolute inset-0 bg-muted/20" />
         <div className="relative flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <Badge className="mb-2">Cổng chủ vườn</Badge>
+            <Badge className="mb-2">Cổng chủ trang trại</Badge>
             <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
               Mẫu nhiệm vụ
             </h1>

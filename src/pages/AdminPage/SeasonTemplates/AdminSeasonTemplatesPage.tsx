@@ -243,7 +243,7 @@ export default function AdminSeasonTemplatesPage() {
               </CardTitle>
               <CardDescription>
                 Mẫu starter định nghĩa giai đoạn, công việc và ngưỡng cảm biến.
-                Manager/Owner có thể chọn mẫu khi tạo vụ — chỉnh sửa tự do
+                Quản lý/Chủ trang trại có thể chọn mẫu khi tạo vụ — chỉnh sửa tự do
                 trước khi lưu.
               </CardDescription>
             </div>
@@ -310,7 +310,7 @@ export default function AdminSeasonTemplatesPage() {
               description={
                 isFiltered
                   ? "Thử bỏ bộ lọc hoặc đổi từ khoá tìm kiếm."
-                  : "Tạo mẫu đầu tiên để Manager có thể prefill khi tạo vụ."
+                  : "Tạo mẫu đầu tiên để Quản lý có thể prefill khi tạo vụ."
               }
               action={
                 isFiltered
@@ -469,8 +469,8 @@ export default function AdminSeasonTemplatesPage() {
         }
         description={
           toggleTarget?.isActive
-            ? "Manager/Owner sẽ không thấy mẫu này khi tạo vụ mới. Vụ đã apply mẫu này KHÔNG bị ảnh hưởng."
-            : "Manager/Owner sẽ thấy mẫu này khi tạo vụ mới."
+            ? "Quản lý/Chủ trang trại sẽ không thấy mẫu này khi tạo vụ mới. Vụ đã apply mẫu này KHÔNG bị ảnh hưởng."
+            : "Quản lý/Chủ trang trại sẽ thấy mẫu này khi tạo vụ mới."
         }
         confirmLabel={toggleTarget?.isActive ? "Vô hiệu" : "Kích hoạt"}
         cancelLabel="Huỷ"

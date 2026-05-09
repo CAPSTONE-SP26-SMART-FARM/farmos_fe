@@ -133,10 +133,10 @@ const AssignDoctorDialog = () => {
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Phân công bác sĩ cho chủ vườn</DialogTitle>
+          <DialogTitle>Phân công bác sĩ cho chủ trang trại</DialogTitle>
           <DialogDescription>
             Hiện tại nhập trực tiếp UUID. Sau này bạn sẽ thay bằng danh sách
-            chọn bác sĩ/chủ vườn.
+            chọn bác sĩ/chủ trang trại.
           </DialogDescription>
         </DialogHeader>
 
@@ -187,13 +187,13 @@ const AssignDoctorDialog = () => {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Chủ vườn</FieldLabel>
+                  <FieldLabel>Chủ trang trại</FieldLabel>
                   <Select
                     value={field.value}
                     onValueChange={field.onChange}
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Chọn chủ vườn" />
+                      <SelectValue placeholder="Chọn chủ trang trại" />
                     </SelectTrigger>
                     <SelectContent>
                       {ownerOptions.length ? (
@@ -210,7 +210,7 @@ const AssignDoctorDialog = () => {
                           value="__empty_owner__"
                           disabled
                         >
-                          Chưa có chủ vườn (kết nối API sau)
+                          Chưa có chủ trang trại (kết nối API sau)
                         </SelectItem>
                       )}
                     </SelectContent>

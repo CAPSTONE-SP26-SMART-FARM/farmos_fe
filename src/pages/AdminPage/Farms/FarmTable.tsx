@@ -47,7 +47,7 @@ const columns: ColumnDef<FarmWithOwnerResType>[] = [
   },
   {
     accessorKey: "owner",
-    header: "Chủ vườn",
+    header: "Chủ trang trại",
     cell: ({ row }) => (
       <div>{row.original.owner.fullName ?? row.original.owner.email}</div>
     ),

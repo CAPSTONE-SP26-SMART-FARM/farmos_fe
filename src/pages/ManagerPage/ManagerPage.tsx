@@ -51,7 +51,7 @@ const managerViews: Record<string, ManagerView> = {
       "Danh sách khu vực",
       "Mùa vụ hiện tại",
       "Trạng thái rủi ro",
-      "Tóm tắt chủ vườn",
+      "Tóm tắt chủ trang trại",
     ],
   },
   seasons: {
@@ -108,8 +108,8 @@ const managerViews: Record<string, ManagerView> = {
     modules: ["Sự cố đang mở", "Trạng thái bác sĩ", "Ca ưu tiên", "Chuyển cấp"],
   },
   reports: {
-    title: "Báo cáo chủ vườn",
-    description: "Tổng hợp báo cáo định kỳ gửi chủ vườn.",
+    title: "Báo cáo chủ trang trại",
+    description: "Tổng hợp báo cáo định kỳ gửi chủ trang trại.",
     modules: [
       "Báo cáo tuần",
       "Báo cáo tháng",
@@ -321,7 +321,7 @@ function AssignedZonesSection() {
               <p className="text-sm text-muted-foreground max-w-sm">
                 {hasFilter
                   ? "Thử đổi từ khoá tìm kiếm hoặc xoá bộ lọc để xem toàn bộ khu vực."
-                  : "Chủ vườn cần giao khu vực cho bạn để bắt đầu quản lý mùa vụ."}
+                  : "Chủ trang trại cần giao khu vực cho bạn để bắt đầu quản lý mùa vụ."}
               </p>
             </div>
           ) : (

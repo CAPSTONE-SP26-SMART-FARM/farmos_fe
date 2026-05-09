@@ -55,7 +55,7 @@ export default function AdminKitAssignmentsPage() {
   const columns: ColumnDef<OwnerRow>[] = [
     {
       id: "owner",
-      header: "Chủ vườn",
+      header: "Chủ trang trại",
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
           <Avatar className="h-9 w-9">
@@ -143,7 +143,7 @@ export default function AdminKitAssignmentsPage() {
               Quản lý gán bộ kit IoT
             </CardTitle>
             <CardDescription>
-              Danh sách các chủ vườn có đơn kit đã thanh toán còn slot trống và
+              Danh sách các chủ trang trại có đơn kit đã thanh toán còn slot trống và
               vẫn nằm trong hạn mức gói. Bấm vào dòng để xem chi tiết và gán
               thiết bị.
             </CardDescription>
@@ -173,8 +173,8 @@ export default function AdminKitAssignmentsPage() {
           ) : !ownersQuery.isLoading && items.length === 0 ? (
             <EmptyState
               icon={Users}
-              title="Chưa có chủ vườn nào đủ điều kiện"
-              description="Chỉ những chủ vườn đã mua bộ kit (đơn PAID) còn slot trống và còn quota gói mới hiển thị ở đây."
+              title="Chưa có chủ trang trại nào đủ điều kiện"
+              description="Chỉ những chủ trang trại đã mua bộ kit (đơn PAID) còn slot trống và còn quota gói mới hiển thị ở đây."
             />
           ) : (
             <>

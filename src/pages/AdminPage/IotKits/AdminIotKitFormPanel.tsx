@@ -164,7 +164,7 @@ export default function AdminIotKitFormPanel({
         <CardHeader>
           <CardTitle>Thông tin bộ Kit</CardTitle>
           <CardDescription>
-            Mã, tên, giá và cấu hình thiết bị mà Owner sẽ thấy ở marketplace.
+            Mã, tên, giá và cấu hình thiết bị mà Chủ trang trại sẽ thấy ở marketplace.
           </CardDescription>
         </CardHeader>
         <CardContent>

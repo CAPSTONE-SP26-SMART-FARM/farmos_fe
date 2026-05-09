@@ -123,7 +123,7 @@ const DoctorAssignmentDetailDialog = ({ id, setId }: Props) => {
 
 						<Card>
 							<CardHeader>
-								<CardTitle>Owner</CardTitle>
+								<CardTitle>Chủ trang trại</CardTitle>
 							</CardHeader>
 							<CardContent className="space-y-2 text-sm">
 								<div>
