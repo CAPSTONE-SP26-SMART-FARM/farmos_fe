@@ -215,6 +215,7 @@ export default function AdminIotKitFormPanel({
                 <Input
                   id="kit-price"
                   inputMode="numeric"
+                  min={10000}
                   value={priceInput}
                   onChange={(e) => {
                     const digits = e.target.value.replace(/\D/g, "");
@@ -224,10 +225,12 @@ export default function AdminIotKitFormPanel({
                       shouldDirty: true,
                     });
                   }}
-                  placeholder="VD: 2500000"
+                  placeholder="VD: 2500000 (tối thiểu 10000)"
                 />
                 <FieldDescription>
-                  Hiển thị: {formatCurrencyVnd(watchedPrice ?? 0)}
+                  Hiển thị: {formatCurrencyVnd(watchedPrice ?? 0)}. Giá tối
+                  thiểu <strong>10.000đ</strong> để cổng thanh toán (VNPay,
+                  ngân hàng) chấp nhận giao dịch.
                 </FieldDescription>
                 <FieldError errors={[form.formState.errors.price]} />
               </Field>

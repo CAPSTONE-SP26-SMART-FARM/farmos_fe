@@ -54,7 +54,12 @@ export const CreateServicePackageBodySchema = z
     code: z.string().min(1, "Vui lòng nhập mã gói").max(50),
     name: z.string().min(1, "Vui lòng nhập tên gói").max(255),
     description: z.string().optional(),
-    price: z.number().min(0, "Giá phải >= 0"),
+    price: z
+      .number()
+      .min(
+        10000,
+        "Giá tối thiểu 10.000đ để cổng thanh toán chấp nhận giao dịch.",
+      ),
     creditAmount: z
       .number()
       .int("Số credit phải là số nguyên")

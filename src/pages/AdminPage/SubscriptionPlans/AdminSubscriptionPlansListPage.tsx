@@ -616,7 +616,8 @@ function AdminSubscriptionPlansListPage() {
                       <Input
                         id="list-price"
                         type="number"
-                        min={0}
+                        min={10000}
+                        step={1000}
                         value={field.value}
                         onChange={(event) =>
                           field.onChange(Number(event.target.value))
@@ -625,7 +626,9 @@ function AdminSubscriptionPlansListPage() {
                         aria-invalid={fieldState.invalid}
                       />
                       <p className="text-xs text-muted-foreground">
-                        Đơn vị: VND, đã bao gồm VAT
+                        Đơn vị: VND, đã bao gồm VAT. Tối thiểu{" "}
+                        <strong>10.000đ</strong> để cổng thanh toán (VNPay,
+                        ngân hàng) chấp nhận giao dịch.
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Hiển thị: {formatCurrency(field.value || 0)}

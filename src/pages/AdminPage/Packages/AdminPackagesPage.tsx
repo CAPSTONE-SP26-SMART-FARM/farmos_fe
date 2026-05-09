@@ -572,21 +572,24 @@ function ServicePackageFormDialog({
             <Input
               id="pkg-price"
               type="number"
-              min={0}
+              min={10000}
               step={1000}
-              placeholder="VD: 199000"
+              placeholder="VD: 199000 (tối thiểu 10000)"
               disabled={isEdit}
               {...register("price", { valueAsNumber: true })}
               aria-invalid={Boolean(errors.price)}
             />
             {errors.price ? (
               <p className="text-destructive text-xs">{errors.price.message}</p>
+            ) : isEdit ? (
+              <p className="text-xs text-muted-foreground">
+                Giá không thể thay đổi sau khi tạo.
+              </p>
             ) : (
-              isEdit && (
-                <p className="text-xs text-muted-foreground">
-                  Giá không thể thay đổi sau khi tạo.
-                </p>
-              )
+              <p className="text-xs text-muted-foreground">
+                Giá tối thiểu <strong>10.000đ</strong> để cổng thanh toán
+                (VNPay, ngân hàng) chấp nhận giao dịch.
+              </p>
             )}
           </div>
 

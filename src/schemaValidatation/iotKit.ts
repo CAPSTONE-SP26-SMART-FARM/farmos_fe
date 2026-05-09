@@ -113,7 +113,7 @@ export const CreateIotKitBodySchema = z
       .optional(),
     price: z
       .number({ message: "Vui lòng nhập giá hợp lệ." })
-      .positive("Giá phải lớn hơn 0."),
+      .min(10000, "Giá tối thiểu là 10.000đ để đảm bảo cổng thanh toán chấp nhận."),
     boardType: BoardTypeEnum,
     includedSensors: z.array(SensorTypeEnum).optional(),
     includedModules: z.array(KitModuleNameEnum).optional(),
@@ -136,7 +136,10 @@ export const UpdateIotKitBodySchema = z
   .object({
     name: z.string().min(1).max(255).optional(),
     description: z.string().max(2000).nullable().optional(),
-    price: z.number().positive().optional(),
+    price: z
+      .number()
+      .min(10000, "Giá tối thiểu là 10.000đ để đảm bảo cổng thanh toán chấp nhận.")
+      .optional(),
     boardType: BoardTypeEnum.optional(),
     includedSensors: z.array(SensorTypeEnum).nullable().optional(),
     includedModules: z.array(KitModuleNameEnum).nullable().optional(),
