@@ -35,6 +35,7 @@ export const DqsSnapshotResSchema = z.object({
 // (cron chưa chạy hoặc doctor mới <30 ngày).
 export const DoctorDqsDetailResSchema = z.object({
   doctorId: z.string().uuid(),
+  doctorName: z.string().nullable(),
   latest: DqsSnapshotResSchema.nullable(),
 });
 

@@ -71,7 +71,7 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-r
 import { cn } from "@/lib/utils";
 import {
   formatMilestoneIotDetailDeviceLabel,
-  formatMilestoneIotPickerSubtitle,
+  milestoneIotModuleTypeVi,
 } from "@/lib/milestone-iot-display";
 import {
   useManagerListProductionMilestones,
@@ -1181,12 +1181,11 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
                     />
                     <div className="flex-1">
                       <p className="font-medium text-sm">{dev.deviceName}</p>
-                      <p className="text-xs text-muted-foreground leading-snug">
-                        {formatMilestoneIotPickerSubtitle(
-                          dev.deviceType,
-                          IOT_DEVICE_STATUS_VI[dev.status] ?? dev.status,
-                        )}
-                      </p>
+                      {milestoneIotModuleTypeVi(dev.deviceType) && (
+                        <p className="text-xs text-muted-foreground leading-snug">
+                          {milestoneIotModuleTypeVi(dev.deviceType)}
+                        </p>
+                      )}
                     </div>
                   </label>
                 ))

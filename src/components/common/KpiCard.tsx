@@ -33,7 +33,7 @@ function KpiCard({
       <CardContent className="pt-6">
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-1">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground min-h-10">
               {label}
             </p>
             <p className={cn("text-2xl font-semibold", TONE_CLASS[tone])}>
