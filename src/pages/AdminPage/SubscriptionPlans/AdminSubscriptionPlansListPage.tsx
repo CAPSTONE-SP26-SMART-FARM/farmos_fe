@@ -277,8 +277,7 @@ function AdminSubscriptionPlansListPage() {
               setPlanQuery((prev) => ({
                 ...prev,
                 page: 1,
-                status:
-                  value === "ALL" ? undefined : (value as PlanStatusType),
+                status: value === "ALL" ? undefined : (value as PlanStatusType),
               }))
             }
           >
@@ -394,9 +393,7 @@ function AdminSubscriptionPlansListPage() {
                   label: "Chi tiết gói",
                   icon: Eye,
                   onSelect: (plan) =>
-                    navigate(
-                      `/dashboard/admin/subscription-plans/${plan.id}`,
-                    ),
+                    navigate(`/dashboard/admin/subscription-plans/${plan.id}`),
                 },
                 {
                   key: "archive",
@@ -494,11 +491,13 @@ function AdminSubscriptionPlansListPage() {
 
           <Alert>
             <Info className="h-4 w-4" />
-            <AlertTitle>Thông tin gói không thể chỉnh sửa sau khi tạo</AlertTitle>
+            <AlertTitle>
+              Thông tin gói không thể chỉnh sửa sau khi tạo
+            </AlertTitle>
             <AlertDescription>
               Mã gói, tên, mô tả, thời hạn và giá niêm yết sẽ được cố định. Để
-              thay đổi tính năng hoặc điều chỉnh giá, hãy tạo phiên bản mới cho
-              gói sau khi khởi tạo.
+              thay đổi tính năng, hãy tạo phiên bản mới cho gói sau khi khởi
+              tạo.
             </AlertDescription>
           </Alert>
 
