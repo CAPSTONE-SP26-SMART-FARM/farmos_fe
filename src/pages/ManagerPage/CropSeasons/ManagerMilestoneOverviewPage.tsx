@@ -39,6 +39,10 @@ import type {
   ProductionMilestoneStatusType,
 } from "@/schemaValidatation/productionMilestone";
 import { format, isValid, parse } from "date-fns";
+import {
+  formatMilestoneIotDeviceWithOptionalCode,
+  milestoneIotModuleTypeVi,
+} from "@/lib/milestone-iot-display";
 
 // ============================================================
 // Helpers
@@ -177,6 +181,7 @@ function IotSensorSection({
   const configuredThresholds = eligibleSensors.filter(
     (s) => s.threshold?.source !== "none",
   );
+  const moduleTypeVi = milestoneIotModuleTypeVi(assignment.device.deviceType);
 
   return (
     <Card>
@@ -196,14 +201,13 @@ function IotSensorSection({
             Thiết bị
           </p>
           <p className="text-sm font-medium">
-            {assignment.device.deviceName}{" "}
-            <span className="text-muted-foreground">
-              ({assignment.device.deviceCode})
-            </span>
+            {formatMilestoneIotDeviceWithOptionalCode(assignment.device)}
           </p>
-          <p className="text-xs text-muted-foreground capitalize">
-            Loại: {assignment.device.deviceType.replace(/_/g, " ")}
-          </p>
+          {moduleTypeVi ? (
+            <p className="text-xs text-muted-foreground">
+              Loại: {moduleTypeVi}
+            </p>
+          ) : null}
           {assignment.assignedAt && (
             <p className="text-xs text-muted-foreground">
               Gán lúc: {formatDate(assignment.assignedAt)}

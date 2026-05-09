@@ -286,10 +286,12 @@ const DEVICE_TYPE_ICON: Record<string, typeof Cpu> = {
 };
 
 const STATUS_LABEL: Record<string, string> = {
+  available: "Có thể sử dụng",
+  purchase: "Khả dụng",
+  install: "Đang lắp đặt",
   active: "Hoạt động",
-  inactive: "Tắt",
-  maintenance: "Bảo trì",
-  retired: "Ngưng hoạt động",
+  error: "Lỗi",
+  revoked: "Thu hồi",
 };
 
 const SENSOR_TYPE_LABEL: Record<string, string> = {

@@ -3,6 +3,8 @@ import { api } from "@/lib/axios";
 import type {
   CreateProductionMilestoneBatchBodyType,
   CreateProductionMilestoneItemBodyType,
+  IotConfigResType,
+  IotConfigPutBodyType,
   ListProductionMilestonesQueryType,
   ListProductionMilestonesResType,
   ProductionMilestoneResType,
@@ -129,5 +131,37 @@ export const productionMilestoneService = {
   ownerDetail: (milestoneId: string, cropSeasonId: string) =>
     api.get<ProductionMilestoneResType>(
       OWNER.PRODUCTION_MILESTONE.DETAIL(milestoneId, cropSeasonId),
+    ),
+
+  // ── iotConfig (manager) ────────────────────────────────────────────────────
+  getIotConfig: (cropSeasonId: string, milestoneId: string) =>
+    api.get<IotConfigResType>(
+      MANAGER.PRODUCTION_MILESTONE.IOT_CONFIG(cropSeasonId, milestoneId),
+    ),
+
+  updateIotConfig: (
+    cropSeasonId: string,
+    milestoneId: string,
+    body: IotConfigPutBodyType,
+  ) =>
+    api.put<IotConfigResType, IotConfigPutBodyType>(
+      MANAGER.PRODUCTION_MILESTONE.IOT_CONFIG(cropSeasonId, milestoneId),
+      body,
+    ),
+
+  // ── iotConfig (owner) ──────────────────────────────────────────────────────
+  ownerGetIotConfig: (cropSeasonId: string, milestoneId: string) =>
+    api.get<IotConfigResType>(
+      OWNER.PRODUCTION_MILESTONE.IOT_CONFIG(cropSeasonId, milestoneId),
+    ),
+
+  ownerUpdateIotConfig: (
+    cropSeasonId: string,
+    milestoneId: string,
+    body: IotConfigPutBodyType,
+  ) =>
+    api.put<IotConfigResType, IotConfigPutBodyType>(
+      OWNER.PRODUCTION_MILESTONE.IOT_CONFIG(cropSeasonId, milestoneId),
+      body,
     ),
 };

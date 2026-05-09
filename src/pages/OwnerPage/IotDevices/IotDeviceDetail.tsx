@@ -9,12 +9,14 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  AlertCircle,
   ArrowLeft,
   Calendar,
   CircuitBoard,
   Cpu,
+  Package,
+  PackageCheck,
   Power,
-  PowerOff,
   Radio,
   ShieldOff,
   Wifi,
@@ -34,27 +36,40 @@ const STATUS_META: Record<
   string,
   { label: string; className: string; icon: typeof Power }
 > = {
+  available: {
+    label: "Có thể sử dụng",
+    className:
+      "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+    icon: Package,
+  },
+  purchase: {
+    label: "Khả dụng",
+    className:
+      "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
+    icon: PackageCheck,
+  },
+  install: {
+    label: "Đang lắp đặt",
+    className:
+      "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300",
+    icon: Wrench,
+  },
   active: {
     label: "Hoạt động",
     className:
       "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300",
     icon: Power,
   },
-  inactive: {
-    label: "Tắt",
+  error: {
+    label: "Lỗi",
     className:
-      "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
-    icon: PowerOff,
+      "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
+    icon: AlertCircle,
   },
-  maintenance: {
-    label: "Bảo trì",
+  revoked: {
+    label: "Thu hồi",
     className:
-      "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300",
-    icon: Wrench,
-  },
-  retired: {
-    label: "Ngưng hoạt động",
-    className: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
+      "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
     icon: ShieldOff,
   },
 };
@@ -145,7 +160,7 @@ export default function IotDeviceDetail({
     );
   }
 
-  const sMeta = STATUS_META[device.status] ?? STATUS_META.inactive;
+  const sMeta = STATUS_META[device.status] ?? STATUS_META.available;
   const SIcon = sMeta.icon;
   const DIcon = DEVICE_TYPE_ICON[device.deviceType] ?? Cpu;
   const dtLabel = DEVICE_TYPE_LABEL[device.deviceType] ?? device.deviceType;
@@ -356,7 +371,7 @@ function SubDeviceCard({
     () => DEVICE_TYPE_ICON[device.deviceType] ?? Cpu,
     [device.deviceType],
   );
-  const sMeta = STATUS_META[device.status] ?? STATUS_META.inactive;
+  const sMeta = STATUS_META[device.status] ?? STATUS_META.available;
   const SIcon = sMeta.icon;
 
   return (
