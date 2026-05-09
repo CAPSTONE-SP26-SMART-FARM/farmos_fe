@@ -83,6 +83,26 @@ export const useUpdateCropSeason = (id: string) => {
   });
 };
 
+export const useCompleteCropSeason = (id: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => cropSeasonService.complete(id),
+    onSuccess: async (data) => {
+      await qc.invalidateQueries({
+        queryKey: QUERY_KEYS.cropSeasons.detail(id),
+      });
+      await qc.invalidateQueries({
+        queryKey: ["crop-seasons", "zone", data.data.zoneId],
+      });
+      await qc.refetchQueries({
+        queryKey: ["crop-seasons", "zone", data.data.zoneId],
+      });
+      toast.success("Đã hoàn thành mùa vụ!");
+    },
+    onError: (error) => onMutationError(error, "Hoàn thành mùa vụ thất bại"),
+  });
+};
+
 export const useSendProductionRequest = (cropSeasonId: string) => {
   const qc = useQueryClient();
   return useMutation({

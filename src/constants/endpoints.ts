@@ -556,6 +556,7 @@ export const API_ENDPOINTS = {
       LIST_BY_ZONE: (zoneId: string) => `/crop-seasons/zone/${zoneId}`,
       DETAIL: (id: string) => `/crop-seasons/${id}`,
       UPDATE: (id: string) => `/crop-seasons/${id}`,
+      COMPLETE: (id: string) => `/crop-seasons/${id}/complete`,
       SEND_REQUEST: (id: string) => `/crop-seasons/${id}/send-request`,
       LIST_REQUESTS: (cropSeasonId: string) =>
         `/crop-seasons/${cropSeasonId}/requests`,

@@ -23,6 +23,7 @@ import { useNavigate, useSearchParams } from "react-router";
 import { useManagerListCropSeasons } from "@/queries/useCropSeason";
 import { useManagerListAssignedZones } from "@/queries/useZone";
 import { ProductionStatusName, type CropSeasonType } from "@/types/cropSeason";
+import { CompleteCropSeasonButton } from "./components/CompleteCropSeasonButton";
 import { CreateCropSeasonScreen } from "./components/CreateCropSeasonScreen";
 import { CropSeasonSummaryCard } from "./components/CropSeasonSummaryCard";
 import { SendRequestDialog } from "./components/SendRequestDialog";
@@ -251,7 +252,11 @@ export default function ManagerCropSeasonsPage() {
                         <BarChart3 className="h-3 w-3 mr-1.5" />
                         Kế hoạch vs Thực tế
                       </Button>
-                      <UpdateCropSeasonDialog season={nowSeason} />
+                      {nowSeason.status === ProductionStatusName.Active ? (
+                        <CompleteCropSeasonButton season={nowSeason} />
+                      ) : (
+                        <UpdateCropSeasonDialog season={nowSeason} />
+                      )}
                       <SendRequestDialog season={nowSeason} />
                     </>
                   }
