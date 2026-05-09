@@ -46,6 +46,9 @@ export const WithdrawalRequestResSchema = z.object({
   notReceivedAt: z.string().nullable(),
   notReceivedReason: z.string().nullable(),
 
+  resolvedNotReceivedAt: z.string().nullable().optional(),
+  resolvedNotReceivedNote: z.string().nullable().optional(),
+
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -96,16 +99,21 @@ export type RejectWithdrawalBodyType = z.infer<
   typeof RejectWithdrawalBodySchema
 >;
 
+// Phải khớp regex BE: ^https://res.cloudinary.com/[a-z0-9_-]+/.+
+const CLOUDINARY_URL_REGEX = /^https:\/\/res\.cloudinary\.com\/[a-z0-9_-]+\/.+/;
+const cloudinaryUrlSchema = z
+  .string()
+  .max(500, "URL tối đa 500 ký tự")
+  .regex(CLOUDINARY_URL_REGEX, "URL phải là Cloudinary (res.cloudinary.com)")
+  .optional()
+  .or(z.literal(""));
+
 export const MarkPaidBodySchema = z.object({
   transferReference: z
     .string()
     .min(1, "Mã chuyển khoản là bắt buộc")
     .max(255, "Tối đa 255 ký tự"),
-  transferProofUrl: z
-    .string()
-    .max(500, "URL tối đa 500 ký tự")
-    .optional()
-    .or(z.literal("")),
+  transferProofUrl: cloudinaryUrlSchema,
   adminNote: z.string().max(2000, "Tối đa 2000 ký tự").optional(),
 });
 
@@ -114,7 +122,7 @@ export type MarkPaidBodyType = z.infer<typeof MarkPaidBodySchema>;
 export const ResolveNotReceivedBodySchema = z.object({
   action: z.enum(["RETRY_PAID", "REFUND"]),
   transferReference: z.string().max(255).optional(),
-  transferProofUrl: z.string().max(500).optional().or(z.literal("")),
+  transferProofUrl: cloudinaryUrlSchema,
   adminNote: z.string().max(2000).optional(),
 });
 
