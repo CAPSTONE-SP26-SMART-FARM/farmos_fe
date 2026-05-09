@@ -32,6 +32,7 @@ import type {
 } from "@/schemaValidatation/iotDevice";
 import useDebounce from "@/hooks/useDebounce";
 import { useNavigate } from "react-router";
+import { toast } from "sonner";
 
 const DEVICE_TYPE_LABEL: Record<string, string> = {
   board_module: "Bo mạch",
@@ -98,7 +99,7 @@ export default function AdminIotDevicesPage() {
             onClick={() => navigate("/dashboard/admin/iot-devices/create")}
           >
             <Plus className="mr-2 h-4 w-4" />
-            Tạo lô thiết bị
+            Tạo bộ kit mới
           </Button>
         </div>
       </section>
@@ -283,6 +284,7 @@ export default function AdminIotDevicesPage() {
         onConfirm={async () => {
           if (deleteTarget) {
             await deleteMutation.mutateAsync(deleteTarget.id);
+            toast.success("Bộ kit đã được xoá thành công");
           }
           setDeleteTarget(null);
         }}

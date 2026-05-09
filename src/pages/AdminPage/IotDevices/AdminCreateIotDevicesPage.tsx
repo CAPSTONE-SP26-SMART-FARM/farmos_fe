@@ -134,7 +134,7 @@ export default function AdminCreateIotDevicesPage() {
         <div className="space-y-2">
           <Badge>Cổng quản trị</Badge>
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-            Tạo lô thiết bị IoT
+            Tạo bộ thiết bị IoT
           </h1>
           <p className="max-w-2xl text-sm text-muted-foreground md:text-base">
             Bước 1: tạo lô thiết bị. Bước 2: gắn cảm biến cho bo mạch.
@@ -330,6 +330,7 @@ function SensorStep({
       });
       setConfirmCreate(false);
       setPendingItems(null);
+      toast.success("Bộ kit Iot mới đã được tạo thành công");
       onDone();
     } catch (error) {
       setConfirmCreate(false);

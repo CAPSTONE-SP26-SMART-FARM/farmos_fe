@@ -26,7 +26,7 @@ import { formatCurrencyVnd, formatDateTimeVi } from "@/lib/format";
 import { useAdminTicketFull } from "@/queries/useTicket";
 import { TierSchema } from "@/schemaValidatation/dqs";
 import { type TicketStatusUpperType } from "@/schemaValidatation/ticket";
-import { ArrowLeft, ShieldOff, Ticket, Undo2, UserRound } from "lucide-react";
+import { ArrowLeft, RefreshCw, ShieldOff, Ticket, UserRound } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
@@ -35,7 +35,6 @@ import BroadcastTimeline from "@/components/ticket-quality/BroadcastTimeline";
 import PrescriptionItemsCard from "@/components/ticket-quality/PrescriptionItemsCard";
 import RatingDisplay from "@/components/ticket-quality/RatingDisplay";
 import SolutionViewCard from "@/components/ticket-quality/SolutionViewCard";
-import ClawbackModal from "@/components/ticket-quality/admin/ClawbackModal";
 import InvalidateRatingModal from "@/components/ticket-quality/admin/InvalidateRatingModal";
 
 const STATUS_LABEL: Record<TicketStatusUpperType, string> = {
@@ -81,9 +80,14 @@ export default function AdminTicketDetailPage() {
   const ticketId = id ?? "";
   const navigate = useNavigate();
 
-  const fullQuery = useAdminTicketFull(ticketId);
+  // FE-only mitigation cho Gap #1 (admin realtime 403 silent — xem ticket-v2.md):
+  // BE chưa cho admin join socket subscribe-ticket, nên ta fallback bằng polling 30s
+  // khi page focused. Khi BE phối hợp mở subscribe cho admin → bỏ refetchInterval
+  // và dựa hoàn toàn vào useRealtimeTicketDetail.
+  const fullQuery = useAdminTicketFull(ticketId, true, {
+    refetchInterval: 30_000,
+  });
   const [invalidateOpen, setInvalidateOpen] = useState(false);
-  const [clawbackOpen, setClawbackOpen] = useState(false);
   const full = fullQuery.data?.data;
   const t = full?.ticket;
 
@@ -158,6 +162,17 @@ export default function AdminTicketDetailPage() {
         >
           {STATUS_LABEL[t.status]}
         </Badge>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => fullQuery.refetch()}
+          disabled={fullQuery.isFetching}
+          title="Tải lại dữ liệu ticket"
+        >
+          <RefreshCw
+            className={`h-4 w-4 ${fullQuery.isFetching ? "animate-spin" : ""}`}
+          />
+        </Button>
       </div>
 
       <Separator />
@@ -395,22 +410,6 @@ export default function AdminTicketDetailPage() {
                       </Badge>
                     </div>
                   )}
-
-                  <Separator />
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs text-muted-foreground">
-                      Phát hiện sai sót sau payout? Có thể thu hồi để tạo
-                      PENALTY transaction.
-                    </span>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => setClawbackOpen(true)}
-                    >
-                      <Undo2 className="mr-2 h-4 w-4" />
-                      Thu hồi hoa hồng
-                    </Button>
-                  </div>
                 </div>
               ) : (
                 <div className="text-sm text-muted-foreground">
@@ -427,14 +426,6 @@ export default function AdminTicketDetailPage() {
         onOpenChange={setInvalidateOpen}
         ticketId={ticketId}
         rating={full.rating}
-      />
-
-      <ClawbackModal
-        open={clawbackOpen}
-        onOpenChange={setClawbackOpen}
-        ticketId={ticketId}
-        ticketNumber={t.ticketNumber}
-        commissionAmount={payout?.amount ?? null}
       />
     </div>
   );

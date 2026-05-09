@@ -181,11 +181,17 @@ export const useTicketFull = (ticketId: string, enabled = true) =>
     enabled: enabled && Boolean(ticketId),
   });
 
-export const useAdminTicketFull = (ticketId: string, enabled = true) =>
+export const useAdminTicketFull = (
+  ticketId: string,
+  enabled = true,
+  options?: { refetchInterval?: number | false },
+) =>
   useQuery({
     queryKey: QUERY_KEYS.ticketsExt.adminFull(ticketId),
     queryFn: () => ticketService.adminGetFull(ticketId),
     enabled: enabled && Boolean(ticketId),
+    refetchInterval: options?.refetchInterval,
+    refetchIntervalInBackground: false,
   });
 
 export const useCloseTicket = () => {

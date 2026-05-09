@@ -29,13 +29,6 @@ const columns: ColumnDef<FarmWithOwnerResType>[] = [
     cell: ({ row }) => <div>{row.getValue("name")}</div>,
   },
   {
-    accessorKey: "farmType",
-    header: "Loại",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("farmType")}</div>
-    ),
-  },
-  {
     accessorKey: "address",
     header: "Địa chỉ",
     cell: ({ row }) => <div>{row.getValue("address") ?? "—"}</div>,

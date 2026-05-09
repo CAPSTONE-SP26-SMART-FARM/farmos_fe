@@ -22,6 +22,7 @@ import {
   Archive,
   ArchiveRestore,
   Boxes,
+  Eye,
   PackageOpen,
   Search,
 } from "lucide-react";
@@ -44,7 +45,13 @@ import { toast } from "sonner";
 
 type StatusFilter = "all" | "active" | "archived";
 
-export default function AdminIotKitListSection() {
+interface AdminIotKitListSectionProps {
+  onViewDetail?: (kit: IotDeviceKitResType) => void;
+}
+
+export default function AdminIotKitListSection({
+  onViewDetail,
+}: AdminIotKitListSectionProps) {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
@@ -178,11 +185,11 @@ export default function AdminIotKitListSection() {
       <CardHeader className="bg-muted/30">
         <CardTitle className="flex items-center gap-2">
           <Boxes className="h-5 w-5 text-primary" />
-          Danh mục bộ Kit IoT
+          Danh mục các gói Kit IoT
         </CardTitle>
         <CardDescription>
-          Bộ Kit bán lẻ giúp Chủ trang trại mở rộng hạn mức thiết bị, đồng pha hạn với
-          gói đăng ký.
+          Bộ Kit bán lẻ giúp Chủ trang trại mở rộng hạn mức thiết bị bao gồm
+          trong gói đăng ký.
         </CardDescription>
 
         <div className="mt-2 grid gap-2 md:grid-cols-[1fr_200px_140px]">
@@ -247,6 +254,12 @@ export default function AdminIotKitListSection() {
               data={kits}
               isLoading={listQuery.isLoading}
               actions={[
+                {
+                  key: "detail",
+                  label: "Chi tiết",
+                  icon: Eye,
+                  onSelect: (kit) => onViewDetail?.(kit),
+                },
                 {
                   key: "archive",
                   label: "Lưu trữ",

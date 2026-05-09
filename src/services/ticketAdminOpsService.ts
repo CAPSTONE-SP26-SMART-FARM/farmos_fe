@@ -1,13 +1,11 @@
 import { API_ENDPOINTS } from "@/constants";
 import { api } from "@/lib/axios";
 import type {
-  ClawbackTicketBodyType,
   DoctorCommissionReportQueryType,
   DoctorCommissionReportResType,
   TicketRevenueReportQueryType,
   TicketRevenueReportResType,
 } from "@/schemaValidatation/ticketReports";
-import type { MessageResType } from "@/types/api";
 import queryString from "query-string";
 
 const TV2 = API_ENDPOINTS.TICKET_V2;
@@ -23,13 +21,9 @@ const ticketAdminOpsService = {
       `${TV2.ADMIN_REPORT_DOCTOR_COMMISSION}?${queryString.stringify({ ...query }, { skipNull: true, skipEmptyString: true })}`,
     ),
 
-  // B16 — Admin clawback. BE body `{reason?: string}` (optional ở schema BE,
-  // nhưng FE form bắt buộc nhập để phục vụ audit).
-  clawback: (ticketId: string, body: ClawbackTicketBodyType) =>
-    api.post<MessageResType, ClawbackTicketBodyType>(
-      TV2.ADMIN_CLAWBACK(ticketId),
-      body,
-    ),
+  // Clawback (POST /admin/tickets/:id/clawback) — KHÔNG integrate trên web FE
+  // theo quyết định 2026-05-09 (xem docs/ticket-v2/ticket-v2.md). Endpoint vẫn
+  // tồn tại ở BE để xử lý offline/manual nếu cần.
 };
 
 export default ticketAdminOpsService;

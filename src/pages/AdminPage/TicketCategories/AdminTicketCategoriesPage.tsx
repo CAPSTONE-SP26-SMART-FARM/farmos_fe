@@ -1,3 +1,4 @@
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,6 +8,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -36,7 +45,15 @@ import {
 } from "@/schemaValidatation/ticketCategory";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isAxiosError } from "axios";
-import { Loader2, Pencil, Plus, Power, Search } from "lucide-react";
+import {
+  AlertTriangle,
+  Loader2,
+  Pencil,
+  Plus,
+  Power,
+  Search,
+  X,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router";
@@ -62,7 +79,9 @@ function EditCategorySheet({
   const updateMutation = useUpdateTicketCategory();
 
   const form = useForm<UpdateTicketCategoryBodyType>({
-    resolver: zodResolver(UpdateTicketCategoryBodySchema) as Resolver<UpdateTicketCategoryBodyType>,
+    resolver: zodResolver(
+      UpdateTicketCategoryBodySchema,
+    ) as Resolver<UpdateTicketCategoryBodyType>,
     defaultValues: {
       name: category.name,
       description: category.description ?? "",
@@ -71,7 +90,7 @@ function EditCategorySheet({
       eligibleForSubscriptionGrant: category.eligibleForSubscriptionGrant,
       eligibleForPurchase: category.eligibleForPurchase,
       featureCode: category.featureCode ?? "",
-      creditType: category.creditType ?? "",
+      metadata: category.metadata ?? undefined,
     },
   });
   useClearServerFieldErrors(form);
@@ -116,14 +135,9 @@ function EditCategorySheet({
           </p>
           <div className="flex flex-wrap gap-2">
             <Badge variant="secondary">Mã: {category.code}</Badge>
-            {category.legacyCategory && (
-              <Badge variant="secondary">
-                Legacy: {category.legacyCategory}
-              </Badge>
-            )}
-            {category.legacyTicketType && (
-              <Badge variant="secondary">
-                Type: {category.legacyTicketType}
+            {category.creditType && (
+              <Badge variant="secondary" className="font-mono">
+                Credit: {category.creditType}
               </Badge>
             )}
             <Badge variant="secondary">Tiền tệ: {category.currency}</Badge>
@@ -246,23 +260,25 @@ function EditCategorySheet({
 
         <Separator />
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="edit-creditType">Loại credit</Label>
-            <Input
-              id="edit-creditType"
-              {...register("creditType")}
-              className="font-mono text-sm"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="edit-featureCode">Feature code</Label>
-            <Input
-              id="edit-featureCode"
-              {...register("featureCode")}
-              className="font-mono text-sm"
-            />
-          </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="edit-featureCode">Feature code</Label>
+          <Input
+            id="edit-featureCode"
+            {...register("featureCode")}
+            className="font-mono text-sm"
+            aria-invalid={Boolean(errors.featureCode)}
+          />
+          {errors.featureCode ? (
+            <p className="text-destructive text-xs">
+              {errors.featureCode.message}
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Chỉ sửa được khi chưa có ticket nào dùng category này (BE check
+              <code className="mx-1">TicketCategoryCannotChangeFeatureCode</code>
+              ).
+            </p>
+          )}
         </div>
       </div>
 
@@ -305,6 +321,16 @@ export default function AdminTicketCategoriesPage() {
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
   const [editTarget, setEditTarget] = useState<TicketCategoryType | null>(null);
+  // FE-only mitigation cho Gap #2 (toggle isActive=false không pre-validate):
+  // - confirmTarget mở ConfirmDialog cảnh báo trước khi gọi toggle
+  // - blockingError giữ hint từ BE 422 hiển thị inline thay vì toast thoáng qua
+  const [confirmTarget, setConfirmTarget] = useState<TicketCategoryType | null>(
+    null,
+  );
+  const [blockingError, setBlockingError] = useState<{
+    categoryName: string;
+    message: string;
+  } | null>(null);
 
   const listQuery = useAdminTicketCategoryList(query);
   const toggleMutation = useToggleTicketCategory();
@@ -352,9 +378,9 @@ export default function AdminTicketCategoriesPage() {
       },
       {
         accessorKey: "creditType",
-        header: "Credit type",
+        header: "Credit type (auto)",
         cell: ({ row }) => (
-          <span className="text-xs text-muted-foreground">
+          <span className="font-mono text-xs text-muted-foreground">
             {row.original.creditType ?? "—"}
           </span>
         ),
@@ -399,7 +425,7 @@ export default function AdminTicketCategoriesPage() {
     [],
   );
 
-  const handleToggle = async (category: TicketCategoryType) => {
+  const performToggle = async (category: TicketCategoryType) => {
     try {
       await toggleMutation.mutateAsync({
         id: category.id,
@@ -408,20 +434,61 @@ export default function AdminTicketCategoriesPage() {
       toast.success(
         `${category.isActive ? "Vô hiệu hoá" : "Kích hoạt"} danh mục "${category.name}" thành công.`,
       );
+      setBlockingError(null);
     } catch (err) {
       if (isAxiosError(err) && err.response?.status === 422) {
-        const firstMsg =
-          err.response.data?.errors?.[0]?.message ??
+        // BE describeBlockingResources trả hint dạng:
+        // "Còn N owner đang có balance / M subscription đang cấp / K ticket chưa đóng"
+        const data = err.response.data;
+        const hint =
+          data?.errors?.[0]?.message ??
+          data?.message ??
           "Không thể thay đổi trạng thái danh mục này.";
-        toast.error(firstMsg);
+        setBlockingError({ categoryName: category.name, message: hint });
+        toast.error(hint);
       } else {
         toast.error(getApiErrorMessageVi(err));
       }
     }
   };
 
+  const handleToggleAction = (category: TicketCategoryType) => {
+    // Activate (isActive=false → true) không bị BE chặn → bypass confirm.
+    if (!category.isActive) {
+      void performToggle(category);
+      return;
+    }
+    // Deactivate: mở confirm dialog cảnh báo trước.
+    setConfirmTarget(category);
+  };
+
   return (
     <div className="p-6 space-y-6 animate-in fade-in duration-300">
+      {blockingError && (
+        <Alert variant="destructive" className="relative pr-10">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>
+            Không thể vô hiệu hoá "{blockingError.categoryName}"
+          </AlertTitle>
+          <AlertDescription className="space-y-1">
+            <p>{blockingError.message}</p>
+            <p className="text-xs text-muted-foreground">
+              Cần xử lý các tài nguyên đang phụ thuộc (owner còn balance,
+              subscription đang cấp, ticket chưa đóng) trước khi tắt danh mục
+              này.
+            </p>
+          </AlertDescription>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-2 top-2 h-6 w-6"
+            onClick={() => setBlockingError(null)}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </Alert>
+      )}
+
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -478,7 +545,7 @@ export default function AdminTicketCategoriesPage() {
                 hidden: (cat) => !cat.isActive,
                 disabled: () => toggleMutation.isPending,
                 variant: "destructive",
-                onSelect: (cat) => handleToggle(cat),
+                onSelect: (cat) => handleToggleAction(cat),
               },
               {
                 key: "activate",
@@ -486,7 +553,7 @@ export default function AdminTicketCategoriesPage() {
                 icon: Power,
                 hidden: (cat) => cat.isActive,
                 disabled: () => toggleMutation.isPending,
-                onSelect: (cat) => handleToggle(cat),
+                onSelect: (cat) => handleToggleAction(cat),
               },
             ]}
             emptyText="Không có danh mục nào."
@@ -549,6 +616,64 @@ export default function AdminTicketCategoriesPage() {
           )}
         </SheetContent>
       </Sheet>
+
+      <Dialog
+        open={Boolean(confirmTarget)}
+        onOpenChange={(open) => !open && setConfirmTarget(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Vô hiệu hoá danh mục "{confirmTarget?.name ?? ""}"?
+            </DialogTitle>
+            <DialogDescription>
+              Hành động có thể bị backend chặn nếu danh mục còn ràng buộc.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 text-sm">
+            <p>BE sẽ kiểm tra 3 nguồn block:</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Owner đang giữ balance theo credit type của danh mục</li>
+              <li>Subscription đang cấp entitlement theo feature code</li>
+              <li>
+                Ticket chưa terminal (open / assigned / in_progress / resolved)
+              </li>
+            </ul>
+            <p className="text-xs text-muted-foreground">
+              Nếu bị chặn, chi tiết tài nguyên cần xử lý sẽ hiện ở banner phía
+              trên trang.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmTarget(null)}
+              disabled={toggleMutation.isPending}
+            >
+              Huỷ
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={toggleMutation.isPending}
+              onClick={async () => {
+                if (!confirmTarget) return;
+                const target = confirmTarget;
+                setConfirmTarget(null);
+                await performToggle(target);
+              }}
+            >
+              {toggleMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Đang xử lý...
+                </>
+              ) : (
+                "Vô hiệu hoá"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

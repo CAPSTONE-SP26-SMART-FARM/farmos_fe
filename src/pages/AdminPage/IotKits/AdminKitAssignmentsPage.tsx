@@ -70,9 +70,6 @@ export default function AdminKitAssignmentsPage() {
             <p className="truncate font-medium">
               {row.original.owner.fullName || row.original.owner.email}
             </p>
-            <p className="truncate text-xs text-muted-foreground">
-              ID: {row.original.owner.id.slice(0, 8)}…
-            </p>
           </div>
         </div>
       ),
@@ -93,7 +90,7 @@ export default function AdminKitAssignmentsPage() {
     },
     {
       id: "quota",
-      header: () => <div className="text-right">Quota gói</div>,
+      header: () => <div className="text-right">Hạn mức theo gói đăng ký</div>,
       cell: ({ row }) => (
         <div className="text-right tabular-nums">
           <span className="font-semibold">{row.original.quota.used}</span>
@@ -109,7 +106,7 @@ export default function AdminKitAssignmentsPage() {
     },
     {
       id: "orders",
-      header: () => <div className="text-right">Bộ kit còn slot</div>,
+      header: () => <div className="text-right">Gói mua thêm</div>,
       cell: ({ row }) => (
         <div className="text-right">
           <Badge variant="secondary">{row.original.orders.length} đơn</Badge>
@@ -118,7 +115,7 @@ export default function AdminKitAssignmentsPage() {
     },
     {
       id: "remaining",
-      header: () => <div className="text-right">Slot trống</div>,
+      header: () => <div className="text-right">Hạn mức mua thêm khả dụng</div>,
       cell: ({ row }) => {
         const totalRemaining = row.original.orders.reduce(
           (acc, o) => acc + o.remainingSlots,
@@ -143,9 +140,7 @@ export default function AdminKitAssignmentsPage() {
               Quản lý gán bộ kit IoT
             </CardTitle>
             <CardDescription>
-              Danh sách các chủ trang trại có đơn kit đã thanh toán còn slot trống và
-              vẫn nằm trong hạn mức gói. Bấm vào dòng để xem chi tiết và gán
-              thiết bị.
+              Quản lý và phân quyền sử dụng các bộ kit IoT cho các chủ trang trại.
             </CardDescription>
           </div>
           <div className="relative w-full md:w-72">

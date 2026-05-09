@@ -4,15 +4,26 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import AdminIotKitListSection from "./AdminIotKitListSection";
 import AdminIotKitFormPanel from "./AdminIotKitFormPanel";
+import type { IotDeviceKitResType } from "@/schemaValidatation/iotKit";
 
-type PanelState = { mode: "list" } | { mode: "create" };
+type PanelState =
+  | { mode: "list" }
+  | { mode: "create" }
+  | { mode: "detail"; kit: IotDeviceKitResType };
 
 export default function AdminIotKitsPage() {
   const [panel, setPanel] = useState<PanelState>({ mode: "list" });
 
-  if (panel.mode !== "list") {
+  if (panel.mode === "create") {
+    return <AdminIotKitFormPanel onBack={() => setPanel({ mode: "list" })} />;
+  }
+
+  if (panel.mode === "detail") {
     return (
-      <AdminIotKitFormPanel onBack={() => setPanel({ mode: "list" })} />
+      <AdminIotKitFormPanel
+        kit={panel.kit}
+        onBack={() => setPanel({ mode: "list" })}
+      />
     );
   }
 
@@ -31,12 +42,14 @@ export default function AdminIotKitsPage() {
           </div>
           <Button onClick={() => setPanel({ mode: "create" })}>
             <Plus className="mr-2 h-4 w-4" />
-            Tạo bộ Kit
+            Tạo gói Iot Kit
           </Button>
         </div>
       </section>
 
-      <AdminIotKitListSection />
+      <AdminIotKitListSection
+        onViewDetail={(kit) => setPanel({ mode: "detail", kit })}
+      />
     </div>
   );
 }

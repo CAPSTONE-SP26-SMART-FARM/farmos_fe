@@ -36,6 +36,7 @@ import type {
 import {
   AlertCircle,
   Clock3,
+  Eye,
   Loader2,
   Milestone,
   MoreVertical,
@@ -45,6 +46,7 @@ import {
   PowerOff,
   Search,
   Trash2,
+  Ban,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -56,11 +58,13 @@ const FARM_TYPE_LABEL: Record<string, string> = {
 interface MilestoneTemplateListProps {
   onCreate: () => void;
   onEdit: (template: MilestoneTemplateResType) => void;
+  onDetail: (template: MilestoneTemplateResType) => void;
 }
 
 export default function MilestoneTemplateList({
   onCreate,
   onEdit,
+  onDetail,
 }: MilestoneTemplateListProps) {
   const [query, setQuery] = useState<ListMilestoneTemplatesQueryType>({
     page: 1,
@@ -106,13 +110,6 @@ export default function MilestoneTemplateList({
     meta?.page,
     templates.length,
   ]);
-
-  const activeCount = templates.filter(
-    (template) => template.isActive && !template.deletedAt,
-  ).length;
-  const inactiveCount = templates.filter(
-    (template) => !template.isActive && !template.deletedAt,
-  ).length;
 
   return (
     <>
@@ -168,40 +165,6 @@ export default function MilestoneTemplateList({
         </CardHeader>
 
         <CardContent className="space-y-4 pt-5">
-          <div className="grid gap-2 md:grid-cols-3">
-            <div className="rounded-lg border bg-background p-3">
-              <div className="flex items-center gap-1.5">
-                <Power className="h-3.5 w-3.5 text-emerald-500" />
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Đang hoạt động
-                </p>
-              </div>
-              <p className="mt-1 text-xl font-semibold">{activeCount}</p>
-            </div>
-
-            <div className="rounded-lg border bg-background p-3">
-              <div className="flex items-center gap-1.5">
-                <PowerOff className="h-3.5 w-3.5 text-muted-foreground" />
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Đang tắt
-                </p>
-              </div>
-              <p className="mt-1 text-xl font-semibold">{inactiveCount}</p>
-            </div>
-
-            <div className="rounded-lg border bg-background p-3">
-              <div className="flex items-center gap-1.5">
-                <Milestone className="h-3.5 w-3.5 text-primary" />
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Tổng mẫu
-                </p>
-              </div>
-              <p className="mt-1 text-xl font-semibold">
-                {meta?.totalItems ?? 0}
-              </p>
-            </div>
-          </div>
-
           {listQuery.isLoading ? (
             <div className="grid gap-3 md:grid-cols-2">
               {[0, 1, 2, 3].map((index) => (
@@ -268,11 +231,13 @@ export default function MilestoneTemplateList({
                 return (
                   <div
                     key={template.id}
-                    onClick={() => onEdit(template)}
+                    onClick={() => template.deletedAt ? onDetail(template) : onEdit(template)}
                     className={`group cursor-pointer rounded-xl border p-4 transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md ${
-                      template.isActive
-                        ? "border-border/70 bg-background"
-                        : "border-border/60 bg-muted/20"
+                      template.deletedAt
+                        ? "border-border/60 bg-muted/20 opacity-70"
+                        : template.isActive
+                          ? "border-border/70 bg-background"
+                          : "border-border/60 bg-muted/20"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -288,23 +253,33 @@ export default function MilestoneTemplateList({
                             {FARM_TYPE_LABEL[template.farmType] ??
                               template.farmType}
                           </Badge>
-                          <Badge
-                            variant={
-                              template.isActive ? "default" : "secondary"
-                            }
-                            className={`gap-1 ${
-                              template.isActive
-                                ? "bg-emerald-600 hover:bg-emerald-600/90"
-                                : ""
-                            }`}
-                          >
-                            {template.isActive ? (
-                              <Power className="h-3 w-3" />
-                            ) : (
-                              <PowerOff className="h-3 w-3" />
-                            )}
-                            {template.isActive ? "Hoạt động" : "Đang tắt"}
-                          </Badge>
+                          {template.deletedAt ? (
+                            <Badge
+                              variant="destructive"
+                              className="gap-1"
+                            >
+                              <Ban className="h-3 w-3" />
+                              Đã xóa
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant={
+                                template.isActive ? "default" : "secondary"
+                              }
+                              className={`gap-1 ${
+                                template.isActive
+                                  ? "bg-emerald-600 hover:bg-emerald-600/90"
+                                  : ""
+                              }`}
+                            >
+                              {template.isActive ? (
+                                <Power className="h-3 w-3" />
+                              ) : (
+                                <PowerOff className="h-3 w-3" />
+                              )}
+                              {template.isActive ? "Hoạt động" : "Đang tắt"}
+                            </Badge>
+                          )}
                         </div>
                         <p className="mt-1 text-xs text-muted-foreground">
                           {orderedItems.length} giai đoạn | Cập nhật{" "}
@@ -329,22 +304,35 @@ export default function MilestoneTemplateList({
                           <DropdownMenuItem
                             onClick={(event) => {
                               event.stopPropagation();
-                              onEdit(template);
+                              onDetail(template);
                             }}
                           >
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Chỉnh sửa
+                            <Eye className="mr-2 h-4 w-4" />
+                            Xem chi tiết
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              setDeleteId(template.id);
-                            }}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Xóa
-                          </DropdownMenuItem>
+                          {!template.deletedAt && (
+                            <DropdownMenuItem
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                onEdit(template);
+                              }}
+                            >
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Chỉnh sửa
+                            </DropdownMenuItem>
+                          )}
+                          {!template.deletedAt && (
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setDeleteId(template.id);
+                              }}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Xóa
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>

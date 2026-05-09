@@ -2,16 +2,30 @@ import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { ChevronRight, Milestone } from "lucide-react";
 import type { MilestoneTemplateResType } from "@/schemaValidatation/milestoneTemplate";
+import MilestoneTemplateDetail from "./MilestoneTemplateDetail";
 import MilestoneTemplateForm from "./MilestoneTemplateForm";
 import MilestoneTemplateList from "./MilestoneTemplateList";
 
 type ViewState =
   | { view: "list" }
   | { view: "create" }
+  | { view: "detail"; template: MilestoneTemplateResType }
   | { view: "edit"; template: MilestoneTemplateResType };
 
 function AdminMilestoneTemplatePage() {
   const [state, setState] = useState<ViewState>({ view: "list" });
+
+  if (state.view === "detail") {
+    return (
+      <div className="space-y-6 animate-in fade-in duration-300">
+        <MilestoneTemplateDetail
+          template={state.template}
+          onBack={() => setState({ view: "list" })}
+          onEdit={(t) => setState({ view: "edit", template: t })}
+        />
+      </div>
+    );
+  }
 
   if (state.view === "create") {
     return (
@@ -67,6 +81,7 @@ function AdminMilestoneTemplatePage() {
       <MilestoneTemplateList
         onCreate={() => setState({ view: "create" })}
         onEdit={(template) => setState({ view: "edit", template })}
+        onDetail={(template) => setState({ view: "detail", template })}
       />
     </div>
   );

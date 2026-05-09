@@ -280,9 +280,6 @@ export default function AdminKitAssignmentDetailPage() {
                 {owner.email}
                 {owner.phone ? ` · ${owner.phone}` : ""}
               </CardDescription>
-              <p className="mt-1 text-xs text-muted-foreground break-all">
-                ID: {owner.id}
-              </p>
             </div>
           </div>
         </CardHeader>

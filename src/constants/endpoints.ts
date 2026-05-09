@@ -434,7 +434,7 @@ export const API_ENDPOINTS = {
   },
   TICKET_V2: {
     CANCEL: (id: string) => `/tickets/${id}/cancel`,
-    ADMIN_CLAWBACK: (id: string) => `/admin/tickets/${id}/clawback`,
+    // ADMIN_CLAWBACK: gỡ khỏi web FE — xem docs/ticket-v2/ticket-v2.md (2026-05-09)
     ADMIN_REPORT_REVENUE: "/admin/reports/ticket-revenue",
     ADMIN_REPORT_DOCTOR_COMMISSION: "/admin/reports/doctor-commission",
     ADMIN_ANALYTICS: "/admin/ticket-analytics",
