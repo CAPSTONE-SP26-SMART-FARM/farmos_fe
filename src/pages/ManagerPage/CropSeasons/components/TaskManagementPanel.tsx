@@ -14,9 +14,10 @@ import { useMemo, useState } from "react";
 
 interface TaskManagementPanelProps {
   cropSeason: CropSeasonType;
+  readOnly?: boolean;
 }
 
-export function TaskManagementPanel({ cropSeason }: TaskManagementPanelProps) {
+export function TaskManagementPanel({ cropSeason, readOnly = false }: TaskManagementPanelProps) {
   const milestonesQuery = useManagerListProductionMilestones(cropSeason.id, {
     page: 1,
     limit: 50,
@@ -87,7 +88,7 @@ export function TaskManagementPanel({ cropSeason }: TaskManagementPanelProps) {
       {activeMilestoneId && (
         <ManagerMilestoneTasksSection
           milestoneId={activeMilestoneId}
-          canEdit={true}
+          canEdit={!readOnly}
         />
       )}
     </div>

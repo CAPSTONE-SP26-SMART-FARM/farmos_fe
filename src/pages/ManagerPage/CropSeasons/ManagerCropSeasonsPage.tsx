@@ -580,6 +580,7 @@ export default function ManagerCropSeasonsPage() {
                     zoneId={zoneId}
                     zoneName={selectedZoneName}
                     cropSeason={historyDetail}
+                    readOnly={true}
                   />
                 </TabsContent>
                 <TabsContent value="tracking-config" className="mt-4">
@@ -589,7 +590,7 @@ export default function ManagerCropSeasonsPage() {
                   />
                 </TabsContent>
                 <TabsContent value="harvest" className="mt-4">
-                  <HarvestRecordTab cropSeason={historyDetail} />
+                  <HarvestRecordTab cropSeason={historyDetail} readOnly={true} />
                 </TabsContent>
                 <TabsContent value="requests" className="mt-4">
                   <RequestsHistoryTab

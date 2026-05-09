@@ -102,9 +102,11 @@ function getInitials(name: string): string {
 function OwnerLogsPanel({
   zoneId,
   zoneName,
+  readOnly = false,
 }: {
   zoneId: string;
   zoneName?: string;
+  readOnly?: boolean;
 }) {
   const farmQuery = useOwnerGetMyFarm();
   const farmId = farmQuery.data?.data.id;
@@ -264,7 +266,7 @@ function OwnerLogsPanel({
               : `${totalItems} nhật ký được ghi nhận`}
           </p>
         </div>
-        <SubmitLogDialog />
+        {!readOnly && <SubmitLogDialog />}
       </div>
 
       {/* Table */}
@@ -469,8 +471,10 @@ function OwnerTodayTasksPanel({ zoneId }: { zoneId: string }) {
 
 function OwnerTaskManagementPanel({
   cropSeason,
+  readOnly = false,
 }: {
   cropSeason: CropSeasonType;
+  readOnly?: boolean;
 }) {
   const milestonesQuery = useOwnerListProductionMilestones(cropSeason.id, {
     page: 1,
@@ -542,7 +546,7 @@ function OwnerTaskManagementPanel({
       {activeMilestoneId && (
         <OwnerMilestoneTasksSection
           milestoneId={activeMilestoneId}
-          canEdit={true}
+          canEdit={!readOnly}
         />
       )}
     </div>
@@ -557,12 +561,14 @@ interface OwnerDailyLogsTabProps {
   zoneId: string;
   zoneName?: string;
   cropSeason: CropSeasonType;
+  readOnly?: boolean;
 }
 
 export function OwnerDailyLogsTab({
   zoneId,
   zoneName,
   cropSeason,
+  readOnly = false,
 }: OwnerDailyLogsTabProps) {
   return (
     <Card>
@@ -603,6 +609,7 @@ export function OwnerDailyLogsTab({
             <OwnerLogsPanel
               zoneId={zoneId}
               zoneName={zoneName}
+              readOnly={readOnly}
             />
           </TabsContent>
 
@@ -617,7 +624,10 @@ export function OwnerDailyLogsTab({
             value="tasks"
             className="mt-0"
           >
-            <OwnerTaskManagementPanel cropSeason={cropSeason} />
+            <OwnerTaskManagementPanel
+              cropSeason={cropSeason}
+              readOnly={readOnly}
+            />
           </TabsContent>
         </CardContent>
       </Tabs>

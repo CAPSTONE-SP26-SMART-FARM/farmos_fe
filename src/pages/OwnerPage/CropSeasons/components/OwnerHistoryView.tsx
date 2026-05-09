@@ -1,16 +1,17 @@
-import { History } from "lucide-react";
+import { ChevronRight, History } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { CropSeasonType } from "@/types/cropSeason";
 import { StatusBadge } from "@/pages/ManagerPage/CropSeasons/components/StatusBadge";
 import { formatDate } from "@/pages/ManagerPage/CropSeasons/components/helpers";
-import { OwnerCropSeasonDetailSheet } from "./OwnerCropSeasonDetailSheet";
 
 export function OwnerHistoryView({
   seasons,
   isLoading,
+  onSelect,
 }: {
   seasons: CropSeasonType[];
   isLoading: boolean;
+  onSelect: (season: CropSeasonType) => void;
 }) {
   if (isLoading) {
     return (
@@ -37,9 +38,11 @@ export function OwnerHistoryView({
   return (
     <div className="space-y-2">
       {seasons.map((s) => (
-        <div
+        <button
           key={s.id}
-          className="flex items-center justify-between rounded-md border px-4 py-3"
+          type="button"
+          onClick={() => onSelect(s)}
+          className="w-full flex items-center justify-between rounded-md border px-4 py-3 text-left transition-colors hover:bg-accent/40"
         >
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -56,8 +59,8 @@ export function OwnerHistoryView({
               {formatDate(s.actualHarvestDate ?? s.expectedHarvestDate)}
             </p>
           </div>
-          <OwnerCropSeasonDetailSheet season={s} />
-        </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+        </button>
       ))}
     </div>
   );
