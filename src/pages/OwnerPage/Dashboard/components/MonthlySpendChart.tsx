@@ -62,9 +62,9 @@ function MonthlySpendChart({ data, className }: MonthlySpendChartProps) {
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle className="text-base">Chi tiêu 30 ngày</CardTitle>
+        <CardTitle className="text-base">Chi phí dịch vụ đã chi trả</CardTitle>
         <CardDescription>
-          Tổng cộng {formatCurrencyVnd(total)} trong kỳ.
+          Tổng cộng đã chi trả {formatCurrencyVnd(total)}.
         </CardDescription>
       </CardHeader>
       <CardContent>

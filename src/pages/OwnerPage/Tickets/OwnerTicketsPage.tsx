@@ -37,6 +37,7 @@ import {
   Ticket,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useAuthStore } from "@/stores/authStore";
@@ -423,7 +424,32 @@ function TicketDetailPanelLegacy({ ticketId, onBack }: TicketDetailPanelProps) {
 function OwnerTicketsPage() {
   const [page, setPage] = useState(1);
   const limit = 10;
-  const [viewingTicketId, setViewingTicketId] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const ticketIdFromQuery = searchParams.get("ticketId");
+  const [viewingTicketId, setViewingTicketIdState] = useState<string | null>(
+    ticketIdFromQuery,
+  );
+
+  // Sync state with URL query param both ways.
+  useEffect(() => {
+    if (ticketIdFromQuery !== viewingTicketId) {
+      setViewingTicketIdState(ticketIdFromQuery);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticketIdFromQuery]);
+
+  const setViewingTicketId = (id: string | null) => {
+    setViewingTicketIdState(id);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (id) next.set("ticketId", id);
+        else next.delete("ticketId");
+        return next;
+      },
+      { replace: true },
+    );
+  };
 
   const { data: myFarmData, isLoading: farmLoading } = useOwnerGetMyFarm();
   const farmId = myFarmData?.data.id ?? "";
