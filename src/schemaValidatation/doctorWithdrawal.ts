@@ -17,6 +17,8 @@ export type WithdrawalStatus = (typeof WITHDRAWAL_STATUS_VALUES)[number];
 export const WithdrawalRequestResSchema = z.object({
   id: z.string().uuid(),
   doctorId: z.string().uuid(),
+  doctorName: z.string().nullable(),
+  doctorEmail: z.string().nullable(),
   walletId: z.string().uuid(),
   amount: z.number(),
   status: z.enum(WITHDRAWAL_STATUS_VALUES),
@@ -73,6 +75,7 @@ export const ListAdminWithdrawalsQuerySchema = z.object({
   limit: z.number().int().min(1).default(10),
   status: z.enum(WITHDRAWAL_STATUS_VALUES).optional(),
   doctorId: z.string().optional(),
+  q: z.string().optional(),
   from: z.string().optional(),
   to: z.string().optional(),
 });

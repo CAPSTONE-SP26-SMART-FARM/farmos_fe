@@ -8,6 +8,7 @@ import {
   GitCompareArrows,
   History,
   Inbox,
+  RefreshCw,
   Table2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +33,6 @@ import ErrorState from "@/components/common/ErrorState";
 import LoadingCard from "@/components/common/LoadingCard";
 import EmptyState from "@/components/common/EmptyState";
 import { useTrackingDiff, useTrackingLog } from "@/queries/useTracking";
-import KpiSummaryCards from "./components/KpiSummaryCards";
 import DiffTable from "./components/DiffTable";
 import UnplannedTable from "./components/UnplannedTable";
 import TrackingTimeline from "./components/TrackingTimeline";
@@ -164,15 +164,30 @@ function PlanVsActualPage() {
             </BreadcrumbList>
           </Breadcrumb>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBack}
-            className="mb-3 -ml-2 gap-1 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Quay lại chi tiết mùa vụ
-          </Button>
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBack}
+              className="-ml-2 gap-1 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Quay lại chi tiết mùa vụ
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 hover:border-emerald-400 shadow-sm"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              aria-label="Làm mới"
+            >
+              <RefreshCw
+                className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`}
+              />
+              <span className="text-xs font-semibold">Làm mới</span>
+            </Button>
+          </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
@@ -202,19 +217,6 @@ function PlanVsActualPage() {
               </div>
             )}
           </div>
-        </div>
-
-        {/* ── KPI / health summary ────────────────────────────── */}
-        <div
-          className={`transition-opacity duration-500 delay-75 ease-out ${
-            show ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          <KpiSummaryCards
-            diff={diff}
-            onRefresh={handleRefresh}
-            isRefreshing={isRefreshing}
-          />
         </div>
 
         {/* ── Combined empty state ────────────────────────────── */}

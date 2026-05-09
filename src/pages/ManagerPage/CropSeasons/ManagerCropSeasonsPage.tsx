@@ -521,13 +521,6 @@ export default function ManagerCropSeasonsPage() {
                     Mốc công việc
                   </TabsTrigger>
                   <TabsTrigger
-                    value="sensors"
-                    className="flex items-center gap-1.5"
-                  >
-                    <Radio className="h-3.5 w-3.5" />
-                    Cảm biến
-                  </TabsTrigger>
-                  <TabsTrigger
                     value="incidents"
                     className="flex items-center gap-1.5"
                   >
@@ -540,13 +533,6 @@ export default function ManagerCropSeasonsPage() {
                   >
                     <BookOpen className="h-3.5 w-3.5" />
                     Nhiệm vụ
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="tracking-config"
-                    className="flex items-center gap-1.5"
-                  >
-                    <SlidersHorizontal className="h-3.5 w-3.5" />
-                    Cấu hình theo dõi
                   </TabsTrigger>
                   <TabsTrigger
                     value="harvest"
@@ -569,9 +555,6 @@ export default function ManagerCropSeasonsPage() {
                     zoneId={zoneId}
                   />
                 </TabsContent>
-                <TabsContent value="sensors" className="mt-4">
-                  <SensorOverviewTab cropSeason={historyDetail} />
-                </TabsContent>
                 <TabsContent value="incidents" className="mt-4">
                   <IncidentTab cropSeason={historyDetail} />
                 </TabsContent>
@@ -580,12 +563,6 @@ export default function ManagerCropSeasonsPage() {
                     zoneId={zoneId}
                     zoneName={selectedZoneName}
                     cropSeason={historyDetail}
-                    readOnly={true}
-                  />
-                </TabsContent>
-                <TabsContent value="tracking-config" className="mt-4">
-                  <TrackingConfigPanel
-                    cropSeasonId={historyDetail.id}
                     readOnly={true}
                   />
                 </TabsContent>
