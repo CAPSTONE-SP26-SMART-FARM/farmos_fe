@@ -14,7 +14,6 @@ import {
   PackagePlus,
   Pill,
   ReceiptText,
-  Settings,
   Settings2,
   Shield,
   Sprout,
@@ -313,16 +312,6 @@ export const sidebarData: SidebarData = {
           title: "Quản Lý Vụ Mùa",
           url: "/dashboard/manager/crop-seasons",
           icon: Sprout,
-        },
-      ],
-    },
-    {
-      label: "IoT & Cảm biến",
-      items: [
-        {
-          title: "Cấu Hình IoT",
-          url: "/dashboard/manager/iot-config",
-          icon: Settings,
         },
       ],
     },

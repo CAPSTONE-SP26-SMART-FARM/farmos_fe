@@ -1899,6 +1899,23 @@ const ManagerMilestoneDetailPage = () => {
   const assignments = assignmentsQuery.data?.data.data ?? [];
   const hasDevice = assignments.length > 0;
 
+  // Step 2 completion check: gọi threshold cho từng assignment, đánh dấu xong
+  // khi có ít nhất 1 ngưỡng do user lưu ở mốc (source === "milestone").
+  const stepThresholdQueries = useQueries({
+    queries: assignments.map((a) => ({
+      queryKey: QUERY_KEYS.manager.productionMilestones.thresholds(a.assignmentId),
+      queryFn: () => sensorThresholdService.get(a.assignmentId),
+      enabled: !!a.assignmentId,
+      refetchOnMount: "always" as const,
+      staleTime: 0,
+    })),
+  });
+  const hasMilestoneThreshold =
+    hasDevice &&
+    stepThresholdQueries.some((q) =>
+      (q.data?.data?.data ?? []).some((row) => row.source === "milestone"),
+    );
+
   const taskValidationQuery = useManagerListEmployeeTasks(
     msId,
     { page: 1, limit: 100 },
@@ -1917,55 +1934,39 @@ const ManagerMilestoneDetailPage = () => {
     milestoneTasks.every((task) => Boolean(task.assignedTo));
   const canCompleteMilestoneSetup = hasTasks && allTasksAssigned;
 
-  // Bước cảm biến: chỉnh ngưỡng tại chỗ; không bắt buộc nhập hết mới qua bước
-  // nhiệm vụ — vẫn mở khóa khi đã có ít nhất một thiết bị gán.
-  const canProceedToTaskStep = true;
+  // Luôn refetch 4 API check-data mỗi lần vào page (không dùng cache cũ).
+  useEffect(() => {
+    iotConfigQuery.refetch();
+    assignmentsQuery.refetch();
+    taskValidationQuery.refetch();
+    // threshold queries đã set refetchOnMount="always" ở trên.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [csId, msId]);
 
-  // Derive step statuses (wizard 4 bước):
-  //  0 = Cấu hình IoT (BẮT BUỘC)
-  //  1 = Gán thiết bị IoT (bulk-assign, optional — có thể skip)
-  //  2 = Cảm biến + ngưỡng (locked nếu chưa có device)
-  //  3 = Nhiệm vụ + nông dân
+  // Derive step statuses (wizard 4 bước) — tích completed theo DỮ LIỆU thực tế
+  // từ 4 API tương ứng, không phụ thuộc currentStep:
+  //  0 = Cấu hình IoT          → isIotConfigured
+  //  1 = Gán thiết bị IoT      → hasDevice
+  //  2 = Cảm biến + ngưỡng     → hasMilestoneThreshold (cần hasDevice)
+  //  3 = Nhiệm vụ + nông dân   → hasTasks && allTasksAssigned
   const stepStatuses: StepStatus[] = (() => {
-    const statuses: StepStatus[] = [];
+    const compute = (
+      index: number,
+      completed: boolean,
+      locked = false,
+    ): StepStatus => {
+      if (locked) return "locked";
+      if (currentStep === index) return "current";
+      if (completed) return "completed";
+      return "upcoming";
+    };
 
-    // Step 0: IoT Config — luôn unlocked, completed khi isConfigured.
-    if (currentStep === 0) {
-      statuses.push("current");
-    } else if (isIotConfigured) {
-      statuses.push("completed");
-    } else {
-      statuses.push("upcoming");
-    }
-
-    // Các step sau đều LOCK cho đến khi step 0 done.
-    if (!isIotConfigured) {
-      statuses.push("locked", "locked", "locked");
-      return statuses;
-    }
-
-    // Step 1: IoT Device (optional).
-    statuses.push(currentStep === 1 ? "current" : "completed");
-
-    // Step 2: cảm biến + ngưỡng — locked khi chưa có thiết bị.
-    if (!hasDevice) {
-      statuses.push("locked");
-    } else if (currentStep === 2) {
-      statuses.push("current");
-    } else if (currentStep > 2) {
-      statuses.push("completed");
-    } else {
-      statuses.push("upcoming");
-    }
-
-    // Step 3: nhiệm vụ và phân công.
-    if (!canProceedToTaskStep) {
-      statuses.push("locked");
-    } else {
-      statuses.push(currentStep === 3 ? "current" : "upcoming");
-    }
-
-    return statuses;
+    return [
+      compute(0, isIotConfigured),
+      compute(1, hasDevice, !isIotConfigured),
+      compute(2, hasMilestoneThreshold, !isIotConfigured || !hasDevice),
+      compute(3, canCompleteMilestoneSetup, !isIotConfigured),
+    ];
   })();
 
   const handleStepClick = (index: number) => {

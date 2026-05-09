@@ -214,3 +214,123 @@ export interface ManagerDashboardPayload {
   zonesOverview: ManagerZoneOverview[];
   recentLogs: DailyLogResType[];
 }
+
+// ── Admin Revenue ─────────────────────────────────────────────────────────
+export type RevenueRange = "1d" | "7d" | "30d" | "90d";
+export type RevenueLineRange = "30d" | "12m";
+export type RevenueSource = "total" | "subscription" | "iot" | "ticket";
+export type RevenueTxCategory = "SUBSCRIPTION" | "IOT" | "TICKET";
+export type RevenueTxStatus = "PAID" | "OPEN" | "VOID";
+
+export interface RevenueKpis {
+  range: RevenueRange;
+  total: number;
+  subscription: number;
+  iot: number;
+  ticket: number;
+}
+
+export interface RevenueProductSlice {
+  name: string;
+  value: number;
+}
+
+export interface RevenueProductBreakdown {
+  range: RevenueRange;
+  subscriptionPlans: RevenueProductSlice[];
+  iotKits: RevenueProductSlice[];
+  ticketPackages: RevenueProductSlice[];
+}
+
+export interface RevenueOverviewPayload {
+  kpis: RevenueKpis;
+  productBreakdown: RevenueProductBreakdown;
+}
+
+export interface RevenueTimeseriesPoint {
+  label: string;
+  value: number;
+}
+
+export interface RevenueTimeseriesPayload {
+  source: RevenueSource;
+  range: RevenueLineRange;
+  data: RevenueTimeseriesPoint[];
+}
+
+export interface RevenueTransaction {
+  id: string;
+  invoiceNumber: string;
+  category: RevenueTxCategory;
+  customer: string;
+  amount: number;
+  status: RevenueTxStatus;
+  paidAt: string | null;
+}
+
+export interface PagingMeta {
+  page: number;
+  limit: number;
+  totalItems: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+export interface RevenueTransactionsPayload {
+  data: RevenueTransaction[];
+  meta: PagingMeta;
+}
+
+export interface RevenueTransactionsQuery {
+  range?: RevenueRange;
+  category?: RevenueTxCategory;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+// ── Admin Doctor Payouts ──────────────────────────────────────────────────
+export type PayoutMethod = "BANK" | "EWALLET";
+export type PayoutStatus = "PENDING" | "APPROVED" | "PAID" | "REJECTED";
+
+export interface PayoutKpis {
+  range: RevenueRange;
+  projected: number;
+  paid: number;
+  requests: number;
+  requestsResolved: number;
+}
+
+export interface PayoutOverviewPayload {
+  kpis: PayoutKpis;
+}
+
+export interface PayoutTimeseriesPayload {
+  range: RevenueLineRange;
+  data: RevenueTimeseriesPoint[];
+}
+
+export interface PayoutWithdrawal {
+  id: string;
+  refNumber: string;
+  doctor: string;
+  category: PayoutMethod;
+  amount: number;
+  status: PayoutStatus;
+  requestedAt: string;
+}
+
+export interface PayoutWithdrawalsPayload {
+  data: PayoutWithdrawal[];
+  meta: PagingMeta;
+}
+
+export interface PayoutWithdrawalsQuery {
+  range?: RevenueRange;
+  category?: PayoutMethod;
+  status?: PayoutStatus;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
