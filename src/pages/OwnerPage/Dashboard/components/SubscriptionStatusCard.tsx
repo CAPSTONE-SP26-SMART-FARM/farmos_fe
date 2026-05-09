@@ -12,13 +12,11 @@ import { cn } from "@/lib/utils";
 import { formatCurrencyVnd, formatDateVi } from "@/lib/format";
 import type {
   OwnerCreditBalance as CreditBalanceMock,
-  OwnerLatestInvoice as LatestInvoiceMock,
   OwnerSubscriptionStatus as SubscriptionStatusMock,
 } from "@/types/dashboard";
 import {
   CheckCircle2,
   CreditCard,
-  ReceiptText,
   RefreshCcw,
   Wallet,
   XCircle,
@@ -47,35 +45,15 @@ const STATUS_META: Record<
   },
 };
 
-const INVOICE_STATUS_META: Record<
-  LatestInvoiceMock["status"],
-  { label: string; tone: string }
-> = {
-  paid: {
-    label: "Đã thanh toán",
-    tone: "bg-emerald-500/10 text-emerald-700 border-transparent",
-  },
-  open: {
-    label: "Chờ thanh toán",
-    tone: "bg-blue-500/10 text-blue-700 border-transparent",
-  },
-  overdue: {
-    label: "Quá hạn",
-    tone: "bg-red-500/10 text-red-700 border-transparent",
-  },
-};
-
 interface SubscriptionStatusCardProps {
   subscription: SubscriptionStatusMock;
   credits: CreditBalanceMock;
-  latestInvoice: LatestInvoiceMock | null;
   className?: string;
 }
 
 function SubscriptionStatusCard({
   subscription,
   credits,
-  latestInvoice,
   className,
 }: SubscriptionStatusCardProps) {
   const subMeta = STATUS_META[subscription.status];
@@ -147,37 +125,6 @@ function SubscriptionStatusCard({
               {credits.ticketCredits}
             </p>
           </div>
-        </div>
-
-        <Separator />
-
-        {/* Latest invoice */}
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <ReceiptText className="h-3.5 w-3.5" />
-            Hoá đơn gần nhất
-          </div>
-          {latestInvoice ? (
-            <div className="flex items-center justify-between gap-2">
-              <div className="space-y-0.5">
-                <p className="text-sm font-medium">
-                  #{latestInvoice.invoiceCode} ·{" "}
-                  {formatCurrencyVnd(latestInvoice.amountVnd)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Phát hành {formatDateVi(latestInvoice.issuedAt)}
-                </p>
-              </div>
-              <Badge
-                variant="outline"
-                className={cn(INVOICE_STATUS_META[latestInvoice.status].tone)}
-              >
-                {INVOICE_STATUS_META[latestInvoice.status].label}
-              </Badge>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">Chưa có hoá đơn.</p>
-          )}
         </div>
 
         <div className="pt-1">

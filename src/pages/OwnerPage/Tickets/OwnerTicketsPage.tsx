@@ -15,13 +15,9 @@ import { useOwnerGetMyFarm } from "@/queries/useOwner";
 import {
   useOwnerTicketList,
   useOwnerTicketDetail,
-  useEndIncidentTicket,
-  useTicketMessages,
-  useCreateTicketMessage,
   useTicketPrescriptions,
 } from "@/queries/useTicket";
 import { useRealtimeTicket } from "@/hooks/useRealtimeTicket";
-import { useTicketSubscription } from "@/hooks/useTicketSubscription";
 import { useTicketQualityFlag } from "@/hooks/useTicketQualityFlag";
 import TicketDetailPanelV2 from "@/components/ticket-quality/TicketDetailPanelV2";
 import { RoleName } from "@/constants/role";
@@ -31,18 +27,14 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
-  MessageSquare,
   Pill,
-  Send,
   Ticket,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useAuthStore } from "@/stores/authStore";
-import { Input } from "@/components/ui/input";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -84,8 +76,6 @@ const STATUS_VARIANT: Record<
   cancelled: "outline",
 };
 
-const ACTIVE_STATUSES = new Set(["open", "assigned", "in_progress"]);
-
 // ── Ticket Detail Panel ────────────────────────────────────────────────────
 
 interface TicketDetailPanelProps {
@@ -126,33 +116,16 @@ function TicketDetailPanel(props: TicketDetailPanelProps) {
 
 function TicketDetailPanelLegacy({ ticketId, onBack }: TicketDetailPanelProps) {
   const [show, setShow] = useState(false);
-  const [msgPage] = useState(1);
   const [rxPage] = useState(1);
-  const [msgText, setMsgText] = useState("");
-  const [endConfirmOpen, setEndConfirmOpen] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const user = useAuthStore((s) => s.user);
-
-  // Realtime: subscribe room ticket + listen ticket.message.created.
-  useTicketSubscription(ticketId);
 
   const { data: ticketData, isLoading: ticketLoading } =
     useOwnerTicketDetail(ticketId);
-  const { data: msgData } = useTicketMessages(ticketId, {
-    page: msgPage,
-    limit: 50,
-  });
   const { data: rxData } = useTicketPrescriptions(ticketId, {
     page: rxPage,
     limit: 20,
   });
 
-  const endMutation = useEndIncidentTicket();
-  const sendMutation = useCreateTicketMessage(ticketId);
-
   const ticket = ticketData?.data;
-  const messages = msgData?.data.data ?? [];
   const prescriptions = rxData?.data.data ?? [];
 
   useEffect(() => {
@@ -160,30 +133,9 @@ function TicketDetailPanelLegacy({ ticketId, onBack }: TicketDetailPanelProps) {
     return () => cancelAnimationFrame(frame);
   }, []);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length]);
-
   const handleBack = () => {
     setShow(false);
     setTimeout(onBack, 300);
-  };
-
-  const handleSend = () => {
-    if (!msgText.trim()) return;
-    sendMutation.mutate(
-      { message: msgText.trim() },
-      { onSuccess: () => setMsgText("") },
-    );
-  };
-
-  const handleEnd = () => {
-    endMutation.mutate(ticketId, {
-      onSuccess: () => {
-        setEndConfirmOpen(false);
-        handleBack();
-      },
-    });
   };
 
   return (
@@ -221,197 +173,93 @@ function TicketDetailPanelLegacy({ ticketId, onBack }: TicketDetailPanelProps) {
       ) : !ticket ? (
         <p className="text-sm text-muted-foreground">Không tìm thấy ticket.</p>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Left: Ticket Info */}
-          <div className="lg:col-span-1 space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Ticket className="h-4 w-4" />
-                  Thông tin sự cố
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Mã ticket</span>
-                  <span className="font-mono text-xs">
-                    {ticket.ticketNumber}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Trạng thái</span>
-                  <Badge variant={STATUS_VARIANT[ticket.status]}>
-                    {STATUS_LABEL[ticket.status]}
-                  </Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Mức độ</span>
-                  <Badge variant={SEVERITY_VARIANT[ticket.severity]}>
-                    {SEVERITY_LABEL[ticket.severity]}
-                  </Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Khu vực</span>
-                  <span>{ticket.zone?.name ?? "—"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Bác sĩ</span>
-                  <span>{ticket.assignee?.fullName ?? "Chưa phân công"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Tạo lúc</span>
-                  <span>
-                    {format(new Date(ticket.createdAt), "dd/MM/yyyy HH:mm", {
-                      locale: vi,
-                    })}
-                  </span>
-                </div>
-                <Separator />
-                <p className="text-muted-foreground text-xs">Mô tả</p>
-                <p className="text-sm leading-relaxed">{ticket.description}</p>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Ticket className="h-4 w-4" />
+                Thông tin sự cố
+              </CardTitle>
+              <CardDescription>
+                Chi tiết ticket được tạo và tiến trình xử lý.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Mã ticket</span>
+                <span className="font-mono text-xs">
+                  {ticket.ticketNumber}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Trạng thái</span>
+                <Badge variant={STATUS_VARIANT[ticket.status]}>
+                  {STATUS_LABEL[ticket.status]}
+                </Badge>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Mức độ</span>
+                <Badge variant={SEVERITY_VARIANT[ticket.severity]}>
+                  {SEVERITY_LABEL[ticket.severity]}
+                </Badge>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Khu vực</span>
+                <span>{ticket.zone?.name ?? "—"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Bác sĩ</span>
+                <span>{ticket.assignee?.fullName ?? "Chưa phân công"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Tạo lúc</span>
+                <span>
+                  {format(new Date(ticket.createdAt), "dd/MM/yyyy HH:mm", {
+                    locale: vi,
+                  })}
+                </span>
+              </div>
+              <Separator />
+              <p className="text-muted-foreground text-xs">Mô tả</p>
+              <p className="text-sm leading-relaxed">{ticket.description}</p>
+            </CardContent>
+          </Card>
 
-                {ACTIVE_STATUSES.has(ticket.status) &&
-                  ticket.createdBy === user?.id && (
-                    <>
-                      <Separator />
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="w-full"
-                        onClick={() => setEndConfirmOpen(true)}
-                        disabled={endMutation.isPending}
-                      >
-                        Kết thúc ticket
-                      </Button>
-                    </>
-                  )}
-              </CardContent>
-            </Card>
-
-            {/* Prescriptions */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Pill className="h-4 w-4" />
-                  Đơn thuốc ({prescriptions.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {prescriptions.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    Chưa có đơn thuốc.
-                  </p>
-                ) : (
-                  prescriptions.map((rx) => (
-                    <div
-                      key={rx.id}
-                      className="rounded-md border p-3 text-sm"
-                    >
-                      <p className="font-medium">{rx.medicineName}</p>
-                      <p className="text-muted-foreground text-xs mt-0.5">
-                        Liều: {rx.dosage}
-                      </p>
-                      <p className="text-muted-foreground text-xs">
-                        {format(new Date(rx.createdAt), "dd/MM HH:mm", {
-                          locale: vi,
-                        })}
-                      </p>
-                    </div>
-                  ))
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right: Messages */}
-          <div className="lg:col-span-2">
-            <Card className="flex flex-col h-150">
-              <CardHeader className="shrink-0">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  Hội thoại
-                </CardTitle>
-                <CardDescription>Trao đổi với bác sĩ về sự cố</CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1 overflow-y-auto flex flex-col gap-2 min-h-0">
-                {messages.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center flex-1 text-center">
-                    <MessageSquare className="h-8 w-8 text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground">
-                      Chưa có tin nhắn. Hãy gửi tin nhắn đầu tiên.
+          {/* Prescriptions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Pill className="h-4 w-4" />
+                Đơn thuốc ({prescriptions.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {prescriptions.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Chưa có đơn thuốc.
+                </p>
+              ) : (
+                prescriptions.map((rx) => (
+                  <div
+                    key={rx.id}
+                    className="rounded-md border p-3 text-sm"
+                  >
+                    <p className="font-medium">{rx.medicineName}</p>
+                    <p className="text-muted-foreground text-xs mt-0.5">
+                      Liều: {rx.dosage}
+                    </p>
+                    <p className="text-muted-foreground text-xs">
+                      {format(new Date(rx.createdAt), "dd/MM HH:mm", {
+                        locale: vi,
+                      })}
                     </p>
                   </div>
-                ) : (
-                  messages.map((msg) => {
-                    const isMe = msg.senderId === user?.id;
-                    return (
-                      <div
-                        key={msg.id}
-                        className={`flex flex-col gap-1 max-w-[80%] ${isMe ? "self-end items-end" : "self-start items-start"}`}
-                      >
-                        {!isMe && (
-                          <span className="text-xs text-muted-foreground px-1">
-                            {msg.sender.fullName}
-                          </span>
-                        )}
-                        <div
-                          className={`rounded-xl px-3 py-2 text-sm leading-relaxed ${
-                            isMe
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted"
-                          }`}
-                        >
-                          {msg.message}
-                        </div>
-                        <span className="text-xs text-muted-foreground px-1">
-                          {format(new Date(msg.createdAt), "HH:mm dd/MM", {
-                            locale: vi,
-                          })}
-                        </span>
-                      </div>
-                    );
-                  })
-                )}
-                <div ref={messagesEndRef} />
-              </CardContent>
-              {/* Input */}
-              {ACTIVE_STATUSES.has(ticket.status) && (
-                <div className="shrink-0 border-t p-3 flex gap-2">
-                  <Input
-                    placeholder="Nhập tin nhắn..."
-                    value={msgText}
-                    onChange={(e) => setMsgText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSend();
-                      }
-                    }}
-                    className="flex-1"
-                  />
-                  <Button
-                    size="icon"
-                    onClick={handleSend}
-                    disabled={sendMutation.isPending || !msgText.trim()}
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
+                ))
               )}
-            </Card>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       )}
-
-      <ConfirmDialog
-        open={endConfirmOpen}
-        onCancel={() => setEndConfirmOpen(false)}
-        title="Kết thúc ticket?"
-        description="Sau khi kết thúc, ticket sẽ được đóng và không thể nhắn tin thêm. Bạn có chắc chắn không?"
-        confirmLabel="Kết thúc"
-        variant="destructive"
-        onConfirm={handleEnd}
-      />
     </div>
   );
 }

@@ -61,7 +61,6 @@ function OwnerDashboardSection() {
               <SubscriptionStatusCard
                 subscription={data.subscription}
                 credits={data.credits}
-                latestInvoice={data.latestInvoice}
               />
             )}
           </div>
