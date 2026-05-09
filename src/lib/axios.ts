@@ -1,5 +1,6 @@
 import axios, {
 	type AxiosError,
+	type AxiosRequestConfig,
 	type AxiosResponse,
 	type InternalAxiosRequestConfig,
 	isAxiosError,
@@ -158,13 +159,13 @@ export default axiosInstance;
  * Type-safe request helpers
  */
 export const api = {
-	get: <T>(url: string, config?: InternalAxiosRequestConfig) =>
+	get: <T>(url: string, config?: AxiosRequestConfig) =>
 		axiosInstance.get<ApiResponseType<T>>(url, config).then((res) => res.data),
 
 	post: <T, D = unknown>(
 		url: string,
 		data?: D,
-		config?: InternalAxiosRequestConfig,
+		config?: AxiosRequestConfig,
 	) =>
 		axiosInstance
 			.post<ApiResponseType<T>>(url, data, config)
@@ -173,7 +174,7 @@ export const api = {
 	put: <T, D = unknown>(
 		url: string,
 		data?: D,
-		config?: InternalAxiosRequestConfig,
+		config?: AxiosRequestConfig,
 	) =>
 		axiosInstance
 			.put<ApiResponseType<T>>(url, data, config)
@@ -182,13 +183,13 @@ export const api = {
 	patch: <T, D = unknown>(
 		url: string,
 		data?: D,
-		config?: InternalAxiosRequestConfig,
+		config?: AxiosRequestConfig,
 	) =>
 		axiosInstance
 			.patch<ApiResponseType<T>>(url, data, config)
 			.then((res) => res.data),
 
-	delete: <T>(url: string, config?: InternalAxiosRequestConfig) =>
+	delete: <T>(url: string, config?: AxiosRequestConfig) =>
 		axiosInstance
 			.delete<ApiResponseType<T>>(url, config)
 			.then((res) => res.data),
