@@ -844,6 +844,12 @@ interface IotDeviceFormProps {
   device?: IotDeviceResType | IotDeviceDetailResType;
   onBack: () => void;
   actor?: IotActor;
+  onCreated?: (devices: IotDeviceResType[]) => void;
+  hideSensors?: boolean;
+  onNext?: () => void;
+  nextLabel?: string;
+  onBackRequested?: () => void;
+  hideStatus?: boolean;
 }
 
 export default function IotDeviceForm({
@@ -851,6 +857,12 @@ export default function IotDeviceForm({
   device,
   onBack,
   actor = "owner",
+  onCreated,
+  hideSensors,
+  onNext,
+  nextLabel,
+  onBackRequested,
+  hideStatus,
 }: IotDeviceFormProps) {
   const isEdit = !!device;
   const [show, setShow] = useState(false);
@@ -863,6 +875,10 @@ export default function IotDeviceForm({
   }, []);
 
   const handleBack = () => {
+    if (onBackRequested) {
+      onBackRequested();
+      return;
+    }
     setShow(false);
     setTimeout(onBack, 300);
   };
@@ -879,6 +895,10 @@ export default function IotDeviceForm({
         setConfirmSave={setConfirmSave}
         setPendingData={setPendingData}
         handleBack={handleBack}
+        hideSensors={hideSensors}
+        onNext={onNext}
+        nextLabel={nextLabel}
+        hideStatus={hideStatus}
       />
     );
   }
@@ -889,6 +909,8 @@ export default function IotDeviceForm({
       actor={actor}
       show={show}
       handleBack={handleBack}
+      onCreated={onCreated}
+      hideStatus={hideStatus}
     />
   );
 }
@@ -904,6 +926,7 @@ function DeviceItemCard({
   boardTakenByOther,
   onApplyTemplate,
   onRemove,
+  hideStatus,
 }: {
   actor: IotActor;
   index: number;
@@ -913,6 +936,7 @@ function DeviceItemCard({
   boardTakenByOther: boolean;
   onApplyTemplate: (index: number, template: IotDeviceTemplateResType) => void;
   onRemove: () => void;
+  hideStatus?: boolean;
 }) {
   const dtVal = useWatch({ control, name: `devices.${index}.deviceType` });
   const macValue = useWatch({ control, name: `devices.${index}.macAddress` });
@@ -1029,34 +1053,36 @@ function DeviceItemCard({
                 )}
               />
             )}
-            <Controller
-              name={`devices.${index}.status`}
-              control={control}
-              render={({ field: f, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Trạng thái</FieldLabel>
-                  <Select
-                    value={f.value}
-                    onValueChange={f.onChange}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(STATUS_LABEL).map(([val, label]) => (
-                        <SelectItem
-                          key={val}
-                          value={val}
-                        >
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FieldError>{fieldState.error?.message}</FieldError>
-                </Field>
-              )}
-            />
+            {!hideStatus && (
+              <Controller
+                name={`devices.${index}.status`}
+                control={control}
+                render={({ field: f, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Trạng thái</FieldLabel>
+                    <Select
+                      value={f.value}
+                      onValueChange={f.onChange}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(STATUS_LABEL).map(([val, label]) => (
+                          <SelectItem
+                            key={val}
+                            value={val}
+                          >
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FieldError>{fieldState.error?.message}</FieldError>
+                  </Field>
+                )}
+              />
+            )}
           </div>
         </FieldGroup>
       </CardContent>
@@ -1071,11 +1097,15 @@ function BatchCreateForm({
   actor,
   show,
   handleBack,
+  onCreated,
+  hideStatus,
 }: {
   farmId: string;
   actor: IotActor;
   show: boolean;
   handleBack: () => void;
+  onCreated?: (devices: IotDeviceResType[]) => void;
+  hideStatus?: boolean;
 }) {
   const adminCreateMutation = useAdminCreateIotDeviceBatch();
   const ownerCreateMutation = useOwnerCreateIotDevices();
@@ -1197,7 +1227,7 @@ function BatchCreateForm({
 
   const onSubmit = async (data: BatchCreateFormType) => {
     try {
-      await createAsync({
+      const result = await createAsync({
         farmId,
         body: {
           devices: data.devices.map((d) => ({
@@ -1207,6 +1237,10 @@ function BatchCreateForm({
           })),
         },
       });
+      if (onCreated) {
+        onCreated(result.data ?? []);
+        return;
+      }
       handleBack();
     } catch (error) {
       if (isApiErrorUnprocessableEntityResponse(error)) {
@@ -1318,6 +1352,7 @@ function BatchCreateForm({
                   onApplyTemplate={applyDeviceTemplateAt}
                   canRemove={fields.length > 3}
                   onRemove={() => remove(index)}
+                  hideStatus={hideStatus}
                 />
               ))}
 
@@ -1406,6 +1441,10 @@ function EditDeviceForm({
   setConfirmSave,
   setPendingData,
   handleBack,
+  hideSensors,
+  onNext,
+  nextLabel,
+  hideStatus,
 }: {
   farmId: string;
   device: IotDeviceResType | IotDeviceDetailResType;
@@ -1416,6 +1455,10 @@ function EditDeviceForm({
   setConfirmSave: (v: boolean) => void;
   setPendingData: (v: EditFormType | null) => void;
   handleBack: () => void;
+  hideSensors?: boolean;
+  onNext?: () => void;
+  nextLabel?: string;
+  hideStatus?: boolean;
 }) {
   const adminUpdateMutation = useAdminUpdateIotDevice();
   const ownerUpdateMutation = useOwnerUpdateIotDevice();
@@ -1747,6 +1790,15 @@ function EditDeviceForm({
         <div className="h-4 w-px bg-border" />
         <DIcon className="h-5 w-5 text-primary" />
         <h2 className="text-lg font-semibold">Chỉnh sửa thiết bị</h2>
+        {onNext && (
+          <Button
+            size="sm"
+            className="ml-auto"
+            onClick={onNext}
+          >
+            {nextLabel ?? "Tiếp tục"}
+          </Button>
+        )}
       </div>
 
       <form onSubmit={form.handleSubmit(onValidSubmit)}>
@@ -1822,34 +1874,38 @@ function EditDeviceForm({
                     )}
                   />
                 ) : null}
-                <Controller
-                  name="status"
-                  control={form.control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>Trạng thái</FieldLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(STATUS_LABEL).map(([val, label]) => (
-                            <SelectItem
-                              key={val}
-                              value={val}
-                            >
-                              {label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FieldError>{fieldState.error?.message}</FieldError>
-                    </Field>
-                  )}
-                />
+                {!hideStatus && (
+                  <Controller
+                    name="status"
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>Trạng thái</FieldLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(STATUS_LABEL).map(
+                              ([val, label]) => (
+                                <SelectItem
+                                  key={val}
+                                  value={val}
+                                >
+                                  {label}
+                                </SelectItem>
+                              ),
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <FieldError>{fieldState.error?.message}</FieldError>
+                      </Field>
+                    )}
+                  />
+                )}
               </div>
             </FieldGroup>
           </CardContent>
@@ -1928,31 +1984,37 @@ function EditDeviceForm({
                         }
                       />
                     </Field>
-                    <Field>
-                      <FieldLabel>Trạng thái</FieldLabel>
-                      <Select
-                        value={subDevice.status}
-                        onValueChange={(value) =>
-                          patchSubDevice(subDevice.id, {
-                            status: value as z.infer<typeof DeviceStatusSchema>,
-                          })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(STATUS_LABEL).map(([val, label]) => (
-                            <SelectItem
-                              key={val}
-                              value={val}
-                            >
-                              {label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </Field>
+                    {!hideStatus && (
+                      <Field>
+                        <FieldLabel>Trạng thái</FieldLabel>
+                        <Select
+                          value={subDevice.status}
+                          onValueChange={(value) =>
+                            patchSubDevice(subDevice.id, {
+                              status: value as z.infer<
+                                typeof DeviceStatusSchema
+                              >,
+                            })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(STATUS_LABEL).map(
+                              ([val, label]) => (
+                                <SelectItem
+                                  key={val}
+                                  value={val}
+                                >
+                                  {label}
+                                </SelectItem>
+                              ),
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </Field>
+                    )}
                   </div>
 
                   {showMacField ? (
@@ -1977,7 +2039,7 @@ function EditDeviceForm({
         </Card>
       )}
 
-      {isBoard && (
+      {isBoard && !hideSensors && (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">

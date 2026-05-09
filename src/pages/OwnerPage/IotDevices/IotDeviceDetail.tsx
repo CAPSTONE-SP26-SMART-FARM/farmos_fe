@@ -277,9 +277,12 @@ export default function IotDeviceDetail({
 
       <Card>
         <CardHeader>
-          <CardTitle>Cảm biến trên bo mạch ({device.sensors.length})</CardTitle>
+          <CardTitle>
+            Cảm biến trên bo mạch ({device.sensors.length}/4)
+          </CardTitle>
           <CardDescription>
-            Cảm biến được trả trực tiếp từ chi tiết gán Iot kit.
+            Cảm biến được trả trực tiếp từ chi tiết gán Iot kit. Không thể chỉnh
+            sửa từ trang này.
           </CardDescription>
         </CardHeader>
         <CardContent>

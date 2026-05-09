@@ -22,7 +22,6 @@ import {
   Archive,
   ArchiveRestore,
   Boxes,
-  Pencil,
   PackageOpen,
   Search,
 } from "lucide-react";
@@ -43,15 +42,9 @@ import AdminIotKitArchiveConfirm from "./AdminIotKitArchiveConfirm";
 import { onMutationError } from "@/lib/axios";
 import { toast } from "sonner";
 
-interface AdminIotKitListSectionProps {
-  onEdit: (kit: IotDeviceKitResType) => void;
-}
-
 type StatusFilter = "all" | "active" | "archived";
 
-export default function AdminIotKitListSection({
-  onEdit,
-}: AdminIotKitListSectionProps) {
+export default function AdminIotKitListSection() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
@@ -254,12 +247,6 @@ export default function AdminIotKitListSection({
               data={kits}
               isLoading={listQuery.isLoading}
               actions={[
-                {
-                  key: "edit",
-                  label: "Sửa",
-                  icon: Pencil,
-                  onSelect: (kit) => onEdit(kit),
-                },
                 {
                   key: "archive",
                   label: "Lưu trữ",
