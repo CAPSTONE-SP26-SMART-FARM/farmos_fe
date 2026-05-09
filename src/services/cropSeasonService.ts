@@ -50,6 +50,8 @@ export const cropSeasonService = {
     );
   },
 
+  complete: (id: string) => api.post<CropSeasonType>(CS.MANAGER.COMPLETE(id)),
+
   sendRequest: (cropSeasonId: string, body: SendProductionRequestBodyType) =>
     api.post<ProductionRequestType, SendProductionRequestBodyType>(
       CS.MANAGER.SEND_REQUEST(cropSeasonId),

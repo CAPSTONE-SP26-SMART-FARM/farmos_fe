@@ -38,6 +38,7 @@ import {
   UserPlus,
   Users,
 } from "lucide-react";
+import type { DataTableAction } from "@/components/common/DataTable/types";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getRoleLabelVi, RoleName } from "@/constants/role";
@@ -176,26 +177,27 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
           </span>
         ),
       },
-      {
-        id: "remove",
-        header: "Gỡ tài khoản",
-        cell: ({ row }) => (
-          <Button
-            variant="destructive"
-            size="sm"
-            className="gap-1.5"
-            onClick={(e) => {
-              e.stopPropagation();
-              setDeleteTarget(row.original);
-            }}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            Gỡ
-          </Button>
-        ),
-      },
     ],
     [],
+  );
+
+  const tableActions = useMemo<DataTableAction<FarmMemberResType>[]>(
+    () => [
+      {
+        key: "view",
+        label: "Xem",
+        icon: Eye,
+        onSelect: (member) => onViewMember(member),
+      },
+      {
+        key: "remove",
+        label: "Gỡ tài khoản",
+        icon: Trash2,
+        variant: "destructive",
+        onSelect: (member) => setDeleteTarget(member),
+      },
+    ],
+    [onViewMember],
   );
 
   return (
@@ -282,14 +284,7 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
               columns={columns}
               data={members}
               isLoading={isLoading}
-              actions={[
-                {
-                  key: "view",
-                  label: "Xem",
-                  icon: Eye,
-                  onSelect: (member) => onViewMember(member),
-                },
-              ]}
+              actions={tableActions}
               onRowClick={(member) => onViewMember(member)}
               emptyText="Chưa có tài khoản nào."
             />

@@ -512,11 +512,18 @@ const DatePickerField = ({
   );
 };
 
+const maxDate = (a?: Date, b?: Date): Date | undefined => {
+  if (!a) return b;
+  if (!b) return a;
+  return a.getTime() >= b.getTime() ? a : b;
+};
+
 const MilestoneEditFormFields = ({
   form,
   errors,
   mode,
   onChange,
+  minExpectedStartDate,
 }: {
   form: MilestoneEditFormState;
   errors: MilestoneEditFormErrors;
@@ -525,11 +532,21 @@ const MilestoneEditFormFields = ({
     key: K,
     value: MilestoneEditFormState[K],
   ) => void;
+  minExpectedStartDate?: Date;
 }) => {
   const parsedExpectedStartDate = parseBackendDate(form.expectedStartDate);
-  const minExpectedEndDate = parsedExpectedStartDate
-    ? addDays(startOfDay(parsedExpectedStartDate), 1)
+  const normalizedMinExpectedStartDate = minExpectedStartDate
+    ? startOfDay(minExpectedStartDate)
     : undefined;
+  // End date must be after own start AND after the prev milestone's end date.
+  const minExpectedEndDate = maxDate(
+    parsedExpectedStartDate
+      ? addDays(startOfDay(parsedExpectedStartDate), 1)
+      : undefined,
+    normalizedMinExpectedStartDate
+      ? addDays(normalizedMinExpectedStartDate, 1)
+      : undefined,
+  );
 
   const parsedActualStartDate = parseBackendDate(form.actualStartDate);
   const minActualEndDate = parsedActualStartDate
@@ -562,6 +579,7 @@ const MilestoneEditFormFields = ({
               value={form.expectedStartDate}
               error={errors.expectedStartDate}
               onChange={(value) => onChange("expectedStartDate", value)}
+              minDate={normalizedMinExpectedStartDate}
             />
             <DatePickerField
               label="Ngày kết thúc dự kiến"
@@ -638,6 +656,7 @@ const MilestoneEditDialog = ({
   initialValues,
   isSubmitting,
   mode,
+  minExpectedStartDate,
 }: {
   open: boolean;
   onClose: () => void;
@@ -645,6 +664,7 @@ const MilestoneEditDialog = ({
   initialValues: MilestoneEditFormState;
   isSubmitting: boolean;
   mode: MilestoneEditMode;
+  minExpectedStartDate?: Date;
 }) => {
   const [form, setForm] = useState<MilestoneEditFormState>(initialValues);
   const [errors, setErrors] = useState<MilestoneEditFormErrors>({});
@@ -685,6 +705,7 @@ const MilestoneEditDialog = ({
           errors={errors}
           mode={mode}
           onChange={update}
+          minExpectedStartDate={minExpectedStartDate}
         />
         <DialogFooter>
           <Button
@@ -2044,8 +2065,6 @@ const ManagerMilestoneDetailPage = () => {
           milestoneOrder: form.milestoneOrder,
           expectedStartDate: form.expectedStartDate || null,
           expectedEndDate: form.expectedEndDate || null,
-          actualStartDate: form.actualStartDate || null,
-          actualEndDate: form.actualEndDate || null,
           status: form.status,
         };
 
@@ -2331,24 +2350,42 @@ const ManagerMilestoneDetailPage = () => {
       </Card>
 
       {/* Edit Dialog */}
-      {editingMilestone && canEditMilestone && (
-        <MilestoneEditDialog
-          open={!!editingMilestone}
-          mode={isApprovedCropSeason ? "approved" : "planning"}
-          initialValues={{
-            stageName: editingMilestone.stageName,
-            milestoneOrder: editingMilestone.milestoneOrder,
-            expectedStartDate: editingMilestone.expectedStartDate ?? "",
-            expectedEndDate: editingMilestone.expectedEndDate ?? "",
-            actualStartDate: editingMilestone.actualStartDate ?? "",
-            actualEndDate: editingMilestone.actualEndDate ?? "",
-            status: editingMilestone.status,
-          }}
-          onClose={() => setEditingMilestone(null)}
-          onSubmit={handleUpdate}
-          isSubmitting={updateMutation.isPending}
-        />
-      )}
+      {editingMilestone && canEditMilestone && (() => {
+        // Re-derive prev milestone from the latest list so any reorder taking
+        // effect while the dialog is open updates the disabled-date floor.
+        const prevMilestone = milestones
+          .filter(
+            (m) =>
+              m.id !== editingMilestone.id &&
+              m.milestoneOrder < editingMilestone.milestoneOrder,
+          )
+          .slice()
+          .sort((a, b) => a.milestoneOrder - b.milestoneOrder)
+          .pop();
+        const prevEndParsed = parseBackendDate(prevMilestone?.expectedEndDate);
+        const minExpectedStartDate = prevEndParsed
+          ? addDays(startOfDay(prevEndParsed), 1)
+          : undefined;
+        return (
+          <MilestoneEditDialog
+            open={!!editingMilestone}
+            mode={isApprovedCropSeason ? "approved" : "planning"}
+            initialValues={{
+              stageName: editingMilestone.stageName,
+              milestoneOrder: editingMilestone.milestoneOrder,
+              expectedStartDate: editingMilestone.expectedStartDate ?? "",
+              expectedEndDate: editingMilestone.expectedEndDate ?? "",
+              actualStartDate: editingMilestone.actualStartDate ?? "",
+              actualEndDate: editingMilestone.actualEndDate ?? "",
+              status: editingMilestone.status,
+            }}
+            onClose={() => setEditingMilestone(null)}
+            onSubmit={handleUpdate}
+            isSubmitting={updateMutation.isPending}
+            minExpectedStartDate={minExpectedStartDate}
+          />
+        );
+      })()}
 
       {/* Delete Confirm */}
       <ConfirmDialog

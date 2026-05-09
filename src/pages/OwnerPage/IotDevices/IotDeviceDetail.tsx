@@ -251,6 +251,14 @@ export default function IotDeviceDetail({
                 }
               />
             )}
+            {device.macAddress && (
+              <InfoRow
+                label="Địa chỉ MAC"
+                value={
+                  <span className="font-mono">{device.macAddress}</span>
+                }
+              />
+            )}
             <InfoRow
               label="Cài đặt lúc"
               value={
@@ -401,6 +409,13 @@ function SubDeviceCard({
         <span className="font-medium text-foreground">Cài đặt: </span>
         {new Date(device.installedAt).toLocaleDateString("vi-VN")}
       </div>
+
+      {device.deviceType === "wifi_module" && device.macAddress && (
+        <div className="text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">Địa chỉ MAC: </span>
+          <span className="font-mono">{device.macAddress}</span>
+        </div>
+      )}
 
       {device.sensors.length > 0 && (
         <div className="space-y-1">

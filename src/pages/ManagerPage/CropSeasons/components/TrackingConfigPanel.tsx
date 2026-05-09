@@ -36,17 +36,35 @@ export default function TrackingConfigPanel({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // Sync local state when config data loads
+  const allFieldKeys: string[] =
+    availableData?.data?.data?.flatMap((group) =>
+      group.fields.map((f) => `${group.entityType}:${f.fieldName}`),
+    ) ?? [];
+
+  // Sync local state when config data loads. Default to all fields when no
+  // active config exists yet so the manager starts with everything tracked.
   useEffect(() => {
     const activeConfigs = configData?.data?.data ?? [];
-    setSelected(
-      new Set(
-        activeConfigs
-          .filter((c) => c.isActive)
-          .map((c) => `${c.entityType}:${c.fieldName}`),
-      ),
-    );
-  }, [configData]);
+    const activeKeys = activeConfigs
+      .filter((c) => c.isActive)
+      .map((c) => `${c.entityType}:${c.fieldName}`);
+    if (activeKeys.length === 0 && allFieldKeys.length > 0) {
+      setSelected(new Set(allFieldKeys));
+    } else {
+      setSelected(new Set(activeKeys));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [configData, availableData]);
+
+  const allChecked =
+    allFieldKeys.length > 0 && allFieldKeys.every((k) => selected.has(k));
+  const someChecked =
+    !allChecked && allFieldKeys.some((k) => selected.has(k));
+
+  const toggleAll = () => {
+    if (readOnly) return;
+    setSelected(allChecked ? new Set() : new Set(allFieldKeys));
+  };
 
   const toggleField = (entityType: string, fieldName: string) => {
     if (readOnly) return;
@@ -103,6 +121,20 @@ export default function TrackingConfigPanel({
           kế hoạch.
         </p>
       )}
+
+      <label className="flex items-center gap-3 cursor-pointer rounded-md border bg-muted/30 px-3 py-2.5">
+        <Checkbox
+          checked={allChecked ? true : someChecked ? "indeterminate" : false}
+          disabled={readOnly}
+          onCheckedChange={toggleAll}
+        />
+        <span className="text-sm font-medium flex-1">
+          Chọn tất cả cấu hình
+        </span>
+        <span className="text-xs text-muted-foreground">
+          {selected.size}/{allFieldKeys.length}
+        </span>
+      </label>
 
       {availableData.data.data.map((group) => (
         <div
