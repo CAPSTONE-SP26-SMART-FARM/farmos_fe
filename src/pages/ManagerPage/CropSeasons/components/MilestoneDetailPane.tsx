@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarDays, CheckCircle2, ClipboardList, Cpu, Info, Loader2, PlayCircle, Settings, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useManagerMilestoneAssignment,
   useManagerGetMilestoneDetail,
@@ -291,6 +292,7 @@ export function MilestoneDetailPane({
 
   const [confirmStart, setConfirmStart] = useState(false);
   const [confirmComplete, setConfirmComplete] = useState(false);
+  const qc = useQueryClient();
   const { mutate: updateMilestone, isPending: isUpdating } =
     useManagerUpdateProductionMilestone(cropSeason.id);
 
@@ -331,13 +333,32 @@ export function MilestoneDetailPane({
     // Khi cropSeason approved → chỉ gửi status; BE sẽ auto-activate.
     // Gửi YYYY-MM-DD; service tự append "T00:00:00Z" trước khi gọi BE.
     const today = format(new Date(), "yyyy-MM-dd");
+    const willActivateSeason =
+      cropSeason.status === "approved" && isFirstMilestone;
     const body =
       cropSeason.status === "active"
         ? { status: "in_progress" as const, actualStartDate: today }
         : { status: "in_progress" as const };
     updateMilestone(
       { milestoneId: milestone.id, body },
-      { onSettled: () => setConfirmStart(false) },
+      {
+        onSuccess: () => {
+          if (willActivateSeason) {
+            // BE auto-activate cropSeason khi mốc đầu tiên start → tab "Cảm
+            // biến" mới khả dụng và pipeline sensor bắt đầu chạy. Refetch
+            // assignment + readings + alerts để tab Cảm biến hiển thị đúng
+            // ngay khi user mở.
+            qc.invalidateQueries({
+              queryKey: ["manager", "production-milestones", "assignment"],
+            });
+            qc.invalidateQueries({
+              queryKey: ["manager", "sensor-readings"],
+            });
+            qc.invalidateQueries({ queryKey: ["alerts"] });
+          }
+        },
+        onSettled: () => setConfirmStart(false),
+      },
     );
   };
 
