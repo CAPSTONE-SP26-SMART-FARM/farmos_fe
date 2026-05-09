@@ -430,9 +430,7 @@ function ServicePackageFormDialog({
         const updateBody: UpdateServicePackageBodyType = {
           name: data.name,
           description,
-          price: data.price,
           creditAmount: data.creditAmount,
-          creditType: data.creditType,
         };
         await updateMutation.mutateAsync({ id: pkg.id, body: updateBody });
         toast.success("Đã cập nhật gói dịch vụ.");
@@ -528,6 +526,7 @@ function ServicePackageFormDialog({
               <Input
                 id="pkg-credit-type"
                 placeholder="VD: ticket_general"
+                disabled={isEdit}
                 {...register("creditType")}
                 aria-invalid={Boolean(errors.creditType)}
               />
@@ -537,7 +536,12 @@ function ServicePackageFormDialog({
                 </p>
               ) : (
                 <p className="text-xs text-muted-foreground">
-                  Mặc định: <span className="font-mono">ticket_general</span>
+                  {isEdit
+                    ? "Loại credit không thể thay đổi sau khi tạo."
+                    : "Mặc định: "}
+                  {!isEdit && (
+                    <span className="font-mono">ticket_general</span>
+                  )}
                 </p>
               )}
             </div>
@@ -571,11 +575,18 @@ function ServicePackageFormDialog({
               min={0}
               step={1000}
               placeholder="VD: 199000"
+              disabled={isEdit}
               {...register("price", { valueAsNumber: true })}
               aria-invalid={Boolean(errors.price)}
             />
-            {errors.price && (
+            {errors.price ? (
               <p className="text-destructive text-xs">{errors.price.message}</p>
+            ) : (
+              isEdit && (
+                <p className="text-xs text-muted-foreground">
+                  Giá không thể thay đổi sau khi tạo.
+                </p>
+              )
             )}
           </div>
 

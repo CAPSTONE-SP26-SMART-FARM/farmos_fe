@@ -67,9 +67,7 @@ export const UpdateServicePackageBodySchema = z
   .object({
     name: z.string().min(1).max(255).optional(),
     description: z.string().optional(),
-    price: z.number().min(0).optional(),
     creditAmount: z.number().int().positive().optional(),
-    creditType: z.string().min(1).optional(),
   })
   .strict();
 
