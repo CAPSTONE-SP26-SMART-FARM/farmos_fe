@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useCompleteCropSeason } from "@/queries/useCropSeason";
+import { useManagerListProductionMilestones } from "@/queries/useProductionMilestone";
 import {
   type CropSeasonType,
   ProductionStatusName,
@@ -16,8 +17,17 @@ export function CompleteCropSeasonButton({
 }) {
   const [open, setOpen] = useState(false);
   const { mutateAsync, isPending } = useCompleteCropSeason(season.id);
+  const milestonesQuery = useManagerListProductionMilestones(season.id, {
+    page: 1,
+    limit: 50,
+  });
+  const milestones = milestonesQuery.data?.data.data ?? [];
+  const allMilestonesCompleted =
+    milestones.length > 0 &&
+    milestones.every((m) => m.status === "completed");
 
   if (season.status !== ProductionStatusName.Active) return null;
+  if (!allMilestonesCompleted) return null;
 
   const handleConfirm = async () => {
     try {
