@@ -21,8 +21,7 @@ import {
 } from "@/components/ui/field";
 import { LoginBodySchema, type LoginBodyType } from "@/schemaValidatation/auth";
 import { toast } from "sonner";
-import type { UserResType } from "@/types/user";
-import { RoleLabelVi, RoleName, type RoleNameType } from "@/constants/role";
+import { RoleLabelVi, type RoleNameType } from "@/constants/role";
 import {
   decodeAccessToken,
   isApiErrorResponse,
@@ -30,48 +29,6 @@ import {
 } from "@/lib/utils";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
 import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
-type DummyAccount = Pick<UserResType, "role" | "fullName" | "email"> & {
-  username: string;
-  password: string;
-};
-
-const DUMMY_ACCOUNTS: DummyAccount[] = [
-  {
-    role: RoleName.Admin,
-    username: "admin",
-    password: "123456",
-    fullName: "System Admin",
-    email: "admin@example.com",
-  },
-  {
-    role: RoleName.Owner,
-    username: "owner",
-    password: "owner123",
-    fullName: "Farm Owner",
-    email: "owner@farmos.test",
-  },
-  {
-    role: RoleName.Manager,
-    username: "manager",
-    password: "manager123",
-    fullName: "Farm Manager",
-    email: "manager@farmos.test",
-  },
-  {
-    role: RoleName.Farmer,
-    username: "farmer",
-    password: "farmer123",
-    fullName: "Farm Farmer",
-    email: "farmer@farmos.test",
-  },
-  {
-    role: RoleName.Doctor,
-    username: "doctor",
-    password: "doctor123",
-    fullName: "Agronomy Doctor",
-    email: "doctor@farmos.test",
-  },
-];
 
 const getRoleLabel = (role: RoleNameType) => RoleLabelVi[role] ?? role;
 
@@ -135,7 +92,7 @@ function LoginPage() {
                       {...field}
                       id="form-rhf-demo-title"
                       aria-invalid={fieldState.invalid}
-                      placeholder="hoangday185"
+                      placeholder="email@example.com"
                       autoComplete="off"
                     />
                     {fieldState.invalid && (
@@ -164,24 +121,8 @@ function LoginPage() {
                 )}
               />
             </FieldGroup>
-
-            <div className="text-xs text-muted-foreground bg-muted p-3 rounded-md">
-              <p className="font-medium mb-2">
-                Tài khoản mẫu để xem nhanh dashboard theo vai trò:
-              </p>
-              <div className="space-y-1">
-                {DUMMY_ACCOUNTS.map((account) => (
-                  <p key={account.role}>
-                    {getRoleLabel(account.role)}:{" "}
-                    <span className="font-medium">{account.email}</span> /
-                    <span className="font-medium">{account.username}</span> /{" "}
-                    <span className="font-medium">{account.password}</span>
-                  </p>
-                ))}
-              </div>
-            </div>
           </CardContent>
-          <CardFooter className="flex flex-col gap-4">
+          <CardFooter className="flex flex-col gap-4 mt-4">
             <Button
               type="submit"
               className="w-full"
