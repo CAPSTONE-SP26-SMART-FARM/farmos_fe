@@ -1,7 +1,13 @@
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
 	Select,
@@ -12,14 +18,15 @@ import {
 } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
+	CircuitBoard,
 	Cpu,
 	Loader2,
+	Pencil,
 	Plus,
+	Radio,
 	Search,
 	Trash2,
 	Wifi,
-	Radio,
-	CircuitBoard,
 } from "lucide-react";
 import {
 	useAdminDeleteIotDevice,
