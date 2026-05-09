@@ -254,11 +254,18 @@ const validateMilestoneEditForm = (
   return errors;
 };
 
+const maxDate = (a?: Date, b?: Date): Date | undefined => {
+  if (!a) return b;
+  if (!b) return a;
+  return a.getTime() >= b.getTime() ? a : b;
+};
+
 const MilestoneEditFormFields = ({
   form,
   errors,
   mode,
   onChange,
+  minExpectedStartDate,
 }: {
   form: MilestoneEditFormState;
   errors: MilestoneEditFormErrors;
@@ -267,11 +274,21 @@ const MilestoneEditFormFields = ({
     key: K,
     value: MilestoneEditFormState[K],
   ) => void;
+  minExpectedStartDate?: Date;
 }) => {
   const parsedExpectedStartDate = parseBackendDate(form.expectedStartDate);
-  const minExpectedEndDate = parsedExpectedStartDate
-    ? addDays(startOfDay(parsedExpectedStartDate), 1)
+  const normalizedMinExpectedStartDate = minExpectedStartDate
+    ? startOfDay(minExpectedStartDate)
     : undefined;
+  // End date must be after own start AND after prev milestone's end date.
+  const minExpectedEndDate = maxDate(
+    parsedExpectedStartDate
+      ? addDays(startOfDay(parsedExpectedStartDate), 1)
+      : undefined,
+    normalizedMinExpectedStartDate
+      ? addDays(normalizedMinExpectedStartDate, 1)
+      : undefined,
+  );
 
   const parsedActualStartDate = parseBackendDate(form.actualStartDate);
   const minActualEndDate = parsedActualStartDate
@@ -304,6 +321,7 @@ const MilestoneEditFormFields = ({
               value={form.expectedStartDate}
               error={errors.expectedStartDate}
               onChange={(value) => onChange("expectedStartDate", value)}
+              minDate={normalizedMinExpectedStartDate}
             />
             <DatePickerField
               label="Ngày kết thúc dự kiến"
@@ -380,6 +398,7 @@ const MilestoneEditDialog = ({
   initialValues,
   isSubmitting,
   mode,
+  minExpectedStartDate,
 }: {
   open: boolean;
   onClose: () => void;
@@ -387,6 +406,7 @@ const MilestoneEditDialog = ({
   initialValues: MilestoneEditFormState;
   isSubmitting: boolean;
   mode: MilestoneEditMode;
+  minExpectedStartDate?: Date;
 }) => {
   const [form, setForm] = useState<MilestoneEditFormState>(initialValues);
   const [errors, setErrors] = useState<MilestoneEditFormErrors>({});
@@ -427,6 +447,7 @@ const MilestoneEditDialog = ({
           errors={errors}
           mode={mode}
           onChange={update}
+          minExpectedStartDate={minExpectedStartDate}
         />
         <DialogFooter>
           <Button
@@ -468,12 +489,14 @@ const CreateMilestonesScreen = ({
   cropSeasonLabel,
   initialStartDate,
   nextMilestoneOrder,
+  lastExistingEndDate,
   onBack,
 }: {
   cropSeasonId: string;
   cropSeasonLabel: string;
   initialStartDate: string;
   nextMilestoneOrder: number;
+  lastExistingEndDate?: string | null;
   onBack: () => void;
 }) => {
   const [show, setShow] = useState(false);
@@ -661,20 +684,34 @@ const CreateMilestonesScreen = ({
       return;
     }
 
-    const sortedForOverlap = normalizedItems
+    const sortedByOrder = normalizedItems
       .map((item) => ({
         ...item,
         startValue: startOfDay(item.parsedStart!).getTime(),
         endValue: startOfDay(item.parsedEnd!).getTime(),
       }))
-      .sort((a, b) => a.startValue - b.startValue);
+      .sort((a, b) => a.milestoneOrder - b.milestoneOrder);
 
-    for (let i = 1; i < sortedForOverlap.length; i++) {
-      const prev = sortedForOverlap[i - 1];
-      const cur = sortedForOverlap[i];
+    // First draft must be after the latest existing milestone, since new
+    // milestones are appended (milestoneOrder > nextMilestoneOrder).
+    const lastExistingEnd = parseBackendDate(lastExistingEndDate);
+    if (lastExistingEnd && sortedByOrder.length > 0) {
+      const lastEndValue = startOfDay(lastExistingEnd).getTime();
+      const first = sortedByOrder[0];
+      if (first.startValue <= lastEndValue) {
+        toast.error(
+          `Mốc #${first.milestoneOrder}: Ngày bắt đầu phải sau ngày kết thúc dự kiến của mốc cuối cùng đã có (${formatDate(lastExistingEndDate)}).`,
+        );
+        return;
+      }
+    }
+
+    for (let i = 1; i < sortedByOrder.length; i++) {
+      const prev = sortedByOrder[i - 1];
+      const cur = sortedByOrder[i];
       if (cur.startValue <= prev.endValue) {
         toast.error(
-          `Mốc #${cur.milestoneOrder} bị trùng khoảng thời gian với mốc #${prev.milestoneOrder}.`,
+          `Mốc #${cur.milestoneOrder}: Ngày bắt đầu phải sau ngày kết thúc của mốc #${prev.milestoneOrder}.`,
         );
         return;
       }
@@ -702,13 +739,6 @@ const CreateMilestonesScreen = ({
     setDraftItems([createEmptyDraft(nextMilestoneOrder)]);
   };
 
-  const addDraftItem = () => {
-    setDraftItems((prev) => [
-      ...prev,
-      createEmptyDraft(nextMilestoneOrder + prev.length),
-    ]);
-  };
-
   return (
     <div
       className={`space-y-6 transition-all duration-300 ease-out ${
@@ -730,24 +760,8 @@ const CreateMilestonesScreen = ({
       </div>
 
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowTemplates(!showTemplates)}
-        >
-          <Eye className="h-4 w-4 mr-1" />
-          {showTemplates ? "Ẩn mẫu" : "Áp dụng mẫu"}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={addDraftItem}
-        >
-          <Plus className="h-4 w-4 mr-1" />
-          Thêm mốc
-        </Button>
-        {draftItems.length > 1 && (
+      {draftItems.length > 1 && (
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
@@ -756,8 +770,8 @@ const CreateMilestonesScreen = ({
             <Trash2 className="h-3.5 w-3.5 mr-1" />
             Xóa tất cả
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Template Browser */}
       <div
@@ -990,10 +1004,23 @@ const CreateMilestonesScreen = ({
           </div>
 
           {draftItems.map((draft, index) => {
-            const parsedStart = parseBackendDate(draft.expectedStartDate);
-            const minEnd = parsedStart
-              ? addDays(startOfDay(parsedStart), 1)
+            // Prev = previous draft in the list, or the last existing milestone
+            // for the first draft (since new drafts are appended after the
+            // existing list).
+            const prevEndRaw =
+              index === 0
+                ? lastExistingEndDate ?? null
+                : draftItems[index - 1]?.expectedEndDate || null;
+            const parsedPrevEnd = parseBackendDate(prevEndRaw);
+            const minStart = parsedPrevEnd
+              ? addDays(startOfDay(parsedPrevEnd), 1)
               : undefined;
+
+            const parsedStart = parseBackendDate(draft.expectedStartDate);
+            const minEnd = maxDate(
+              parsedStart ? addDays(startOfDay(parsedStart), 1) : undefined,
+              minStart ? addDays(minStart, 0) : undefined,
+            );
 
             return (
               <div
@@ -1034,6 +1061,7 @@ const CreateMilestonesScreen = ({
                     onChange={(value) =>
                       updateDraftItem(index, { expectedStartDate: value })
                     }
+                    minDate={minStart}
                   />
                   <DatePickerField
                     label="Ngày kết thúc dự kiến"
@@ -1048,17 +1076,6 @@ const CreateMilestonesScreen = ({
               </div>
             );
           })}
-
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="w-full"
-            onClick={addDraftItem}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Thêm mốc
-          </Button>
 
           <div className="flex justify-end gap-2 pt-2">
             <Button
@@ -1147,11 +1164,12 @@ const ManagerMilestonesPage = () => {
     isPlanningCropSeason || isApprovedCropSeason || isActiveCropSeason;
   const canDeleteMilestone = isPlanningCropSeason;
 
-  const findOverlappingMilestone = (
+  const findSequenceConflict = (
+    milestoneId: string,
+    milestoneOrder: number,
     startDate: string | null | undefined,
     endDate: string | null | undefined,
-    excludeMilestoneId?: string,
-  ) => {
+  ): { milestone: ProductionMilestoneResType; reason: "before" | "after" } | null => {
     const parsedStart = parseBackendDate(startDate);
     const parsedEnd = parseBackendDate(endDate);
     if (!parsedStart || !parsedEnd) return null;
@@ -1159,15 +1177,32 @@ const ManagerMilestonesPage = () => {
     const nextStart = startOfDay(parsedStart).getTime();
     const nextEnd = startOfDay(parsedEnd).getTime();
 
-    return orderedMilestones.find((item) => {
-      if (excludeMilestoneId && item.id === excludeMilestoneId) return false;
-      const itemStart = parseBackendDate(item.expectedStartDate);
-      const itemEnd = parseBackendDate(item.expectedEndDate);
-      if (!itemStart || !itemEnd) return false;
-      const itemStartValue = startOfDay(itemStart).getTime();
-      const itemEndValue = startOfDay(itemEnd).getTime();
-      return nextStart <= itemEndValue && itemStartValue <= nextEnd;
-    });
+    const others = orderedMilestones
+      .filter((item) => item.id !== milestoneId)
+      .slice()
+      .sort((a, b) => a.milestoneOrder - b.milestoneOrder);
+
+    const prev = others
+      .filter((item) => item.milestoneOrder < milestoneOrder)
+      .pop();
+    if (prev) {
+      const prevEnd = parseBackendDate(prev.expectedEndDate);
+      if (prevEnd && nextStart <= startOfDay(prevEnd).getTime()) {
+        return { milestone: prev, reason: "before" };
+      }
+    }
+
+    const nextItem = others.find(
+      (item) => item.milestoneOrder > milestoneOrder,
+    );
+    if (nextItem) {
+      const nextItemStart = parseBackendDate(nextItem.expectedStartDate);
+      if (nextItemStart && startOfDay(nextItemStart).getTime() <= nextEnd) {
+        return { milestone: nextItem, reason: "after" };
+      }
+    }
+
+    return null;
   };
 
   const updateMutation = useManagerUpdateProductionMilestone(id);
@@ -1215,15 +1250,22 @@ const ManagerMilestonesPage = () => {
         return;
       }
 
-      const overlapped = findOverlappingMilestone(
+      const conflict = findSequenceConflict(
+        editingMilestone.id,
+        editingMilestone.milestoneOrder,
         form.expectedStartDate,
         form.expectedEndDate,
-        editingMilestone.id,
       );
-      if (overlapped) {
-        toast.error(
-          `Khoảng thời gian bị trùng với mốc #${overlapped.milestoneOrder} (${overlapped.stageName}).`,
-        );
+      if (conflict) {
+        if (conflict.reason === "before") {
+          toast.error(
+            `Ngày bắt đầu phải sau ngày kết thúc của mốc #${conflict.milestone.milestoneOrder} (${conflict.milestone.stageName}).`,
+          );
+        } else {
+          toast.error(
+            `Ngày kết thúc phải trước ngày bắt đầu của mốc #${conflict.milestone.milestoneOrder} (${conflict.milestone.stageName}).`,
+          );
+        }
         return;
       }
     }
@@ -1444,12 +1486,18 @@ const ManagerMilestonesPage = () => {
   };
 
   if (showCreateScreen) {
+    const lastExistingMilestone = orderedMilestones.length
+      ? orderedMilestones.reduce((latest, m) =>
+          m.milestoneOrder > latest.milestoneOrder ? m : latest,
+        )
+      : undefined;
     return (
       <CreateMilestonesScreen
         cropSeasonId={id}
         cropSeasonLabel={cropSeasonLabel}
         initialStartDate={cropSeason?.plantDate ?? ""}
         nextMilestoneOrder={nextMilestoneOrder}
+        lastExistingEndDate={lastExistingMilestone?.expectedEndDate ?? null}
         onBack={() => setShowCreateScreen(false)}
       />
     );
@@ -1705,24 +1753,41 @@ const ManagerMilestonesPage = () => {
         </Card>
       </div>
 
-      {editingMilestone && canEditMilestone && (
-        <MilestoneEditDialog
-          open={!!editingMilestone}
-          mode={isApprovedCropSeason || isActiveCropSeason ? "approved" : "planning"}
-          initialValues={{
-            stageName: editingMilestone.stageName,
-            milestoneOrder: editingMilestone.milestoneOrder,
-            expectedStartDate: editingMilestone.expectedStartDate ?? "",
-            expectedEndDate: editingMilestone.expectedEndDate ?? "",
-            actualStartDate: editingMilestone.actualStartDate ?? "",
-            actualEndDate: editingMilestone.actualEndDate ?? "",
-            status: editingMilestone.status,
-          }}
-          onClose={() => setEditingMilestone(null)}
-          onSubmit={handleUpdate}
-          isSubmitting={updateMutation.isPending}
-        />
-      )}
+      {editingMilestone && canEditMilestone && (() => {
+        // Re-derive prev milestone from current orderedMilestones so reorders
+        // performed while the dialog is open immediately update the min-date.
+        const prevMilestone = orderedMilestones
+          .filter(
+            (m) =>
+              m.id !== editingMilestone.id &&
+              m.milestoneOrder < editingMilestone.milestoneOrder,
+          )
+          .sort((a, b) => a.milestoneOrder - b.milestoneOrder)
+          .pop();
+        const prevEndParsed = parseBackendDate(prevMilestone?.expectedEndDate);
+        const minExpectedStartDate = prevEndParsed
+          ? addDays(startOfDay(prevEndParsed), 1)
+          : undefined;
+        return (
+          <MilestoneEditDialog
+            open={!!editingMilestone}
+            mode={isApprovedCropSeason || isActiveCropSeason ? "approved" : "planning"}
+            initialValues={{
+              stageName: editingMilestone.stageName,
+              milestoneOrder: editingMilestone.milestoneOrder,
+              expectedStartDate: editingMilestone.expectedStartDate ?? "",
+              expectedEndDate: editingMilestone.expectedEndDate ?? "",
+              actualStartDate: editingMilestone.actualStartDate ?? "",
+              actualEndDate: editingMilestone.actualEndDate ?? "",
+              status: editingMilestone.status,
+            }}
+            onClose={() => setEditingMilestone(null)}
+            onSubmit={handleUpdate}
+            isSubmitting={updateMutation.isPending}
+            minExpectedStartDate={minExpectedStartDate}
+          />
+        );
+      })()}
 
       <ConfirmDialog
         open={!!confirmDelete}
