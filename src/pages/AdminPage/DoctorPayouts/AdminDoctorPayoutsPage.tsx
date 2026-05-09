@@ -8,7 +8,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { CheckCircle2, ClipboardList, HandCoins, Wallet } from "lucide-react";
+import {
+  CheckCircle2,
+  ClipboardList,
+  HandCoins,
+  Loader2,
+  Wallet,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,9 +42,19 @@ import {
 } from "@/components/ui/table";
 import { formatCurrencyVnd } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import {
+  usePayoutOverview,
+  usePayoutTimeseries,
+  usePayoutWithdrawals,
+} from "@/queries/useDashboard";
+import type {
+  PayoutMethod,
+  PayoutStatus,
+  RevenueLineRange,
+  RevenueRange,
+} from "@/types/dashboard";
 
-type RangePreset = "1d" | "7d" | "30d" | "90d";
-type LineRange = "30d" | "12m";
+type RangePreset = RevenueRange;
 
 const RANGE_LABEL: Record<RangePreset, string> = {
   "1d": "Hôm nay",
@@ -47,22 +63,9 @@ const RANGE_LABEL: Record<RangePreset, string> = {
   "90d": "90 ngày",
 };
 
-const LINE_RANGE_LABEL: Record<LineRange, string> = {
+const LINE_RANGE_LABEL: Record<RevenueLineRange, string> = {
   "30d": "30 ngày gần nhất",
   "12m": "12 tháng gần nhất",
-};
-
-const RANGE_DAYS: Record<RangePreset, number> = {
-  "1d": 1,
-  "7d": 7,
-  "30d": 30,
-  "90d": 90,
-};
-const RANGE_FACTOR: Record<RangePreset, number> = {
-  "1d": 1,
-  "7d": 6.4,
-  "30d": 25,
-  "90d": 70,
 };
 
 function compactVnd(v: number): string {
@@ -70,40 +73,6 @@ function compactVnd(v: number): string {
   if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(0)}M`;
   if (v >= 1_000) return `${(v / 1_000).toFixed(0)}K`;
   return String(v);
-}
-
-function buildKpis(range: RangePreset) {
-  const f = RANGE_FACTOR[range];
-  const projected = Math.round(36_500_000 * f);
-  const paid = Math.round(28_900_000 * f);
-  const requests = Math.round(48 * f);
-  const requestsResolved = Math.round(36 * f);
-  return { projected, paid, requests, requestsResolved };
-}
-
-function buildSeries(range: LineRange, base: number) {
-  const points = range === "30d" ? 30 : 12;
-  const out: { label: string; value: number }[] = [];
-  for (let i = 0; i < points; i++) {
-    const wave = 1 + Math.sin(i / 1.9) * 0.32 + (i / points) * 0.15;
-    const value = Math.round(base * wave);
-    if (range === "30d") {
-      const d = new Date();
-      d.setDate(d.getDate() - (points - 1 - i));
-      out.push({
-        label: `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`,
-        value,
-      });
-    } else {
-      const d = new Date();
-      d.setMonth(d.getMonth() - (points - 1 - i));
-      out.push({
-        label: `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getFullYear()).slice(2)}`,
-        value,
-      });
-    }
-  }
-  return out;
 }
 
 interface RangeFilterProps<T extends string> {
@@ -134,14 +103,21 @@ function RangeFilter<T extends string>({
   );
 }
 
-interface KpiCardProps {
+function KpiCard({
+  title,
+  value,
+  icon: Icon,
+  accent,
+  hint,
+  loading,
+}: {
   title: string;
   value: string;
   icon: React.ElementType;
   accent: string;
   hint?: string;
-}
-function KpiCard({ title, value, icon: Icon, accent, hint }: KpiCardProps) {
+  loading?: boolean;
+}) {
   return (
     <Card>
       <CardContent className="p-5">
@@ -150,10 +126,10 @@ function KpiCard({ title, value, icon: Icon, accent, hint }: KpiCardProps) {
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               {title}
             </p>
-            <p className="text-2xl font-bold tabular-nums truncate">{value}</p>
-            {hint && (
-              <p className="text-xs text-muted-foreground">{hint}</p>
-            )}
+            <p className="text-2xl font-bold tabular-nums truncate">
+              {loading ? <Loader2 className="size-5 animate-spin" /> : value}
+            </p>
+            {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
           </div>
           <div
             className={cn(
@@ -169,10 +145,10 @@ function KpiCard({ title, value, icon: Icon, accent, hint }: KpiCardProps) {
   );
 }
 
-// Line chart — paid amounts over time
 function PaidLineChartCard() {
-  const [range, setRange] = useState<LineRange>("30d");
-  const data = useMemo(() => buildSeries(range, 18_400_000), [range]);
+  const [range, setRange] = useState<RevenueLineRange>("30d");
+  const query = usePayoutTimeseries(range);
+  const data = query.data?.data?.data ?? [];
   const total = data.reduce((acc, d) => acc + d.value, 0);
 
   return (
@@ -184,7 +160,7 @@ function PaidLineChartCard() {
             Số tiền admin đã hoàn tất thanh toán · Tổng {formatCurrencyVnd(total)}
           </CardDescription>
         </div>
-        <RangeFilter<LineRange>
+        <RangeFilter<RevenueLineRange>
           value={range}
           onChange={setRange}
           options={[
@@ -196,59 +172,44 @@ function PaidLineChartCard() {
       </CardHeader>
       <CardContent>
         <div className="h-64 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
-              <defs>
-                <linearGradient id="payoutGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#6366f1" stopOpacity={0.35} />
-                  <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                vertical={false}
-                stroke="currentColor"
-                className="text-border"
-              />
-              <XAxis
-                dataKey="label"
-                tickLine={false}
-                axisLine={false}
-                fontSize={11}
-                stroke="currentColor"
-                className="text-muted-foreground"
-              />
-              <YAxis
-                tickFormatter={compactVnd}
-                tickLine={false}
-                axisLine={false}
-                fontSize={11}
-                width={48}
-                stroke="currentColor"
-                className="text-muted-foreground"
-              />
-              <Tooltip
-                formatter={(v) => [formatCurrencyVnd(Number(v)), "Đã chi trả"]}
-                cursor={{ stroke: "currentColor", strokeOpacity: 0.1 }}
-              />
-              <Area
-                type="monotone"
-                dataKey="value"
-                stroke="#6366f1"
-                strokeWidth={2.2}
-                fill="url(#payoutGradient)"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          {query.isLoading ? (
+            <div className="flex h-full items-center justify-center">
+              <Loader2 className="size-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={data}
+                margin={{ top: 8, right: 16, bottom: 0, left: 0 }}
+              >
+                <defs>
+                  <linearGradient id="payoutGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#6366f1" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="label" fontSize={11} />
+                <YAxis tickFormatter={compactVnd} fontSize={11} width={48} />
+                <Tooltip
+                  formatter={(v) => [formatCurrencyVnd(Number(v)), "Đã chi trả"]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#6366f1"
+                  strokeWidth={2.2}
+                  fill="url(#payoutGradient)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </CardContent>
     </Card>
   );
 }
 
-// ── Withdrawals mock table ─────────────────────────────────────────────────
-type PayoutCategory = "ALL" | "BANK" | "EWALLET";
-type PayoutStatus = "PENDING" | "APPROVED" | "PAID" | "REJECTED";
 const STATUS_LABEL: Record<PayoutStatus, string> = {
   PENDING: "Chờ xử lý",
   APPROVED: "Đã duyệt",
@@ -262,80 +223,27 @@ const STATUS_COLOR: Record<PayoutStatus, string> = {
   REJECTED: "bg-rose-100 text-rose-700",
 };
 
-interface PayoutRow {
-  id: string;
-  refNumber: string;
-  doctor: string;
-  category: Exclude<PayoutCategory, "ALL">;
-  amount: number;
-  status: PayoutStatus;
-  requestedAt: string;
-}
-
-function buildPayouts(): PayoutRow[] {
-  const doctors = [
-    "BS. Nguyễn Văn An",
-    "BS. Trần Thị Bình",
-    "BS. Lê Hoàng Cường",
-    "BS. Phạm Quỳnh Dao",
-    "BS. Hoàng Minh Đức",
-    "BS. Vũ Thị Hà",
-    "BS. Đỗ Trung Kiên",
-    "BS. Bùi Thanh Lan",
-  ];
-  const cats: Exclude<PayoutCategory, "ALL">[] = ["BANK", "EWALLET"];
-  const statuses: PayoutStatus[] = [
-    "PAID",
-    "PAID",
-    "APPROVED",
-    "PENDING",
-    "REJECTED",
-    "PAID",
-  ];
-  const out: PayoutRow[] = [];
-  for (let i = 0; i < 48; i++) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    out.push({
-      id: `pay_${i}`,
-      refNumber: `WTH-2026${String(800 + i).padStart(4, "0")}`,
-      doctor: doctors[i % doctors.length],
-      category: cats[i % cats.length],
-      amount: Math.round((1_500_000 + (i % 7) * 450_000) * 1),
-      status: statuses[i % statuses.length],
-      requestedAt: d.toISOString(),
-    });
-  }
-  return out;
-}
-
-const ALL_PAYOUTS = buildPayouts();
-
 function PayoutsTable() {
   const [range, setRange] = useState<RangePreset>("90d");
-  const [category, setCategory] = useState<PayoutCategory>("ALL");
+  const [category, setCategory] = useState<"ALL" | PayoutMethod>("ALL");
+  const [status, setStatus] = useState<"ALL" | PayoutStatus>("ALL");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const limit = 10;
 
-  const filtered = useMemo(() => {
-    const cutoff = Date.now() - RANGE_DAYS[range] * 24 * 3600 * 1000;
-    return ALL_PAYOUTS.filter((p) => {
-      if (new Date(p.requestedAt).getTime() < cutoff) return false;
-      if (category !== "ALL" && p.category !== category) return false;
-      if (
-        search &&
-        !p.refNumber.toLowerCase().includes(search.toLowerCase()) &&
-        !p.doctor.toLowerCase().includes(search.toLowerCase())
-      )
-        return false;
-      return true;
-    });
-  }, [range, category, search]);
+  const query = usePayoutWithdrawals({
+    range,
+    category: category === "ALL" ? undefined : category,
+    status: status === "ALL" ? undefined : status,
+    search: search || undefined,
+    page,
+    limit,
+  });
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const safePage = Math.min(page, totalPages);
-  const slice = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const rows = query.data?.data?.data ?? [];
+  const meta = query.data?.data?.meta;
+  const totalPages = meta?.totalPages ?? 1;
+  const totalItems = meta?.totalItems ?? 0;
 
   return (
     <Card>
@@ -343,24 +251,41 @@ function PayoutsTable() {
         <div>
           <CardTitle className="text-base">Lịch sử thanh toán bác sĩ</CardTitle>
           <CardDescription>
-            Tổng {filtered.length} giao dịch trong{" "}
-            {RANGE_LABEL[range].toLowerCase()}
+            Tổng {totalItems} giao dịch trong {RANGE_LABEL[range].toLowerCase()}
           </CardDescription>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Input
-            placeholder="Tìm mã yêu cầu / tên bác sĩ..."
+            placeholder="Tìm tên bác sĩ / số tài khoản..."
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="h-8 w-[240px] text-xs"
+            className="h-8 w-60 text-xs"
           />
+          <Select
+            value={status}
+            onValueChange={(v) => {
+              setStatus(v as "ALL" | PayoutStatus);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="h-8 w-[170px] text-xs">
+              <SelectValue placeholder="Trạng thái" />
+            </SelectTrigger>
+            <SelectContent align="end">
+              <SelectItem value="ALL">Tất cả trạng thái</SelectItem>
+              <SelectItem value="PENDING">Chờ xử lý</SelectItem>
+              <SelectItem value="APPROVED">Đã duyệt</SelectItem>
+              <SelectItem value="PAID">Đã thanh toán</SelectItem>
+              <SelectItem value="REJECTED">Từ chối</SelectItem>
+            </SelectContent>
+          </Select>
           <Select
             value={category}
             onValueChange={(v) => {
-              setCategory(v as PayoutCategory);
+              setCategory(v as "ALL" | PayoutMethod);
               setPage(1);
             }}
           >
@@ -399,7 +324,13 @@ function PayoutsTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {slice.length === 0 && (
+              {query.isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="py-10 text-center">
+                    <Loader2 className="mx-auto size-5 animate-spin text-muted-foreground" />
+                  </TableCell>
+                </TableRow>
+              ) : rows.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={5}
@@ -408,44 +339,43 @@ function PayoutsTable() {
                     Không có yêu cầu phù hợp.
                   </TableCell>
                 </TableRow>
+              ) : (
+                rows.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell className="font-medium">{p.refNumber}</TableCell>
+                    <TableCell className="max-w-50 truncate">{p.doctor}</TableCell>
+                    <TableCell className="text-right tabular-nums font-medium">
+                      {formatCurrencyVnd(p.amount)}
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium",
+                          STATUS_COLOR[p.status],
+                        )}
+                      >
+                        {STATUS_LABEL[p.status]}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground tabular-nums">
+                      {new Date(p.requestedAt).toLocaleString("vi-VN")}
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
-              {slice.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium">{p.refNumber}</TableCell>
-                  <TableCell className="max-w-[200px] truncate">
-                    {p.doctor}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums font-medium">
-                    {formatCurrencyVnd(p.amount)}
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={cn(
-                        "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium",
-                        STATUS_COLOR[p.status],
-                      )}
-                    >
-                      {STATUS_LABEL[p.status]}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground tabular-nums">
-                    {new Date(p.requestedAt).toLocaleString("vi-VN")}
-                  </TableCell>
-                </TableRow>
-              ))}
             </TableBody>
           </Table>
         </div>
 
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Trang {safePage}/{totalPages}
+            Trang {page}/{totalPages}
           </p>
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
-              disabled={safePage <= 1}
+              disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
             >
               Trang trước
@@ -453,7 +383,7 @@ function PayoutsTable() {
             <Button
               variant="outline"
               size="sm"
-              disabled={safePage >= totalPages}
+              disabled={page >= totalPages}
               onClick={() => setPage((p) => p + 1)}
             >
               Trang sau
@@ -466,13 +396,23 @@ function PayoutsTable() {
 }
 
 function AdminDoctorPayoutsPage() {
-  const [kpiRange, setKpiRange] = useState<RangePreset>("1d");
-  const kpis = useMemo(() => buildKpis(kpiRange), [kpiRange]);
+  const [kpiRange, setKpiRange] = useState<RangePreset>("30d");
+  const overviewQuery = usePayoutOverview(kpiRange);
+  const kpis = overviewQuery.data?.data?.kpis;
 
-  const rangeOpts = (Object.keys(RANGE_LABEL) as RangePreset[]).map((r) => ({
-    value: r,
-    label: RANGE_LABEL[r],
-  }));
+  const rangeOpts = useMemo(
+    () =>
+      (Object.keys(RANGE_LABEL) as RangePreset[]).map((r) => ({
+        value: r,
+        label: RANGE_LABEL[r],
+      })),
+    [],
+  );
+
+  const resolvedPct =
+    kpis && kpis.requests > 0
+      ? Math.round((kpis.requestsResolved / kpis.requests) * 100)
+      : 0;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -498,31 +438,35 @@ function AdminDoctorPayoutsPage() {
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <KpiCard
             title="Tổng dự trù phải trả"
-            value={formatCurrencyVnd(kpis.projected)}
+            value={formatCurrencyVnd(kpis?.projected ?? 0)}
             icon={Wallet}
             accent="bg-amber-100 text-amber-700"
-            hint="Hoa hồng đã chốt nhưng chưa chi"
+            hint="Số dư ví bác sĩ + đang chờ rút"
+            loading={overviewQuery.isLoading}
           />
           <KpiCard
             title="Tổng đã chi trả"
-            value={formatCurrencyVnd(kpis.paid)}
+            value={formatCurrencyVnd(kpis?.paid ?? 0)}
             icon={HandCoins}
             accent="bg-emerald-100 text-emerald-700"
             hint="Admin đã hoàn tất thanh toán"
+            loading={overviewQuery.isLoading}
           />
           <KpiCard
             title="Số yêu cầu rút tiền"
-            value={String(kpis.requests)}
+            value={String(kpis?.requests ?? 0)}
             icon={ClipboardList}
             accent="bg-sky-100 text-sky-700"
             hint="Bác sĩ đã gửi trong kỳ"
+            loading={overviewQuery.isLoading}
           />
           <KpiCard
             title="Yêu cầu đã xử lý"
-            value={String(kpis.requestsResolved)}
+            value={String(kpis?.requestsResolved ?? 0)}
             icon={CheckCircle2}
             accent="bg-violet-100 text-violet-700"
-            hint={`${Math.round((kpis.requestsResolved / Math.max(1, kpis.requests)) * 100)}% được xử lý`}
+            hint={`${resolvedPct}% được xử lý`}
+            loading={overviewQuery.isLoading}
           />
         </div>
       </section>

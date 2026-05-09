@@ -612,6 +612,12 @@ export const API_ENDPOINTS = {
     ADMIN: "/dashboard/admin",
     OWNER: "/dashboard/owner",
     MANAGER: "/dashboard/manager",
+    ADMIN_REVENUE_OVERVIEW: "/dashboard/admin/revenue/overview",
+    ADMIN_REVENUE_TIMESERIES: "/dashboard/admin/revenue/timeseries",
+    ADMIN_REVENUE_TRANSACTIONS: "/dashboard/admin/revenue/transactions",
+    ADMIN_PAYOUT_OVERVIEW: "/dashboard/admin/doctor-payouts/overview",
+    ADMIN_PAYOUT_TIMESERIES: "/dashboard/admin/doctor-payouts/timeseries",
+    ADMIN_PAYOUT_WITHDRAWALS: "/dashboard/admin/doctor-payouts/withdrawals",
   },
   HARVEST_RECORDS: {
     LIST_BY_ZONE: (zoneId: string) => `/harvest-records/zone/${zoneId}`,
@@ -1498,6 +1504,18 @@ export const QUERY_KEYS = {
     admin: (period: string) => ["dashboard", "admin", period] as const,
     owner: (period: string) => ["dashboard", "owner", period] as const,
     manager: (period: string) => ["dashboard", "manager", period] as const,
+    revenueOverview: (kpiRange: string, chartRange: string) =>
+      ["dashboard", "admin", "revenue", "overview", kpiRange, chartRange] as const,
+    revenueTimeseries: (source: string, range: string) =>
+      ["dashboard", "admin", "revenue", "timeseries", source, range] as const,
+    revenueTransactions: (q: Record<string, unknown>) =>
+      ["dashboard", "admin", "revenue", "transactions", q] as const,
+    payoutOverview: (kpiRange: string) =>
+      ["dashboard", "admin", "doctor-payouts", "overview", kpiRange] as const,
+    payoutTimeseries: (range: string) =>
+      ["dashboard", "admin", "doctor-payouts", "timeseries", range] as const,
+    payoutWithdrawals: (q: Record<string, unknown>) =>
+      ["dashboard", "admin", "doctor-payouts", "withdrawals", q] as const,
   },
   harvestRecords: {
     root: ["harvest-records"] as const,
