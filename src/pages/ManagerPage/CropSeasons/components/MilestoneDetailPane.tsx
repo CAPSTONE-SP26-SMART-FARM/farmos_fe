@@ -1,14 +1,17 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarDays, ClipboardList, Cpu, Info, Settings, XCircle } from "lucide-react";
+import { CalendarDays, CheckCircle2, ClipboardList, Cpu, Info, Loader2, PlayCircle, Settings, XCircle } from "lucide-react";
+import { format } from "date-fns";
 import { useState } from "react";
 import {
   useManagerMilestoneAssignment,
   useManagerGetMilestoneDetail,
+  useManagerUpdateProductionMilestone,
 } from "@/queries/useProductionMilestone";
 import type { ProductionMilestoneResType } from "@/schemaValidatation/productionMilestone";
 import type { AssignmentBoundSensorResSchema } from "@/schemaValidatation/milestoneIotDevice";
@@ -259,11 +262,15 @@ export function MilestoneDetailPane({
   milestone: listMilestone,
   cropSeason,
   isWizardState,
+  allMilestones = [],
+  onSelectMilestone,
   onGoConfig,
 }: {
   milestone: ProductionMilestoneResType;
   cropSeason: CropSeasonType;
   isWizardState: boolean;
+  allMilestones?: ProductionMilestoneResType[];
+  onSelectMilestone?: (id: string) => void;
   onGoConfig: () => void;
 }) {
   const detailQuery = useManagerGetMilestoneDetail(listMilestone.id, cropSeason.id, true);
@@ -276,6 +283,76 @@ export function MilestoneDetailPane({
 
   const isOperational = !isWizardState;
 
+  const [confirmStart, setConfirmStart] = useState(false);
+  const [confirmComplete, setConfirmComplete] = useState(false);
+  const { mutate: updateMilestone, isPending: isUpdating } =
+    useManagerUpdateProductionMilestone(cropSeason.id);
+
+  // BR: cho "Bắt đầu" khi:
+  //  - milestone đang pending,
+  //  - mọi milestone trước (theo order) đã completed,
+  //  - không có milestone khác đang in_progress,
+  //  - cropSeason ở active, HOẶC approved + đây là milestone đầu tiên
+  //    (BE sẽ auto-activate cropSeason khi first milestone in_progress).
+  const sortedAsc = [...allMilestones].sort(
+    (a, b) => a.milestoneOrder - b.milestoneOrder,
+  );
+  const isFirstMilestone = sortedAsc[0]?.id === milestone.id;
+  const earlierAllCompleted = sortedAsc
+    .filter((m) => m.milestoneOrder < milestone.milestoneOrder)
+    .every((m) => m.status === "completed");
+  const noOtherInProgress = sortedAsc.every(
+    (m) => m.id === milestone.id || m.status !== "in_progress",
+  );
+  const seasonAllowsStart =
+    cropSeason.status === "active" ||
+    (cropSeason.status === "approved" && isFirstMilestone);
+  const canStart =
+    seasonAllowsStart &&
+    milestone.status === "pending" &&
+    earlierAllCompleted &&
+    noOtherInProgress;
+  const canComplete =
+    cropSeason.status === "active" && milestone.status === "in_progress";
+
+  const nextMilestone = sortedAsc.find(
+    (m) => m.milestoneOrder > milestone.milestoneOrder,
+  );
+
+  const handleStart = () => {
+    // BE: cấm gửi actualStartDate khi cropSeason chưa active
+    // (MilestoneActualDateRequiresActiveSeasonException).
+    // Khi cropSeason approved → chỉ gửi status; BE sẽ auto-activate.
+    // Gửi YYYY-MM-DD; service tự append "T00:00:00Z" trước khi gọi BE.
+    const today = format(new Date(), "yyyy-MM-dd");
+    const body =
+      cropSeason.status === "active"
+        ? { status: "in_progress" as const, actualStartDate: today }
+        : { status: "in_progress" as const };
+    updateMilestone(
+      { milestoneId: milestone.id, body },
+      { onSettled: () => setConfirmStart(false) },
+    );
+  };
+
+  const handleComplete = () => {
+    const today = format(new Date(), "yyyy-MM-dd");
+    updateMilestone(
+      {
+        milestoneId: milestone.id,
+        body: { status: "completed", actualEndDate: today },
+      },
+      {
+        onSuccess: () => {
+          if (nextMilestone && onSelectMilestone) {
+            onSelectMilestone(nextMilestone.id);
+          }
+        },
+        onSettled: () => setConfirmComplete(false),
+      },
+    );
+  };
+
   return (
     <div className="space-y-3 overflow-y-auto">
       <div className="flex items-start justify-between gap-3">
@@ -286,13 +363,74 @@ export function MilestoneDetailPane({
             {meta.label}
           </Badge>
         </div>
-        {isWizardState && (
-          <Button size="sm" variant="outline" onClick={onGoConfig}>
-            <Settings className="h-3 w-3 mr-1.5" />
-            Cấu hình
-          </Button>
-        )}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {canStart && (
+            <Button
+              size="sm"
+              variant="default"
+              className="h-7"
+              onClick={() => setConfirmStart(true)}
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              ) : (
+                <PlayCircle className="h-3 w-3 mr-1" />
+              )}
+              Bắt đầu
+            </Button>
+          )}
+          {canComplete && (
+            <Button
+              size="sm"
+              className="h-7 bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={() => setConfirmComplete(true)}
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              ) : (
+                <CheckCircle2 className="h-3 w-3 mr-1" />
+              )}
+              Hoàn thành
+            </Button>
+          )}
+          {isWizardState && (
+            <Button size="sm" variant="outline" className="h-7" onClick={onGoConfig}>
+              <Settings className="h-3 w-3 mr-1" />
+              Cấu hình
+            </Button>
+          )}
+        </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmStart}
+        title="Bắt đầu mốc công việc?"
+        description={`Đánh dấu mốc "${milestone.stageName}" là đang thực hiện. Ngày bắt đầu thực tế sẽ được ghi nhận là hôm nay.`}
+        confirmLabel={isUpdating ? "Đang xử lý..." : "Bắt đầu"}
+        cancelLabel="Hủy"
+        onCancel={() => {
+          if (!isUpdating) setConfirmStart(false);
+        }}
+        onConfirm={handleStart}
+      />
+
+      <ConfirmDialog
+        open={confirmComplete}
+        title="Hoàn thành mốc công việc?"
+        description={`Đánh dấu mốc "${milestone.stageName}" là hoàn thành.${
+          nextMilestone
+            ? ` Sau khi hoàn thành, hệ thống sẽ chuyển sang mốc tiếp theo "${nextMilestone.stageName}".`
+            : " Đây là mốc cuối cùng."
+        }`}
+        confirmLabel={isUpdating ? "Đang xử lý..." : "Hoàn thành"}
+        cancelLabel="Hủy"
+        onCancel={() => {
+          if (!isUpdating) setConfirmComplete(false);
+        }}
+        onConfirm={handleComplete}
+      />
 
       <Separator />
 

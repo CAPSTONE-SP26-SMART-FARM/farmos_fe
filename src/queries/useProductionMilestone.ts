@@ -124,7 +124,7 @@ export const useManagerUpdateProductionMilestone = (
       milestoneId: string;
       body: UpdateProductionMilestoneBodyType;
     }) => productionMilestoneService.update(milestoneId, cropSeasonId, body),
-    onSuccess: (_res, { milestoneId }) => {
+    onSuccess: (_res, { milestoneId, body }) => {
       if (!silent) {
         toast.success("Cập nhật milestone thành công!");
       }
@@ -136,6 +136,11 @@ export const useManagerUpdateProductionMilestone = (
         qc.invalidateQueries({
           queryKey: QUERY_KEYS.manager.productionMilestones.detail(milestoneId),
         });
+        // BE auto-completes cropSeason khi milestone cuối được set "completed".
+        // Invalidate cropSeason cache để UI cập nhật status mới.
+        if (body.status === "completed" || body.status === "in_progress") {
+          qc.invalidateQueries({ queryKey: ["crop-seasons"] });
+        }
       }
     },
     onError: (error: AxiosError<ApiResponseType>) => {

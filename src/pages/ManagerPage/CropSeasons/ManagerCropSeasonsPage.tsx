@@ -22,9 +22,11 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useManagerListCropSeasons } from "@/queries/useCropSeason";
 import { useManagerListAssignedZones } from "@/queries/useZone";
-import { ProductionStatusName } from "@/types/cropSeason";
+import { ProductionStatusName, type CropSeasonType } from "@/types/cropSeason";
 import { CreateCropSeasonScreen } from "./components/CreateCropSeasonScreen";
 import { CropSeasonSummaryCard } from "./components/CropSeasonSummaryCard";
+import { SendRequestDialog } from "./components/SendRequestDialog";
+import { UpdateCropSeasonDialog } from "./components/UpdateCropSeasonDialog";
 import { MilestonesWithDetailTab } from "./components/MilestonesWithDetailTab";
 import { RequestsHistoryTab } from "./components/RequestsHistoryTab";
 import { SensorOverviewTab } from "./components/SensorOverviewTab";
@@ -43,6 +45,7 @@ export default function ManagerCropSeasonsPage() {
   const navigate = useNavigate();
   const [showCreate, setShowCreate] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<"now" | "history">("now");
+  const [historyDetail, setHistoryDetail] = useState<CropSeasonType | null>(null);
   const zoneId = searchParams.get("zoneId")?.trim() ?? "";
 
   const assignedZonesQuery = useManagerListAssignedZones({
@@ -235,18 +238,22 @@ export default function ManagerCropSeasonsPage() {
                   season={nowSeason}
                   zoneId={zoneId}
                   actions={
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        navigate(
-                          `/dashboard/manager/crop-seasons/${nowSeason.id}/plan-vs-actual`,
-                        )
-                      }
-                    >
-                      <BarChart3 className="h-3 w-3 mr-1.5" />
-                      Kế hoạch vs Thực tế
-                    </Button>
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          navigate(
+                            `/dashboard/manager/crop-seasons/${nowSeason.id}/plan-vs-actual`,
+                          )
+                        }
+                      >
+                        <BarChart3 className="h-3 w-3 mr-1.5" />
+                        Kế hoạch vs Thực tế
+                      </Button>
+                      <UpdateCropSeasonDialog season={nowSeason} />
+                      <SendRequestDialog season={nowSeason} />
+                    </>
                   }
                 />
 
@@ -469,7 +476,7 @@ export default function ManagerCropSeasonsPage() {
               </div>
             ))}
 
-          {sidebarTab === "history" && (
+          {sidebarTab === "history" && !historyDetail && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-base font-semibold">Lịch sử vụ mùa</h2>
@@ -482,7 +489,115 @@ export default function ManagerCropSeasonsPage() {
               <HistoryView
                 seasons={historySeasons}
                 isLoading={seasonsLoading}
+                onSelect={(s) => setHistoryDetail(s)}
               />
+            </div>
+          )}
+
+          {sidebarTab === "history" && historyDetail && (
+            <div className="space-y-4">
+              <CropSeasonSummaryCard
+                season={historyDetail}
+                zoneId={zoneId}
+                actions={
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setHistoryDetail(null)}
+                  >
+                    <ArrowLeft className="h-3 w-3 mr-1.5" />
+                    Quay lại lịch sử
+                  </Button>
+                }
+                footer={null}
+              />
+              <Tabs defaultValue="milestones-op">
+                <TabsList className="w-full md:w-auto flex-wrap h-auto gap-1">
+                  <TabsTrigger
+                    value="milestones-op"
+                    className="flex items-center gap-1.5"
+                  >
+                    <Layers className="h-3.5 w-3.5" />
+                    Mốc công việc
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="sensors"
+                    className="flex items-center gap-1.5"
+                  >
+                    <Radio className="h-3.5 w-3.5" />
+                    Cảm biến
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="incidents"
+                    className="flex items-center gap-1.5"
+                  >
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    Sự cố
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="daily-logs"
+                    className="flex items-center gap-1.5"
+                  >
+                    <BookOpen className="h-3.5 w-3.5" />
+                    Nhiệm vụ
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="tracking-config"
+                    className="flex items-center gap-1.5"
+                  >
+                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                    Cấu hình theo dõi
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="harvest"
+                    className="flex items-center gap-1.5"
+                  >
+                    <Wheat className="h-3.5 w-3.5" />
+                    Thu hoạch
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="requests"
+                    className="flex items-center gap-1.5"
+                  >
+                    <Send className="h-3.5 w-3.5" />
+                    Yêu cầu duyệt
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="milestones-op" className="mt-4">
+                  <MilestonesWithDetailTab
+                    cropSeason={historyDetail}
+                    zoneId={zoneId}
+                  />
+                </TabsContent>
+                <TabsContent value="sensors" className="mt-4">
+                  <SensorOverviewTab cropSeason={historyDetail} />
+                </TabsContent>
+                <TabsContent value="incidents" className="mt-4">
+                  <IncidentTab cropSeason={historyDetail} />
+                </TabsContent>
+                <TabsContent value="daily-logs" className="mt-4">
+                  <DailyLogsTab
+                    zoneId={zoneId}
+                    zoneName={selectedZoneName}
+                    cropSeason={historyDetail}
+                  />
+                </TabsContent>
+                <TabsContent value="tracking-config" className="mt-4">
+                  <TrackingConfigPanel
+                    cropSeasonId={historyDetail.id}
+                    readOnly={true}
+                  />
+                </TabsContent>
+                <TabsContent value="harvest" className="mt-4">
+                  <HarvestRecordTab cropSeason={historyDetail} />
+                </TabsContent>
+                <TabsContent value="requests" className="mt-4">
+                  <RequestsHistoryTab
+                    cropSeasonId={historyDetail.id}
+                    readOnly={true}
+                  />
+                </TabsContent>
+              </Tabs>
             </div>
           )}
         </div>

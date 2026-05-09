@@ -135,6 +135,8 @@ export function MilestonesWithDetailTab({
             milestone={selected}
             cropSeason={cropSeason}
             isWizardState={isWizardState}
+            allMilestones={milestones}
+            onSelectMilestone={setSelectedId}
             onGoConfig={() => navigate(msUrl(selected))}
           />
         ) : (
