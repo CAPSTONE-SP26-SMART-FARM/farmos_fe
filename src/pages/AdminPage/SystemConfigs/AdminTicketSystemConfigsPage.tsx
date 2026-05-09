@@ -45,8 +45,8 @@ import {
 import { toast } from "sonner";
 
 // ── Page Admin — Cấu hình quy trình ticket (B18) ─────────────────────────
-// 9 ticket key prefix `ticket.`. BE endpoint single-key upsert
-// (`PATCH /admin/system-configs/:key`); FE gọi tuần tự, chỉ key đã đổi.
+// 7 ticket key (xem TICKET_SYSTEM_CONFIG_KEY_MAP). BE endpoint single-key
+// upsert (`PATCH /admin/system-configs/:key`); FE gọi tuần tự, chỉ key đã đổi.
 
 interface FieldDef {
   key: TicketSystemConfigFormKey;
@@ -58,7 +58,7 @@ interface FieldDef {
   liveHelper?: (value: number) => string;
 }
 
-// Helpers chuyển seconds → human readable.
+// Helpers human-readable theo đơn vị nguồn (BE lưu hours/minutes/seconds tuỳ key).
 function formatSecondsHuman(s: number): string {
   if (!Number.isFinite(s) || s <= 0) return "";
   if (s < 60) return `≈ ${s} giây`;
@@ -66,18 +66,29 @@ function formatSecondsHuman(s: number): string {
   if (s < 86400) return `≈ ${(s / 3600).toFixed(s % 3600 === 0 ? 0 : 1)} giờ`;
   return `≈ ${(s / 86400).toFixed(s % 86400 === 0 ? 0 : 1)} ngày`;
 }
+function formatMinutesHuman(m: number): string {
+  if (!Number.isFinite(m) || m <= 0) return "";
+  if (m < 60) return "";
+  if (m < 1440) return `≈ ${(m / 60).toFixed(m % 60 === 0 ? 0 : 1)} giờ`;
+  return `≈ ${(m / 1440).toFixed(m % 1440 === 0 ? 0 : 1)} ngày`;
+}
+function formatHoursHuman(h: number): string {
+  if (!Number.isFinite(h) || h <= 0) return "";
+  if (h < 24) return "";
+  return `≈ ${(h / 24).toFixed(h % 24 === 0 ? 0 : 1)} ngày`;
+}
 
 const GROUP_LIFECYCLE: FieldDef[] = [
   {
-    key: "auto_close_window_seconds",
+    key: "auto_close_hours",
     label: "Thời gian tự đóng ticket",
-    unit: "giây",
+    unit: "giờ",
     helperText:
       "Sau khi bác sĩ giải quyết, nếu người tạo không xác nhận trong khoảng này, hệ thống tự đóng và thanh toán hoa hồng.",
-    liveHelper: formatSecondsHuman,
+    liveHelper: formatHoursHuman,
   },
   {
-    key: "auto_close_reminder_fraction",
+    key: "auto_close_notify_at_fraction",
     label: "Thời điểm gửi nhắc đóng ticket",
     unit: "tỉ lệ",
     helperText:
@@ -85,26 +96,26 @@ const GROUP_LIFECYCLE: FieldDef[] = [
     step: 0.001,
   },
   {
-    key: "doctor_inactivity_timeout_seconds",
+    key: "doctor_silence_minutes",
     label: "Ngưỡng im lặng của bác sĩ",
-    unit: "giây",
+    unit: "phút",
     helperText:
       "Bác sĩ đã nhận ticket nhưng không xử lý quá thời gian này, hệ thống sẽ hỏi người tạo chuyển sang AI xử lý hoặc hoàn ticket.",
-    liveHelper: formatSecondsHuman,
+    liveHelper: formatMinutesHuman,
   },
   {
-    key: "ai_fallback_timeout_seconds",
+    key: "ai_fallback_minutes",
     label: "Thời gian chờ AI tiếp nhận",
-    unit: "giây",
+    unit: "phút",
     helperText:
       "Sau thời gian này nếu không bác sĩ nào nhận ticket, AI sẽ tự xử lý.",
-    liveHelper: formatSecondsHuman,
+    liveHelper: formatMinutesHuman,
   },
 ];
 
 const GROUP_PRIORITY_WINDOW: FieldDef[] = [
   {
-    key: "broadcast_tier1_delay_seconds",
+    key: "priority_window_platinum_sec",
     label: "Cửa sổ Bạch kim (tier 1)",
     unit: "giây",
     helperText:
@@ -112,7 +123,7 @@ const GROUP_PRIORITY_WINDOW: FieldDef[] = [
     liveHelper: formatSecondsHuman,
   },
   {
-    key: "broadcast_tier2_delay_seconds",
+    key: "priority_window_gold_sec",
     label: "Cửa sổ Vàng (tier 2)",
     unit: "giây",
     helperText:
@@ -120,7 +131,7 @@ const GROUP_PRIORITY_WINDOW: FieldDef[] = [
     liveHelper: formatSecondsHuman,
   },
   {
-    key: "broadcast_tier3_delay_seconds",
+    key: "priority_window_fanout_sec",
     label: "Cửa sổ Bạc + Đồng (tier 3)",
     unit: "giây",
     helperText:
@@ -129,9 +140,9 @@ const GROUP_PRIORITY_WINDOW: FieldDef[] = [
   },
 ];
 
-// `GROUP_QUALITY` (prescription_usage_min_chars + solution_field_min_chars) đã
-// ẩn khỏi UI theo yêu cầu — schema vẫn parse field từ API để form không lỗi,
-// nhưng admin không sửa qua UI này. Nếu cần chỉnh, gọi API trực tiếp.
+// `prescription_usage_min_chars` + `solution_field_min_chars` chưa tồn tại trong
+// `TICKET_SYSTEM_CONFIG_SEEDS` của BE nên không hiển thị ở UI này. Khi BE bổ
+// sung 2 key đó, thêm vào schema + key map và render thêm group "Chất lượng".
 
 // Helper: lookup BE config item theo FE form key.
 function findConfigItem(
@@ -348,7 +359,7 @@ export default function AdminTicketSystemConfigsPage() {
         <CardContent>
           {configsQuery.isLoading ? (
             <div className="space-y-3">
-              {Array.from({ length: 9 }).map((_, i) => (
+              {Array.from({ length: 7 }).map((_, i) => (
                 <Skeleton
                   key={i}
                   className="h-10 w-full"
