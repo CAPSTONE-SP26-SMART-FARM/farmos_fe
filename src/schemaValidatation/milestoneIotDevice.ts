@@ -64,6 +64,13 @@ export const GetMilestoneAssignmentDetailResSchema = z.object({
   data: MilestoneAssignmentDetailResSchema.nullable(),
 });
 
+// List ALL active assignments for a milestone — needed because one milestone
+// may have multiple devices after `assign-bulk`. Singular `getAssignment`
+// returns just the latest one (with a warning).
+export const ListMilestoneAssignmentsResSchema = z.object({
+  data: z.array(MilestoneAssignmentDetailResSchema),
+});
+
 // ── Assign / Unassign Bodies ──────────────────────────────────────────────────
 
 export const AssignIotDeviceBodySchema = z.object({
@@ -72,6 +79,31 @@ export const AssignIotDeviceBodySchema = z.object({
 
 export const UnassignIotDeviceBodySchema = z.object({
   iotDeviceId: z.string().uuid(),
+});
+
+// ── Bulk Assign ───────────────────────────────────────────────────────────────
+
+export const BulkAssignIotDevicesBodySchema = z.object({
+  iotDeviceIds: z.array(z.string().uuid()).min(1).max(50),
+});
+
+export const BulkAssignItemResultSchema = z.object({
+  iotDeviceId: z.string().uuid(),
+  ok: z.boolean(),
+  assignmentId: z.string().uuid().nullable(),
+  boundSensorTypes: z.array(z.string()),
+  missingSensorTypes: z.array(z.string()),
+  error: z.string().nullable(),
+});
+
+export const BulkAssignIotDevicesResSchema = z.object({
+  milestoneId: z.string().uuid(),
+  results: z.array(BulkAssignItemResultSchema),
+  summary: z.object({
+    attempted: z.number().int(),
+    succeeded: z.number().int(),
+    failed: z.number().int(),
+  }),
 });
 
 // ── Sensor Binding ────────────────────────────────────────────────────────────
@@ -125,6 +157,12 @@ export type MilestoneAssignmentDetailResType = z.infer<
 export type GetMilestoneAssignmentDetailResType = z.infer<
   typeof GetMilestoneAssignmentDetailResSchema
 >;
+export type MilestoneAssignmentDetailItemType = z.infer<
+  typeof MilestoneAssignmentDetailResSchema
+>;
+export type ListMilestoneAssignmentsResType = z.infer<
+  typeof ListMilestoneAssignmentsResSchema
+>;
 export type AssignIotDeviceBodyType = z.infer<typeof AssignIotDeviceBodySchema>;
 export type UnassignIotDeviceBodyType = z.infer<
   typeof UnassignIotDeviceBodySchema
@@ -132,3 +170,12 @@ export type UnassignIotDeviceBodyType = z.infer<
 export type ListBoundSensorsResType = z.infer<typeof ListBoundSensorsResSchema>;
 export type BindSensorsBodyType = z.infer<typeof BindSensorsBodySchema>;
 export type UnbindSensorsBodyType = z.infer<typeof UnbindSensorsBodySchema>;
+export type BulkAssignIotDevicesBodyType = z.infer<
+  typeof BulkAssignIotDevicesBodySchema
+>;
+export type BulkAssignItemResultType = z.infer<
+  typeof BulkAssignItemResultSchema
+>;
+export type BulkAssignIotDevicesResType = z.infer<
+  typeof BulkAssignIotDevicesResSchema
+>;

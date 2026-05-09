@@ -25,7 +25,9 @@ import {
   Activity,
   Wrench,
   Power,
-  PowerOff,
+  PackageCheck,
+  Package,
+  AlertCircle,
   ShieldOff,
 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -46,27 +48,40 @@ const STATUS_META: Record<
   string,
   { label: string; className: string; icon: typeof Activity }
 > = {
+  available: {
+    label: "Có thể sử dụng",
+    className:
+      "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+    icon: Package,
+  },
+  purchase: {
+    label: "Khả dụng",
+    className:
+      "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
+    icon: PackageCheck,
+  },
+  install: {
+    label: "Đang lắp đặt",
+    className:
+      "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300",
+    icon: Wrench,
+  },
   active: {
     label: "Hoạt động",
     className:
       "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300",
     icon: Power,
   },
-  inactive: {
-    label: "Tắt",
+  error: {
+    label: "Lỗi",
     className:
-      "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
-    icon: PowerOff,
+      "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
+    icon: AlertCircle,
   },
-  maintenance: {
-    label: "Bảo trì",
+  revoked: {
+    label: "Thu hồi",
     className:
-      "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300",
-    icon: Wrench,
-  },
-  retired: {
-    label: "Ngưng hoạt động",
-    className: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
+      "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
     icon: ShieldOff,
   },
 };
@@ -129,14 +144,25 @@ export default function IotDeviceList({
     actor === "manager",
   );
 
+  // Stats: query nhỏ riêng để lấy meta.totalItems theo từng status, không phụ
+  // thuộc filter hiện tại trên list. Tổng = số device trong provision của owner
+  // (BE đã filter theo ownerId). Cài đặt / Hoạt động / Lỗi = breakdown theo status.
+  const useStat = actor === "owner" ? useOwnerListIotDevices : useManagerListIotDevices;
+  const totalStatQuery = useStat(farmId, { page: 1, limit: 1 }, true);
+  const installStatQuery = useStat(farmId, { page: 1, limit: 1, status: "install" }, true);
+  const activeStatQuery = useStat(farmId, { page: 1, limit: 1, status: "active" }, true);
+  const errorStatQuery = useStat(farmId, { page: 1, limit: 1, status: "error" }, true);
+
   const data = actor === "owner" ? ownerListQuery.data : managerListQuery.data;
   const isLoading =
     actor === "owner" ? ownerListQuery.isLoading : managerListQuery.isLoading;
 
   const devices = data?.data?.data ?? [];
   const meta = data?.data?.meta;
-  const activeCount = devices.filter((d) => d.status === "active").length;
-  const totalCount = meta?.totalItems ?? devices.length;
+  const totalCount = totalStatQuery.data?.data?.meta?.totalItems ?? 0;
+  const installCount = installStatQuery.data?.data?.meta?.totalItems ?? 0;
+  const activeCount = activeStatQuery.data?.data?.meta?.totalItems ?? 0;
+  const errorCount = errorStatQuery.data?.data?.meta?.totalItems ?? 0;
 
   return (
     <Card className="overflow-hidden border-border/70">
@@ -179,10 +205,10 @@ export default function IotDeviceList({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả trạng thái</SelectItem>
+              <SelectItem value="purchase">Khả dụng</SelectItem>
+              <SelectItem value="install">Đang cài đặt</SelectItem>
               <SelectItem value="active">Hoạt động</SelectItem>
-              <SelectItem value="inactive">Tắt</SelectItem>
-              <SelectItem value="maintenance">Bảo trì</SelectItem>
-              <SelectItem value="retired">Ngưng hoạt động</SelectItem>
+              <SelectItem value="error">Lỗi</SelectItem>
             </SelectContent>
           </Select>
 
@@ -209,7 +235,7 @@ export default function IotDeviceList({
       </CardHeader>
 
       <CardContent className="space-y-4 pt-5">
-        <div className="grid gap-2 md:grid-cols-2">
+        <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4">
           <div className="rounded-lg border bg-background p-3">
             <div className="flex items-center gap-1.5">
               <Cpu className="h-3.5 w-3.5 text-primary" />
@@ -221,12 +247,30 @@ export default function IotDeviceList({
           </div>
           <div className="rounded-lg border bg-background p-3">
             <div className="flex items-center gap-1.5">
+              <Wrench className="h-3.5 w-3.5 text-amber-500" />
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                Đang cài đặt
+              </p>
+            </div>
+            <p className="mt-1 text-xl font-semibold">{installCount}</p>
+          </div>
+          <div className="rounded-lg border bg-background p-3">
+            <div className="flex items-center gap-1.5">
               <Activity className="h-3.5 w-3.5 text-emerald-500" />
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Đang hoạt động
+                Hoạt động
               </p>
             </div>
             <p className="mt-1 text-xl font-semibold">{activeCount}</p>
+          </div>
+          <div className="rounded-lg border bg-background p-3">
+            <div className="flex items-center gap-1.5">
+              <AlertCircle className="h-3.5 w-3.5 text-red-500" />
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                Lỗi
+              </p>
+            </div>
+            <p className="mt-1 text-xl font-semibold">{errorCount}</p>
           </div>
         </div>
 
@@ -294,7 +338,7 @@ function DeviceCard({
   device: IotDeviceResType;
   onDetail: () => void;
 }) {
-  const sMeta = STATUS_META[device.status] ?? STATUS_META.inactive;
+  const sMeta = STATUS_META[device.status] ?? STATUS_META.available;
   const SIcon = sMeta.icon;
   const DIcon = DEVICE_TYPE_ICON[device.deviceType] ?? Cpu;
 

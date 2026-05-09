@@ -224,16 +224,24 @@ export const API_ENDPOINTS = {
         `/production-milestone/${milestoneId}/manager/crop-season/${cropSeasonId}`,
       DELETE: (milestoneId: string, cropSeasonId: string) =>
         `/production-milestone/${milestoneId}/manager/crop-season/${cropSeasonId}`,
+      IOT_CONFIG: (cropSeasonId: string, milestoneId: string) =>
+        `/production-milestone/manager/crop-season/${cropSeasonId}/milestones/${milestoneId}/iot-config`,
     },
     MILESTONE_IOT_DEVICE: {
       ASSIGNMENT: (milestoneId: string) =>
         `/production-milestone-iot-device/manager/milestone/${milestoneId}/assignment`,
+      ASSIGNMENTS: (milestoneId: string) =>
+        `/production-milestone-iot-device/manager/milestone/${milestoneId}/assignments`,
       AVAILABLE: (milestoneId: string) =>
         `/production-milestone-iot-device/manager/milestone/${milestoneId}/available`,
       ASSIGN: (milestoneId: string) =>
         `/production-milestone-iot-device/manager/milestone/${milestoneId}/assign`,
       UNASSIGN: (milestoneId: string) =>
         `/production-milestone-iot-device/manager/milestone/${milestoneId}/unassign`,
+      PURCHASE_BOARDS: (milestoneId: string) =>
+        `/production-milestone-iot-device/manager/milestone/${milestoneId}/purchase-boards`,
+      ASSIGN_BULK: (milestoneId: string) =>
+        `/production-milestone-iot-device/manager/milestone/${milestoneId}/assign-bulk`,
     },
     MILESTONE_SENSOR_BINDING: {
       LIST: (assignmentId: string) =>
@@ -333,16 +341,24 @@ export const API_ENDPOINTS = {
         `/production-milestone/owner/crop-season/${cropSeasonId}`,
       DETAIL: (milestoneId: string, cropSeasonId: string) =>
         `/production-milestone/${milestoneId}/owner/crop-season/${cropSeasonId}`,
+      IOT_CONFIG: (cropSeasonId: string, milestoneId: string) =>
+        `/production-milestone/owner/crop-season/${cropSeasonId}/milestones/${milestoneId}/iot-config`,
     },
     MILESTONE_IOT_DEVICE: {
       ASSIGNMENT: (milestoneId: string) =>
         `/production-milestone-iot-device/owner/milestone/${milestoneId}/assignment`,
+      ASSIGNMENTS: (milestoneId: string) =>
+        `/production-milestone-iot-device/owner/milestone/${milestoneId}/assignments`,
       AVAILABLE: (milestoneId: string) =>
         `/production-milestone-iot-device/owner/milestone/${milestoneId}/available`,
       ASSIGN: (milestoneId: string) =>
         `/production-milestone-iot-device/owner/milestone/${milestoneId}/assign`,
       UNASSIGN: (milestoneId: string) =>
         `/production-milestone-iot-device/owner/milestone/${milestoneId}/unassign`,
+      PURCHASE_BOARDS: (milestoneId: string) =>
+        `/production-milestone-iot-device/owner/milestone/${milestoneId}/purchase-boards`,
+      ASSIGN_BULK: (milestoneId: string) =>
+        `/production-milestone-iot-device/owner/milestone/${milestoneId}/assign-bulk`,
     },
     MILESTONE_SENSOR_BINDING: {
       LIST: (assignmentId: string) =>
@@ -882,6 +898,12 @@ export const QUERY_KEYS = {
         milestoneId,
         "assignment",
       ],
+      assignments: (milestoneId: string) => [
+        "manager",
+        "production-milestones",
+        milestoneId,
+        "assignments",
+      ],
       availableDevices: (
         milestoneId: string,
         query?: Record<string, unknown>,
@@ -891,6 +913,23 @@ export const QUERY_KEYS = {
         milestoneId,
         "available-devices",
         ...(query !== undefined ? [query] : []),
+      ],
+      purchaseBoards: (
+        milestoneId: string,
+        query?: Record<string, unknown>,
+      ) => [
+        "manager",
+        "production-milestones",
+        milestoneId,
+        "purchase-boards",
+        ...(query !== undefined ? [query] : []),
+      ],
+      iotConfig: (cropSeasonId: string, milestoneId: string) => [
+        "manager",
+        "production-milestones",
+        cropSeasonId,
+        milestoneId,
+        "iot-config",
       ],
       boundSensors: (assignmentId: string) => [
         "manager",
@@ -1063,6 +1102,12 @@ export const QUERY_KEYS = {
         milestoneId,
         "assignment",
       ],
+      assignments: (milestoneId: string) => [
+        "owner",
+        "production-milestones",
+        milestoneId,
+        "assignments",
+      ],
       availableDevices: (
         milestoneId: string,
         query?: Record<string, unknown>,
@@ -1072,6 +1117,23 @@ export const QUERY_KEYS = {
         milestoneId,
         "available-devices",
         ...(query !== undefined ? [query] : []),
+      ],
+      purchaseBoards: (
+        milestoneId: string,
+        query?: Record<string, unknown>,
+      ) => [
+        "owner",
+        "production-milestones",
+        milestoneId,
+        "purchase-boards",
+        ...(query !== undefined ? [query] : []),
+      ],
+      iotConfig: (cropSeasonId: string, milestoneId: string) => [
+        "owner",
+        "production-milestones",
+        cropSeasonId,
+        milestoneId,
+        "iot-config",
       ],
       boundSensors: (assignmentId: string) => [
         "owner",

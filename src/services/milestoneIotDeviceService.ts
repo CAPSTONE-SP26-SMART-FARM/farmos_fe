@@ -3,10 +3,13 @@ import { api } from "@/lib/axios";
 import type {
   AssignIotDeviceBodyType,
   BindSensorsBodyType,
+  BulkAssignIotDevicesBodyType,
+  BulkAssignIotDevicesResType,
   GetMilestoneAssignmentDetailResType,
   ListAvailableIotDevicesQueryType,
   ListAvailableIotDevicesResType,
   ListBoundSensorsResType,
+  ListMilestoneAssignmentsResType,
   UnassignIotDeviceBodyType,
   UnbindSensorsBodyType,
 } from "@/schemaValidatation/milestoneIotDevice";
@@ -23,6 +26,11 @@ export const milestoneIotDeviceService = {
   getAssignment: (milestoneId: string) =>
     api.get<GetMilestoneAssignmentDetailResType>(
       MANAGER.MILESTONE_IOT_DEVICE.ASSIGNMENT(milestoneId),
+    ),
+
+  listAssignments: (milestoneId: string) =>
+    api.get<ListMilestoneAssignmentsResType>(
+      MANAGER.MILESTONE_IOT_DEVICE.ASSIGNMENTS(milestoneId),
     ),
 
   listAvailable: (
@@ -49,12 +57,36 @@ export const milestoneIotDeviceService = {
       MANAGER.MILESTONE_IOT_DEVICE.UNASSIGN(milestoneId),
       body,
     ),
+
+  listPurchaseBoards: (
+    milestoneId: string,
+    query: ListAvailableIotDevicesQueryType,
+  ) =>
+    api.get<ListAvailableIotDevicesResType>(
+      MANAGER.MILESTONE_IOT_DEVICE.PURCHASE_BOARDS(milestoneId) +
+        "?" +
+        queryString.stringify(
+          { ...query },
+          { skipEmptyString: true, skipNull: true },
+        ),
+    ),
+
+  bulkAssign: (milestoneId: string, body: BulkAssignIotDevicesBodyType) =>
+    api.post<BulkAssignIotDevicesResType, BulkAssignIotDevicesBodyType>(
+      MANAGER.MILESTONE_IOT_DEVICE.ASSIGN_BULK(milestoneId),
+      body,
+    ),
 };
 
 export const ownerMilestoneIotDeviceService = {
   getAssignment: (milestoneId: string) =>
     api.get<GetMilestoneAssignmentDetailResType>(
       OWNER.MILESTONE_IOT_DEVICE.ASSIGNMENT(milestoneId),
+    ),
+
+  listAssignments: (milestoneId: string) =>
+    api.get<ListMilestoneAssignmentsResType>(
+      OWNER.MILESTONE_IOT_DEVICE.ASSIGNMENTS(milestoneId),
     ),
 
   listAvailable: (
@@ -79,6 +111,25 @@ export const ownerMilestoneIotDeviceService = {
   unassign: (milestoneId: string, body: UnassignIotDeviceBodyType) =>
     api.post<MessageResType, UnassignIotDeviceBodyType>(
       OWNER.MILESTONE_IOT_DEVICE.UNASSIGN(milestoneId),
+      body,
+    ),
+
+  listPurchaseBoards: (
+    milestoneId: string,
+    query: ListAvailableIotDevicesQueryType,
+  ) =>
+    api.get<ListAvailableIotDevicesResType>(
+      OWNER.MILESTONE_IOT_DEVICE.PURCHASE_BOARDS(milestoneId) +
+        "?" +
+        queryString.stringify(
+          { ...query },
+          { skipEmptyString: true, skipNull: true },
+        ),
+    ),
+
+  bulkAssign: (milestoneId: string, body: BulkAssignIotDevicesBodyType) =>
+    api.post<BulkAssignIotDevicesResType, BulkAssignIotDevicesBodyType>(
+      OWNER.MILESTONE_IOT_DEVICE.ASSIGN_BULK(milestoneId),
       body,
     ),
 };

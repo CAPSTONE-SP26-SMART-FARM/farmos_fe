@@ -3,6 +3,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Cpu, Radio } from "lucide-react";
 import { format } from "date-fns";
 import { useOwnerMilestoneAssignment } from "@/queries/useProductionMilestone";
+import {
+  formatMilestoneIotDeviceWithOptionalCode,
+  milestoneIotModuleTypeVi,
+} from "@/lib/milestone-iot-display";
 
 const SENSOR_TYPE_LABELS: Record<string, string> = {
   soil_moisture: "Độ ẩm đất",
@@ -27,6 +31,10 @@ export function MilestoneIotDetail({ milestoneId }: { milestoneId: string }) {
   const assignment = (assignmentQuery.data?.data as any)?.data ?? null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sensors: any[] = assignment?.sensors ?? [];
+  const moduleTypeVi =
+    assignment != null
+      ? milestoneIotModuleTypeVi(assignment.device.deviceType)
+      : undefined;
 
   if (assignmentQuery.isLoading) {
     return (
@@ -49,11 +57,13 @@ export function MilestoneIotDetail({ milestoneId }: { milestoneId: string }) {
         ) : (
           <div className="rounded-md border p-2.5 bg-background text-sm space-y-0.5">
             <p className="font-medium text-xs">
-              {assignment.device.deviceName} ({assignment.device.deviceCode})
+              {formatMilestoneIotDeviceWithOptionalCode(assignment.device)}
             </p>
-            <p className="text-muted-foreground text-xs capitalize">
-              Loại: {assignment.device.deviceType.replace(/_/g, " ")}
-            </p>
+            {moduleTypeVi ? (
+              <p className="text-muted-foreground text-xs">
+                Loại: {moduleTypeVi}
+              </p>
+            ) : null}
             <p className="text-muted-foreground text-xs">
               Thời điểm gán:{" "}
               {assignment.assignedAt ? format(new Date(assignment.assignedAt), "dd/MM/yyyy") : "—"}

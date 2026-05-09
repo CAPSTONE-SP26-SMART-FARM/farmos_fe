@@ -30,7 +30,6 @@ import {
   PackagePlus,
   ShoppingBag,
   Wifi,
-  Zap,
 } from "lucide-react";
 import { useState } from "react";
 import IotKitOrderDetailDialog from "@/pages/OwnerPage/Subscriptions/components/IotKitOrderDetailDialog";
@@ -62,11 +61,30 @@ const ORDER_STATUS_META: Record<
 };
 
 const DEVICE_STATUS_LABEL: Record<string, string> = {
+  available: "Có thể sử dụng",
+  purchase: "Khả dụng",
+  install: "Đang cài đặt",
   active: "Hoạt động",
-  inactive: "Tắt",
-  maintenance: "Bảo trì",
-  retired: "Ngưng hoạt động",
+  error: "Lỗi",
+  revoked: "Thu hồi",
 };
+
+const DEVICE_STATUS_BADGE_CLASS: Record<string, string> = {
+  available:
+    "border-slate-300 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200",
+  purchase:
+    "border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",
+  install:
+    "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300",
+  active:
+    "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
+  error:
+    "border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300",
+  revoked:
+    "border-zinc-300 bg-zinc-100 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300",
+};
+
+const DEVICES_PER_PAGE = 8;
 
 export default function OwnerIotTrackingPage({
   embedded = false,
@@ -166,7 +184,7 @@ export default function OwnerIotTrackingPage({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-3">
             <KpiCard
               icon={Package}
               label="Hạn mức gói"
@@ -188,12 +206,6 @@ export default function OwnerIotTrackingPage({
               label="Đang sử dụng"
               value={quota.used}
               tone={usageRatio >= 0.8 ? "warning" : "default"}
-            />
-            <KpiCard
-              icon={Zap}
-              label="IoT kit chưa sử dụng"
-              value={quota.remaining}
-              tone={quota.remaining <= 0 ? "danger" : "success"}
             />
           </div>
         </CardContent>
@@ -362,6 +374,14 @@ function DeviceTable({
   emptyText: string;
   compact?: boolean;
 }) {
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(devices.length / DEVICES_PER_PAGE));
+  const safePage = Math.min(page, totalPages);
+  const pageItems = devices.slice(
+    (safePage - 1) * DEVICES_PER_PAGE,
+    safePage * DEVICES_PER_PAGE,
+  );
+
   if (devices.length === 0) {
     return (
       <p
@@ -389,11 +409,17 @@ function DeviceTable({
     {
       accessorKey: "status",
       header: "Trạng thái",
-      cell: ({ row }) => (
-        <Badge variant="outline">
-          {DEVICE_STATUS_LABEL[row.original.status] ?? row.original.status}
-        </Badge>
-      ),
+      cell: ({ row }) => {
+        const s = row.original.status;
+        return (
+          <Badge
+            variant="outline"
+            className={DEVICE_STATUS_BADGE_CLASS[s]}
+          >
+            {DEVICE_STATUS_LABEL[s] ?? s}
+          </Badge>
+        );
+      },
     },
     {
       accessorKey: "provisionedAt",
@@ -407,12 +433,39 @@ function DeviceTable({
   ];
 
   return (
-    <div className={cn(!compact && "overflow-x-auto rounded-lg border")}>
-      <DataTable
-        columns={columns}
-        data={devices}
-        emptyText={emptyText}
-      />
+    <div className="space-y-3">
+      <div className={cn(!compact && "overflow-x-auto rounded-lg border")}>
+        <DataTable
+          columns={columns}
+          data={pageItems}
+          emptyText={emptyText}
+        />
+      </div>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>
+            Trang {safePage} / {totalPages} ({devices.length} thiết bị)
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={safePage <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              Trước
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={safePage >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            >
+              Sau
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

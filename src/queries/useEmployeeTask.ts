@@ -10,9 +10,32 @@ import type {
   ListTasksWithContextQueryType,
   UpdateEmployeeTaskBodyType,
 } from "@/schemaValidatation/employeeTask";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from "@tanstack/react-query";
 import { toast } from "sonner";
 import { onMutationError } from "@/lib/axios";
+
+export function invalidateManagerEmployeeTasksQueriesForMilestone(
+  qc: QueryClient,
+  milestoneId: string,
+) {
+  const predicate = (query: { queryKey: unknown }) => {
+    const k = query.queryKey as unknown;
+    return (
+      Array.isArray(k) &&
+      k[0] === "manager" &&
+      k[1] === "employee-tasks" &&
+      (k[2] === milestoneId || k[3] === milestoneId)
+    );
+  };
+  qc.invalidateQueries({ predicate });
+  // Force refetch for active queries to avoid "still cached" UX.
+  qc.refetchQueries({ predicate, type: "active" });
+}
 
 // ============================================================
 // Manager

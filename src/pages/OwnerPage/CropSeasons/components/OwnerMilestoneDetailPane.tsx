@@ -15,6 +15,9 @@ import {
   MILESTONE_STATUS_META,
   formatDate,
 } from "@/pages/ManagerPage/CropSeasons/components/helpers";
+import {
+  formatMilestoneIotLinkedSensorsSubtitle,
+} from "@/lib/milestone-iot-display";
 
 type BoundSensor = z.infer<typeof AssignmentBoundSensorResSchema>;
 
@@ -98,21 +101,25 @@ function SensorConfigRow({ sensor }: { sensor: BoundSensor }) {
 
 function IotConfigContent({
   sensors,
-  deviceName,
-  deviceCode,
+  device,
 }: {
   sensors: BoundSensor[];
-  deviceName: string;
-  deviceCode: string;
+  device: {
+    deviceName: string;
+    deviceCode: string;
+    deviceType: string;
+  };
 }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3 rounded-md border px-3 py-2.5 text-sm">
         <Cpu className="h-4 w-4 text-muted-foreground shrink-0" />
         <div className="min-w-0">
-          <p className="font-medium truncate">{deviceName}</p>
+          <p className="font-medium truncate">
+            {device.deviceName?.trim() || "Thiết bị không xác định"}
+          </p>
           <p className="text-xs text-muted-foreground">
-            {deviceCode} · {sensors.length} cảm biến liên kết
+            {formatMilestoneIotLinkedSensorsSubtitle(device, sensors.length)}
           </p>
         </div>
         <div className="ml-auto flex items-center gap-1.5 shrink-0">
@@ -167,8 +174,7 @@ function IotConfigTab({ milestoneId }: { milestoneId: string }) {
   return (
     <IotConfigContent
       sensors={assignment.sensors}
-      deviceName={assignment.device.deviceName}
-      deviceCode={assignment.device.deviceCode}
+      device={assignment.device}
     />
   );
 }

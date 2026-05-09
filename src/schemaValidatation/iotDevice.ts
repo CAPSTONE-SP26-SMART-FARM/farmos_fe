@@ -4,10 +4,12 @@ import { PagingRequestSchema, PagingResponseSchema } from "@/types/api";
 // ── Enums ──────────────────────────────────────────────────────────────
 
 export const DeviceStatusSchema = z.enum([
+  "available",
+  "purchase",
+  "install",
   "active",
-  "inactive",
-  "maintenance",
-  "retired",
+  "error",
+  "revoked",
 ]);
 
 export const IotDeviceTypeSchema = z.enum([
