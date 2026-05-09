@@ -235,10 +235,12 @@ export function DailyLogsTab({ zoneId, zoneName, cropSeason, readOnly = false }:
               <NotebookPen className="h-3.5 w-3.5" />
               Nhật ký nhiệm vụ
             </TabsTrigger>
-            <TabsTrigger value="today" className="flex items-center gap-1.5">
-              <ListTodo className="h-3.5 w-3.5" />
-              Nhiệm vụ hôm nay
-            </TabsTrigger>
+            {!readOnly && (
+              <TabsTrigger value="today" className="flex items-center gap-1.5">
+                <ListTodo className="h-3.5 w-3.5" />
+                Nhiệm vụ hôm nay
+              </TabsTrigger>
+            )}
             <TabsTrigger value="tasks" className="flex items-center gap-1.5">
               <ClipboardList className="h-3.5 w-3.5" />
               Quản lý task
@@ -253,9 +255,11 @@ export function DailyLogsTab({ zoneId, zoneName, cropSeason, readOnly = false }:
             <LogsPanel zoneId={zoneId} zoneName={zoneName} readOnly={readOnly} />
           </TabsContent>
 
-          <TabsContent value="today" className="mt-0">
-            <TodayZoneTasksPanel zoneId={zoneId} />
-          </TabsContent>
+          {!readOnly && (
+            <TabsContent value="today" className="mt-0">
+              <TodayZoneTasksPanel zoneId={zoneId} />
+            </TabsContent>
+          )}
 
           <TabsContent value="tasks" className="mt-0">
             <TaskManagementPanel cropSeason={cropSeason} readOnly={readOnly} />

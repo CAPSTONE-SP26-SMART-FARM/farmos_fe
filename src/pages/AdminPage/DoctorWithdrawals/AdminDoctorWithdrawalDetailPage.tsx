@@ -670,8 +670,8 @@ function AuditLog({
               <div className="pb-3">
                 <p className="text-sm font-medium">{entry.event}</p>
                 <p className="text-xs text-muted-foreground">
-                  {formatDateTimeVi(entry.at)} · {entry.actor ?? "—"} (
-                  {ACTOR_ROLE_LABEL[entry.actorRole]})
+                  {formatDateTimeVi(entry.at)} ·{" "}
+                  {ACTOR_ROLE_LABEL[entry.actorRole]}
                 </p>
                 {entry.note && (
                   <p className="mt-0.5 text-xs text-muted-foreground italic">
@@ -697,7 +697,7 @@ function AdminDoctorWithdrawalDetailPage() {
 
   useDynamicBreadcrumb(
     `/dashboard/admin/doctor-withdrawals/${id}`,
-    w ? `Yêu cầu ${w.id.slice(0, 8)}…` : undefined,
+    w ? `Yêu cầu - ${w.doctorName ?? "Bác sĩ"}` : undefined,
   );
 
   if (detailResult.isLoading) {
@@ -743,7 +743,7 @@ function AdminDoctorWithdrawalDetailPage() {
             </p>
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-semibold tracking-tight">
-                {w.id.slice(0, 8)}…
+                {w.doctorName ?? "Bác sĩ"}
               </h1>
               <Badge
                 variant={STATUS_VARIANT[w.status]}
@@ -752,7 +752,9 @@ function AdminDoctorWithdrawalDetailPage() {
                 {STATUS_LABELS[w.status]}
               </Badge>
             </div>
-            <p className="text-xs text-muted-foreground font-mono">{w.id}</p>
+            {w.doctorEmail && (
+              <p className="text-xs text-muted-foreground">{w.doctorEmail}</p>
+            )}
           </div>
         </div>
         <Button
@@ -858,7 +860,7 @@ function AdminDoctorWithdrawalDetailPage() {
       </div>
 
       {/* Transfer info */}
-      {(w.transferReference || w.paidBy || w.paidAt) && (
+      {(w.transferReference || w.paidAt) && (
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
@@ -873,12 +875,6 @@ function AdminDoctorWithdrawalDetailPage() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Mã giao dịch</span>
                 <span className="font-mono">{w.transferReference}</span>
-              </div>
-            )}
-            {w.paidBy && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Người chuyển</span>
-                <span className="font-mono">{w.paidBy.slice(0, 8)}…</span>
               </div>
             )}
             {w.paidAt && (

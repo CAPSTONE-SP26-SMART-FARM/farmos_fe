@@ -68,20 +68,20 @@ const STATUS_OPTIONS: { label: string; value: string }[] = [
 // ── Columns ───────────────────────────────────────────────────────────────
 const columns: ColumnDef<WithdrawalRequestResType>[] = [
   {
-    accessorKey: "id",
-    header: "Mã yêu cầu",
+    accessorKey: "doctorName",
+    header: "Bác sĩ",
     cell: ({ row }) => (
-      <span className="font-mono text-xs text-muted-foreground">
-        {row.original.id.slice(0, 8)}…
+      <span className="font-medium">
+        {row.original.doctorName ?? "—"}
       </span>
     ),
   },
   {
-    accessorKey: "doctorId",
-    header: "ID Bác sĩ",
+    accessorKey: "doctorEmail",
+    header: "Email",
     cell: ({ row }) => (
-      <span className="font-mono text-xs text-muted-foreground">
-        {row.original.doctorId.slice(0, 8)}…
+      <span className="text-sm text-muted-foreground">
+        {row.original.doctorEmail ?? "—"}
       </span>
     ),
   },
@@ -166,7 +166,7 @@ function AdminDoctorWithdrawalsPage() {
       statusFilter !== "all"
         ? (statusFilter as ListAdminWithdrawalsQueryType["status"])
         : undefined,
-    doctorId: debouncedSearch.trim() || undefined,
+    q: debouncedSearch.trim() || undefined,
   };
 
   const listResult = useAdminListWithdrawals(query);
@@ -201,7 +201,7 @@ function AdminDoctorWithdrawalsPage() {
       {/* Filters */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center">
         <Input
-          placeholder="Tìm theo ID Bác sĩ..."
+          placeholder="Tìm theo tên hoặc email bác sĩ..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-xs"

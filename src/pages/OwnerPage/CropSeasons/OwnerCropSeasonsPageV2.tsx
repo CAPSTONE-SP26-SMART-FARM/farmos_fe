@@ -12,7 +12,6 @@ import {
   Layers,
   Radio,
   Send,
-  SlidersHorizontal,
   Sprout,
   Wheat,
 } from "lucide-react";
@@ -28,7 +27,6 @@ import { OwnerSensorOverviewTab } from "./components/OwnerSensorOverviewTab";
 import { OwnerIncidentTab } from "./components/OwnerIncidentTab";
 import { OwnerDailyLogsTab } from "./components/OwnerDailyLogsTab";
 import HarvestRecordTab from "@/components/common/HarvestRecord/HarvestRecordTab";
-import TrackingConfigPanel from "@/pages/ManagerPage/CropSeasons/components/TrackingConfigPanel";
 import { ZoneSwitcherCombobox } from "@/pages/ManagerPage/CropSeasons/components/ZoneSwitcherCombobox";
 import { ZoneLanding } from "@/pages/ManagerPage/CropSeasons/components/ZoneLanding";
 import { CropSeasonSummaryCard } from "@/pages/ManagerPage/CropSeasons/components/CropSeasonSummaryCard";
@@ -436,13 +434,6 @@ export default function OwnerCropSeasonsPageV2() {
                     Mốc công việc
                   </TabsTrigger>
                   <TabsTrigger
-                    value="sensors"
-                    className="flex items-center gap-1.5"
-                  >
-                    <Radio className="h-3.5 w-3.5" />
-                    Cảm biến
-                  </TabsTrigger>
-                  <TabsTrigger
                     value="incidents"
                     className="flex items-center gap-1.5"
                   >
@@ -455,13 +446,6 @@ export default function OwnerCropSeasonsPageV2() {
                   >
                     <BookOpen className="h-3.5 w-3.5" />
                     Nhiệm vụ
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="tracking-config"
-                    className="flex items-center gap-1.5"
-                  >
-                    <SlidersHorizontal className="h-3.5 w-3.5" />
-                    Cấu hình theo dõi
                   </TabsTrigger>
                   <TabsTrigger
                     value="harvest"
@@ -481,9 +465,6 @@ export default function OwnerCropSeasonsPageV2() {
                 <TabsContent value="milestones" className="mt-4">
                   <OwnerMilestonesWithDetailTab cropSeason={historyDetail} />
                 </TabsContent>
-                <TabsContent value="sensors" className="mt-4">
-                  <OwnerSensorOverviewTab cropSeason={historyDetail} />
-                </TabsContent>
                 <TabsContent value="incidents" className="mt-4">
                   <OwnerIncidentTab cropSeason={historyDetail} />
                 </TabsContent>
@@ -492,12 +473,6 @@ export default function OwnerCropSeasonsPageV2() {
                     zoneId={zoneId}
                     zoneName={selectedZoneName}
                     cropSeason={historyDetail}
-                    readOnly={true}
-                  />
-                </TabsContent>
-                <TabsContent value="tracking-config" className="mt-4">
-                  <TrackingConfigPanel
-                    cropSeasonId={historyDetail.id}
                     readOnly={true}
                   />
                 </TabsContent>

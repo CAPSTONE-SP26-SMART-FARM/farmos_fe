@@ -582,13 +582,15 @@ export function OwnerDailyLogsTab({
               <NotebookPen className="h-3.5 w-3.5" />
               Nhật ký nhiệm vụ
             </TabsTrigger>
-            <TabsTrigger
-              value="today"
-              className="flex items-center gap-1.5"
-            >
-              <ListTodo className="h-3.5 w-3.5" />
-              Nhiệm vụ hôm nay
-            </TabsTrigger>
+            {!readOnly && (
+              <TabsTrigger
+                value="today"
+                className="flex items-center gap-1.5"
+              >
+                <ListTodo className="h-3.5 w-3.5" />
+                Nhiệm vụ hôm nay
+              </TabsTrigger>
+            )}
             <TabsTrigger
               value="tasks"
               className="flex items-center gap-1.5"
@@ -613,12 +615,14 @@ export function OwnerDailyLogsTab({
             />
           </TabsContent>
 
-          <TabsContent
-            value="today"
-            className="mt-0"
-          >
-            <OwnerTodayTasksPanel zoneId={zoneId} />
-          </TabsContent>
+          {!readOnly && (
+            <TabsContent
+              value="today"
+              className="mt-0"
+            >
+              <OwnerTodayTasksPanel zoneId={zoneId} />
+            </TabsContent>
+          )}
 
           <TabsContent
             value="tasks"
