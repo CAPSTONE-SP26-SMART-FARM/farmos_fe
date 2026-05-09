@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/field";
 import { LoginBodySchema, type LoginBodyType } from "@/schemaValidatation/auth";
 import { toast } from "sonner";
-import { RoleLabelVi, type RoleNameType } from "@/constants/role";
 import {
   decodeAccessToken,
   isApiErrorResponse,
@@ -29,8 +28,6 @@ import {
 } from "@/lib/utils";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
 import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
-
-const getRoleLabel = (role: RoleNameType) => RoleLabelVi[role] ?? role;
 
 function LoginPage() {
   const navigate = useNavigate();
