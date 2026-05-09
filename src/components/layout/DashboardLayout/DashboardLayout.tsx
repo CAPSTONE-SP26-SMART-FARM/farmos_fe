@@ -21,6 +21,7 @@ import { useRealtimeEvents } from "@/hooks/useRealtimeEvents";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import { sidebarData } from "./sidebarItemData";
 import { useBreadcrumbStore } from "@/stores/breadcrumbStore";
+import routes from "@/routes/routes";
 
 const UUID_RE =
   /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i;
@@ -69,6 +70,39 @@ function buildSidebarUrlMap(): Record<string, string> {
 const sidebarUrlMap = buildSidebarUrlMap();
 
 /**
+ * Lazily collect concrete route patterns (excluding wildcard catch-alls) so we
+ * can decide whether a breadcrumb segment corresponds to a real, navigable
+ * route. Computed lazily because `routes.ts` imports this layout — accessing
+ * the import at module-init time would observe an undefined default.
+ */
+let routePatternsCache: string[] | null = null;
+function getRoutePatterns(): string[] {
+  if (routePatternsCache) return routePatternsCache;
+  const patterns: string[] = [];
+  for (const cfg of routes) {
+    for (const child of cfg.children) {
+      if (child.path === "*" || child.path.endsWith("/*")) continue;
+      patterns.push(child.path);
+    }
+  }
+  routePatternsCache = patterns;
+  return patterns;
+}
+
+function pathMatchesPattern(pathname: string, pattern: string): boolean {
+  const patternSegs = pattern.split("/").filter(Boolean);
+  const pathSegs = pathname.split("/").filter(Boolean);
+  if (patternSegs.length !== pathSegs.length) return false;
+  return patternSegs.every(
+    (seg, i) => seg.startsWith(":") || seg === pathSegs[i],
+  );
+}
+
+function isNavigableRoute(pathname: string): boolean {
+  return getRoutePatterns().some((p) => pathMatchesPattern(pathname, p));
+}
+
+/**
  * Generate breadcrumb items from current path with Vietnamese labels
  */
 function useBreadcrumbs() {
@@ -77,7 +111,12 @@ function useBreadcrumbs() {
 
   return useMemo(() => {
     const paths = location.pathname.split("/").filter(Boolean);
-    const breadcrumbs: { label: string; href: string; isLast: boolean }[] = [];
+    const breadcrumbs: {
+      label: string;
+      href: string;
+      isLast: boolean;
+      navigable: boolean;
+    }[] = [];
 
     let currentPath = "";
     paths.forEach((segment, index) => {
@@ -94,6 +133,7 @@ function useBreadcrumbs() {
         label,
         href: currentPath,
         isLast: index === paths.length - 1,
+        navigable: isNavigableRoute(currentPath),
       });
     });
 
@@ -122,14 +162,12 @@ function DashboardHeader() {
               key={crumb.href}
             >
               <BreadcrumbItem key={crumb.href}>
-                {crumb.isLast ? (
+                {crumb.isLast || !crumb.navigable ? (
                   <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
                 ) : (
-                  <BreadcrumbPage>
-                    <BreadcrumbLink href={crumb.href}>
-                      {crumb.label}
-                    </BreadcrumbLink>
-                  </BreadcrumbPage>
+                  <BreadcrumbLink href={crumb.href}>
+                    {crumb.label}
+                  </BreadcrumbLink>
                 )}
               </BreadcrumbItem>
               {index < breadcrumbs.length - 1 && <BreadcrumbSeparator />}
