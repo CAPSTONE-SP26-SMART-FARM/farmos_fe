@@ -149,16 +149,6 @@ const THRESHOLD_ALLOWED_SENSOR_TYPES = new Set<string>(
   IOT_CONFIG_ALLOWED_SENSOR_TYPES,
 );
 
-const IOT_DEVICE_STATUS_VI: Record<string, string> = {
-  available: "Sẵn sàng",
-  purchase: "Đã mua",
-  install: "Đang lắp đặt",
-  active: "Đang hoạt động",
-  error: "Lỗi",
-  revoked: "Thu hồi",
-};
-
-
 const THRESHOLD_SOURCE_LABEL_VI: Record<string, string> = {
   milestone: "Theo mốc",
   zone: "Theo khu vực trồng",
