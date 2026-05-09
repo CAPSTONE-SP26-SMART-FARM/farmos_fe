@@ -163,9 +163,15 @@ export default function AdminDoctorDqsDetailPage() {
             <Award className="h-6 w-6" />
             Chi tiết Xếp Hạng Bác Sĩ
           </h1>
-          <p className="text-muted-foreground text-sm font-mono mt-0.5">
-            {doctorId}
-          </p>
+          {detail?.doctorName ? (
+            <p className="text-muted-foreground text-sm mt-0.5">
+              {detail.doctorName}
+            </p>
+          ) : detailQuery.isLoading ? null : (
+            <p className="text-muted-foreground text-sm font-mono mt-0.5">
+              {doctorId}
+            </p>
+          )}
         </div>
       </div>
 
@@ -290,11 +296,9 @@ export default function AdminDoctorDqsDetailPage() {
                     value={from}
                     onChange={(v) => {
                       setFrom(v);
-                      // Nếu `to` đã chọn nhỏ hơn `from` mới → reset to.
                       if (v && to && to < v) setTo("");
                     }}
                     placeholder="Bắt đầu"
-                    helperText="Để trống = tất cả lịch sử"
                   />
                   <DatePickerField
                     label="Đến ngày"
@@ -302,11 +306,7 @@ export default function AdminDoctorDqsDetailPage() {
                     onChange={setTo}
                     placeholder="Kết thúc"
                     minDate={from ? new Date(from) : undefined}
-                    helperText={
-                      from
-                        ? `Phải ≥ ${format(new Date(from), "dd/MM/yyyy", { locale: vi })}`
-                        : "Để trống = đến hiện tại"
-                    }
+                    helperText={from ? `Phải ≥ ${format(new Date(from), "dd/MM/yyyy", { locale: vi })}` : undefined}
                   />
                   <div className="flex items-end gap-2">
                     <Button

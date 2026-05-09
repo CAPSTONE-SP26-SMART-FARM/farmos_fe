@@ -71,7 +71,7 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-r
 import { cn } from "@/lib/utils";
 import {
   formatMilestoneIotDetailDeviceLabel,
-  formatMilestoneIotPickerSubtitle,
+  milestoneIotModuleTypeVi,
 } from "@/lib/milestone-iot-display";
 import {
   useManagerListProductionMilestones,
@@ -148,16 +148,6 @@ const SENSOR_TYPE_LABELS: Record<string, string> = {
 const THRESHOLD_ALLOWED_SENSOR_TYPES = new Set<string>(
   IOT_CONFIG_ALLOWED_SENSOR_TYPES,
 );
-
-const IOT_DEVICE_STATUS_VI: Record<string, string> = {
-  available: "Sẵn sàng",
-  purchase: "Đã mua",
-  install: "Đang lắp đặt",
-  active: "Đang hoạt động",
-  error: "Lỗi",
-  revoked: "Thu hồi",
-};
-
 
 const THRESHOLD_SOURCE_LABEL_VI: Record<string, string> = {
   milestone: "Theo mốc",
@@ -1202,12 +1192,11 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
                     />
                     <div className="flex-1">
                       <p className="font-medium text-sm">{dev.deviceName}</p>
-                      <p className="text-xs text-muted-foreground leading-snug">
-                        {formatMilestoneIotPickerSubtitle(
-                          dev.deviceType,
-                          IOT_DEVICE_STATUS_VI[dev.status] ?? dev.status,
-                        )}
-                      </p>
+                      {milestoneIotModuleTypeVi(dev.deviceType) && (
+                        <p className="text-xs text-muted-foreground leading-snug">
+                          {milestoneIotModuleTypeVi(dev.deviceType)}
+                        </p>
+                      )}
                     </div>
                   </label>
                 ))
