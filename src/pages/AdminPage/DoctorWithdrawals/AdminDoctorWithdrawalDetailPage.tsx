@@ -212,7 +212,9 @@ function MarkPaidDialog({
 
   const handleSubmit = form.handleSubmit(async (values) => {
     try {
-      await markPaidMutation.mutateAsync({ id: withdrawalId, body: values });
+      const { transferProofUrl: _omitProofUrl, ...body } = values;
+      void _omitProofUrl;
+      await markPaidMutation.mutateAsync({ id: withdrawalId, body });
       form.reset();
       onClose();
     } catch (error) {
@@ -258,7 +260,7 @@ function MarkPaidDialog({
               </p>
             )}
           </div>
-          <div className="space-y-1">
+          {/* <div className="space-y-1">
             <label className="text-sm font-medium">
               URL chứng minh (tuỳ chọn)
             </label>
@@ -271,7 +273,7 @@ function MarkPaidDialog({
                 {form.formState.errors.transferProofUrl.message}
               </p>
             )}
-          </div>
+          </div> */}
           <div className="space-y-1">
             <label className="text-sm font-medium">
               Ghi chú admin (tuỳ chọn)
@@ -332,7 +334,9 @@ function RetryPaidDialog({
 
   const handleSubmit = form.handleSubmit(async (values) => {
     try {
-      await resolveMutation.mutateAsync({ id: withdrawalId, body: values });
+      const { transferProofUrl: _omitProofUrl, ...body } = values;
+      void _omitProofUrl;
+      await resolveMutation.mutateAsync({ id: withdrawalId, body });
       form.reset();
       onClose();
     } catch (error) {
@@ -380,7 +384,7 @@ function RetryPaidDialog({
               </p>
             )}
           </div>
-          <div className="space-y-1">
+          {/* <div className="space-y-1">
             <label className="text-sm font-medium">
               URL chứng minh (tuỳ chọn)
             </label>
@@ -393,7 +397,7 @@ function RetryPaidDialog({
                 {form.formState.errors.transferProofUrl.message}
               </p>
             )}
-          </div>
+          </div> */}
           <div className="space-y-1">
             <label className="text-sm font-medium">
               Ghi chú admin (tuỳ chọn)

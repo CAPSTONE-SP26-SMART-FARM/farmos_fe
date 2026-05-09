@@ -9,15 +9,19 @@ import type { IotDeviceKitResType } from "@/schemaValidatation/iotKit";
 type PanelState =
   | { mode: "list" }
   | { mode: "create" }
-  | { mode: "edit"; kit: IotDeviceKitResType };
+  | { mode: "detail"; kit: IotDeviceKitResType };
 
 export default function AdminIotKitsPage() {
   const [panel, setPanel] = useState<PanelState>({ mode: "list" });
 
-  if (panel.mode !== "list") {
+  if (panel.mode === "create") {
+    return <AdminIotKitFormPanel onBack={() => setPanel({ mode: "list" })} />;
+  }
+
+  if (panel.mode === "detail") {
     return (
       <AdminIotKitFormPanel
-        kit={panel.mode === "edit" ? panel.kit : undefined}
+        kit={panel.kit}
         onBack={() => setPanel({ mode: "list" })}
       />
     );
@@ -30,22 +34,21 @@ export default function AdminIotKitsPage() {
           <div className="space-y-2">
             <Badge className="mb-2">Cổng quản trị</Badge>
             <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-              Bộ Kit IoT
+              Quản Lý Gói Kit IoT
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
-              Quản lý danh mục bộ Kit IoT bán lẻ. Mỗi bộ gồm 1 board chính + module
-              truyền dẫn + 4 cảm biến cố định.
+              Quản lý danh mục các gói bán lẻ bộ Kit IoT
             </p>
           </div>
           <Button onClick={() => setPanel({ mode: "create" })}>
             <Plus className="mr-2 h-4 w-4" />
-            Tạo bộ Kit
+            Tạo gói Iot Kit
           </Button>
         </div>
       </section>
 
       <AdminIotKitListSection
-        onEdit={(kit) => setPanel({ mode: "edit", kit })}
+        onViewDetail={(kit) => setPanel({ mode: "detail", kit })}
       />
     </div>
   );

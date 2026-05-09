@@ -286,7 +286,7 @@ export function TicketDetailPanel({ ticketId, onBack }: TicketDetailPanelProps) 
                   Hội thoại
                 </CardTitle>
                 <CardDescription>
-                  Trao đổi với chủ vườn / quản lý
+                  Trao đổi với chủ trang trại / quản lý
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-1 overflow-y-auto flex flex-col gap-2 min-h-0">

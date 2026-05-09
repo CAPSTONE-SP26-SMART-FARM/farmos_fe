@@ -203,7 +203,7 @@ export default function AdminPackagesPage() {
                 Gói dịch vụ bổ sung
               </h1>
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
-                Quản lý các gói credit (vé bác sĩ, ...) mà chủ vườn có thể mua
+                Quản lý các gói credit (vé bác sĩ, ...) mà chủ trang trại có thể mua
                 thêm ngoài gói đăng ký chính.
               </p>
             </div>
@@ -334,7 +334,7 @@ export default function AdminPackagesPage() {
       <ConfirmDialog
         open={confirmState?.type === "archive"}
         title="Lưu trữ gói dịch vụ?"
-        description="Gói sẽ không còn hiển thị cho chủ vườn mua. Có thể khôi phục lại sau."
+        description="Gói sẽ không còn hiển thị cho chủ trang trại mua. Có thể khôi phục lại sau."
         confirmLabel={
           archiveMutation.isPending ? "Đang lưu trữ..." : "Lưu trữ"
         }
@@ -347,7 +347,7 @@ export default function AdminPackagesPage() {
       <ConfirmDialog
         open={confirmState?.type === "unarchive"}
         title="Khôi phục gói dịch vụ?"
-        description="Gói sẽ hiển thị trở lại cho chủ vườn mua thêm."
+        description="Gói sẽ hiển thị trở lại cho chủ trang trại mua thêm."
         confirmLabel={
           unarchiveMutation.isPending ? "Đang khôi phục..." : "Khôi phục"
         }
@@ -430,9 +430,7 @@ function ServicePackageFormDialog({
         const updateBody: UpdateServicePackageBodyType = {
           name: data.name,
           description,
-          price: data.price,
           creditAmount: data.creditAmount,
-          creditType: data.creditType,
         };
         await updateMutation.mutateAsync({ id: pkg.id, body: updateBody });
         toast.success("Đã cập nhật gói dịch vụ.");
@@ -480,7 +478,7 @@ function ServicePackageFormDialog({
           <DialogDescription>
             {isEdit
               ? "Cập nhật thông tin gói. Mã gói không thay đổi được."
-              : "Tạo gói credit để chủ vườn có thể mua thêm."}
+              : "Tạo gói credit để chủ trang trại có thể mua thêm."}
           </DialogDescription>
         </DialogHeader>
 
@@ -528,6 +526,7 @@ function ServicePackageFormDialog({
               <Input
                 id="pkg-credit-type"
                 placeholder="VD: ticket_general"
+                disabled={isEdit}
                 {...register("creditType")}
                 aria-invalid={Boolean(errors.creditType)}
               />
@@ -537,7 +536,12 @@ function ServicePackageFormDialog({
                 </p>
               ) : (
                 <p className="text-xs text-muted-foreground">
-                  Mặc định: <span className="font-mono">ticket_general</span>
+                  {isEdit
+                    ? "Loại credit không thể thay đổi sau khi tạo."
+                    : "Mặc định: "}
+                  {!isEdit && (
+                    <span className="font-mono">ticket_general</span>
+                  )}
                 </p>
               )}
             </div>
@@ -568,14 +572,24 @@ function ServicePackageFormDialog({
             <Input
               id="pkg-price"
               type="number"
-              min={0}
+              min={10000}
               step={1000}
-              placeholder="VD: 199000"
+              placeholder="VD: 199000 (tối thiểu 10000)"
+              disabled={isEdit}
               {...register("price", { valueAsNumber: true })}
               aria-invalid={Boolean(errors.price)}
             />
-            {errors.price && (
+            {errors.price ? (
               <p className="text-destructive text-xs">{errors.price.message}</p>
+            ) : isEdit ? (
+              <p className="text-xs text-muted-foreground">
+                Giá không thể thay đổi sau khi tạo.
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Giá tối thiểu <strong>10.000đ</strong> để cổng thanh toán
+                (VNPay, ngân hàng) chấp nhận giao dịch.
+              </p>
             )}
           </div>
 

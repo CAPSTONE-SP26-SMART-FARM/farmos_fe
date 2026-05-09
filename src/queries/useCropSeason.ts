@@ -92,7 +92,7 @@ export const useSendProductionRequest = (cropSeasonId: string) => {
       // Invalidate + refetch ngay để UI update trước khi dialog đóng
       await qc.invalidateQueries({ queryKey: ["crop-seasons"] });
       await qc.refetchQueries({ queryKey: ["crop-seasons"] });
-      toast.success("Đã gửi yêu cầu phê duyệt lên Owner!");
+      toast.success("Đã gửi yêu cầu phê duyệt lên Chủ trang trại!");
     },
     onError: (error) => onMutationError(error, "Gửi yêu cầu thất bại"),
   });

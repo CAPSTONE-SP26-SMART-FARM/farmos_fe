@@ -38,7 +38,7 @@ const doctorViews: Record<string, DoctorView> = {
   },
   incidents: {
     title: "Hộp thư sự cố",
-    description: "Danh sách báo cáo bệnh/bất thường từ Farmer và Manager.",
+    description: "Danh sách báo cáo bệnh/bất thường từ Nông dân và Quản lý.",
     widgets: [
       "Báo cáo chưa đọc",
       "Ca khẩn cấp",

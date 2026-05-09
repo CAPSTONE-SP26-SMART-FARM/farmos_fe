@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useAdminUserDetail } from "@/queries/useAdmin";
+import { RoleLabelVi } from "@/constants/role";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -66,17 +67,9 @@ const roleVariant: Record<string, "default" | "secondary" | "outline"> = {
   manager: "outline",
   doctor: "outline",
   farmer: "outline",
-  rancher: "outline",
 };
 
-const roleLabel: Record<string, string> = {
-  admin: "Quản trị viên",
-  owner: "Chủ vườn",
-  manager: "Quản lý",
-  doctor: "Bác sĩ",
-  farmer: "Nông dân",
-  rancher: "Chủ trang trại",
-};
+const roleLabel: Record<string, string> = RoleLabelVi;
 
 const UserDetailPanel = ({ id, onBack }: UserDetailPanelProps) => {
   const [show, setShow] = useState(false);

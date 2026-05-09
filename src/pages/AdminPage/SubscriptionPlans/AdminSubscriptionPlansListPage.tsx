@@ -277,8 +277,7 @@ function AdminSubscriptionPlansListPage() {
               setPlanQuery((prev) => ({
                 ...prev,
                 page: 1,
-                status:
-                  value === "ALL" ? undefined : (value as PlanStatusType),
+                status: value === "ALL" ? undefined : (value as PlanStatusType),
               }))
             }
           >
@@ -394,9 +393,7 @@ function AdminSubscriptionPlansListPage() {
                   label: "Chi tiết gói",
                   icon: Eye,
                   onSelect: (plan) =>
-                    navigate(
-                      `/dashboard/admin/subscription-plans/${plan.id}`,
-                    ),
+                    navigate(`/dashboard/admin/subscription-plans/${plan.id}`),
                 },
                 {
                   key: "archive",
@@ -494,11 +491,13 @@ function AdminSubscriptionPlansListPage() {
 
           <Alert>
             <Info className="h-4 w-4" />
-            <AlertTitle>Thông tin gói không thể chỉnh sửa sau khi tạo</AlertTitle>
+            <AlertTitle>
+              Thông tin gói không thể chỉnh sửa sau khi tạo
+            </AlertTitle>
             <AlertDescription>
               Mã gói, tên, mô tả, thời hạn và giá niêm yết sẽ được cố định. Để
-              thay đổi tính năng hoặc điều chỉnh giá, hãy tạo phiên bản mới cho
-              gói sau khi khởi tạo.
+              thay đổi tính năng, hãy tạo phiên bản mới cho gói sau khi khởi
+              tạo.
             </AlertDescription>
           </Alert>
 
@@ -617,7 +616,8 @@ function AdminSubscriptionPlansListPage() {
                       <Input
                         id="list-price"
                         type="number"
-                        min={0}
+                        min={10000}
+                        step={1000}
                         value={field.value}
                         onChange={(event) =>
                           field.onChange(Number(event.target.value))
@@ -626,7 +626,9 @@ function AdminSubscriptionPlansListPage() {
                         aria-invalid={fieldState.invalid}
                       />
                       <p className="text-xs text-muted-foreground">
-                        Đơn vị: VND, đã bao gồm VAT
+                        Đơn vị: VND, đã bao gồm VAT. Tối thiểu{" "}
+                        <strong>10.000đ</strong> để cổng thanh toán (VNPay,
+                        ngân hàng) chấp nhận giao dịch.
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Hiển thị: {formatCurrency(field.value || 0)}

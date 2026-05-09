@@ -749,7 +749,7 @@ function SubscriptionPlanManagementPage({ mode }: Props) {
             <CardDescription>
               {isAdmin
                 ? "Bạn có thể chỉnh sửa hoặc lưu trữ gói từ khu vực này."
-                : "Bạn đang ở chế độ chỉ xem theo quyền Owner."}
+                : "Bạn đang ở chế độ chỉ xem theo quyền Chủ trang trại."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

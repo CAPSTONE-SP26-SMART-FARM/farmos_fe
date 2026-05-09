@@ -127,7 +127,7 @@ function AdminSubscriptionsWorkspace() {
         <CardHeader>
           <CardTitle>Bộ lọc</CardTitle>
           <CardDescription>
-            Chọn trạng thái và (nếu cần) dán ID chủ trại để thu hẹp kết quả.
+            Chọn trạng thái và (nếu cần) dán ID Chủ trang trại để thu hẹp kết quả.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -140,7 +140,7 @@ function AdminSubscriptionsWorkspace() {
           />
           <div className="grid gap-3 md:grid-cols-[1fr_auto_auto]">
             <Input
-              placeholder="Tên hoặc email chủ trại"
+              placeholder="Tên hoặc email Chủ trang trại"
               value={ownerSearchInput}
               onChange={(e) => setOwnerSearchInput(e.target.value)}
               onKeyDown={(e) => {
@@ -212,7 +212,7 @@ function AdminSubscriptionsWorkspace() {
                     [
                       {
                         id: "owner",
-                        header: "Chủ trại",
+                        header: "Chủ trang trại",
                         cell: ({ row }) =>
                           row.original.owner ? (
                             <div className="flex flex-col">

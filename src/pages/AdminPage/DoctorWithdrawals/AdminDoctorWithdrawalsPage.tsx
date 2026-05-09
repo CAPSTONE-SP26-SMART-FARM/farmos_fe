@@ -78,7 +78,7 @@ const columns: ColumnDef<WithdrawalRequestResType>[] = [
   },
   {
     accessorKey: "doctorId",
-    header: "Doctor ID",
+    header: "ID Bác sĩ",
     cell: ({ row }) => (
       <span className="font-mono text-xs text-muted-foreground">
         {row.original.doctorId.slice(0, 8)}…
@@ -201,7 +201,7 @@ function AdminDoctorWithdrawalsPage() {
       {/* Filters */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center">
         <Input
-          placeholder="Tìm theo Doctor ID..."
+          placeholder="Tìm theo ID Bác sĩ..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-xs"

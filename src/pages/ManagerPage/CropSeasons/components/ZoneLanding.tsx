@@ -13,7 +13,7 @@ export function ZoneLanding({
   badgeText = "Cổng quản lý",
   description = "Chọn khu vực để quản lý mùa vụ và theo dõi sản xuất.",
   emptyTitle = "Chưa được phân công khu vực",
-  emptyDescription = "Liên hệ chủ vườn để được phân công quản lý khu vực.",
+  emptyDescription = "Liên hệ chủ trang trại để được phân công quản lý khu vực.",
   actionLabel = "Quản lý",
 }: {
   zones: ZoneType[];

@@ -387,7 +387,7 @@ export default function SensorTemplateList({
       <ConfirmDialog
         open={!!deleteId}
         title="Xóa template cảm biến?"
-        description="Hành động này sẽ xóa mềm template. Template sẽ không hiển thị cho manager/owner."
+        description="Hành động này sẽ xóa mềm template. Template sẽ không hiển thị cho Quản lý/Chủ trang trại."
         confirmLabel="Xóa"
         cancelLabel="Hủy"
         variant="destructive"

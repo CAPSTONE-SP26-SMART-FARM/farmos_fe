@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import {
   ClipboardList,
+  Eye,
   Loader2,
   MoreVertical,
   Pencil,
@@ -107,14 +108,6 @@ export default function EmployeeTaskTemplateList({
   const templates = data?.data?.data ?? [];
   const meta = data?.data?.meta;
 
-  const activeCount = templates.filter(
-    (t) => t.isActive && !t.deletedAt,
-  ).length;
-  const inactiveCount = templates.filter(
-    (t) => !t.isActive && !t.deletedAt,
-  ).length;
-  const deletedCount = templates.filter((t) => !!t.deletedAt).length;
-
   return (
     <>
       <Card className="overflow-hidden border-border/70">
@@ -165,36 +158,6 @@ export default function EmployeeTaskTemplateList({
           </div>
         </CardHeader>
         <CardContent className="space-y-4 pt-5">
-          <div className="grid gap-2 md:grid-cols-3">
-            <div className="rounded-lg border bg-background p-3">
-              <div className="flex items-center gap-1.5">
-                <Power className="h-3.5 w-3.5 text-emerald-500" />
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Đang hoạt động
-                </p>
-              </div>
-              <p className="mt-1 text-xl font-semibold">{activeCount}</p>
-            </div>
-            <div className="rounded-lg border bg-background p-3">
-              <div className="flex items-center gap-1.5">
-                <PowerOff className="h-3.5 w-3.5 text-muted-foreground" />
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Đang tắt
-                </p>
-              </div>
-              <p className="mt-1 text-xl font-semibold">{inactiveCount}</p>
-            </div>
-            <div className="rounded-lg border bg-background p-3">
-              <div className="flex items-center gap-1.5">
-                <Trash2 className="h-3.5 w-3.5 text-destructive/70" />
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Đã xóa
-                </p>
-              </div>
-              <p className="mt-1 text-xl font-semibold">{deletedCount}</p>
-            </div>
-          </div>
-
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -272,14 +235,33 @@ export default function EmployeeTaskTemplateList({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => onEdit(template)}>
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Chỉnh sửa
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDetail(template);
+                          }}
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          Xem chi tiết
                         </DropdownMenuItem>
                         {!template.deletedAt && (
                           <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEdit(template);
+                            }}
+                          >
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Chỉnh sửa
+                          </DropdownMenuItem>
+                        )}
+                        {!template.deletedAt && (
+                          <DropdownMenuItem
                             className="text-destructive focus:text-destructive"
-                            onClick={() => setDeleteId(template.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteId(template.id);
+                            }}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Xóa
@@ -359,7 +341,7 @@ export default function EmployeeTaskTemplateList({
       <ConfirmDialog
         open={!!deleteId}
         title="Xóa template nhiệm vụ?"
-        description="Hành động này sẽ xóa mềm template. Template sẽ không hiển thị cho manager/owner."
+        description="Hành động này sẽ xóa mềm template. Template sẽ không hiển thị cho Quản lý/Chủ trang trại."
         confirmLabel="Xóa"
         cancelLabel="Hủy"
         variant="destructive"

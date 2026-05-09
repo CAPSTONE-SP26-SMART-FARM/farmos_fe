@@ -170,12 +170,12 @@ const DetailRequest = ({ id, setId }: Props) => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Doctor profile</CardTitle>
+                <CardTitle>Hồ sơ Bác sĩ</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="space-y-1">
-                    <div className="text-muted-foreground">Doctor type</div>
+                    <div className="text-muted-foreground">Loại Bác sĩ</div>
                     <div className="font-medium capitalize">
                       {request.doctorProfile.doctorType}
                     </div>

@@ -60,7 +60,10 @@ export const CreatePlanBodySchema = z
       .positive("Thời hạn phải lớn hơn 0"),
     listPrice: z
       .number({ error: "Giá niêm yết phải là số" })
-      .min(0, "Giá niêm yết không được âm"),
+      .min(
+        10000,
+        "Giá niêm yết tối thiểu 10.000đ để cổng thanh toán chấp nhận giao dịch.",
+      ),
   })
   .strict();
 
@@ -75,7 +78,10 @@ export const UpdatePlanBodySchema = z
       .optional(),
     listPrice: z
       .number({ error: "Giá niêm yết phải là số" })
-      .min(0, "Giá niêm yết không được âm")
+      .min(
+        10000,
+        "Giá niêm yết tối thiểu 10.000đ để cổng thanh toán chấp nhận giao dịch.",
+      )
       .optional(),
   })
   .strict();

@@ -1,14 +1,14 @@
-import DailyLogActivityFeed from "@/components/common/DailyLogActivityFeed";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useOwnerDashboard } from "@/queries/useDashboard";
+import { useOwnerGetMyFarm } from "@/queries/useOwner";
 import type { DashboardPeriod } from "@/types/dashboard";
 import { useState } from "react";
 import FarmAtGlanceStrip from "./components/FarmAtGlanceStrip";
 import HealthAlertsCard from "./components/HealthAlertsCard";
 import MonthlySpendChart from "./components/MonthlySpendChart";
-import MyDoctorsCard from "./components/MyDoctorsCard";
 import OperationsTodayStrip from "./components/OperationsTodayStrip";
+import RecentIncidentsCard from "./components/RecentIncidentsCard";
 import RoleDistributionCard from "./components/RoleDistributionCard";
 import SubscriptionStatusCard from "./components/SubscriptionStatusCard";
 
@@ -16,6 +16,8 @@ function OwnerDashboardSection() {
   const [period, setPeriod] = useState<DashboardPeriod>("30d");
   const query = useOwnerDashboard(period);
   const data = query.data?.data;
+  const myFarmQuery = useOwnerGetMyFarm();
+  const farmId = myFarmQuery.data?.data.id ?? "";
 
   return (
     <div className="space-y-6">
@@ -69,16 +71,7 @@ function OwnerDashboardSection() {
             <RoleDistributionCard data={data.roleDistribution} />
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-3">
-            <MyDoctorsCard doctors={data.doctors} />
-            <DailyLogActivityFeed
-              title="Hoạt động gần đây"
-              description="Nhật ký mới nhất từ nông dân trên trang trại."
-              logs={data.recentLogs}
-              maxItems={5}
-              className="lg:col-span-2"
-            />
-          </div>
+          <RecentIncidentsCard farmId={farmId} />
         </>
       )}
     </div>

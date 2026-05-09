@@ -170,7 +170,7 @@ export default function IotDeviceList({
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <Badge className="mb-2">
-              {actor === "owner" ? "Cổng chủ vườn" : "Cổng quản lý"}
+              {actor === "owner" ? "Cổng chủ trang trại" : "Cổng quản lý"}
             </Badge>
             <CardTitle className="flex items-center gap-2">
               <Cpu className="h-5 w-5 text-primary" />

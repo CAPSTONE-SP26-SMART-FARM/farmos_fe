@@ -1,11 +1,10 @@
 import { QUERY_KEYS } from "@/constants";
 import type {
-  ClawbackTicketBodyType,
   DoctorCommissionReportQueryType,
   TicketRevenueReportQueryType,
 } from "@/schemaValidatation/ticketReports";
 import ticketAdminOpsService from "@/services/ticketAdminOpsService";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 export const useTicketRevenueReport = (
   query: TicketRevenueReportQueryType,
@@ -26,30 +25,5 @@ export const useDoctorCommissionReport = (
     queryKey: QUERY_KEYS.adminTicketReports.doctorCommission(query),
     queryFn: () => ticketAdminOpsService.getDoctorCommissionReport(query),
     enabled: enabled && Boolean(query.from) && Boolean(query.to),
-  });
-};
-
-export const useClawback = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({
-      ticketId,
-      body,
-    }: {
-      ticketId: string;
-      body: ClawbackTicketBodyType;
-    }) => ticketAdminOpsService.clawback(ticketId, body),
-    onSuccess: (_res, { ticketId }) => {
-      // Invalidate report caches, admin ticket list, và detail full payload
-      // để payout tab refresh state (PENALTY transaction vừa được tạo).
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.adminTicketReports.root });
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.ticketV2.root });
-      qc.invalidateQueries({
-        queryKey: QUERY_KEYS.ticketsExt.adminFull(ticketId),
-      });
-      qc.invalidateQueries({
-        queryKey: QUERY_KEYS.ticketsExt.full(ticketId),
-      });
-    },
   });
 };

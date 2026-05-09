@@ -1,6 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import type { UserResType } from "@/types/user";
-import { RoleName } from "@/constants/role";
+import { RoleLabelVi, RoleName } from "@/constants/role";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -27,11 +27,11 @@ interface UserTableProps {
 
 const ROLE_OPTIONS = [
   { label: "Tất cả vai trò", value: "all" },
-  { label: "Quản trị viên", value: RoleName.Admin },
-  { label: "Chủ vườn", value: RoleName.Owner },
-  { label: "Quản lý", value: RoleName.Manager },
-  { label: "Bác sĩ", value: RoleName.Doctor },
-  { label: "Nông dân", value: RoleName.Farmer },
+  { label: RoleLabelVi[RoleName.Admin], value: RoleName.Admin },
+  { label: RoleLabelVi[RoleName.Owner], value: RoleName.Owner },
+  { label: RoleLabelVi[RoleName.Manager], value: RoleName.Manager },
+  { label: RoleLabelVi[RoleName.Doctor], value: RoleName.Doctor },
+  { label: RoleLabelVi[RoleName.Farmer], value: RoleName.Farmer },
 ];
 
 const STATUS_OPTIONS = [
@@ -41,13 +41,7 @@ const STATUS_OPTIONS = [
   { label: "Bị khóa", value: "BLOCKED" },
 ];
 
-const ROLE_LABELS: Record<string, string> = {
-  admin: "Quản trị viên",
-  owner: "Chủ vườn",
-  manager: "Quản lý",
-  doctor: "Bác sĩ",
-  farmer: "Nông dân",
-};
+const ROLE_LABELS: Record<string, string> = RoleLabelVi;
 
 const STATUS_LABELS: Record<string, string> = {
   ACTIVE: "Hoạt động",

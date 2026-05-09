@@ -31,7 +31,7 @@ const STATUS_LABELS: Record<string, string> = {
 const columns: ColumnDef<AssignmentWithOwnerResType>[] = [
   {
     id: "owner",
-    header: "Chủ vườn",
+    header: "Chủ trang trại",
     accessorFn: (row) => row.owner?.email ?? "",
     cell: ({ row }) => {
       const original = row.original;
@@ -127,7 +127,7 @@ const TableDoctorAssignments = () => {
     <div className="w-full">
       <div className="flex items-center py-4 gap-2">
         <Input
-          placeholder="Tìm chủ vườn..."
+          placeholder="Tìm chủ trang trại..."
           value={filters.search ?? ""}
           onChange={(e) =>
             setFilters((prev) => ({ ...prev, search: e.target.value }))

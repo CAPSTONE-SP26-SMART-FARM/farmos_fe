@@ -61,7 +61,7 @@ export default function UnassignOwnerDialog({
         iotDeviceId: values.iotDeviceId,
         reason: values.reason?.trim() ? values.reason.trim() : undefined,
       });
-      toast.success("Thu hồi owner khỏi thiết bị thành công");
+      toast.success("Thu hồi Chủ trang trại khỏi thiết bị thành công");
       onOpenChange(false);
       reset();
     } catch {
@@ -79,7 +79,7 @@ export default function UnassignOwnerDialog({
     >
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Thu hồi owner khỏi thiết bị?</DialogTitle>
+          <DialogTitle>Thu hồi Chủ trang trại khỏi thiết bị?</DialogTitle>
           <DialogDescription>
             Thiết bị{" "}
             <span className="font-medium text-foreground">{deviceName}</span>{" "}
@@ -87,7 +87,7 @@ export default function UnassignOwnerDialog({
             {farmName ? (
               <span className="font-medium text-foreground">{farmName}</span>
             ) : (
-              "chủ vườn hiện tại"
+              "chủ trang trại hiện tại"
             )}
             . Hành động này có thể ảnh hưởng tới các cấu hình liên quan.
           </DialogDescription>
@@ -106,7 +106,7 @@ export default function UnassignOwnerDialog({
                     value={field.value ?? ""}
                     rows={4}
                     maxLength={500}
-                    placeholder="Ví dụ: chủ vườn đã trả thiết bị, chuyển sang gói khác..."
+                    placeholder="Ví dụ: chủ trang trại đã trả thiết bị, chuyển sang gói khác..."
                   />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />

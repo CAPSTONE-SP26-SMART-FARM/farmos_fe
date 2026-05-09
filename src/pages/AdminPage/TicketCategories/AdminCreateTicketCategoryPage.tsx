@@ -17,20 +17,11 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
 import { getApiErrorMessageVi } from "@/lib/error-message";
-import { useListFeatures } from "@/queries/useFeature";
 import {
   useAdminTicketCategoryList,
   useCreateTicketCategory,
@@ -41,71 +32,62 @@ import {
 } from "@/schemaValidatation/ticketCategory";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isAxiosError } from "axios";
-import { ArrowLeft, Loader2, Tag } from "lucide-react";
-import { useMemo } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { ArrowLeft, Info, Loader2, Sparkles, Tag } from "lucide-react";
+import { useEffect, useMemo, useRef } from "react";
+import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
 const LIST_PATH = "/dashboard/admin/ticket-categories";
 const OPTION_FETCH_LIMIT = 99;
-const FALLBACK_TICKET_CODES = [
-  "ticket_general",
-  "ticket_disease",
-  "ticket_nutrition",
-  "ticket_reproduction",
-  "ticket_emergency",
+const FEATURE_CODE_REGEX = /^[A-Z][A-Z0-9_]{2,63}$/;
+
+const STANDARD_FEATURE_CODES = [
+  "TICKET_GENERAL_CREDITS",
+  "TICKET_DISEASE_CREDITS",
+  "TICKET_NUTRITION_CREDITS",
+  "TICKET_REPRODUCTION_CREDITS",
+  "TICKET_EMERGENCY_CREDITS",
 ];
 
-const LEGACY_TO_TICKET_CODE = {
-  general: "ticket_general",
-  disease: "ticket_disease",
-  nutrition: "ticket_nutrition",
-  reproduction: "ticket_reproduction",
-  emergency: "ticket_emergency",
-} as const;
+const STANDARD_CODE_TO_FEATURE: Record<string, string> = {
+  GENERAL_CONSULTATION: "TICKET_GENERAL_CREDITS",
+  DISEASE_DIAGNOSIS: "TICKET_DISEASE_CREDITS",
+  NUTRITION: "TICKET_NUTRITION_CREDITS",
+  REPRODUCTION: "TICKET_REPRODUCTION_CREDITS",
+  EMERGENCY: "TICKET_EMERGENCY_CREDITS",
+};
 
-type LegacyCategoryValue = keyof typeof LEGACY_TO_TICKET_CODE;
+function deriveFeatureCode(code: string): string {
+  const normalized = code.trim().toUpperCase();
+  if (!normalized) return "";
+  if (STANDARD_CODE_TO_FEATURE[normalized])
+    return STANDARD_CODE_TO_FEATURE[normalized];
+  return `${normalized}_CREDITS`;
+}
 
 export default function AdminCreateTicketCategoryPage() {
   const navigate = useNavigate();
   const createMutation = useCreateTicketCategory();
-  const featureQuery = useListFeatures({
-    page: 1,
-    limit: OPTION_FETCH_LIMIT,
-    search: "",
-  });
   const categoryQuery = useAdminTicketCategoryList({
     page: 1,
     limit: OPTION_FETCH_LIMIT,
     search: "",
   });
 
-  const featureRows = featureQuery.data?.data?.data ?? [];
   const categoryRows = categoryQuery.data?.data?.data ?? [];
 
-  const featureNameMap = useMemo(
-    () => new Map(featureRows.map((item) => [item.code, item.name])),
-    [featureRows],
-  );
-
-  const featureCodeOptions = useMemo(() => {
-    const set = new Set<string>(FALLBACK_TICKET_CODES);
-    featureRows
-      .filter((item) => item.code.startsWith("ticket_"))
-      .forEach((item) => set.add(item.code));
+  // BE check `existsAnotherActiveByFeatureCode` → 422
+  // `TicketCategoryFeatureCodeConflict`. FE pre-warn để admin biết trước khi
+  // submit thay vì chờ BE từ chối.
+  const activeFeatureCodeMap = useMemo(() => {
+    const map = new Map<string, { name: string; code: string }>();
     categoryRows.forEach((item) => {
-      if (item.featureCode) set.add(item.featureCode);
+      if (item.featureCode && item.isActive) {
+        map.set(item.featureCode, { name: item.name, code: item.code });
+      }
     });
-    return Array.from(set).sort();
-  }, [categoryRows, featureRows]);
-
-  const creditTypeOptions = useMemo(() => {
-    const set = new Set<string>(FALLBACK_TICKET_CODES);
-    categoryRows.forEach((item) => {
-      if (item.creditType) set.add(item.creditType);
-    });
-    return Array.from(set).sort();
+    return map;
   }, [categoryRows]);
 
   const form = useForm<CreateTicketCategoryBodyType>({
@@ -118,10 +100,7 @@ export default function AdminCreateTicketCategoryPage() {
       defaultCommissionPercent: 0,
       eligibleForSubscriptionGrant: false,
       eligibleForPurchase: true,
-      featureCode: "ticket_general",
-      creditType: "ticket_general",
-      legacyCategory: "general",
-      legacyTicketType: "general_support",
+      featureCode: "",
     },
   });
   useClearServerFieldErrors(form);
@@ -129,11 +108,45 @@ export default function AdminCreateTicketCategoryPage() {
   const {
     register,
     handleSubmit,
-    control,
     formState: { errors, isSubmitting },
     setValue,
     watch,
   } = form;
+
+  const watchedCode = watch("code");
+  const previewCreditType = watchedCode
+    ? `ticket_cat_${watchedCode.toLowerCase()}`
+    : "ticket_cat_<mã danh mục>";
+
+  const watchedFeatureCode = watch("featureCode");
+  const featureCodeConflict = watchedFeatureCode
+    ? activeFeatureCodeMap.get(watchedFeatureCode)
+    : undefined;
+
+  // Auto-suggest featureCode khi user gõ `code` — chỉ áp dụng khi field
+  // featureCode còn rỗng hoặc trùng với suggestion trước đó (tức user chưa
+  // tự gõ tay), tránh ghi đè input của user.
+  const lastAutoFeatureCode = useRef<string>("");
+  useEffect(() => {
+    const suggested = deriveFeatureCode(watchedCode ?? "");
+    if (!suggested) return;
+    const current = form.getValues("featureCode") ?? "";
+    if (current === "" || current === lastAutoFeatureCode.current) {
+      setValue("featureCode", suggested, { shouldValidate: false });
+      lastAutoFeatureCode.current = suggested;
+    }
+  }, [watchedCode, form, setValue]);
+
+  // Suggestion chips: 5 mã chuẩn + mã derive từ code hiện tại (nếu khác).
+  const suggestionChips = useMemo(() => {
+    const set = new Set<string>(STANDARD_FEATURE_CODES);
+    const derived = deriveFeatureCode(watchedCode ?? "");
+    if (derived) set.add(derived);
+    return Array.from(set);
+  }, [watchedCode]);
+
+  const featureCodeFormatInvalid =
+    !!watchedFeatureCode && !FEATURE_CODE_REGEX.test(watchedFeatureCode);
 
   const onSubmit = async (data: CreateTicketCategoryBodyType) => {
     try {
@@ -199,7 +212,7 @@ export default function AdminCreateTicketCategoryPage() {
           </h1>
           <p className="text-sm text-muted-foreground">
             Danh mục định nghĩa loại dịch vụ ticket, đơn giá tính tiền và tỷ lệ
-            hoa hồng mặc định cho bác sĩ
+            hoa hồng mặc định cho bác sĩ.
           </p>
         </div>
         <Button
@@ -221,8 +234,8 @@ export default function AdminCreateTicketCategoryPage() {
           <CardHeader>
             <CardTitle className="text-base">Thông tin cơ bản</CardTitle>
             <CardDescription>
-              Mã và tên danh mục là định danh chính. Chọn kỹ vì không thể sửa
-              sau khi tạo.
+              Mã và tên danh mục là định danh chính. Mã không thể sửa sau khi
+              tạo.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -234,7 +247,7 @@ export default function AdminCreateTicketCategoryPage() {
                 <Input
                   id="code"
                   {...register("code")}
-                  placeholder="VD: DOCTOR_CONSULT"
+                  placeholder="VD: DISEASE_DIAGNOSIS"
                   aria-invalid={Boolean(errors.code)}
                   className="font-mono uppercase"
                 />
@@ -244,9 +257,17 @@ export default function AdminCreateTicketCategoryPage() {
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground">
-                    Dùng chữ in hoa, gạch dưới. Không thể sửa sau khi tạo.
+                    Chữ in hoa, bắt đầu bằng chữ cái, 3-64 ký tự (A-Z, 0-9, _).
+                    Không thể sửa sau khi tạo.
                   </p>
                 )}
+                <div className="rounded-md border bg-muted/30 px-3 py-2 text-xs space-y-0.5">
+                  <p className="text-muted-foreground flex items-center gap-1">
+                    <Info className="h-3 w-3" />
+                    Credit type sẽ được hệ thống tự sinh
+                  </p>
+                  <p className="font-mono font-medium">{previewCreditType}</p>
+                </div>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="name">
@@ -255,7 +276,7 @@ export default function AdminCreateTicketCategoryPage() {
                 <Input
                   id="name"
                   {...register("name")}
-                  placeholder="VD: Tư vấn bác sĩ"
+                  placeholder="VD: Chẩn đoán bệnh"
                   aria-invalid={Boolean(errors.name)}
                 />
                 {errors.name && (
@@ -283,8 +304,8 @@ export default function AdminCreateTicketCategoryPage() {
           <CardHeader>
             <CardTitle className="text-base">Giá & Hoa hồng</CardTitle>
             <CardDescription>
-              Đơn giá được dùng khi tính hóa đơn ticket. Hoa hồng mặc định áp
-              dụng khi không có quy tắc hoa hồng cụ thể nào khớp với bác sĩ.
+              Đơn giá lock vào ticket khi tạo (snapshot). Hoa hồng mặc định áp
+              dụng khi không có quy tắc cụ thể nào khớp với bác sĩ.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -356,100 +377,94 @@ export default function AdminCreateTicketCategoryPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Liên kết hệ thống</CardTitle>
-            <CardDescription>
-              Bắt buộc chọn để đồng bộ quota subscription ({"featureCode"}) và
-              ví credit ({"creditType"}).
-            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="featureCode">
-                  Feature code <span className="text-destructive">*</span>
-                </Label>
-                <Controller
-                  control={control}
-                  name="featureCode"
-                  render={({ field }) => (
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
+            <div className="space-y-1.5">
+              <Label htmlFor="featureCode">
+                Feature code <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="featureCode"
+                {...register("featureCode", {
+                  setValueAs: (v) =>
+                    typeof v === "string" ? v.trim().toUpperCase() : v,
+                })}
+                onChange={(e) => {
+                  const next = e.target.value.toUpperCase();
+                  setValue("featureCode", next, { shouldValidate: false });
+                  // User đã tự gõ → khoá auto-suggest từ code.
+                  lastAutoFeatureCode.current = "__user_edited__";
+                }}
+                placeholder="VD: TICKET_DISEASE_CREDITS hoặc TICKET_12_CREDITS"
+                aria-invalid={
+                  Boolean(errors.featureCode) ||
+                  Boolean(featureCodeConflict) ||
+                  featureCodeFormatInvalid
+                }
+                className="font-mono uppercase"
+              />
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Sparkles className="h-3 w-3" /> Gợi ý:
+                </span>
+                {suggestionChips.map((code) => {
+                  const taken = activeFeatureCodeMap.get(code);
+                  const isActive = watchedFeatureCode === code;
+                  return (
+                    <button
+                      key={code}
+                      type="button"
+                      disabled={Boolean(taken)}
+                      onClick={() => {
+                        setValue("featureCode", code, {
+                          shouldValidate: true,
+                        });
+                        lastAutoFeatureCode.current = "__user_edited__";
+                      }}
+                      className={`rounded-md border px-2 py-0.5 text-xs font-mono transition-colors ${
+                        isActive
+                          ? "border-primary bg-primary/10 text-primary"
+                          : taken
+                            ? "border-destructive/30 bg-destructive/5 text-destructive/60 cursor-not-allowed line-through"
+                            : "border-border bg-muted/30 hover:bg-muted"
+                      }`}
+                      title={
+                        taken
+                          ? `Đã dùng bởi category "${taken.name}"`
+                          : "Bấm để áp dụng"
+                      }
                     >
-                      <SelectTrigger
-                        id="featureCode"
-                        aria-invalid={Boolean(errors.featureCode)}
-                      >
-                        <SelectValue placeholder="Chọn feature code" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {featureCodeOptions.map((code) => (
-                          <SelectItem
-                            key={code}
-                            value={code}
-                          >
-                            {code}
-                            {featureNameMap.get(code)
-                              ? ` — ${featureNameMap.get(code)}`
-                              : ""}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {errors.featureCode ? (
-                  <p className="text-destructive text-xs">
-                    {errors.featureCode.message}
-                  </p>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    Nên chọn feature có prefix <code>ticket_</code>.
-                  </p>
-                )}
+                      {code}
+                    </button>
+                  );
+                })}
               </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="creditType">
-                  Credit type <span className="text-destructive">*</span>
-                </Label>
-                <Controller
-                  control={control}
-                  name="creditType"
-                  render={({ field }) => (
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger
-                        id="creditType"
-                        aria-invalid={Boolean(errors.creditType)}
-                      >
-                        <SelectValue placeholder="Chọn credit type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {creditTypeOptions.map((code) => (
-                          <SelectItem
-                            key={code}
-                            value={code}
-                          >
-                            {code}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {errors.creditType ? (
-                  <p className="text-destructive text-xs">
-                    {errors.creditType.message}
-                  </p>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    Credit type phải khớp với service package bán lẻ của loại
-                    ticket này.
-                  </p>
-                )}
-              </div>
+              {errors.featureCode ? (
+                <p className="text-destructive text-xs">
+                  {errors.featureCode.message}
+                </p>
+              ) : featureCodeConflict ? (
+                <p className="text-destructive text-xs">
+                  Feature code này đang được category active{" "}
+                  <strong>"{featureCodeConflict.name}"</strong> (
+                  <code>{featureCodeConflict.code}</code>) sử dụng. Mỗi
+                  category cần có featureCode riêng — hãy chọn mã khác (vd{" "}
+                  <code>{deriveFeatureCode(watchedCode ?? "")}</code>) hoặc vô
+                  hiệu hoá category đó trước.
+                </p>
+              ) : featureCodeFormatInvalid ? (
+                <p className="text-destructive text-xs">
+                  Định dạng không hợp lệ — phải UPPERCASE, bắt đầu bằng chữ
+                  cái, độ dài 3-64 ký tự (A-Z, 0-9, _).
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Mỗi category nên có featureCode riêng. Mã chuẩn dạng{" "}
+                  <code>TICKET_*_CREDITS</code>; với code không chuẩn (vd{" "}
+                  <code>TICKET_12</code>), dùng <code>TICKET_12_CREDITS</code>{" "}
+                  hoặc tên có ý nghĩa nghiệp vụ.
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -467,8 +482,8 @@ export default function AdminCreateTicketCategoryPage() {
               <div className="space-y-0.5 flex-1">
                 <p className="text-sm font-medium">Cấp qua gói đăng ký</p>
                 <p className="text-xs text-muted-foreground">
-                  Ticket danh mục này sẽ được gán tự động cho chủ trang trại khi
-                  đăng ký gói dịch vụ có bao gồm loại này.
+                  Trừ vào quota subscription (entitlement match featureCode) khi
+                  farmer tạo ticket trên mobile.
                 </p>
               </div>
               <Switch
@@ -483,8 +498,8 @@ export default function AdminCreateTicketCategoryPage() {
               <div className="space-y-0.5 flex-1">
                 <p className="text-sm font-medium">Cho phép mua lẻ</p>
                 <p className="text-xs text-muted-foreground">
-                  Chủ trang trại có thể mua thêm ticket loại này theo đơn lẻ
-                  ngoài gói đăng ký.
+                  Trừ vào pool credit riêng <code>{previewCreditType}</code> khi
+                  owner đã mua ticket bundle bound vào danh mục này.
                 </p>
               </div>
               <Switch
@@ -494,112 +509,6 @@ export default function AdminCreateTicketCategoryPage() {
                   setValue("eligibleForPurchase", Boolean(v))
                 }
               />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* ── Section 5: Legacy / Tương thích ngược ────────────────── */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
-              Legacy / Tương thích ngược
-            </CardTitle>
-            <CardDescription>
-              Map danh mục này về enum cũ để hệ thống hiện tại tiếp tục hoạt
-              động trong quá trình migration.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="legacyCategory">
-                  Legacy Category <span className="text-destructive">*</span>
-                </Label>
-                <Controller
-                  control={control}
-                  name="legacyCategory"
-                  render={({ field }) => (
-                    <Select
-                      value={field.value}
-                      onValueChange={(v) => {
-                        const next = v as LegacyCategoryValue;
-                        field.onChange(next);
-                        const mappedCode = LEGACY_TO_TICKET_CODE[next];
-                        setValue("featureCode", mappedCode, {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                        });
-                        setValue("creditType", mappedCode, {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                        });
-                        setValue(
-                          "legacyTicketType",
-                          next === "emergency" ? "incident" : "general_support",
-                          {
-                            shouldDirty: true,
-                            shouldValidate: true,
-                          },
-                        );
-                      }}
-                    >
-                      <SelectTrigger id="legacyCategory">
-                        <SelectValue placeholder="Chọn loại category cũ..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="general">
-                          general — Tư vấn chung
-                        </SelectItem>
-                        <SelectItem value="disease">
-                          disease — Bệnh tật
-                        </SelectItem>
-                        <SelectItem value="nutrition">
-                          nutrition — Dinh dưỡng
-                        </SelectItem>
-                        <SelectItem value="reproduction">
-                          reproduction — Sinh sản
-                        </SelectItem>
-                        <SelectItem value="emergency">
-                          emergency — Khẩn cấp
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Map sang enum <code>TicketCategory</code> trong hệ thống cũ.
-                </p>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="legacyTicketType">
-                  Legacy Ticket Type <span className="text-destructive">*</span>
-                </Label>
-                <Controller
-                  control={control}
-                  name="legacyTicketType"
-                  render={({ field }) => (
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger id="legacyTicketType">
-                        <SelectValue placeholder="Chọn loại ticket cũ..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="general_support">
-                          general_support — Hỗ trợ chung
-                        </SelectItem>
-                        <SelectItem value="incident">
-                          incident — Sự cố khẩn cấp
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Map sang enum <code>TicketType</code> trong hệ thống cũ.
-                </p>
-              </div>
             </div>
           </CardContent>
         </Card>

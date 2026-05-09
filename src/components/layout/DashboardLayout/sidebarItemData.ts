@@ -102,12 +102,12 @@ export const sidebarData: SidebarData = {
       label: "IoT & Thiết bị",
       items: [
         {
-          title: "Thiết Bị IoT",
+          title: "Bộ kit IoT",
           url: "/dashboard/admin/iot-devices",
           icon: Cpu,
         },
         {
-          title: "Bộ Kit IoT",
+          title: "Quản Lý Gói Kit IoT",
           url: "/dashboard/admin/iot-kits",
           icon: PackagePlus,
         },

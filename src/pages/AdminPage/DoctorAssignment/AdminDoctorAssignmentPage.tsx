@@ -17,7 +17,7 @@ function AdminDoctorAssignmentPage() {
           <Badge className="mb-2">Cổng quản trị</Badge>
           <h1 className="text-2xl font-bold">Phân công bác sĩ</h1>
           <p className="text-muted-foreground">
-            Gán bác sĩ cho chủ vườn/nông trại và theo dõi phân bổ nguồn lực.
+            Gán bác sĩ cho chủ trang trại/nông trại và theo dõi phân bổ nguồn lực.
           </p>
         </div>
         <AssignDoctorDialog />
@@ -26,7 +26,7 @@ function AdminDoctorAssignmentPage() {
       <Card>
         <CardHeader>
           <CardTitle>Ma trận phân công</CardTitle>
-          <CardDescription>Danh sách gán bác sĩ cho chủ vườn.</CardDescription>
+          <CardDescription>Danh sách gán bác sĩ cho chủ trang trại.</CardDescription>
         </CardHeader>
         <CardContent>
           <ListAssignmentDoctor />

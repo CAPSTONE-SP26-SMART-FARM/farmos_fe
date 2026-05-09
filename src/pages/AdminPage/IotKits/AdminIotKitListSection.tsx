@@ -22,7 +22,7 @@ import {
   Archive,
   ArchiveRestore,
   Boxes,
-  Pencil,
+  Eye,
   PackageOpen,
   Search,
 } from "lucide-react";
@@ -43,14 +43,14 @@ import AdminIotKitArchiveConfirm from "./AdminIotKitArchiveConfirm";
 import { onMutationError } from "@/lib/axios";
 import { toast } from "sonner";
 
-interface AdminIotKitListSectionProps {
-  onEdit: (kit: IotDeviceKitResType) => void;
-}
-
 type StatusFilter = "all" | "active" | "archived";
 
+interface AdminIotKitListSectionProps {
+  onViewDetail?: (kit: IotDeviceKitResType) => void;
+}
+
 export default function AdminIotKitListSection({
-  onEdit,
+  onViewDetail,
 }: AdminIotKitListSectionProps) {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -185,11 +185,11 @@ export default function AdminIotKitListSection({
       <CardHeader className="bg-muted/30">
         <CardTitle className="flex items-center gap-2">
           <Boxes className="h-5 w-5 text-primary" />
-          Danh mục bộ Kit IoT
+          Danh mục các gói Kit IoT
         </CardTitle>
         <CardDescription>
-          Bộ Kit bán lẻ giúp Owner mở rộng hạn mức thiết bị, đồng pha hạn với
-          gói đăng ký.
+          Bộ Kit bán lẻ giúp Chủ trang trại mở rộng hạn mức thiết bị bao gồm
+          trong gói đăng ký.
         </CardDescription>
 
         <div className="mt-2 grid gap-2 md:grid-cols-[1fr_200px_140px]">
@@ -245,7 +245,7 @@ export default function AdminIotKitListSection({
           <EmptyState
             icon={PackageOpen}
             title="Chưa có bộ Kit nào"
-            description="Tạo bộ Kit đầu tiên để Owner có thể mua thêm hạn mức thiết bị."
+            description="Tạo bộ Kit đầu tiên để Chủ trang trại có thể mua thêm hạn mức thiết bị."
           />
         ) : (
           <div className="overflow-x-auto">
@@ -255,10 +255,10 @@ export default function AdminIotKitListSection({
               isLoading={listQuery.isLoading}
               actions={[
                 {
-                  key: "edit",
-                  label: "Sửa",
-                  icon: Pencil,
-                  onSelect: (kit) => onEdit(kit),
+                  key: "detail",
+                  label: "Chi tiết",
+                  icon: Eye,
+                  onSelect: (kit) => onViewDetail?.(kit),
                 },
                 {
                   key: "archive",

@@ -104,7 +104,7 @@ export default function AssignOwnerDialog({
       : { iotDeviceId: values.iotDeviceId, ownerId: values.ownerId };
     try {
       await mutateAsync(body);
-      toast.success("Gán owner cho thiết bị thành công");
+      toast.success("Gán Chủ trang trại cho thiết bị thành công");
       onOpenChange(false);
       reset();
     } catch {
@@ -122,9 +122,9 @@ export default function AssignOwnerDialog({
     >
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Gán owner cho thiết bị</DialogTitle>
+          <DialogTitle>Gán Chủ trang trại cho thiết bị</DialogTitle>
           <DialogDescription>
-            Chọn chủ vườn sẽ nhận thiết bị{" "}
+            Chọn chủ trang trại sẽ nhận thiết bị{" "}
             <span className="font-medium text-foreground">{deviceName}</span>.
           </DialogDescription>
         </DialogHeader>
@@ -132,7 +132,7 @@ export default function AssignOwnerDialog({
         <form onSubmit={onSubmit}>
           <FieldGroup>
             <Field>
-              <FieldLabel>Tìm chủ vườn</FieldLabel>
+              <FieldLabel>Tìm chủ trang trại</FieldLabel>
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -149,7 +149,7 @@ export default function AssignOwnerDialog({
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Chủ vườn</FieldLabel>
+                  <FieldLabel>Chủ trang trại</FieldLabel>
                   <div className="max-h-64 overflow-y-auto rounded-md border">
                     {ownersQuery.isLoading ? (
                       <div className="flex items-center justify-center py-6">
@@ -157,7 +157,7 @@ export default function AssignOwnerDialog({
                       </div>
                     ) : filteredOwners.length === 0 ? (
                       <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-                        Không có chủ vườn phù hợp.
+                        Không có chủ trang trại phù hợp.
                       </p>
                     ) : (
                       <ul className="divide-y">
@@ -238,7 +238,7 @@ export default function AssignOwnerDialog({
                         aria-invalid={fieldState.invalid}
                       />
                       <p className="text-xs text-muted-foreground">
-                        Owner này hiện không có đơn còn slot trống, hoặc tính
+                        Chủ trang trại này hiện không có đơn còn slot trống, hoặc tính
                         năng tự động chưa khả dụng. Bạn có thể nhập UUID đơn
                         thủ công.
                       </p>
@@ -317,7 +317,7 @@ export default function AssignOwnerDialog({
                   Đang gán...
                 </>
               ) : (
-                "Gán owner"
+                "Gán Chủ trang trại"
               )}
             </Button>
           </DialogFooter>

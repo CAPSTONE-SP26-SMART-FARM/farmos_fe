@@ -157,7 +157,7 @@ export default function AdminKitAssignmentDetailPage() {
       <ErrorState
         message={getApiErrorMessageVi(
           ownersQuery.error,
-          "Không thể tải dữ liệu chủ vườn.",
+          "Không thể tải dữ liệu chủ trang trại.",
         )}
         onRetry={() => ownersQuery.refetch()}
       />
@@ -177,7 +177,7 @@ export default function AdminKitAssignmentDetailPage() {
         </Button>
         <EmptyState
           icon={PackagePlus}
-          title="Chủ vườn không còn đủ điều kiện"
+          title="Chủ trang trại không còn đủ điều kiện"
           description="Có thể đã hết slot hoặc đạt hạn mức gói. Vui lòng kiểm tra lại."
         />
       </div>
@@ -232,7 +232,7 @@ export default function AdminKitAssignmentDetailPage() {
     setIsAssigning(false);
     setSelectedDeviceIds(new Set());
     if (success > 0) {
-      toast.success(`Đã gán ${success}/${ids.length} thiết bị cho chủ vườn`);
+      toast.success(`Đã gán ${success}/${ids.length} thiết bị cho chủ trang trại`);
     }
     if (failed > 0) {
       toast.error(`${failed} thiết bị không gán được — kiểm tra lại quota.`);
@@ -280,9 +280,6 @@ export default function AdminKitAssignmentDetailPage() {
                 {owner.email}
                 {owner.phone ? ` · ${owner.phone}` : ""}
               </CardDescription>
-              <p className="mt-1 text-xs text-muted-foreground break-all">
-                ID: {owner.id}
-              </p>
             </div>
           </div>
         </CardHeader>
@@ -447,7 +444,7 @@ export default function AdminKitAssignmentDetailPage() {
         <CardHeader>
           <CardTitle>Iot kit đã gán</CardTitle>
           <CardDescription>
-            Các bo mạch đang được gán cho chủ vườn này. Thu hồi để giải phóng
+            Các bo mạch đang được gán cho chủ trang trại này. Thu hồi để giải phóng
             slot quota.
           </CardDescription>
         </CardHeader>
@@ -517,7 +514,7 @@ export default function AdminKitAssignmentDetailPage() {
           <div>
             <CardTitle>Gán Iot kit</CardTitle>
             <CardDescription>
-              Chọn các bo mạch còn trống để cấp cho chủ vườn. Mỗi thiết bị tiêu
+              Chọn các bo mạch còn trống để cấp cho chủ trang trại. Mỗi thiết bị tiêu
               1 slot quota.
             </CardDescription>
           </div>
@@ -639,7 +636,7 @@ export default function AdminKitAssignmentDetailPage() {
       <ConfirmDialog
         open={!!unassignTarget}
         title="Thu hồi thiết bị?"
-        description={`Thu hồi "${unassignTarget?.deviceName ?? ""}" khỏi chủ vườn này. Slot quota sẽ được giải phóng.`}
+        description={`Thu hồi "${unassignTarget?.deviceName ?? ""}" khỏi chủ trang trại này. Slot quota sẽ được giải phóng.`}
         confirmLabel="Thu hồi"
         cancelLabel="Hủy"
         variant="destructive"

@@ -45,7 +45,7 @@ import { toast } from "sonner";
 
 const ROLE_OPTIONS = [
   { value: "doctor", label: "Bác sĩ" },
-  { value: "owner", label: "Chủ vườn" },
+  { value: "owner", label: "Chủ trang trại" },
 ];
 
 function RegisterPage() {

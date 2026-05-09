@@ -203,7 +203,7 @@ export default function IotDeviceDetail({
                 variant="outline"
                 className="border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300"
               >
-                Chưa gán owner
+                Chưa gán Chủ trang trại
               </Badge>
             )}
           </div>
@@ -261,14 +261,14 @@ export default function IotDeviceDetail({
               }
             />
             <InfoRow
-              label="Chủ sở hữu"
+              label="Chủ trang trại"
               value={
                 device.owner ? (
                   <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
                     {device.owner.name}
                   </span>
                 ) : (
-                  <span className="text-muted-foreground">Chưa gán owner</span>
+                  <span className="text-muted-foreground">Chưa gán Chủ trang trại</span>
                 )
               }
             />
@@ -292,9 +292,12 @@ export default function IotDeviceDetail({
 
       <Card>
         <CardHeader>
-          <CardTitle>Cảm biến trên bo mạch ({device.sensors.length})</CardTitle>
+          <CardTitle>
+            Cảm biến trên bo mạch ({device.sensors.length}/4)
+          </CardTitle>
           <CardDescription>
-            Cảm biến được trả trực tiếp từ chi tiết gán Iot kit.
+            Cảm biến được trả trực tiếp từ chi tiết gán Iot kit. Không thể chỉnh
+            sửa từ trang này.
           </CardDescription>
         </CardHeader>
         <CardContent>

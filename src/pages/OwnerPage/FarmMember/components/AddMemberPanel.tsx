@@ -116,7 +116,7 @@ const AddMemberPanel = ({ farmCode, onBack }: Props) => {
             <ArrowLeft className="h-4 w-4" />
             Quay lại danh sách tài khoản
           </Button>
-          <Badge className="mb-2 block w-fit">Cổng chủ vườn</Badge>
+          <Badge className="mb-2 block w-fit">Cổng chủ trang trại</Badge>
           <h1 className="text-2xl font-bold">Thêm tài khoản</h1>
           <p className="text-muted-foreground">
             Tạo tài khoản và gán vào nông trại của bạn.

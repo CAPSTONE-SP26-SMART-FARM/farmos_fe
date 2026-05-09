@@ -47,7 +47,7 @@ const columns: ColumnDef<AssignmentWithDoctorAndOwnerResType>[] = [
   },
   {
     id: "owner",
-    header: "Chủ vườn",
+    header: "Chủ trang trại",
     accessorFn: (row) => row.owner?.email ?? "",
     cell: ({ row }) => {
       const original = row.original;
@@ -146,7 +146,7 @@ const TableAssignmentDoctor = () => {
     <div className="w-full">
       <div className="flex items-center py-4 gap-2">
         <Input
-          placeholder="Tìm bác sĩ/chủ vườn..."
+          placeholder="Tìm bác sĩ/chủ trang trại..."
           value={filters.search ?? ""}
           onChange={(e) =>
             setFilters((prev) => ({ ...prev, search: e.target.value }))

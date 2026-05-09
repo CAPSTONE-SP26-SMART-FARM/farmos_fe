@@ -1,13 +1,7 @@
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
 	Select,
@@ -20,7 +14,6 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
 	Cpu,
 	Loader2,
-	Pencil,
 	Plus,
 	Search,
 	Trash2,
@@ -39,6 +32,7 @@ import type {
 } from "@/schemaValidatation/iotDevice";
 import useDebounce from "@/hooks/useDebounce";
 import { useNavigate } from "react-router";
+import { toast } from "sonner";
 
 const DEVICE_TYPE_LABEL: Record<string, string> = {
 	board_module: "Bo mạch",
@@ -112,7 +106,7 @@ export default function AdminIotDevicesPage() {
 					<div>
 						<Badge className="mb-2">Cổng quản trị</Badge>
 						<h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-							Quản lý thiết bị IoT
+							Quản lý các bộ kit IoT
 						</h1>
 						<p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
 							Tạo, cập nhật, xóa và cấu hình vòng đời thiết bị IoT.
@@ -122,7 +116,7 @@ export default function AdminIotDevicesPage() {
 						onClick={() => navigate("/dashboard/admin/iot-devices/create")}
 					>
 						<Plus className="mr-2 h-4 w-4" />
-						Tạo lô thiết bị
+						Tạo bộ kit mới
 					</Button>
 				</div>
 			</section>
@@ -328,6 +322,7 @@ export default function AdminIotDevicesPage() {
 				onConfirm={async () => {
 					if (deleteTarget) {
 						await deleteMutation.mutateAsync(deleteTarget.id);
+						toast.success("Bộ kit đã được xoá thành công");
 					}
 					setDeleteTarget(null);
 				}}

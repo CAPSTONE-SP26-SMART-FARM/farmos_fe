@@ -17,6 +17,20 @@ export const RoleRegister = {
 } as const;
 export type RoleRegisterType = (typeof RoleRegister)[keyof typeof RoleRegister];
 
+export const RoleLabelVi: Record<RoleNameType, string> = {
+  [RoleName.Admin]: "Quản trị viên",
+  [RoleName.Owner]: "Chủ trang trại",
+  [RoleName.Manager]: "Quản lý",
+  [RoleName.Doctor]: "Bác sĩ",
+  [RoleName.Farmer]: "Nông dân",
+};
+
+export const getRoleLabelVi = (role?: string | null): string => {
+  if (!role) return "";
+  const key = role.toLowerCase() as RoleNameType;
+  return RoleLabelVi[key] ?? role;
+};
+
 //<=======================>
 
 export const HTTPMethod = {

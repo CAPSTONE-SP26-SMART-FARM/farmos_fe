@@ -224,10 +224,7 @@ export default function AdminTicketSystemConfigsPage() {
   // "Hủy" hoặc lưu thành công → quay về read-only.
   const [isEditing, setIsEditing] = useState(false);
 
-  const defaultValues = useMemo(
-    () => buildDefaultsFromConfigs(items),
-    [items],
-  );
+  const defaultValues = useMemo(() => buildDefaultsFromConfigs(items), [items]);
 
   const form = useForm<TicketSystemConfigFormType>({
     resolver: zodResolver(TicketSystemConfigFormSchema),
@@ -313,7 +310,9 @@ export default function AdminTicketSystemConfigsPage() {
         `Đã cập nhật ${successCount}/${keysToUpdate.length} cấu hình. Có ${failures.length} key lỗi.`,
       );
       // Log chi tiết để Admin biết key nào fail.
-      failures.forEach((f) => console.warn(`[system-config] ${f.key}: ${f.message}`));
+      failures.forEach((f) =>
+        console.warn(`[system-config] ${f.key}: ${f.message}`),
+      );
     }
   };
 
@@ -341,9 +340,9 @@ export default function AdminTicketSystemConfigsPage() {
             Cấu Hình Quy Trình Ticket
           </CardTitle>
           <CardDescription>
-            Tham số vận hành vòng đời ticket — thời gian tự đóng, ngưỡng im
-            lặng của bác sĩ, thứ tự ưu tiên gửi ticket, thời gian chờ AI tiếp
-            nhận và ngưỡng chất lượng nội dung bác sĩ.
+            Tham số vận hành vòng đời ticket — thời gian tự đóng, ngưỡng im lặng
+            của bác sĩ, thứ tự ưu tiên gửi ticket, thời gian chờ AI tiếp nhận và
+            ngưỡng chất lượng nội dung bác sĩ.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -388,9 +387,8 @@ export default function AdminTicketSystemConfigsPage() {
                     Đang chỉnh sửa
                   </AlertTitle>
                   <AlertDescription className="text-xs text-amber-900/80">
-                    Sau khi lưu, các giá trị mới sẽ áp dụng cho ticket được
-                    tạo sau thời điểm này. Ticket đang chạy vẫn dùng giá trị
-                    cũ.
+                    Sau khi lưu, các giá trị mới sẽ áp dụng cho ticket được tạo
+                    sau thời điểm này. Ticket đang chạy vẫn dùng giá trị cũ.
                   </AlertDescription>
                 </Alert>
               )}
@@ -427,9 +425,9 @@ export default function AdminTicketSystemConfigsPage() {
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription className="text-xs">
                     Quy trình gửi ticket: ngay lập tức gửi cho Bạch kim trực
-                    tuyến · sau X giây mở thêm Vàng · sau Y giây mở cho tất
-                    cả bác sĩ trực tuyến (Bạc và Đồng) · cuối cùng AI tiếp
-                    nhận nếu vẫn chưa ai nhận.
+                    tuyến · sau X giây mở thêm Vàng · sau Y giây mở cho tất cả
+                    bác sĩ trực tuyến (Bạc và Đồng) · cuối cùng AI tiếp nhận nếu
+                    vẫn chưa ai nhận.
                   </AlertDescription>
                 </Alert>
                 <div className="grid gap-4 md:grid-cols-3">

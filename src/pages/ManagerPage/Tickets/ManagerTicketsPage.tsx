@@ -19,7 +19,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useManagerListAssignedZones } from "@/queries/useZone";
 import {
@@ -30,10 +29,6 @@ import {
   useCreateTicketMessage,
   useTicketPrescriptions,
 } from "@/queries/useTicket";
-import {
-  useCreateTicketV2,
-  useOwnerTicketBalance,
-} from "@/queries/useTicketV2";
 import { useRealtimeTicket } from "@/hooks/useRealtimeTicket";
 import { useTicketSubscription } from "@/hooks/useTicketSubscription";
 import { useTicketQualityFlag } from "@/hooks/useTicketQualityFlag";
@@ -41,13 +36,6 @@ import TicketDetailPanelV2 from "@/components/ticket-quality/TicketDetailPanelV2
 import { RoleName } from "@/constants/role";
 import type { TicketIncidentResType } from "@/schemaValidatation/ticket";
 import {
-  CreateTicketV2BodySchema,
-  type CreateTicketV2BodyType,
-} from "@/schemaValidatation/ticketV2";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import {
-  AlertTriangle,
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
@@ -62,16 +50,6 @@ import { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useAuthStore } from "@/stores/authStore";
-import { useSearchParams } from "react-router";
-import { useManagerListCropSeasons } from "@/queries/useCropSeason";
-import { useManagerListProductionMilestones } from "@/queries/useProductionMilestone";
-import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
-import { handleApiErrorUnprocessentity } from "@/lib/axios";
-import {
-  isApiErrorUnprocessableEntityResponse,
-  isApiErrorResponse,
-} from "@/lib/utils";
-import { toast } from "sonner";
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -435,383 +413,13 @@ function TicketDetailPanelLegacy({ ticketId, onBack }: TicketDetailPanelProps) {
   );
 }
 
-// ── Create Ticket Panel ────────────────────────────────────────────────────
-
-interface CreateTicketPanelProps {
-  initialZoneId?: string;
-  initialMilestoneId?: string;
-  initialMilestoneName?: string;
-  onBack: () => void;
-  onCreated: () => void;
-}
-
-function CreateTicketPanel({
-  initialZoneId,
-  initialMilestoneId,
-  initialMilestoneName,
-  onBack,
-  onCreated,
-}: CreateTicketPanelProps) {
-  const [show, setShow] = useState(false);
-  const [selectedZoneId, setSelectedZoneId] = useState(initialZoneId ?? "");
-  const [selectedCropSeasonId, setSelectedCropSeasonId] = useState("");
-
-  // V2 mutation — POST /tickets với categoryConfigId. Manager tạo ticket dùng
-  // chung endpoint với owner; BE tự resolve owner = farm.ownerId, trừ quota
-  // vào ví owner. Dùng `useOwnerTicketBalance` (alias /me/ticket-balance) —
-  // BE filter theo user hiện tại; với manager response sẽ trả balance của owner
-  // farm tương ứng (xem walkthrough Bước 1).
-  const createMutation = useCreateTicketV2();
-  const balanceQuery = useOwnerTicketBalance();
-  const balanceItems = balanceQuery.data?.data.data ?? [];
-  const eligibleCategories = balanceItems.filter((b) => b.total > 0);
-
-  const zonesQuery = useManagerListAssignedZones({ page: 1, limit: 100 });
-  const zones = zonesQuery.data?.data.data ?? [];
-
-  const cropSeasonsQuery = useManagerListCropSeasons(selectedZoneId, {
-    page: 1,
-    limit: 100,
-  });
-  const cropSeasons = cropSeasonsQuery.data?.data.data ?? [];
-
-  const milestonesQuery = useManagerListProductionMilestones(
-    selectedCropSeasonId,
-    { page: 1, limit: 100 },
-  );
-  const milestones = milestonesQuery.data?.data.data ?? [];
-
-  const form = useForm<CreateTicketV2BodyType>({
-    resolver: zodResolver(CreateTicketV2BodySchema),
-    defaultValues: {
-      milestoneId: initialMilestoneId ?? "",
-      categoryConfigId: "",
-      title: "",
-      description: "",
-      severity: "low",
-    },
-  });
-  useClearServerFieldErrors(form);
-
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => setShow(true));
-    return () => cancelAnimationFrame(frame);
-  }, []);
-
-  const handleBack = () => {
-    setShow(false);
-    setTimeout(onBack, 300);
-  };
-
-  const onSubmit = async (data: CreateTicketV2BodyType) => {
-    try {
-      await createMutation.mutateAsync(data);
-      toast.success("Đã tạo ticket sự cố thành công.");
-      onCreated();
-      handleBack();
-    } catch (error) {
-      if (isApiErrorUnprocessableEntityResponse<CreateTicketV2BodyType>(error)) {
-        handleApiErrorUnprocessentity<CreateTicketV2BodyType>(
-          error.response!.data.errors,
-          form.setError,
-          { getValues: form.getValues },
-        );
-        return;
-      }
-
-      if (isApiErrorResponse(error)) {
-        toast.error(error.response?.data.message ?? "Tạo ticket thất bại");
-        return;
-      }
-
-      toast.error("Tạo ticket thất bại");
-    }
-  };
-
-  return (
-    <div
-      className={`space-y-6 transition-all duration-300 ease-out ${show ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-    >
-      <div className="flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleBack}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <Badge className="mb-1">Báo cáo sự cố</Badge>
-          <h1 className="text-2xl font-bold">Tạo ticket sự cố</h1>
-        </div>
-      </div>
-
-      <Separator />
-
-      <Card className="max-w-2xl">
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4" />
-            Thông tin sự cố
-          </CardTitle>
-          <CardDescription>
-            Điền thông tin sự cố trong khu vực quản lý của bạn.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4"
-          >
-            {/* Category selector — V2 yêu cầu categoryConfigId */}
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Loại ticket *</label>
-              <Select
-                value={form.watch("categoryConfigId")}
-                onValueChange={(v) =>
-                  form.setValue("categoryConfigId", v, {
-                    shouldValidate: true,
-                  })
-                }
-                disabled={balanceQuery.isLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={
-                      balanceQuery.isLoading
-                        ? "Đang tải quota..."
-                        : eligibleCategories.length === 0
-                          ? "Hết quota — chủ vườn cần nạp thêm"
-                          : "Chọn loại ticket"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {eligibleCategories.map((c) => (
-                    <SelectItem
-                      key={c.categoryConfigId}
-                      value={c.categoryConfigId}
-                    >
-                      {c.categoryName} — còn {c.total}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {form.formState.errors.categoryConfigId && (
-                <p className="text-xs text-destructive">
-                  {form.formState.errors.categoryConfigId.message}
-                </p>
-              )}
-            </div>
-
-            {/* Milestone selector */}
-            {initialMilestoneId ? (
-              <div className="rounded-md border p-3 bg-muted/30">
-                <p className="text-xs text-muted-foreground mb-1">
-                  Mốc sản xuất
-                </p>
-                <p className="text-sm font-medium">
-                  {initialMilestoneName || initialMilestoneId}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <label className="text-sm font-medium">Khu vực</label>
-                  <Select
-                    value={selectedZoneId}
-                    onValueChange={(v) => {
-                      setSelectedZoneId(v);
-                      setSelectedCropSeasonId("");
-                      form.setValue("milestoneId", "");
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={
-                          zonesQuery.isLoading ? "Đang tải..." : "Chọn khu vực"
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {zones.map((z) => (
-                        <SelectItem
-                          key={z.id}
-                          value={z.id}
-                        >
-                          {z.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {selectedZoneId && (
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium">Mùa vụ</label>
-                    <Select
-                      value={selectedCropSeasonId}
-                      onValueChange={(v) => {
-                        setSelectedCropSeasonId(v);
-                        form.setValue("milestoneId", "");
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={
-                            cropSeasonsQuery.isLoading
-                              ? "Đang tải..."
-                              : "Chọn mùa vụ"
-                          }
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {cropSeasons.map((cs) => (
-                          <SelectItem
-                            key={cs.id}
-                            value={cs.id}
-                          >
-                            {cs.cropName}
-                            {cs.variety ? ` — ${cs.variety}` : ""}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {selectedCropSeasonId && (
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium">Mốc sản xuất</label>
-                    <Select
-                      value={form.watch("milestoneId") ?? ""}
-                      onValueChange={(v) =>
-                        form.setValue("milestoneId", v, {
-                          shouldValidate: true,
-                        })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={
-                            milestonesQuery.isLoading
-                              ? "Đang tải..."
-                              : "Chọn mốc sản xuất"
-                          }
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {milestones.map((m) => (
-                          <SelectItem
-                            key={m.id}
-                            value={m.id}
-                          >
-                            #{m.milestoneOrder} {m.stageName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {form.formState.errors.milestoneId && (
-                      <p className="text-xs text-destructive">
-                        {form.formState.errors.milestoneId.message}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Tiêu đề</label>
-              <Input
-                placeholder="Ví dụ: Phát hiện sâu bệnh"
-                {...form.register("title")}
-              />
-              {form.formState.errors.title && (
-                <p className="text-xs text-destructive">
-                  {form.formState.errors.title.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Mô tả chi tiết</label>
-              <Textarea
-                placeholder="Mô tả triệu chứng, phạm vi, thời gian phát hiện..."
-                rows={4}
-                {...form.register("description")}
-              />
-              {form.formState.errors.description && (
-                <p className="text-xs text-destructive">
-                  {form.formState.errors.description.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Mức độ nghiêm trọng</label>
-              <Select
-                value={form.watch("severity")}
-                onValueChange={(v) =>
-                  form.setValue(
-                    "severity",
-                    v as CreateTicketV2BodyType["severity"],
-                    { shouldValidate: true },
-                  )
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Thấp</SelectItem>
-                  <SelectItem value="medium">Trung bình</SelectItem>
-                  <SelectItem value="high">Cao</SelectItem>
-                  <SelectItem value="critical">Nghiêm trọng</SelectItem>
-                </SelectContent>
-              </Select>
-              {form.formState.errors.severity && (
-                <p className="text-xs text-destructive">
-                  {form.formState.errors.severity.message}
-                </p>
-              )}
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <Button
-                type="submit"
-                disabled={createMutation.isPending}
-                className="flex-1"
-              >
-                {createMutation.isPending ? "Đang gửi..." : "Gửi báo cáo"}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleBack}
-              >
-                Hủy
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
 // ── Main Page ──────────────────────────────────────────────────────────────
 
 function ManagerTicketsPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const urlMilestoneId = searchParams.get("milestoneId");
-  const urlMilestoneName = searchParams.get("milestoneName");
-
   const [page, setPage] = useState(1);
   const limit = 10;
   const [selectedZoneId, setSelectedZoneId] = useState<string>("");
   const [viewingTicketId, setViewingTicketId] = useState<string | null>(null);
-  const [showCreate, setShowCreate] = useState(!!urlMilestoneId);
 
   const zonesQuery = useManagerListAssignedZones({ page: 1, limit: 100 });
   const zones = zonesQuery.data?.data.data ?? [];
@@ -906,20 +514,6 @@ function ManagerTicketsPage() {
     },
   ];
 
-  if (showCreate) {
-    return (
-      <CreateTicketPanel
-        initialZoneId={selectedZoneId || undefined}
-        initialMilestoneId={urlMilestoneId ?? undefined}
-        initialMilestoneName={urlMilestoneName ?? undefined}
-        onBack={() => {
-          setShowCreate(false);
-          if (urlMilestoneId) setSearchParams({});
-        }}
-        onCreated={() => setPage(1)}
-      />
-    );
-  }
 
   if (viewingTicketId) {
     return (

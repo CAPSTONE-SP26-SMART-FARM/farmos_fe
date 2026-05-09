@@ -9,21 +9,39 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { DataTable } from "@/components/common/DataTable";
 import useDebounce from "@/hooks/useDebounce";
 import { useOwnerListFarmMembers } from "@/queries/useOwner";
+import {
+  useOwnerListZones,
+  useOwnerSoftDeleteFarmStaffUser,
+} from "@/queries/useZone";
 import type { FarmMemberResType } from "@/schemaValidatation/farmMember";
+import type { ListZonesQueryType } from "@/types/zone";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import {
   Eye,
+  Loader2,
   Search,
   Tractor,
+  Trash2,
   UserCog,
   UserPlus,
   Users,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import { getRoleLabelVi, RoleName } from "@/constants/role";
+import { isApiErrorResponse } from "@/lib/utils";
 
 interface Props {
   farmId: string;
@@ -33,12 +51,14 @@ interface Props {
 
 const ROLE_OPTIONS = [
   { value: "all", label: "Tất cả vai trò" },
-  { value: "manager", label: "Quản lý" },
-  { value: "farmer", label: "Nông dân" },
+  { value: RoleName.Manager, label: "Quản lý" },
+  { value: RoleName.Farmer, label: "Nông dân" },
 ] as const;
 
+const ZONES_LIST_QUERY: ListZonesQueryType = { page: 1, limit: 100 };
+
 const RoleIcon = ({ role }: { role: string }) =>
-  role === "manager" ? (
+  role === RoleName.Manager ? (
     <UserCog className="h-4 w-4 text-blue-600" />
   ) : (
     <Tractor className="h-4 w-4 text-green-600" />
@@ -52,6 +72,9 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
   const [page, setPage] = useState(1);
   const limit = 10;
   const debouncedSearch = useDebounce(search, 500);
+  const [deleteTarget, setDeleteTarget] = useState<FarmMemberResType | null>(
+    null,
+  );
 
   const query = {
     page,
@@ -65,9 +88,43 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
   const members = data?.data.data ?? [];
   const meta = data?.data.meta;
 
+  const zonesQuery = useOwnerListZones(farmId, ZONES_LIST_QUERY);
+  const zones = zonesQuery.data?.data?.data ?? [];
+
+  const { mutateAsync: softDeleteMember, isPending: deleting } =
+    useOwnerSoftDeleteFarmStaffUser();
+
   const handleRoleChange = (value: string) => {
     setRoleFilter(value as "all" | "farmer" | "manager");
     setPage(1);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    const zoneId = zones[0]?.id;
+    if (!zoneId) {
+      toast.error(
+        "Thêm ít nhất một khu vực (zone) vào nông trại để có thể gỡ tài khoản.",
+      );
+      return;
+    }
+    try {
+      await softDeleteMember({
+        zoneId,
+        userId: deleteTarget.user.id,
+        farmMemberId: deleteTarget.id,
+      });
+      toast.success("Đã gỡ tài khoản khỏi hệ thống");
+      setDeleteTarget(null);
+    } catch (error) {
+      if (isApiErrorResponse(error)) {
+        toast.error(
+          error.response?.data.message ?? "Không thể gỡ tài khoản này.",
+        );
+        return;
+      }
+      toast.error("Không thể gỡ tài khoản. Vui lòng thử lại.");
+    }
   };
 
   const columns = useMemo<ColumnDef<FarmMemberResType>[]>(
@@ -91,11 +148,8 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
         accessorKey: "role",
         header: "Vai trò",
         cell: ({ row }) => (
-          <Badge
-            variant="secondary"
-            className="capitalize"
-          >
-            {row.original.role}
+          <Badge variant="secondary">
+            {getRoleLabelVi(row.original.role)}
           </Badge>
         ),
       },
@@ -120,6 +174,24 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
           <span className="text-muted-foreground text-sm">
             {format(new Date(row.original.assignedAt), "dd/MM/yyyy")}
           </span>
+        ),
+      },
+      {
+        id: "remove",
+        header: "Gỡ tài khoản",
+        cell: ({ row }) => (
+          <Button
+            variant="destructive"
+            size="sm"
+            className="gap-1.5"
+            onClick={(e) => {
+              e.stopPropagation();
+              setDeleteTarget(row.original);
+            }}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Gỡ
+          </Button>
         ),
       },
     ],
@@ -251,6 +323,60 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
           )}
         </>
       )}
+
+      <Dialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => !deleting && !o && setDeleteTarget(null)}
+      >
+        <DialogContent showCloseButton={!deleting}>
+          <DialogHeader>
+            <DialogTitle>Gỡ tài khoản?</DialogTitle>
+            <DialogDescription>
+              Tài khoản{" "}
+              <strong>{deleteTarget?.user.fullName}</strong> sẽ bị vô hiệu hoá
+              và không đăng nhập được nữa. Thao tác này dựa trên API xóa mềm
+              theo khu vực của nông trại.
+            </DialogDescription>
+          </DialogHeader>
+          {zonesQuery.isFetching && zones.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Đang kiểm tra khu vực…
+            </p>
+          ) : zones.length === 0 ? (
+            <p className="text-sm text-destructive">
+              Nông trại chưa có khu vực (zone). Hãy tạo một khu vực trước khi
+              gỡ tài khoản.
+            </p>
+          ) : null}
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDeleteTarget(null)}
+              disabled={deleting}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={
+                deleting || zonesQuery.isFetching || zones.length === 0
+              }
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Đang xử lý...
+                </>
+              ) : (
+                "Gỡ tài khoản"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

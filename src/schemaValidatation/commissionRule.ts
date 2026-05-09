@@ -16,6 +16,10 @@ export const DoctorTierSchema = z.enum([
 ]);
 
 // ── Response schema ───────────────────────────────────────────────────────────
+// Khớp BE `DoctorCommissionRuleSchema` (xem
+// `farm_os_be/src/modules/commission-rule/commission-rule.model.ts:9-25`).
+// `isActive=false` = rule đã ngưng hiệu lực (soft-delete) — FE dùng để hiển
+// thị badge trạng thái + ẩn action "Ngưng hiệu lực" khi đã ngưng rồi.
 export const CommissionRuleSchema = z.object({
   id: z.string().uuid(),
   scope: CommissionScopeSchema,
@@ -25,6 +29,7 @@ export const CommissionRuleSchema = z.object({
   commissionPercent: z.number(),
   effectiveFrom: z.string().nullable(),
   effectiveTo: z.string().nullable(),
+  isActive: z.boolean(),
   note: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),

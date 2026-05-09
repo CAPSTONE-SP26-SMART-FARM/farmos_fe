@@ -22,7 +22,7 @@ import {
 import { LoginBodySchema, type LoginBodyType } from "@/schemaValidatation/auth";
 import { toast } from "sonner";
 import type { UserResType } from "@/types/user";
-import { RoleName, type RoleNameType } from "@/constants/role";
+import { RoleLabelVi, RoleName, type RoleNameType } from "@/constants/role";
 import {
   decodeAccessToken,
   isApiErrorResponse,
@@ -73,17 +73,7 @@ const DUMMY_ACCOUNTS: DummyAccount[] = [
   },
 ];
 
-const getRoleLabel = (role: RoleNameType) => {
-  const roleLabels: Partial<Record<RoleNameType, string>> = {
-    [RoleName.Admin]: "Quản trị viên",
-    [RoleName.Owner]: "Chủ vườn",
-    [RoleName.Manager]: "Quản lý",
-    [RoleName.Farmer]: "Nông dân",
-    [RoleName.Doctor]: "Bác sĩ",
-  };
-
-  return roleLabels[role] ?? role;
-};
+const getRoleLabel = (role: RoleNameType) => RoleLabelVi[role] ?? role;
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -129,7 +119,7 @@ function LoginPage() {
           </CardTitle>
           <CardDescription className="text-center">
             Đăng nhập để truy cập bảng điều khiển theo vai trò cho quản trị
-            viên, chủ vườn, quản lý và bác sĩ.
+            viên, chủ trang trại, quản lý và bác sĩ.
           </CardDescription>
         </CardHeader>
         <form onSubmit={form.handleSubmit(handleSubmit)}>

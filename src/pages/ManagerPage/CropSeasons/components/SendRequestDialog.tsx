@@ -71,11 +71,11 @@ export function SendRequestDialog({ season }: { season: CropSeasonType }) {
             </div>
           )}
           <p className="text-sm text-muted-foreground">
-            Gửi mùa vụ <strong>{season.cropName}</strong> lên chủ vườn để phê duyệt. Sau khi gửi,
+            Gửi mùa vụ <strong>{season.cropName}</strong> lên chủ trang trại để phê duyệt. Sau khi gửi,
             mùa vụ <strong>không thể chỉnh sửa thêm</strong>.
           </p>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <Field label="Ghi chú cho chủ vườn (tuỳ chọn)">
+            <Field label="Ghi chú cho chủ trang trại (tuỳ chọn)">
               <Textarea
                 {...form.register("description")}
                 rows={3}

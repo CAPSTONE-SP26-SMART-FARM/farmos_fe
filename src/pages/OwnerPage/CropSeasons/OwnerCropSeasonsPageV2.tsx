@@ -265,7 +265,7 @@ export default function OwnerCropSeasonsPageV2() {
           next.set("zoneId", id);
           setSearchParams(next);
         }}
-        badgeText="Cổng chủ vườn"
+        badgeText="Cổng chủ trang trại"
         description="Chọn khu vực để xem mùa vụ và phê duyệt yêu cầu sản xuất."
         emptyTitle="Chưa có khu vực"
         emptyDescription="Hãy tạo khu vực trong mục Quản lý trang trại để bắt đầu."

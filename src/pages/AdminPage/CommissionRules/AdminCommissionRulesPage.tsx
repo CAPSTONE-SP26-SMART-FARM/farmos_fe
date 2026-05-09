@@ -25,6 +25,12 @@ import {
 } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { DataTable } from "@/components/common/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
@@ -45,7 +51,14 @@ import {
 } from "@/schemaValidatation/commissionRule";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isAxiosError } from "axios";
-import { CalendarDays, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  AlertTriangle,
+  Ban,
+  CalendarDays,
+  Loader2,
+  Pencil,
+  Plus,
+} from "lucide-react";
 import { format, isValid, parse } from "date-fns";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
@@ -369,19 +382,43 @@ export default function AdminCommissionRulesPage() {
       {
         accessorKey: "scope",
         header: "Phạm vi",
-        cell: ({ row }) => (
-          <div className="flex items-center gap-1">
-            <Badge variant="secondary">{SCOPE_LABELS[row.original.scope]}</Badge>
-            {overlapping.has(row.original.id) && (
-              <Badge
-                variant="outline"
-                className="border-yellow-300 text-yellow-700 text-xs"
-              >
-                ⚠ Trùng
+        cell: ({ row }) => {
+          const isOverlap = overlapping.has(row.original.id);
+          return (
+            <div className="flex items-center gap-1.5">
+              <Badge variant="secondary">
+                {SCOPE_LABELS[row.original.scope]}
               </Badge>
-            )}
-          </div>
-        ),
+              {isOverlap && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span
+                        role="img"
+                        aria-label="Trùng khoảng hiệu lực"
+                        className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200"
+                      >
+                        <AlertTriangle className="h-3 w-3" />
+                        Trùng hiệu lực
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="right"
+                      className="max-w-xs"
+                    >
+                      <p className="text-xs">
+                        Quy tắc này có khoảng thời gian hiệu lực trùng với một
+                        hoặc nhiều quy tắc khác cùng phạm vi. Hệ thống có thể
+                        áp dụng sai % hoa hồng — vui lòng điều chỉnh để các
+                        khoảng không chồng lấn.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
+          );
+        },
       },
       {
         id: "subject",
@@ -429,6 +466,23 @@ export default function AdminCommissionRulesPage() {
           </span>
         ),
       },
+      {
+        accessorKey: "isActive",
+        header: "Trạng thái",
+        cell: ({ row }) =>
+          row.original.isActive ? (
+            <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100">
+              Đang hiệu lực
+            </Badge>
+          ) : (
+            <Badge
+              variant="outline"
+              className="text-muted-foreground"
+            >
+              Đã ngưng
+            </Badge>
+          ),
+      },
     ],
     [overlapping],
   );
@@ -437,7 +491,7 @@ export default function AdminCommissionRulesPage() {
     if (!deleteTarget) return;
     try {
       await deleteMutation.mutateAsync(deleteTarget.id);
-      toast.success("Xoá quy tắc hoa hồng thành công.");
+      toast.success("Ngưng hiệu lực quy tắc hoa hồng thành công.");
       setDeleteTarget(null);
     } catch (err) {
       toast.error(getApiErrorMessageVi(err));
@@ -511,10 +565,13 @@ export default function AdminCommissionRulesPage() {
               },
               {
                 key: "delete",
-                label: "Xoá",
-                icon: Trash2,
+                label: "Ngưng hiệu lực",
+                icon: Ban,
                 variant: "destructive",
                 onSelect: (rule) => setDeleteTarget(rule),
+                // Rule đã ngưng (`isActive=false`) thì không cho ngưng tiếp.
+                // BE soft-delete cũng sẽ trả 404/422 nếu gọi lại.
+                hidden: (rule) => !rule.isActive,
               },
             ]}
             emptyText="Chưa có quy tắc hoa hồng nào."
