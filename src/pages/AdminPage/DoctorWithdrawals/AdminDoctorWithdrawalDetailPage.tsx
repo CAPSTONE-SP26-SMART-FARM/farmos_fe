@@ -8,13 +8,16 @@ import {
   ClipboardList,
   Clock,
   RefreshCcw,
+  Upload,
   User,
+  X,
 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 
+import envConfig from "@/config";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -189,6 +192,26 @@ function RejectDialog({
   );
 }
 
+// ── Cloudinary upload helper ──────────────────────────────────────────────
+async function uploadProofToCloudinary(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", envConfig.CLOUDINARY_UPLOAD_PRESET);
+
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${envConfig.CLOUDINARY_CLOUD_NAME}/image/upload`,
+    { method: "POST", body: formData },
+  );
+  if (!res.ok) {
+    throw new Error(`Cloudinary upload failed (${res.status})`);
+  }
+  const data = (await res.json()) as { secure_url?: string };
+  if (!data.secure_url) {
+    throw new Error("Cloudinary không trả về secure_url");
+  }
+  return data.secure_url;
+}
+
 // ── Mark Paid Dialog ──────────────────────────────────────────────────────
 function MarkPaidDialog({
   open,
@@ -200,6 +223,8 @@ function MarkPaidDialog({
   withdrawalId: string;
 }) {
   const markPaidMutation = useAdminMarkPaidWithdrawal();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
   const form = useForm<MarkPaidBodyType>({
     resolver: zodResolver(MarkPaidBodySchema),
     defaultValues: {
@@ -209,11 +234,54 @@ function MarkPaidDialog({
     },
   });
   useClearServerFieldErrors(form);
+  const proofUrl = form.watch("transferProofUrl");
+
+  const handlePickFile = () => fileInputRef.current?.click();
+
+  const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = async (
+    event,
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Vui lòng chọn file ảnh");
+      return;
+    }
+
+    try {
+      setUploading(true);
+      const url = await uploadProofToCloudinary(file);
+      form.setValue("transferProofUrl", url, { shouldValidate: true });
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Tải ảnh lên thất bại",
+      );
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveProof = () => {
+    form.setValue("transferProofUrl", "", { shouldValidate: true });
+  };
+
+  const handleClose = () => {
+    if (uploading || markPaidMutation.isPending) return;
+    form.reset();
+    onClose();
+  };
 
   const handleSubmit = form.handleSubmit(async (values) => {
     try {
-      const { transferProofUrl: _omitProofUrl, ...body } = values;
-      void _omitProofUrl;
+      const body: MarkPaidBodyType = {
+        transferReference: values.transferReference,
+        adminNote: values.adminNote?.trim() ? values.adminNote : undefined,
+        ...(values.transferProofUrl
+          ? { transferProofUrl: values.transferProofUrl }
+          : {}),
+      };
       await markPaidMutation.mutateAsync({ id: withdrawalId, body });
       form.reset();
       onClose();
@@ -235,7 +303,7 @@ function MarkPaidDialog({
   return (
     <Dialog
       open={open}
-      onOpenChange={(v) => !v && onClose()}
+      onOpenChange={(v) => !v && handleClose()}
     >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
@@ -260,20 +328,76 @@ function MarkPaidDialog({
               </p>
             )}
           </div>
-          {/* <div className="space-y-1">
+
+          <div className="space-y-2">
             <label className="text-sm font-medium">
-              URL chứng minh (tuỳ chọn)
+              Ảnh chứng minh chuyển khoản (tuỳ chọn)
             </label>
-            <Input
-              {...form.register("transferProofUrl")}
-              placeholder="https://..."
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
             />
+            {proofUrl ? (
+              <div className="relative overflow-hidden rounded-md border">
+                <img
+                  src={proofUrl}
+                  alt="Ảnh chứng minh chuyển khoản"
+                  className="max-h-64 w-full object-contain bg-muted"
+                />
+                <div className="flex items-center justify-between gap-2 border-t bg-background p-2">
+                  <a
+                    href={proofUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="truncate text-xs text-primary underline underline-offset-2"
+                  >
+                    Mở ảnh gốc
+                  </a>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handlePickFile}
+                      disabled={uploading || markPaidMutation.isPending}
+                    >
+                      Đổi ảnh
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRemoveProof}
+                      disabled={uploading || markPaidMutation.isPending}
+                    >
+                      <X className="mr-1 h-3 w-3" />
+                      Xoá
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handlePickFile}
+                disabled={uploading || markPaidMutation.isPending}
+                className="w-full"
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                {uploading ? "Đang tải lên…" : "Chọn ảnh để tải lên"}
+              </Button>
+            )}
             {form.formState.errors.transferProofUrl && (
               <p className="text-xs text-destructive">
                 {form.formState.errors.transferProofUrl.message}
               </p>
             )}
-          </div> */}
+          </div>
+
           <div className="space-y-1">
             <label className="text-sm font-medium">
               Ghi chú admin (tuỳ chọn)
@@ -293,13 +417,14 @@ function MarkPaidDialog({
             <Button
               type="button"
               variant="outline"
-              onClick={onClose}
+              onClick={handleClose}
+              disabled={uploading || markPaidMutation.isPending}
             >
               Huỷ
             </Button>
             <Button
               type="submit"
-              disabled={markPaidMutation.isPending}
+              disabled={uploading || markPaidMutation.isPending}
             >
               {markPaidMutation.isPending ? "Đang xử lý…" : "Xác nhận"}
             </Button>
@@ -933,6 +1058,12 @@ function AdminDoctorWithdrawalDetailPage() {
             <div className="flex justify-between">
               <span className="text-muted-foreground">Chưa nhận lúc</span>
               <span>{formatDateTimeVi(w.notReceivedAt)}</span>
+            </div>
+          )}
+          {w.resolvedNotReceivedAt && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Xử lý khiếu nại lúc</span>
+              <span>{formatDateTimeVi(w.resolvedNotReceivedAt)}</span>
             </div>
           )}
         </CardContent>
