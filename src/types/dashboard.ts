@@ -157,8 +157,8 @@ export interface OwnerDashboardPayload {
   subscription: OwnerSubscriptionStatus | null;
   credits: OwnerCreditBalance;
   latestInvoice: OwnerLatestInvoice | null;
-  monthlySpend: DailyPoint[];
-  roleDistribution: OwnerRoleShare[];
+  monthlySpend?: DailyPoint[];
+  roleDistribution?: OwnerRoleShare[];
   doctors: OwnerDoctor[];
   recentLogs: DailyLogResType[];
 }

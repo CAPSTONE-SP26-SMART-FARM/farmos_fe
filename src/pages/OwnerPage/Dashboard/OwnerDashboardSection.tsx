@@ -67,8 +67,8 @@ function OwnerDashboardSection() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-3">
-            <MonthlySpendChart data={data.monthlySpend} className="lg:col-span-2" />
-            <RoleDistributionCard data={data.roleDistribution} />
+            <MonthlySpendChart data={data.monthlySpend ?? []} className="lg:col-span-2" />
+            <RoleDistributionCard data={data.roleDistribution ?? []} />
           </div>
 
           <RecentIncidentsCard farmId={farmId} />
