@@ -131,11 +131,11 @@ function RecentIncidentsCard({ farmId, className }: RecentIncidentsCardProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <Ticket className="h-4 w-4" />
-          Sự cố gần đây từ nông dân
+          Sự cố gần đây
         </CardTitle>
         <CardDescription>
-          10 ticket sự cố mới nhất do nông dân tạo trên trang trại của bạn.
-          Bấm để xem chi tiết.
+          10 ticket sự cố mới nhất được tạo trên trang trại của bạn. Bấm để xem
+          chi tiết.
         </CardDescription>
       </CardHeader>
       <CardContent>

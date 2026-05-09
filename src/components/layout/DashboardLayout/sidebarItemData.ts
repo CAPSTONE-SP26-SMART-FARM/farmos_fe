@@ -319,7 +319,7 @@ export const sidebarData: SidebarData = {
       label: "Hỗ trợ",
       items: [
         {
-          title: "Điều Phối Sự Cố",
+          title: "Giám Sát Sự Cố",
           url: "/dashboard/manager/tickets",
           icon: Ticket,
         },
