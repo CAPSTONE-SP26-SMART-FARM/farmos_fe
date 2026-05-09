@@ -43,9 +43,10 @@ function getInitials(name: string): string {
 interface LogsPanelProps {
   zoneId: string;
   zoneName?: string;
+  readOnly?: boolean;
 }
 
-function LogsPanel({ zoneId, zoneName }: LogsPanelProps) {
+function LogsPanel({ zoneId, zoneName, readOnly = false }: LogsPanelProps) {
   const today = todayIso();
   const [page, setPage] = useState(1);
   const [fromDateInput, setFromDateInput] = useState(today);
@@ -172,7 +173,7 @@ function LogsPanel({ zoneId, zoneName }: LogsPanelProps) {
               {logsQuery.isLoading ? "Đang tải..." : `${totalItems} nhật ký được ghi nhận`}
             </p>
           </div>
-          <SubmitLogDialog />
+          {!readOnly && <SubmitLogDialog />}
         </div>
         <div>
           {logsQuery.isError ? (
@@ -221,9 +222,10 @@ interface DailyLogsTabProps {
   zoneId: string;
   zoneName?: string;
   cropSeason: CropSeasonType;
+  readOnly?: boolean;
 }
 
-export function DailyLogsTab({ zoneId, zoneName, cropSeason }: DailyLogsTabProps) {
+export function DailyLogsTab({ zoneId, zoneName, cropSeason, readOnly = false }: DailyLogsTabProps) {
   return (
     <Card>
       <Tabs defaultValue="logs">
@@ -248,7 +250,7 @@ export function DailyLogsTab({ zoneId, zoneName, cropSeason }: DailyLogsTabProps
 
         <CardContent className="pt-4">
           <TabsContent value="logs" className="mt-0">
-            <LogsPanel zoneId={zoneId} zoneName={zoneName} />
+            <LogsPanel zoneId={zoneId} zoneName={zoneName} readOnly={readOnly} />
           </TabsContent>
 
           <TabsContent value="today" className="mt-0">
@@ -256,7 +258,7 @@ export function DailyLogsTab({ zoneId, zoneName, cropSeason }: DailyLogsTabProps
           </TabsContent>
 
           <TabsContent value="tasks" className="mt-0">
-            <TaskManagementPanel cropSeason={cropSeason} />
+            <TaskManagementPanel cropSeason={cropSeason} readOnly={readOnly} />
           </TabsContent>
         </CardContent>
       </Tabs>

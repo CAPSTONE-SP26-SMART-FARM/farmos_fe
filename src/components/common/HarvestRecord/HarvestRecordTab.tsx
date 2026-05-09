@@ -40,6 +40,7 @@ const ALLOWED_CREATE_STATUSES = new Set(["approved", "active", "completed"]);
 
 interface Props {
   cropSeason: CropSeasonType;
+  readOnly?: boolean;
 }
 
 function formatDateOnly(value: string | null | undefined) {
@@ -51,10 +52,10 @@ function formatDateOnly(value: string | null | undefined) {
   }
 }
 
-export default function HarvestRecordTab({ cropSeason }: Props) {
+export default function HarvestRecordTab({ cropSeason, readOnly = false }: Props) {
   const zoneId = cropSeason.zoneId;
   const cropSeasonId = cropSeason.id;
-  const canCreate = ALLOWED_CREATE_STATUSES.has(cropSeason.status);
+  const canCreate = !readOnly && ALLOWED_CREATE_STATUSES.has(cropSeason.status);
 
   const [query, setQuery] = useState<ListHarvestRecordsQueryType>({
     page: 1,
@@ -132,18 +133,20 @@ export default function HarvestRecordTab({ cropSeason }: Props) {
             Ghi nhận sản lượng và chất lượng theo từng đợt thu hoạch của mùa vụ.
           </p>
         </div>
-        <Button
-          onClick={handleOpenCreate}
-          disabled={!canCreate}
-          title={
-            canCreate
-              ? undefined
-              : "Chỉ có thể tạo bản ghi khi mùa vụ đã được duyệt, đang hoạt động hoặc đã hoàn tất."
-          }
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Tạo bản ghi
-        </Button>
+        {!readOnly && (
+          <Button
+            onClick={handleOpenCreate}
+            disabled={!canCreate}
+            title={
+              canCreate
+                ? undefined
+                : "Chỉ có thể tạo bản ghi khi mùa vụ đã được duyệt, đang hoạt động hoặc đã hoàn tất."
+            }
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Tạo bản ghi
+          </Button>
+        )}
       </div>
 
       {/* Filter bar */}
@@ -260,22 +263,26 @@ export default function HarvestRecordTab({ cropSeason }: Props) {
               ] as ColumnDef<HarvestRecordResType>[]
             }
             data={items}
-            actions={[
-              {
-                key: "edit",
-                label: "Chỉnh sửa",
-                icon: Pencil,
-                onSelect: (r) => handleOpenEdit(r),
-              },
-              {
-                key: "delete",
-                label: "Xoá",
-                icon: Trash2,
-                variant: "destructive",
-                disabled: () => deleteMutation.isPending,
-                onSelect: (r) => setDeleteTarget(r),
-              },
-            ]}
+            actions={
+              readOnly
+                ? undefined
+                : [
+                    {
+                      key: "edit",
+                      label: "Chỉnh sửa",
+                      icon: Pencil,
+                      onSelect: (r) => handleOpenEdit(r),
+                    },
+                    {
+                      key: "delete",
+                      label: "Xoá",
+                      icon: Trash2,
+                      variant: "destructive",
+                      disabled: () => deleteMutation.isPending,
+                      onSelect: (r) => setDeleteTarget(r),
+                    },
+                  ]
+            }
             emptyText="Chưa có bản ghi."
           />
         </div>

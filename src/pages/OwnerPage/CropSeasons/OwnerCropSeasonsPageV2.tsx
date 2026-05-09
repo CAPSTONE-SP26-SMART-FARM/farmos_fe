@@ -12,6 +12,7 @@ import {
   Layers,
   Radio,
   Send,
+  SlidersHorizontal,
   Sprout,
   Wheat,
 } from "lucide-react";
@@ -27,10 +28,11 @@ import { OwnerSensorOverviewTab } from "./components/OwnerSensorOverviewTab";
 import { OwnerIncidentTab } from "./components/OwnerIncidentTab";
 import { OwnerDailyLogsTab } from "./components/OwnerDailyLogsTab";
 import HarvestRecordTab from "@/components/common/HarvestRecord/HarvestRecordTab";
+import TrackingConfigPanel from "@/pages/ManagerPage/CropSeasons/components/TrackingConfigPanel";
 import { ZoneSwitcherCombobox } from "@/pages/ManagerPage/CropSeasons/components/ZoneSwitcherCombobox";
 import { ZoneLanding } from "@/pages/ManagerPage/CropSeasons/components/ZoneLanding";
 import { CropSeasonSummaryCard } from "@/pages/ManagerPage/CropSeasons/components/CropSeasonSummaryCard";
-import { ProductionStatusName } from "@/types/cropSeason";
+import { ProductionStatusName, type CropSeasonType } from "@/types/cropSeason";
 
 const HISTORY_STATUSES = new Set(["completed", "cancelled"]);
 
@@ -197,6 +199,7 @@ function NowSeasonContent({
 export default function OwnerCropSeasonsPageV2() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [sidebarTab, setSidebarTab] = useState<"now" | "history">("now");
+  const [historyDetail, setHistoryDetail] = useState<CropSeasonType | null>(null);
   const zoneId = searchParams.get("zoneId")?.trim() ?? "";
   const openRequestId =
     searchParams.get("openRequestId")?.trim() || undefined;
@@ -243,6 +246,10 @@ export default function OwnerCropSeasonsPageV2() {
     setSearchParams,
     zoneId,
   ]);
+
+  useEffect(() => {
+    setHistoryDetail(null);
+  }, [zoneId]);
 
   const { data: allData, isLoading: seasonsLoading } = useOwnerListCropSeasons(
     zoneId,
@@ -385,7 +392,7 @@ export default function OwnerCropSeasonsPageV2() {
               />
             ))}
 
-          {sidebarTab === "history" && (
+          {sidebarTab === "history" && !historyDetail && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-base font-semibold">Lịch sử vụ mùa</h2>
@@ -398,7 +405,112 @@ export default function OwnerCropSeasonsPageV2() {
               <OwnerHistoryView
                 seasons={historySeasons}
                 isLoading={seasonsLoading}
+                onSelect={(s) => setHistoryDetail(s)}
               />
+            </div>
+          )}
+
+          {sidebarTab === "history" && historyDetail && (
+            <div className="space-y-4">
+              <CropSeasonSummaryCard
+                season={historyDetail}
+                actions={
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setHistoryDetail(null)}
+                  >
+                    <ArrowLeft className="h-3 w-3 mr-1.5" />
+                    Quay lại lịch sử
+                  </Button>
+                }
+                footer={null}
+              />
+              <Tabs defaultValue="milestones">
+                <TabsList className="w-full md:w-auto flex-wrap h-auto gap-1">
+                  <TabsTrigger
+                    value="milestones"
+                    className="flex items-center gap-1.5"
+                  >
+                    <Layers className="h-3.5 w-3.5" />
+                    Mốc công việc
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="sensors"
+                    className="flex items-center gap-1.5"
+                  >
+                    <Radio className="h-3.5 w-3.5" />
+                    Cảm biến
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="incidents"
+                    className="flex items-center gap-1.5"
+                  >
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    Sự cố
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="daily-logs"
+                    className="flex items-center gap-1.5"
+                  >
+                    <BookOpen className="h-3.5 w-3.5" />
+                    Nhiệm vụ
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="tracking-config"
+                    className="flex items-center gap-1.5"
+                  >
+                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                    Cấu hình theo dõi
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="harvest"
+                    className="flex items-center gap-1.5"
+                  >
+                    <Wheat className="h-3.5 w-3.5" />
+                    Thu hoạch
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="requests"
+                    className="flex items-center gap-1.5"
+                  >
+                    <Send className="h-3.5 w-3.5" />
+                    Yêu cầu duyệt
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="milestones" className="mt-4">
+                  <OwnerMilestonesWithDetailTab cropSeason={historyDetail} />
+                </TabsContent>
+                <TabsContent value="sensors" className="mt-4">
+                  <OwnerSensorOverviewTab cropSeason={historyDetail} />
+                </TabsContent>
+                <TabsContent value="incidents" className="mt-4">
+                  <OwnerIncidentTab cropSeason={historyDetail} />
+                </TabsContent>
+                <TabsContent value="daily-logs" className="mt-4">
+                  <OwnerDailyLogsTab
+                    zoneId={zoneId}
+                    zoneName={selectedZoneName}
+                    cropSeason={historyDetail}
+                    readOnly={true}
+                  />
+                </TabsContent>
+                <TabsContent value="tracking-config" className="mt-4">
+                  <TrackingConfigPanel
+                    cropSeasonId={historyDetail.id}
+                    readOnly={true}
+                  />
+                </TabsContent>
+                <TabsContent value="harvest" className="mt-4">
+                  <HarvestRecordTab
+                    cropSeason={historyDetail}
+                    readOnly={true}
+                  />
+                </TabsContent>
+                <TabsContent value="requests" className="mt-4">
+                  <OwnerRequestsHistoryTab cropSeasonId={historyDetail.id} />
+                </TabsContent>
+              </Tabs>
             </div>
           )}
         </div>
