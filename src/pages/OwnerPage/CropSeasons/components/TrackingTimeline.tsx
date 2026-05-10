@@ -75,7 +75,9 @@ export default function TrackingTimeline({
   const activeData = hasFilter || page > 1 ? data?.data : (initialData ?? data?.data);
   const loading = hasFilter || page > 1 ? isLoading : initialLoading;
 
-  const items = activeData?.data ?? [];
+  const items = (activeData?.data ?? []).filter(
+    (item) => item.fieldName !== "sensorBinding",
+  );
   const meta = activeData?.meta;
 
   const handleFilterChange = () => {
