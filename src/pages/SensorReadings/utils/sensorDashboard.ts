@@ -92,8 +92,8 @@ export const SENSOR_TYPE_META: Record<
   light_intensity: {
     label: "Cường độ sáng",
     icon: Sun,
-    unit: "lux",
-    format: (v) => `${Math.round(v)} lux`,
+    unit: "%",
+    format: (v) => `${Math.round(v)}%`,
   },
 };
 

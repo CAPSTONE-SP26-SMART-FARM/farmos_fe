@@ -19,7 +19,7 @@ const SENSOR_META: Record<
   soil_moisture: { label: "Độ ẩm đất", icon: Droplets, unit: "%" },
   air_temperature: { label: "Nhiệt độ KK", icon: Thermometer, unit: "°C" },
   air_humidity: { label: "Độ ẩm KK", icon: Sprout, unit: "%" },
-  light_intensity: { label: "Cường độ sáng", icon: Sun, unit: "lux" },
+  light_intensity: { label: "Cường độ sáng", icon: Sun, unit: "%" },
 };
 
 type SensorCardProps = {
