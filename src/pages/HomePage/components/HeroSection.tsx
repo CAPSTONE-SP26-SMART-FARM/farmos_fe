@@ -79,7 +79,7 @@ const bentoCards = [
   {
     icon: Sun,
     label: "Ánh sáng",
-    value: "850 lux",
+    value: "85%",
     trend: "Tốt",
     color: "from-yellow-500 to-orange-400",
     bgColor: "bg-yellow-500/10",
