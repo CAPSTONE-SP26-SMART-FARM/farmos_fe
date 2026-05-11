@@ -35,7 +35,6 @@ export default function AdminEditIotDevicePage() {
       device={device}
       onBack={handleBack}
       onBackRequested={handleBack}
-      hideSensors
     />
   );
 }

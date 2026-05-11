@@ -172,6 +172,9 @@ export const API_ENDPOINTS = {
       ASSIGN_FROM_KIT:
         "/iot-device-provisioning/admin/provision/assign-from-kit",
       UNASSIGN_OWNER: "/iot-device-provisioning/admin/provision/unassign-owner",
+      LOG_LIST: "/iot-device-provisioning/admin/iot-device-log",
+      LOG_DETAIL: (logId: string) =>
+        `/iot-device-provisioning/admin/iot-device-log/${logId}`,
     },
     WITHDRAWALS: {
       LIST: "/admin/withdrawals",
@@ -813,6 +816,13 @@ export const QUERY_KEYS = {
         ...(query !== undefined ? [query] : []),
       ],
       detail: (deviceId: string) => ["admin", "iot-devices", deviceId],
+      logs: (query?: Record<string, unknown>) => [
+        "admin",
+        "iot-device-logs",
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ],
+      logDetail: (logId: string) => ["admin", "iot-device-logs", logId],
     },
     withdrawals: {
       list: (query?: Record<string, unknown>) => [
