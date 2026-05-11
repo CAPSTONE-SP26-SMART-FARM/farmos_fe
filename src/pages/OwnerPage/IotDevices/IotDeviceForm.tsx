@@ -289,7 +289,7 @@ const DEVICE_TYPE_ICON: Record<string, typeof Cpu> = {
 
 const STATUS_LABEL: Record<string, string> = {
   available: "Có thể sử dụng",
-  purchase: "Khả dụng",
+  purchase: "Đã cho thuê",
   install: "Đang lắp đặt",
   active: "Hoạt động",
   error: "Lỗi",
@@ -1170,19 +1170,19 @@ function BatchCreateForm({
           deviceName: "",
           deviceType: "board_module",
           macAddress: "",
-          status: "active",
+          status: "available",
         },
         {
           deviceName: "",
           deviceType: "lora_module",
           macAddress: "",
-          status: "active",
+          status: "available",
         },
         {
           deviceName: "",
           deviceType: "wifi_module",
           macAddress: "",
-          status: "active",
+          status: "available",
         },
       ],
     },
@@ -1385,7 +1385,7 @@ function BatchCreateForm({
                       deviceName: "",
                       deviceType: "board_module",
                       macAddress: "",
-                      status: "active",
+                      status: "available",
                     })
                   }
                 >
@@ -1400,7 +1400,7 @@ function BatchCreateForm({
                       deviceName: "",
                       deviceType: "lora_module",
                       macAddress: "",
-                      status: "active",
+                      status: "available",
                     })
                   }
                 >
@@ -1415,7 +1415,7 @@ function BatchCreateForm({
                       deviceName: "",
                       deviceType: "wifi_module",
                       macAddress: "",
-                      status: "active",
+                      status: "available",
                     })
                   }
                 >
@@ -1871,36 +1871,12 @@ function EditDeviceForm({
                     </Field>
                   )}
                 />
-                <Controller
-                  name="deviceType"
-                  control={form.control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>Loại thiết bị *</FieldLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(DEVICE_TYPE_LABEL).map(
-                            ([val, label]) => (
-                              <SelectItem
-                                key={val}
-                                value={val}
-                              >
-                                {label}
-                              </SelectItem>
-                            ),
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <FieldError>{fieldState.error?.message}</FieldError>
-                    </Field>
-                  )}
-                />
+                <Field>
+                  <FieldLabel>Loại thiết bị</FieldLabel>
+                  <div className="flex h-9 items-center rounded-md border bg-muted/50 px-3 text-sm text-muted-foreground">
+                    {DEVICE_TYPE_LABEL[dtVal] ?? dtVal}
+                  </div>
+                </Field>
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">

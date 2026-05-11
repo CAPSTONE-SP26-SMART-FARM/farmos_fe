@@ -82,6 +82,9 @@ export const useAdminUpdateIotDevice = () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.admin.iotDevices.detail(deviceId),
       });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.iotKits.all,
+      });
       toast.success("Cập nhật thiết bị IoT thành công!");
     },
     onError: (error) =>
