@@ -15,21 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Cpu,
-  Loader2,
-  Search,
-  Wifi,
-  Radio,
-  CircuitBoard,
-  Activity,
-  Wrench,
-  Power,
-  PackageCheck,
-  Package,
-  AlertCircle,
-  ShieldOff,
-} from "lucide-react";
+import { Activity, AlertCircle, Cpu, Loader2, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import useDebounce from "@/hooks/useDebounce";
 import {
@@ -41,62 +27,14 @@ import type {
   IotDeviceResType,
   ListIotDevicesQueryType,
 } from "@/schemaValidatation/iotDevice";
+import {
+  DEVICE_STATUS_LABEL_USER,
+  DEVICE_TYPE_ICON,
+  DEVICE_TYPE_LABEL,
+  STATUS_META,
+} from "@/constants/iotDeviceDisplay";
 
 type IotActor = "owner" | "manager";
-
-const STATUS_META: Record<
-  string,
-  { label: string; className: string; icon: typeof Activity }
-> = {
-  available: {
-    label: "Có thể sử dụng",
-    className:
-      "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-    icon: Package,
-  },
-  purchase: {
-    label: "Khả dụng",
-    className:
-      "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
-    icon: PackageCheck,
-  },
-  install: {
-    label: "Đang lắp đặt",
-    className:
-      "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300",
-    icon: Wrench,
-  },
-  active: {
-    label: "Hoạt động",
-    className:
-      "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300",
-    icon: Power,
-  },
-  error: {
-    label: "Lỗi",
-    className:
-      "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
-    icon: AlertCircle,
-  },
-  revoked: {
-    label: "Thu hồi",
-    className:
-      "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
-    icon: ShieldOff,
-  },
-};
-
-const DEVICE_TYPE_ICON: Record<string, typeof Cpu> = {
-  board_module: CircuitBoard,
-  lora_module: Radio,
-  wifi_module: Wifi,
-};
-
-const DEVICE_TYPE_LABEL: Record<string, string> = {
-  board_module: "Bo mạch",
-  lora_module: "Mô-đun LoRa",
-  wifi_module: "Mô-đun WiFi",
-};
 
 interface IotDeviceListProps {
   farmId: string;
@@ -144,45 +82,48 @@ export default function IotDeviceList({
     actor === "manager",
   );
 
-  // Stats: query nhỏ riêng để lấy meta.totalItems theo từng status, không phụ
-  // thuộc filter hiện tại trên list. Tổng = số device trong provision của owner
-  // (BE đã filter theo ownerId). Cài đặt / Hoạt động / Lỗi = breakdown theo status.
-  const useStat = actor === "owner" ? useOwnerListIotDevices : useManagerListIotDevices;
-  const totalStatQuery = useStat(farmId, { page: 1, limit: 1 }, true);
-  const installStatQuery = useStat(farmId, { page: 1, limit: 1, status: "install" }, true);
-  const activeStatQuery = useStat(farmId, { page: 1, limit: 1, status: "active" }, true);
-  const errorStatQuery = useStat(farmId, { page: 1, limit: 1, status: "error" }, true);
-
   const data = actor === "owner" ? ownerListQuery.data : managerListQuery.data;
   const isLoading =
     actor === "owner" ? ownerListQuery.isLoading : managerListQuery.isLoading;
+  const isFetching =
+    actor === "owner" ? ownerListQuery.isFetching : managerListQuery.isFetching;
+  const isError =
+    actor === "owner" ? ownerListQuery.isError : managerListQuery.isError;
 
   const devices = data?.data?.data ?? [];
   const meta = data?.data?.meta;
-  const totalCount = totalStatQuery.data?.data?.meta?.totalItems ?? 0;
-  const installCount = installStatQuery.data?.data?.meta?.totalItems ?? 0;
-  const activeCount = activeStatQuery.data?.data?.meta?.totalItems ?? 0;
-  const errorCount = errorStatQuery.data?.data?.meta?.totalItems ?? 0;
 
   return (
     <Card className="overflow-hidden border-border/70">
       <CardHeader className="bg-muted/30">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div>
-            <Badge className="mb-2">
-              {actor === "owner" ? "Cổng chủ trang trại" : "Cổng quản lý"}
-            </Badge>
-            <CardTitle className="flex items-center gap-2">
-              <Cpu className="h-5 w-5 text-primary" />
-              Iot kit đã gán {farmName ? `- ${farmName}` : ""}
-            </CardTitle>
-            <CardDescription className="mt-1">
-              Danh sách bo mạch được cấp quyền truy cập từ hệ thống gán Iot kit.
-            </CardDescription>
-          </div>
+        {/*
+          CardHeader chỉ chứa identity (badge + title + description).
+          Filter bar được tách xuống div border-t bên dưới — cùng nằm trong Card
+          nhưng tách biệt về mặt visual để rõ ràng: header = "đây là gì",
+          filter = "tôi muốn xem gì". Pattern này nhất quán với AdminIotDevicesPage
+          (filter bar nằm ngoài Card) nhưng phù hợp hơn ở đây vì IotDeviceList
+          là component nhúng (không có page-level space phía trên).
+        */}
+        <div>
+          <Badge className="mb-2">
+            {actor === "owner" ? "Cổng chủ trang trại" : "Cổng quản lý"}
+          </Badge>
+          <CardTitle className="flex items-center gap-2">
+            <Cpu className="h-5 w-5 text-primary" />
+            Iot kit đã gán {farmName ? `- ${farmName}` : ""}
+            {isFetching && !isLoading && (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+            )}
+          </CardTitle>
+          <CardDescription className="mt-1">
+            Danh sách bo mạch được cấp quyền truy cập từ hệ thống gán Iot kit.
+          </CardDescription>
         </div>
+      </CardHeader>
 
-        <div className="mt-2 grid gap-2 md:grid-cols-[1fr_160px_140px]">
+      {/* Filter bar — border-t tách biệt với header, trong cùng Card */}
+      <div className="border-t px-6 py-3">
+        <div className="grid gap-2 md:grid-cols-[1fr_160px_140px]">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -192,7 +133,6 @@ export default function IotDeviceList({
               className="pl-9"
             />
           </div>
-
           <Select
             value={statusFilter}
             onValueChange={(v) => {
@@ -211,16 +151,11 @@ export default function IotDeviceList({
               <SelectItem value="error">Lỗi</SelectItem>
             </SelectContent>
           </Select>
-
           <Select
             value={String(query.limit ?? defaultLimit)}
-            onValueChange={(value) => {
-              setQuery((prev) => ({
-                ...prev,
-                page: 1,
-                limit: Number(value),
-              }));
-            }}
+            onValueChange={(value) =>
+              setQuery((prev) => ({ ...prev, page: 1, limit: Number(value) }))
+            }
           >
             <SelectTrigger>
               <SelectValue placeholder="Số mục" />
@@ -232,51 +167,17 @@ export default function IotDeviceList({
             </SelectContent>
           </Select>
         </div>
-      </CardHeader>
+      </div>
 
       <CardContent className="space-y-4 pt-5">
-        <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4">
-          <div className="rounded-lg border bg-background p-3">
-            <div className="flex items-center gap-1.5">
-              <Cpu className="h-3.5 w-3.5 text-primary" />
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Tổng thiết bị
-              </p>
-            </div>
-            <p className="mt-1 text-xl font-semibold">{totalCount}</p>
-          </div>
-          <div className="rounded-lg border bg-background p-3">
-            <div className="flex items-center gap-1.5">
-              <Wrench className="h-3.5 w-3.5 text-amber-500" />
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Đang cài đặt
-              </p>
-            </div>
-            <p className="mt-1 text-xl font-semibold">{installCount}</p>
-          </div>
-          <div className="rounded-lg border bg-background p-3">
-            <div className="flex items-center gap-1.5">
-              <Activity className="h-3.5 w-3.5 text-emerald-500" />
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Hoạt động
-              </p>
-            </div>
-            <p className="mt-1 text-xl font-semibold">{activeCount}</p>
-          </div>
-          <div className="rounded-lg border bg-background p-3">
-            <div className="flex items-center gap-1.5">
-              <AlertCircle className="h-3.5 w-3.5 text-red-500" />
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Lỗi
-              </p>
-            </div>
-            <p className="mt-1 text-xl font-semibold">{errorCount}</p>
-          </div>
-        </div>
-
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : isError ? (
+          <div className="flex flex-col items-center gap-2 py-8 text-center text-destructive">
+            <AlertCircle className="h-6 w-6" />
+            <p className="text-sm">Không thể tải danh sách thiết bị. Thử lại sau.</p>
           </div>
         ) : devices.length === 0 ? (
           <p className="py-8 text-center text-muted-foreground">
@@ -294,11 +195,19 @@ export default function IotDeviceList({
           </div>
         )}
 
-        {meta && meta.totalPages > 1 && (
-          <div className="flex items-center justify-between pt-2 text-xs text-muted-foreground">
-            <span>
-              Trang {meta.page} / {meta.totalPages} ({meta.totalItems} mục)
+        <div className="flex items-center justify-between pt-2 text-xs text-muted-foreground">
+          {meta ? (
+            <span className="flex items-center gap-1.5">
+              <Activity className="h-3 w-3" />
+              {meta.totalPages > 1
+                ? `Trang ${meta.page} / ${meta.totalPages} · `
+                : ""}
+              {meta.totalItems} thiết bị
             </span>
+          ) : (
+            <span />
+          )}
+          {meta && meta.totalPages > 1 && (
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
@@ -324,8 +233,8 @@ export default function IotDeviceList({
                 Sau
               </Button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </CardContent>
     </Card>
   );
@@ -343,9 +252,10 @@ function DeviceCard({
   const DIcon = DEVICE_TYPE_ICON[device.deviceType] ?? Cpu;
 
   return (
-    <div
+    <button
+      type="button"
       onClick={onDetail}
-      className="group cursor-pointer rounded-xl border border-border/70 bg-background p-4 transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md"
+      className="group w-full rounded-xl border border-border/70 bg-background p-4 text-left transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
@@ -356,30 +266,20 @@ function DeviceCard({
             </p>
           </div>
           <div className="mt-1.5 flex flex-wrap gap-1">
-            <Badge
-              variant="outline"
-              className="text-[10px]"
-            >
+            <Badge variant="outline" className="text-[10px]">
               {DEVICE_TYPE_LABEL[device.deviceType] ?? device.deviceType}
             </Badge>
             <span
-              className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium ${sMeta.className}`}
+              className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${sMeta.badgeClass}`}
             >
               <SIcon className="h-2.5 w-2.5" />
-              {sMeta.label}
+              {DEVICE_STATUS_LABEL_USER[device.status] ?? device.status}
             </span>
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDetail();
-          }}
-        >
+        <span className="shrink-0 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors group-hover:bg-muted">
           Xem chi tiết
-        </Button>
+        </span>
       </div>
 
       <div className="mt-2 space-y-1 text-xs text-muted-foreground">
@@ -399,6 +299,6 @@ function DeviceCard({
           {new Date(device.latestLog.createdAt).toLocaleDateString("vi-VN")}
         </p>
       )}
-    </div>
+    </button>
   );
 }

@@ -15,6 +15,7 @@ import AdminIotDevicesPage from "@/pages/AdminPage/IotDevices/AdminIotDevicesPag
 import AdminCreateIotDevicesPage from "@/pages/AdminPage/IotDevices/AdminCreateIotDevicesPage";
 import AdminIotDeviceDetailPage from "@/pages/AdminPage/IotDevices/AdminIotDeviceDetailPage";
 import AdminEditIotDevicePage from "@/pages/AdminPage/IotDevices/AdminEditIotDevicePage";
+import AdminIotDeviceLogsPage from "@/pages/AdminPage/IotDevices/AdminIotDeviceLogsPage";
 import AdminEmployeeTaskTemplatesPage from "@/pages/AdminPage/EmployeeTaskTemplates/AdminEmployeeTaskTemplatesPage";
 import AdminMilestoneTemplatePage from "@/pages/AdminPage/AdminMilestoneTemplatePage";
 import AdminSubscriptionPlansPage from "@/pages/AdminPage/SubscriptionPlans/AdminSubscriptionPlansPage";
@@ -209,6 +210,11 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/admin/iot-devices/:deviceId/edit",
         component: AdminEditIotDevicePage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/iot-device-logs",
+        component: AdminIotDeviceLogsPage,
         allowedRoles: [RoleName.Admin],
       },
       {

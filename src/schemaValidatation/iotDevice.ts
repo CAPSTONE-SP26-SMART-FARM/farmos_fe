@@ -179,6 +179,12 @@ export const ProvisionAssignedOwnerSchema = z.object({
   name: z.string(),
 });
 
+export const FarmSummarySchema = z.object({
+  id: z.string().uuid(),
+  code: z.string(),
+  name: z.string(),
+});
+
 export const IotDeviceResSchema = z.object({
   id: z.string().uuid(),
   deviceName: z.string(),
@@ -189,13 +195,8 @@ export const IotDeviceResSchema = z.object({
   iotDeviceBoardId: z.string().uuid().nullable(),
   sensorsLockedAt: z.string().nullable().optional(),
   owner: ProvisionAssignedOwnerSchema.nullable().optional(),
+  farm: FarmSummarySchema.nullable().optional(),
   latestLog: IotDeviceLatestLogSchema.nullable(),
-});
-
-export const FarmSummarySchema = z.object({
-  id: z.string().uuid(),
-  code: z.string(),
-  name: z.string(),
 });
 
 export const SensorSummarySchema = z.object({
@@ -216,6 +217,60 @@ export const IotDeviceDetailResSchema = IotDeviceResSchema.extend({
     }),
   ),
 });
+
+// ── IoT Device Log schemas ─────────────────────────────────────────────
+
+export const IotDeviceLogResSchema = z.object({
+  id: z.string().uuid(),
+  deviceId: z.string().uuid(),
+  action: z.string(),
+  reason: z.string().nullable(),
+  performedBy: z.string().uuid(),
+  zoneIdSnapshot: z.string().uuid().nullable(),
+  createdAt: z.string(),
+  device: z
+    .object({
+      id: z.string().uuid(),
+      deviceName: z.string(),
+      deviceType: IotDeviceTypeSchema,
+      status: DeviceStatusSchema,
+    })
+    .nullable()
+    .optional(),
+  performer: z
+    .object({
+      id: z.string().uuid(),
+      fullName: z.string().nullable(),
+      role: z.string(),
+    })
+    .nullable()
+    .optional(),
+});
+
+export const IotDeviceLogDetailResSchema = IotDeviceLogResSchema.extend({
+  device: z.object({
+    id: z.string().uuid(),
+    deviceName: z.string(),
+    deviceType: IotDeviceTypeSchema,
+    status: DeviceStatusSchema,
+  }),
+  performer: z.object({
+    id: z.string().uuid(),
+    fullName: z.string().nullable(),
+    role: z.string(),
+  }),
+});
+
+export const ListIotDeviceLogsQuerySchema = PagingRequestSchema.extend({
+  performedBy: z.string().uuid().optional(),
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
+  deviceId: z.string().uuid().optional(),
+});
+
+export const ListIotDeviceLogsResSchema = PagingResponseSchema(
+  IotDeviceLogResSchema,
+);
 
 // ── List query ─────────────────────────────────────────────────────────
 
@@ -256,3 +311,13 @@ export type AdminUnassignOwnerBodyType = z.infer<
 export type ListIotDevicesQueryType = z.infer<typeof ListIotDevicesQuerySchema>;
 export type ListIotDevicesResType = z.infer<typeof ListIotDevicesResSchema>;
 export type IotDeviceBatchResType = z.infer<typeof IotDeviceBatchResSchema>;
+export type IotDeviceLogResType = z.infer<typeof IotDeviceLogResSchema>;
+export type IotDeviceLogDetailResType = z.infer<
+  typeof IotDeviceLogDetailResSchema
+>;
+export type ListIotDeviceLogsQueryType = z.infer<
+  typeof ListIotDeviceLogsQuerySchema
+>;
+export type ListIotDeviceLogsResType = z.infer<
+  typeof ListIotDeviceLogsResSchema
+>;

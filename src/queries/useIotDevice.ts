@@ -12,6 +12,7 @@ import type {
   AdminUnassignOwnerBodyType,
   AdminUpdateSensorBodyType,
   CreateIotDeviceBatchBodyType,
+  ListIotDeviceLogsQueryType,
   ListIotDevicesQueryType,
   UpdateIotDeviceBodyType,
 } from "@/schemaValidatation/iotDevice";
@@ -499,5 +500,26 @@ export const useManagerLockSensors = () => {
         queryKey: QUERY_KEYS.manager.iotDevices.list(),
       });
     },
+  });
+};
+
+// ── Admin IoT Device Log hooks ───────────────────────────────────────
+
+export const useAdminListIotDeviceLogs = (
+  query: ListIotDeviceLogsQueryType,
+  enabled = true,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.admin.iotDevices.logs(query),
+    queryFn: () => adminIotDeviceService.listLogs(query),
+    enabled,
+  });
+};
+
+export const useAdminIotDeviceLogDetail = (logId: string, enabled = true) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.admin.iotDevices.logDetail(logId),
+    queryFn: () => adminIotDeviceService.logDetail(logId),
+    enabled: !!logId && enabled,
   });
 };

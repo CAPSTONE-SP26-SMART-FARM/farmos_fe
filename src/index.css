@@ -124,6 +124,16 @@
 	}
 }
 
+@keyframes collapsible-down {
+	from { height: 0; opacity: 0; }
+	to { height: var(--radix-collapsible-content-height); opacity: 1; }
+}
+
+@keyframes collapsible-up {
+	from { height: var(--radix-collapsible-content-height); opacity: 1; }
+	to { height: 0; opacity: 0; }
+}
+
 /* ConfirmDialog (custom portal in confirm-dialog.tsx) renders directly under
  * <body>. When a Radix Dialog/Sheet is open with modal=true, Radix sets
  * `body { pointer-events: none }`, which propagates to the ConfirmDialog and

@@ -2,338 +2,381 @@ import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
-	CircuitBoard,
-	Cpu,
-	Loader2,
-	Pencil,
-	Plus,
-	Radio,
-	Search,
-	Trash2,
-	Wifi,
+  AlertCircle,
+  Cpu,
+  Eye,
+  Loader2,
+  MoreHorizontal,
+  PencilLine,
+  Plus,
+  Search,
+  Trash2,
 } from "lucide-react";
 import {
-	useAdminDeleteIotDevice,
-	useAdminListIotDevices,
+  useAdminDeleteIotDevice,
+  useAdminListIotDevices,
 } from "@/queries/useIotDevice";
 import type {
-	DeviceStatusType,
-	IotDeviceResType,
-	ListIotDevicesQueryType,
+  DeviceStatusType,
+  IotDeviceResType,
+  ListIotDevicesQueryType,
 } from "@/schemaValidatation/iotDevice";
+import {
+  DEVICE_STATUS_LABEL_ADMIN,
+  DEVICE_TYPE_ICON,
+  DEVICE_TYPE_LABEL,
+  STATUS_META,
+} from "@/constants/iotDeviceDisplay";
 import useDebounce from "@/hooks/useDebounce";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
-const DEVICE_TYPE_LABEL: Record<string, string> = {
-	board_module: "Bo mạch",
-	wifi_module: "Mô-đun WiFi",
-	lora_module: "Mô-đun LoRa",
-};
-
-const DEVICE_TYPE_ICON: Record<string, typeof Cpu> = {
-	board_module: CircuitBoard,
-	wifi_module: Wifi,
-	lora_module: Radio,
-};
-
-const DEVICE_STATUS_LABEL: Record<DeviceStatusType, string> = {
-	available: "Có thể sử dụng",
-	purchase: "Đã cho thuê",
-	install: "Đang lắp đặt",
-	active: "Hoạt động",
-	error: "Lỗi",
-	revoked: "Thu hồi",
-};
-
-const DEVICE_STATUS_BADGE_CLASS: Record<DeviceStatusType, string> = {
-	available:
-		"border-slate-300 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200",
-	purchase:
-		"border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",
-	install:
-		"border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300",
-	active:
-		"border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
-	error:
-		"border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300",
-	revoked:
-		"border-zinc-300 bg-zinc-100 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300",
-};
-
 export default function AdminIotDevicesPage() {
-	const navigate = useNavigate();
-	const [query, setQuery] = useState<ListIotDevicesQueryType>({
-		page: 1,
-		limit: 10,
-	});
-	const [search, setSearch] = useState("");
-	const [status, setStatus] = useState<DeviceStatusType | "all">("all");
-	const [deleteTarget, setDeleteTarget] = useState<IotDeviceResType | null>(
-		null,
-	);
+  const navigate = useNavigate();
+  const [query, setQuery] = useState<ListIotDevicesQueryType>({
+    page: 1,
+    limit: 10,
+  });
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<DeviceStatusType | "all">("all");
+  const [deleteTarget, setDeleteTarget] = useState<IotDeviceResType | null>(null);
 
-	const debouncedSearch = useDebounce(search, 500);
+  const debouncedSearch = useDebounce(search, 500);
 
-	const effectiveQuery = useMemo(
-		() => ({
-			...query,
-			search: debouncedSearch || undefined,
-			status: status !== "all" ? status : undefined,
-		}),
-		[query, debouncedSearch, status],
-	);
+  const effectiveQuery = useMemo(
+    () => ({
+      ...query,
+      search: debouncedSearch || undefined,
+      status: status !== "all" ? status : undefined,
+    }),
+    [query, debouncedSearch, status],
+  );
 
-	const listQuery = useAdminListIotDevices(effectiveQuery);
-	const deleteMutation = useAdminDeleteIotDevice();
+  const listQuery = useAdminListIotDevices(effectiveQuery);
+  const deleteMutation = useAdminDeleteIotDevice();
 
-	const devices = listQuery.data?.data?.data ?? [];
-	const meta = listQuery.data?.data?.meta;
+  const devices = listQuery.data?.data?.data ?? [];
+  const meta = listQuery.data?.data?.meta;
 
-	return (
-		<div className="space-y-6 animate-in fade-in duration-300">
-			<section className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
-				<div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-					<div>
-						<Badge className="mb-2">Cổng quản trị</Badge>
-						<h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-							Quản lý các bộ kit IoT
-						</h1>
-						<p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
-							Tạo, cập nhật, xóa và cấu hình vòng đời thiết bị IoT.
-						</p>
-					</div>
-					<Button
-						onClick={() => navigate("/dashboard/admin/iot-devices/create")}
-					>
-						<Plus className="mr-2 h-4 w-4" />
-						Tạo bộ kit mới
-					</Button>
-				</div>
-			</section>
+  return (
+    <div className="space-y-4 animate-in fade-in duration-300">
+      {/* ── Page header ────────────────────────────────────────────────────── */}
+      {/*
+        Lý do tách header thành section riêng (không gộp vào Card danh sách):
+          Header = identity của trang (badge role, tiêu đề, mô tả, nút CTA).
+          Card danh sách = data container. Tách 2 khối giúp admin nhìn
+          ngay "đang ở đâu" và "action chính là gì" mà không cần scan qua list.
+      */}
+      <section className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <Badge className="mb-2">Cổng quản trị</Badge>
+            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+              Quản lý các bộ kit IoT
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
+              Tạo, cập nhật, xóa và cấu hình vòng đời thiết bị IoT.
+            </p>
+          </div>
+          <Button onClick={() => navigate("/dashboard/admin/iot-devices/create")}>
+            <Plus className="mr-2 h-4 w-4" />
+            Tạo bộ kit mới
+          </Button>
+        </div>
+      </section>
 
-			<Card className="overflow-hidden border-border/70">
-				<CardHeader className="bg-muted/30">
-					<CardTitle className="flex items-center gap-2">
-						<Cpu className="h-5 w-5 text-primary" />
-						Danh sách thiết bị
-					</CardTitle>
-					<CardDescription>
-						Dữ liệu lấy từ API gán Iot kit dành cho quản trị viên.
-					</CardDescription>
+      {/* ── Filter bar ─────────────────────────────────────────────────────── */}
+      {/*
+        Lý do filter bar đứng độc lập giữa header và danh sách:
+          CardHeader = nơi mô tả "đây là section gì" — không phải nơi đặt controls.
+          Đặt filter nằm ngoài Card tạo visual hierarchy rõ ràng:
+            [identity] → [narrow down] → [results].
+          Admin thấy filter ngay dưới header = mental model tự nhiên (Google, admin panels).
+          Filter collapse được trên mobile nhờ flex-wrap.
+      */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative min-w-45 flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setQuery((prev) => ({ ...prev, page: 1 }));
+            }}
+            placeholder="Tìm theo tên thiết bị"
+            className="pl-9"
+          />
+        </div>
+        <Select
+          value={status}
+          onValueChange={(value) => {
+            setStatus(value as DeviceStatusType | "all");
+            setQuery((prev) => ({ ...prev, page: 1 }));
+          }}
+        >
+          <SelectTrigger className="w-50">
+            <SelectValue placeholder="Trạng thái" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tất cả trạng thái</SelectItem>
+            {(Object.keys(DEVICE_STATUS_LABEL_ADMIN) as DeviceStatusType[]).map((s) => (
+              <SelectItem key={s} value={s}>
+                {DEVICE_STATUS_LABEL_ADMIN[s]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={String(query.limit)}
+          onValueChange={(value) =>
+            setQuery((prev) => ({ ...prev, page: 1, limit: Number(value) }))
+          }
+        >
+          <SelectTrigger className="w-32.5">
+            <SelectValue placeholder="Số mục" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="10">10 / trang</SelectItem>
+            <SelectItem value="20">20 / trang</SelectItem>
+            <SelectItem value="50">50 / trang</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-					<div className="mt-2 grid gap-2 md:grid-cols-[1fr_200px_140px]">
-						<div className="relative">
-							<Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-							<Input
-								value={search}
-								onChange={(e) => {
-									setSearch(e.target.value);
-									setQuery((prev) => ({ ...prev, page: 1 }));
-								}}
-								placeholder="Tìm theo tên thiết bị"
-								className="pl-9"
-							/>
-						</div>
-						<Select
-							value={status}
-							onValueChange={(value) => {
-								setStatus(value as DeviceStatusType | "all");
-								setQuery((prev) => ({ ...prev, page: 1 }));
-							}}
-						>
-							<SelectTrigger>
-								<SelectValue placeholder="Trạng thái" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="all">Tất cả trạng thái</SelectItem>
-								<SelectItem value="available">Có thể sử dụng</SelectItem>
-								<SelectItem value="purchase">Đã cho thuê</SelectItem>
-								<SelectItem value="install">Đang lắp đặt</SelectItem>
-								<SelectItem value="active">Hoạt động</SelectItem>
-								<SelectItem value="error">Lỗi</SelectItem>
-								<SelectItem value="revoked">Thu hồi</SelectItem>
-							</SelectContent>
-						</Select>
-						<Select
-							value={String(query.limit)}
-							onValueChange={(value) => {
-								setQuery((prev) => ({
-									...prev,
-									page: 1,
-									limit: Number(value),
-								}));
-							}}
-						>
-							<SelectTrigger>
-								<SelectValue placeholder="Số mục" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="10">10 / trang</SelectItem>
-								<SelectItem value="20">20 / trang</SelectItem>
-								<SelectItem value="50">50 / trang</SelectItem>
-							</SelectContent>
-						</Select>
-					</div>
-				</CardHeader>
+      {/* ── Device list card ───────────────────────────────────────────────── */}
+      <Card className="overflow-hidden border-border/70">
+        {/*
+          CardHeader chỉ còn title + description (không có filter).
+          Lý do: header của card = label nhận dạng section, không phải toolbar.
+          isFetching spinner cạnh title = phản hồi background refresh không
+          block UI, user vẫn thấy data cũ trong khi chờ.
+        */}
+        <CardHeader className="bg-muted/30">
+          <CardTitle className="flex items-center gap-2">
+            <Cpu className="h-5 w-5 text-primary" />
+            Danh sách thiết bị
+            {listQuery.isFetching && !listQuery.isLoading && (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+            )}
+          </CardTitle>
+          <CardDescription>
+            Dữ liệu lấy từ API gán Iot kit dành cho quản trị viên.
+          </CardDescription>
+        </CardHeader>
 
-				<CardContent className="space-y-4 pt-5">
-					{listQuery.isLoading ? (
-						<div className="flex items-center justify-center py-8">
-							<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-						</div>
-					) : devices.length === 0 ? (
-						<p className="py-8 text-center text-muted-foreground">
-							Không có dữ liệu thiết bị.
-						</p>
-					) : (
-						<div className="grid gap-3 md:grid-cols-2">
-							{devices.map((device) => {
-								const Icon = DEVICE_TYPE_ICON[device.deviceType] ?? Cpu;
-								return (
-									<div
-										key={device.id}
-										className="flex flex-col gap-3 rounded-xl border border-border/70 bg-background p-4"
-									>
-										<div className="flex items-center gap-2">
-											<Icon className="h-4 w-4 text-primary" />
-											<p className="truncate font-medium">
-												{device.deviceName}
-											</p>
-										</div>
-										<div className="flex flex-wrap gap-1">
-											<Badge variant="outline">
-												{DEVICE_TYPE_LABEL[device.deviceType] ??
-													device.deviceType}
-											</Badge>
-											<Badge
-												variant="outline"
-												className={DEVICE_STATUS_BADGE_CLASS[device.status]}
-											>
-												{DEVICE_STATUS_LABEL[device.status] ?? device.status}
-											</Badge>
-											{device.owner ? (
-												<Badge
-													className="max-w-55 truncate border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-													title={device.owner.name}
-												>
-													Đã gán: {device.owner.name}
-												</Badge>
-											) : device.status === "available" ? null : (
-												<Badge
-													variant="outline"
-													className="border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300"
-												>
-													Chưa gán owner
-												</Badge>
-											)}
-										</div>
-										<div className="mt-auto flex items-center gap-1 border-t pt-3">
-											<Button
-												size="sm"
-												variant="outline"
-												onClick={() =>
-													navigate(`/dashboard/admin/iot-devices/${device.id}`)
-												}
-											>
-												Chi tiết
-											</Button>
-											<div className="ml-auto flex items-center gap-1">
-												<Button
-													size="icon"
-													variant="outline"
-													onClick={() =>
-														navigate(
-															`/dashboard/admin/iot-devices/${device.id}/edit`,
-														)
-													}
-													title="Chỉnh sửa"
-												>
-													<Pencil className="h-4 w-4" />
-												</Button>
-												<Button
-													size="icon"
-													variant="destructive"
-													onClick={() => setDeleteTarget(device)}
-													title="Xóa"
-												>
-													<Trash2 className="h-4 w-4" />
-												</Button>
-											</div>
-										</div>
-									</div>
-								);
-							})}
-						</div>
-					)}
+        <CardContent className="pt-5">
+          {listQuery.isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : listQuery.isError ? (
+            <div className="flex flex-col items-center gap-2 py-8 text-center text-destructive">
+              <AlertCircle className="h-6 w-6" />
+              <p className="text-sm">Không thể tải danh sách thiết bị. Thử lại sau.</p>
+            </div>
+          ) : devices.length === 0 ? (
+            <p className="py-8 text-center text-muted-foreground">
+              Không có dữ liệu thiết bị.
+            </p>
+          ) : (
+            /*
+              Lý do dùng horizontal row thay vì card grid 2-col stacked:
+                Admin quản lý nhiều thiết bị — cần scan nhanh theo tên/trạng thái.
+                Row ngang = tên + loại + status + owner đều visible trên 1 dòng,
+                không cần scroll ngang. So với card stacked (tên ở trên, badges
+                ở giữa, buttons ở dưới) thì eye-travel giảm từ 3 chiều xuống 1.
+                DropdownMenu thay icon buttons inline = gọn hơn, đúng pattern
+                09-dialog-pattern.md của dự án (row actions dùng MoreHorizontal).
+            */
+            <div className="space-y-2">
+              {devices.map((device) => {
+                const Icon = DEVICE_TYPE_ICON[device.deviceType] ?? Cpu;
+                const sMeta = STATUS_META[device.status];
+                const SIcon = sMeta?.icon;
+                return (
+                  <div
+                    key={device.id}
+                    className="flex items-center gap-3 rounded-xl border border-border/70 bg-background p-3.5"
+                  >
+                    {/* Icon avatar — visual anchor theo loại thiết bị */}
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <Icon className="h-4 w-4 text-primary" />
+                    </div>
 
-					{meta && meta.totalPages > 1 && (
-						<div className="flex items-center justify-between pt-2 text-xs text-muted-foreground">
-							<span>
-								Trang {meta.page} / {meta.totalPages} ({meta.totalItems} mục)
-							</span>
-							<div className="flex items-center gap-2">
-								<Button
-									size="sm"
-									variant="outline"
-									disabled={!meta.hasPreviousPage}
-									onClick={() =>
-										setQuery((prev) => ({
-											...prev,
-											page: Math.max(1, prev.page - 1),
-										}))
-									}
-								>
-									Trước
-								</Button>
-								<Button
-									size="sm"
-									variant="outline"
-									disabled={!meta.hasNextPage}
-									onClick={() =>
-										setQuery((prev) => ({ ...prev, page: prev.page + 1 }))
-									}
-								>
-									Sau
-								</Button>
-							</div>
-						</div>
-					)}
-				</CardContent>
-			</Card>
+                    {/* Identity: tên + loại + trạng thái */}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold">{device.deviceName}</p>
+                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                        <span className="text-xs text-muted-foreground">
+                          {DEVICE_TYPE_LABEL[device.deviceType] ?? device.deviceType}
+                        </span>
+                        {sMeta && SIcon && (
+                          <>
+                            <span className="text-muted-foreground/50">·</span>
+                            <span
+                              className={`inline-flex items-center gap-0.5 rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${sMeta.badgeClass}`}
+                            >
+                              <SIcon className="h-2.5 w-2.5" />
+                              {sMeta.labelAdmin}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
 
-			<ConfirmDialog
-				open={!!deleteTarget}
-				title="Xóa thiết bị IoT?"
-				description={`Bạn có chắc muốn xóa thiết bị "${deleteTarget?.deviceName ?? ""}" khỏi hệ thống?`}
-				confirmLabel="Xóa"
-				cancelLabel="Hủy"
-				variant="destructive"
-				onCancel={() => setDeleteTarget(null)}
-				onConfirm={async () => {
-					if (deleteTarget) {
-						await deleteMutation.mutateAsync(deleteTarget.id);
-						toast.success("Bộ kit đã được xoá thành công");
-					}
-					setDeleteTarget(null);
-				}}
-			/>
-		</div>
-	);
+                    {/*
+                      Owner info hiện trên md+ — thông tin phân bổ quan trọng
+                      với admin nhưng ẩn trên mobile để không làm hàng quá chật.
+                    */}
+                    <div className="hidden w-37.5 shrink-0 md:block">
+                      {device.owner ? (
+                        <>
+                          <p className="truncate text-xs font-medium">{device.owner.name}</p>
+                          {device.farm && (
+                            <p className="truncate text-[10px] text-muted-foreground">
+                              {device.farm.name}
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <span className="rounded-md border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                          Chưa gán
+                        </span>
+                      )}
+                    </div>
+
+                    {/*
+                      DropdownMenu thay vì 3 button inline — theo 09-dialog-pattern:
+                      "Mọi table row actions dùng DropdownMenu từ shadcn".
+                      Lý do: 3 button làm hàng bị nặng; dropdown gom gọn, dễ extend
+                      thêm action mới (log, clone...) mà không thay đổi layout.
+                      Separator trước Xóa = phân biệt destructive action rõ ràng.
+                    */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="shrink-0"
+                          aria-label={`Tùy chọn cho ${device.deviceName}`}
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() =>
+                            navigate(`/dashboard/admin/iot-devices/${device.id}`)
+                          }
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          Xem chi tiết
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            navigate(`/dashboard/admin/iot-devices/${device.id}/edit`)
+                          }
+                        >
+                          <PencilLine className="mr-2 h-4 w-4" />
+                          Chỉnh sửa
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => setDeleteTarget(device)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Xóa thiết bị
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+            {meta ? (
+              <span>
+                {meta.totalPages > 1
+                  ? `Trang ${meta.page} / ${meta.totalPages} · `
+                  : ""}
+                {meta.totalItems} thiết bị
+              </span>
+            ) : (
+              <span />
+            )}
+            {meta && meta.totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!meta.hasPreviousPage}
+                  onClick={() =>
+                    setQuery((prev) => ({
+                      ...prev,
+                      page: Math.max(1, prev.page - 1),
+                    }))
+                  }
+                >
+                  Trước
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!meta.hasNextPage}
+                  onClick={() =>
+                    setQuery((prev) => ({ ...prev, page: prev.page + 1 }))
+                  }
+                >
+                  Sau
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Xóa thiết bị IoT?"
+        description={`Bạn có chắc muốn xóa thiết bị "${deleteTarget?.deviceName ?? ""}" khỏi hệ thống? Hành động này không thể hoàn tác.`}
+        confirmLabel="Xóa"
+        cancelLabel="Hủy"
+        variant="destructive"
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={async () => {
+          if (deleteTarget) {
+            await deleteMutation.mutateAsync(deleteTarget.id);
+            toast.success("Bộ kit đã được xoá thành công");
+          }
+          setDeleteTarget(null);
+        }}
+      />
+    </div>
+  );
 }

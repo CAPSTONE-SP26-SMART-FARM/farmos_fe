@@ -19,6 +19,7 @@ export default function AdminIotDeviceDetailPage() {
       farmId=""
       actor="admin"
       onBack={() => navigate("/dashboard/admin/iot-devices")}
+      onEdit={() => navigate(`/dashboard/admin/iot-devices/${deviceId}/edit`)}
     />
   );
 }

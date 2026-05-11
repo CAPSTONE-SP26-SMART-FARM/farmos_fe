@@ -47,6 +47,8 @@ import {
   Thermometer,
   CloudRain,
   Sun,
+  Pencil,
+  X,
 } from "lucide-react";
 
 import { useEffect, useState } from "react";
@@ -321,6 +323,21 @@ const SENSOR_TYPE_ICON: Record<string, typeof Cpu> = {
   air_temperature_sensor: Thermometer,
   air_humidity_sensor: CloudRain,
   light_intensity_sensor: Sun,
+};
+
+// Dùng để hiển thị sensor status mà không cần `as` cast
+const SENSOR_STATUS_DISPLAY: Record<string, string> = {
+  active: "Hoạt động",
+  inactive: "Tắt",
+  calibrating: "Hiệu chuẩn",
+};
+
+// Union các sensor từ admin (minValue: number) và owner/manager (minValue: string)
+type SensorDisplayItem = {
+  sensorType: string;
+  status?: string;
+  minValue?: string | number | null;
+  maxValue?: string | number | null;
 };
 
 // ── IoT Device Template Picker ─────────────────────────────────────────
@@ -1507,6 +1524,7 @@ function EditDeviceForm({
       macAddress: sub.macAddress ?? "",
       isDirty: false,
       isSaving: false,
+      isEditing: false,
     })),
   );
 
@@ -1520,9 +1538,36 @@ function EditDeviceForm({
         macAddress: sub.macAddress ?? "",
         isDirty: false,
         isSaving: false,
+        isEditing: false,
       })),
     );
   }, [device.id]);
+
+  const toggleEditSubDevice = (id: string) => {
+    setEditableSubDevices((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, isEditing: !item.isEditing } : item,
+      ),
+    );
+  };
+
+  const cancelSubDevice = (id: string) => {
+    const original = deviceSubDevices.find((s) => s.id === id);
+    if (!original) return;
+    setEditableSubDevices((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              deviceName: original.deviceName,
+              macAddress: original.macAddress ?? "",
+              isDirty: false,
+              isEditing: false,
+            }
+          : item,
+      ),
+    );
+  };
 
   const patchSubDevice = (
     id: string,
@@ -1583,6 +1628,7 @@ function EditDeviceForm({
                 macAddress: normalizedMac || item.macAddress,
                 isDirty: false,
                 isSaving: false,
+                isEditing: false,
               }
             : item,
         ),
@@ -1623,7 +1669,7 @@ function EditDeviceForm({
     device.id,
     actor === "admin" && isBoard,
   );
-  const existingSensors =
+  const existingSensors: SensorDisplayItem[] =
     actor === "admin"
       ? (adminDetailQuery.data?.data.sensors ?? []).map((s) => ({
           sensorType: s.sensorType,
@@ -1939,7 +1985,7 @@ function EditDeviceForm({
               Chỉnh sửa nhanh các mô-đun WiFi/LoRa thuộc bo mạch này.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-2">
             {editableSubDevices.map((subDevice) => {
               const SubIcon = DEVICE_TYPE_ICON[subDevice.deviceType] ?? Cpu;
               const showMacField = subDevice.deviceType === "wifi_module";
@@ -1947,93 +1993,92 @@ function EditDeviceForm({
               return (
                 <div
                   key={subDevice.id}
-                  className="rounded-lg border bg-muted/10 p-3 space-y-3"
+                  className="rounded-lg border bg-muted/10 p-3"
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <SubIcon className="h-4 w-4 text-primary" />
-                      <p className="text-sm font-medium">
-                        {DEVICE_TYPE_LABEL[subDevice.deviceType] ??
-                          subDevice.deviceType}
-                      </p>
-                      <Badge variant="outline">{subDevice.id.slice(0, 8)}...</Badge>
-                    </div>
-                    <Button
-                      size="sm"
-                      disabled={
-                        subDevice.isSaving ||
-                        !subDevice.isDirty ||
-                        !subDevice.deviceName.trim()
-                      }
-                      onClick={() => void saveSubDevice(subDevice.id)}
-                    >
-                      {subDevice.isSaving && (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      )}
-                      Lưu thiết bị con
-                    </Button>
-                  </div>
-
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <Field>
-                      <FieldLabel>Tên thiết bị con</FieldLabel>
-                      <Input
-                        value={subDevice.deviceName}
-                        onChange={(e) =>
-                          patchSubDevice(subDevice.id, {
-                            deviceName: e.target.value,
-                          })
-                        }
-                      />
-                    </Field>
-                    {!hideStatus && (
-                      <Field>
-                        <FieldLabel>Trạng thái</FieldLabel>
-                        <Select
-                          value={subDevice.status}
-                          onValueChange={(value) =>
-                            patchSubDevice(subDevice.id, {
-                              status: value as z.infer<
-                                typeof DeviceStatusSchema
-                              >,
-                            })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(STATUS_LABEL).map(
-                              ([val, label]) => (
-                                <SelectItem
-                                  key={val}
-                                  value={val}
-                                >
-                                  {label}
-                                </SelectItem>
-                              ),
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </Field>
+                  {/* Compact display row — luôn hiện */}
+                  <div className="flex items-center gap-2">
+                    <SubIcon className="h-4 w-4 shrink-0 text-primary" />
+                    <span className="text-sm font-medium">
+                      {DEVICE_TYPE_LABEL[subDevice.deviceType] ?? subDevice.deviceType}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+                      {subDevice.deviceName}
+                    </span>
+                    {showMacField && subDevice.macAddress && (
+                      <span className="hidden font-mono text-xs text-muted-foreground md:block">
+                        {subDevice.macAddress}
+                      </span>
                     )}
+                    <div className="ml-auto flex shrink-0 items-center gap-1">
+                      {subDevice.isEditing ? (
+                        <>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0"
+                            onClick={() => cancelSubDevice(subDevice.id)}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="h-7"
+                            disabled={
+                              subDevice.isSaving ||
+                              !subDevice.isDirty ||
+                              !subDevice.deviceName.trim()
+                            }
+                            onClick={() => void saveSubDevice(subDevice.id)}
+                          >
+                            {subDevice.isSaving && (
+                              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                            )}
+                            Lưu
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0"
+                          onClick={() => toggleEditSubDevice(subDevice.id)}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
-                  {showMacField ? (
-                    <Field>
-                      <FieldLabel>Địa chỉ MAC</FieldLabel>
-                      <Input
-                        className="font-mono"
-                        placeholder="AA:BB:CC:DD:EE:FF"
-                        value={subDevice.macAddress}
-                        onChange={(e) =>
-                          patchSubDevice(subDevice.id, {
-                            macAddress: e.target.value,
-                          })
-                        }
-                      />
-                    </Field>
-                  ) : null}
+                  {/* Input fields — chỉ hiện khi đang edit */}
+                  {subDevice.isEditing && (
+                    <div className={`mt-3 grid gap-3 ${showMacField ? "md:grid-cols-2" : ""}`}>
+                      <Field>
+                        <FieldLabel>Tên thiết bị con</FieldLabel>
+                        <Input
+                          value={subDevice.deviceName}
+                          onChange={(e) =>
+                            patchSubDevice(subDevice.id, { deviceName: e.target.value })
+                          }
+                        />
+                      </Field>
+                      {showMacField && (
+                        <Field>
+                          <FieldLabel>Địa chỉ MAC</FieldLabel>
+                          <Input
+                            className="font-mono"
+                            placeholder="AA:BB:CC:DD:EE:FF"
+                            value={subDevice.macAddress}
+                            onChange={(e) =>
+                              patchSubDevice(subDevice.id, { macAddress: e.target.value })
+                            }
+                          />
+                        </Field>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -2076,8 +2121,8 @@ function EditDeviceForm({
                 {existingSensors.map((sensor, i) => {
                   const SIcon = SENSOR_TYPE_ICON[sensor.sensorType] ?? Cpu;
                   const label = SENSOR_TYPE_LABEL[sensor.sensorType] ?? sensor.sensorType;
-                  const statusLabel = "status" in sensor
-                    ? ({ active: "Hoạt động", inactive: "Tắt", calibrating: "Hiệu chuẩn" }[(sensor as { status: string }).status] ?? (sensor as { status: string }).status)
+                  const statusLabel = sensor.status
+                    ? (SENSOR_STATUS_DISPLAY[sensor.status] ?? sensor.status)
                     : null;
                   return (
                     <div key={i} className="rounded-lg border bg-background p-3 space-y-2">
@@ -2088,9 +2133,9 @@ function EditDeviceForm({
                         </span>
                         {statusLabel && <Badge variant="outline">{statusLabel}</Badge>}
                       </div>
-                      {"minValue" in sensor && "maxValue" in sensor && (
+                      {sensor.minValue != null && sensor.maxValue != null && (
                         <div className="text-xs text-muted-foreground">
-                          Nhỏ nhất: {(sensor as unknown as { minValue: number }).minValue} | Lớn nhất: {(sensor as unknown as { maxValue: number }).maxValue}
+                          Nhỏ nhất: {sensor.minValue} | Lớn nhất: {sensor.maxValue}
                         </div>
                       )}
                     </div>

@@ -9,7 +9,10 @@ import type {
   AdminUpdateSensorBodyType,
   IotDeviceBatchResType,
   IotDeviceDetailResType,
+  IotDeviceLogDetailResType,
   IotDeviceResType,
+  ListIotDeviceLogsQueryType,
+  ListIotDeviceLogsResType,
   ListIotDevicesQueryType,
   ListIotDevicesResType,
   UpdateIotDeviceBodyType,
@@ -89,6 +92,19 @@ export const adminIotDeviceService = {
       ADMIN_EP.UNASSIGN_OWNER,
       body,
     ),
+
+  listLogs: (query: ListIotDeviceLogsQueryType) =>
+    api.get<ListIotDeviceLogsResType>(
+      ADMIN_EP.LOG_LIST +
+        "?" +
+        queryString.stringify(
+          { ...query },
+          { skipEmptyString: true, skipNull: true },
+        ),
+    ),
+
+  logDetail: (logId: string) =>
+    api.get<IotDeviceLogDetailResType>(ADMIN_EP.LOG_DETAIL(logId)),
 };
 
 export const ownerIotDeviceService = {
