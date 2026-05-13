@@ -47,6 +47,8 @@ import AdminUsersPage from "@/pages/AdminPage/Users/AdminUsersPage";
 import DoctorPage from "@/pages/DoctorPage/DoctorPage";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage/ForgotPasswordPage";
 import HomePage from "@/pages/HomePage/HomePage";
+import IncidentReportingHelpPage from "@/pages/Help/IncidentReportingHelpPage";
+import DoctorGuideHelpPage from "@/pages/Help/DoctorGuideHelpPage";
 import LoginPage from "@/pages/LoginPage/LoginPage";
 import ManagerPage from "@/pages/ManagerPage/ManagerPage";
 import ManagerCropSeasonsPage from "@/pages/ManagerPage/CropSeasons/ManagerCropSeasonsPage";
@@ -102,6 +104,8 @@ const routes: AppRoutes = [
       { path: "/", component: HomePage },
       { path: "/order-success", component: OrderSuccessPage },
       { path: "/order-fail", component: OrderFailPage },
+      { path: "/help/incident-reporting", component: IncidentReportingHelpPage },
+      { path: "/help/doctor-guide", component: DoctorGuideHelpPage },
     ],
   },
   {
