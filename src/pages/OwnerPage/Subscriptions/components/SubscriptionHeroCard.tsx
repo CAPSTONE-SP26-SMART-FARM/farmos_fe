@@ -1,10 +1,5 @@
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import SubscriptionStatusBadge from "@/components/common/SubscriptionStatusBadge";
 import { formatDateVi, formatRelativeVi } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -43,6 +38,13 @@ function SubscriptionHeroCard({
   const { status } = subscription;
   const isActiveOrPending = status === "ACTIVE" || status === "PENDING";
 
+  const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
+  const expiresAtMs = subscription.expiresAt
+    ? new Date(subscription.expiresAt).getTime()
+    : null;
+  const isWithinRenewalWindow =
+    expiresAtMs !== null && expiresAtMs - Date.now() < ONE_MONTH_MS;
+
   const renderActions = () => {
     if (status === "ACTIVE") {
       return (
@@ -57,7 +59,7 @@ function SubscriptionHeroCard({
               {upgradeLoading ? "Đang kiểm tra..." : "Nâng gói"}
             </Button>
           )}
-          {onRenew && (
+          {onRenew && isWithinRenewalWindow && (
             <Button
               size="sm"
               variant="outline"

@@ -17,7 +17,7 @@ import AdminIotDeviceDetailPage from "@/pages/AdminPage/IotDevices/AdminIotDevic
 import AdminEditIotDevicePage from "@/pages/AdminPage/IotDevices/AdminEditIotDevicePage";
 import AdminIotDeviceLogsPage from "@/pages/AdminPage/IotDevices/AdminIotDeviceLogsPage";
 import AdminEmployeeTaskTemplatesPage from "@/pages/AdminPage/EmployeeTaskTemplates/AdminEmployeeTaskTemplatesPage";
-import AdminMilestoneTemplatePage from "@/pages/AdminPage/AdminMilestoneTemplatePage";
+// import AdminMilestoneTemplatePage from "@/pages/AdminPage/AdminMilestoneTemplatePage";
 import AdminSubscriptionPlansPage from "@/pages/AdminPage/SubscriptionPlans/AdminSubscriptionPlansPage";
 import AdminSubscriptionPlanDetailPage from "@/pages/AdminPage/SubscriptionPlans/AdminSubscriptionPlanDetailPage";
 import AdminSubscriptionPlanVersionCreatePage from "@/pages/AdminPage/SubscriptionPlans/AdminSubscriptionPlanVersionCreatePage";
@@ -29,10 +29,10 @@ import AdminCreateTicketCategoryPage from "@/pages/AdminPage/TicketCategories/Ad
 import AdminCommissionRulesPage from "@/pages/AdminPage/CommissionRules/AdminCommissionRulesPage";
 import AdminCreateCommissionRulePage from "@/pages/AdminPage/CommissionRules/AdminCreateCommissionRulePage";
 import AdminMedicinesPage from "@/pages/AdminPage/Medicines/AdminMedicinesPage";
-import AdminSeasonTemplatesPage from "@/pages/AdminPage/SeasonTemplates/AdminSeasonTemplatesPage";
-import AdminSeasonTemplateCreatePage from "@/pages/AdminPage/SeasonTemplates/AdminSeasonTemplateCreatePage";
-import AdminSeasonTemplateDetailPage from "@/pages/AdminPage/SeasonTemplates/AdminSeasonTemplateDetailPage";
-import AdminSeasonTemplateUsagePage from "@/pages/AdminPage/SeasonTemplates/AdminSeasonTemplateUsagePage";
+// import AdminSeasonTemplatesPage from "@/pages/AdminPage/SeasonTemplates/AdminSeasonTemplatesPage";
+// import AdminSeasonTemplateCreatePage from "@/pages/AdminPage/SeasonTemplates/AdminSeasonTemplateCreatePage";
+// import AdminSeasonTemplateDetailPage from "@/pages/AdminPage/SeasonTemplates/AdminSeasonTemplateDetailPage";
+// import AdminSeasonTemplateUsagePage from "@/pages/AdminPage/SeasonTemplates/AdminSeasonTemplateUsagePage";
 import AdminMedicineFreeTextStatsPage from "@/pages/AdminPage/Medicines/AdminMedicineFreeTextStatsPage";
 import AdminTicketSystemConfigsPage from "@/pages/AdminPage/SystemConfigs/AdminTicketSystemConfigsPage";
 import AdminDqsLeaderboardPage from "@/pages/AdminPage/DQS/AdminDqsLeaderboardPage";
@@ -226,11 +226,11 @@ const routes: AppRoutes = [
         component: AdminUsersPage,
         allowedRoles: [RoleName.Admin],
       },
-      {
-        path: "/dashboard/admin/milestone-templates",
-        component: AdminMilestoneTemplatePage,
-        allowedRoles: [RoleName.Admin],
-      },
+      // {
+      //   path: "/dashboard/admin/milestone-templates",
+      //   component: AdminMilestoneTemplatePage,
+      //   allowedRoles: [RoleName.Admin],
+      // },
       {
         path: "/dashboard/admin/farms",
         component: AdminFarmsPage,
@@ -277,26 +277,26 @@ const routes: AppRoutes = [
         allowedRoles: [RoleName.Admin],
       },
       // ── Module 6 — Crop Season Templates ──
-      {
-        path: "/dashboard/admin/season-templates",
-        component: AdminSeasonTemplatesPage,
-        allowedRoles: [RoleName.Admin],
-      },
-      {
-        path: "/dashboard/admin/season-templates/create",
-        component: AdminSeasonTemplateCreatePage,
-        allowedRoles: [RoleName.Admin],
-      },
-      {
-        path: "/dashboard/admin/season-templates/:id",
-        component: AdminSeasonTemplateDetailPage,
-        allowedRoles: [RoleName.Admin],
-      },
-      {
-        path: "/dashboard/admin/season-templates/:id/usage",
-        component: AdminSeasonTemplateUsagePage,
-        allowedRoles: [RoleName.Admin],
-      },
+      // {
+      //   path: "/dashboard/admin/season-templates",
+      //   component: AdminSeasonTemplatesPage,
+      //   allowedRoles: [RoleName.Admin],
+      // },
+      // {
+      //   path: "/dashboard/admin/season-templates/create",
+      //   component: AdminSeasonTemplateCreatePage,
+      //   allowedRoles: [RoleName.Admin],
+      // },
+      // {
+      //   path: "/dashboard/admin/season-templates/:id",
+      //   component: AdminSeasonTemplateDetailPage,
+      //   allowedRoles: [RoleName.Admin],
+      // },
+      // {
+      //   path: "/dashboard/admin/season-templates/:id/usage",
+      //   component: AdminSeasonTemplateUsagePage,
+      //   allowedRoles: [RoleName.Admin],
+      // },
       // ── Module 3 — Admin governance (Wave 2) ──
       {
         path: "/dashboard/admin/medicines",

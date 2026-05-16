@@ -299,6 +299,7 @@ function FarmFields(props: FarmFieldsControl) {
                 const val = e.target.value;
                 field.onChange(val === "" ? undefined : Number(val));
               }}
+              disabled={props.mode === "update"}
             />
             {fieldState.invalid && (
               <FieldError errors={[fieldState.error]} />
