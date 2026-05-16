@@ -243,7 +243,7 @@ export function DailyLogsTab({ zoneId, zoneName, cropSeason, readOnly = false }:
             )}
             <TabsTrigger value="tasks" className="flex items-center gap-1.5">
               <ClipboardList className="h-3.5 w-3.5" />
-              Quản lý task
+              Quản lý nhiệm vụ
             </TabsTrigger>
           </TabsList>
         </CardHeader>

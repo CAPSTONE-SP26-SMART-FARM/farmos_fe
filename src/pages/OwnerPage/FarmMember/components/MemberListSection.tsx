@@ -43,6 +43,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getRoleLabelVi, RoleName } from "@/constants/role";
 import { isApiErrorResponse } from "@/lib/utils";
+import { useAuthStore } from "@/stores/authStore";
 
 interface Props {
   farmId: string;
@@ -76,6 +77,7 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
   const [deleteTarget, setDeleteTarget] = useState<FarmMemberResType | null>(
     null,
   );
+  const currentUserId = useAuthStore((state) => state.user?.id);
 
   const query = {
     page,
@@ -149,9 +151,7 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
         accessorKey: "role",
         header: "Vai trò",
         cell: ({ row }) => (
-          <Badge variant="secondary">
-            {getRoleLabelVi(row.original.role)}
-          </Badge>
+          <Badge variant="secondary">{getRoleLabelVi(row.original.role)}</Badge>
         ),
       },
       {
@@ -190,14 +190,16 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
         onSelect: (member) => onViewMember(member),
       },
       {
-        key: "remove",
+        key: "delete",
         label: "Gỡ tài khoản",
         icon: Trash2,
         variant: "destructive",
+        disabled: () => deleting,
+        hidden: (member) => member.user.id === currentUserId,
         onSelect: (member) => setDeleteTarget(member),
       },
     ],
-    [onViewMember],
+    [currentUserId, deleting, onViewMember],
   );
 
   return (
@@ -293,8 +295,8 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
           {meta && meta.totalPages > 1 && (
             <div className="flex items-center justify-between pt-2">
               <p className="text-sm text-muted-foreground">
-                Trang {meta.page}/{meta.totalPages} &bull; {meta.totalItems}{" "}
-                tài khoản
+                Trang {meta.page}/{meta.totalPages} &bull; {meta.totalItems} tài
+                khoản
               </p>
               <div className="flex gap-2">
                 <Button
@@ -327,10 +329,9 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
           <DialogHeader>
             <DialogTitle>Gỡ tài khoản?</DialogTitle>
             <DialogDescription>
-              Tài khoản{" "}
-              <strong>{deleteTarget?.user.fullName}</strong> sẽ bị vô hiệu hoá
-              và không đăng nhập được nữa. Thao tác này dựa trên API xóa mềm
-              theo khu vực của nông trại.
+              Tài khoản <strong>{deleteTarget?.user.fullName}</strong> sẽ bị vô
+              hiệu hoá và không đăng nhập được nữa. Thao tác này dựa trên API
+              xóa mềm theo khu vực của nông trại.
             </DialogDescription>
           </DialogHeader>
           {zonesQuery.isFetching && zones.length === 0 ? (
@@ -339,8 +340,8 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
             </p>
           ) : zones.length === 0 ? (
             <p className="text-sm text-destructive">
-              Nông trại chưa có khu vực (zone). Hãy tạo một khu vực trước khi
-              gỡ tài khoản.
+              Nông trại chưa có khu vực (zone). Hãy tạo một khu vực trước khi gỡ
+              tài khoản.
             </p>
           ) : null}
           <DialogFooter>
@@ -356,9 +357,7 @@ const MemberListSection = ({ farmId, onAddMember, onViewMember }: Props) => {
               type="button"
               variant="destructive"
               onClick={handleConfirmDelete}
-              disabled={
-                deleting || zonesQuery.isFetching || zones.length === 0
-              }
+              disabled={deleting || zonesQuery.isFetching || zones.length === 0}
             >
               {deleting ? (
                 <>

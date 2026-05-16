@@ -193,15 +193,17 @@ export default function ProductionRequestDetailPanel({
       />
 
       <div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleBack}
-          className="mb-3 -ml-2 gap-1 text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {compact ? "Đóng" : "Chi tiết mùa vụ"}
-        </Button>
+        {!compact && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBack}
+            className="mb-3 -ml-2 gap-1 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Chi tiết mùa vụ
+          </Button>
+        )}
         <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
           <div>
             {!compact && <Badge className="mb-2">Yêu cầu phê duyệt</Badge>}
@@ -211,12 +213,16 @@ export default function ProductionRequestDetailPanel({
               }
             >
               {req ? (
-                <>
-                  Chi tiết yêu cầu
-                  <span className="font-mono text-base text-muted-foreground ml-2">
-                    #{req.id.slice(0, 8)}
-                  </span>
-                </>
+                compact ? (
+                  "Chi tiết yêu cầu"
+                ) : (
+                  <>
+                    Chi tiết yêu cầu
+                    <span className="font-mono text-base text-muted-foreground ml-2">
+                      #{req.id.slice(0, 8)}
+                    </span>
+                  </>
+                )
               ) : (
                 <Skeleton className="h-7 w-40 inline-block" />
               )}
@@ -308,7 +314,7 @@ export default function ProductionRequestDetailPanel({
             </CardContent>
           </Card>
 
-          {season && (
+          {!compact && season && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">

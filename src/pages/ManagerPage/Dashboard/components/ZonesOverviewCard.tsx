@@ -98,7 +98,7 @@ function ZonesOverviewCard({ zones, className }: ZonesOverviewCardProps) {
     },
     {
       accessorKey: "tasksOpen",
-      header: () => <div className="text-right">Tasks</div>,
+      header: () => <div className="text-right">Công việc</div>,
       cell: ({ row }) => (
         <div className="text-right tabular-nums">{row.original.tasksOpen}</div>
       ),

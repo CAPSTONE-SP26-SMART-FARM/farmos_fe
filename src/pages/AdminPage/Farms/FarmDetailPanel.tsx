@@ -6,6 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { useAdminFarmDetail } from "@/queries/useAdmin";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
+import { getRoleLabelVi } from "@/constants/role";
+import {
+  FARM_TYPE_LABEL,
+  type FarmTypeT,
+} from "@/schemaValidatation/seasonTemplate";
 
 interface FarmDetailPanelProps {
   id: string;
@@ -120,8 +125,9 @@ const FarmDetailPanel = ({ id, onBack }: FarmDetailPanelProps) => {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <div className="text-muted-foreground">Loại</div>
-                    <div className="font-medium capitalize">
-                      {farm.farmType}
+                    <div className="font-medium">
+                      {FARM_TYPE_LABEL[farm.farmType as FarmTypeT] ??
+                        farm.farmType}
                     </div>
                   </div>
                   <InfoRow
@@ -200,8 +206,8 @@ const FarmDetailPanel = ({ id, onBack }: FarmDetailPanelProps) => {
                 />
                 <div className="space-y-1">
                   <div className="text-muted-foreground">Vai trò</div>
-                  <div className="font-medium capitalize">
-                    {farm.owner.role}
+                  <div className="font-medium">
+                    {getRoleLabelVi(farm.owner.role)}
                   </div>
                 </div>
               </CardContent>

@@ -31,6 +31,21 @@ export const sidebarData: SidebarData = {
   // ──────────────────────────────────────────────────────────────────────
   navAdmin: [
     {
+      label: "Tài chính",
+      items: [
+        {
+          title: "Quản Lý Doanh Thu",
+          url: "/dashboard/admin/revenue",
+          icon: Coins,
+        },
+        {
+          title: "Thanh Toán Bác Sĩ",
+          url: "/dashboard/admin/doctor-payouts",
+          icon: HandCoins,
+        },
+      ],
+    },
+    {
       label: "Tổng quan",
       items: [
         {
@@ -78,21 +93,6 @@ export const sidebarData: SidebarData = {
           title: "Hóa Đơn",
           url: "/dashboard/admin/invoices",
           icon: ReceiptText,
-        },
-      ],
-    },
-    {
-      label: "Tài chính",
-      items: [
-        {
-          title: "Quản Lý Doanh Thu",
-          url: "/dashboard/admin/revenue",
-          icon: Coins,
-        },
-        {
-          title: "Thanh Toán Bác Sĩ",
-          url: "/dashboard/admin/doctor-payouts",
-          icon: HandCoins,
         },
       ],
     },

@@ -118,7 +118,7 @@ export function OwnerRequestsHistoryTab({
         ) : selectedId ? (
           // Compact list when a detail is selected
           <div className="space-y-1">
-            {requests.map((r) => {
+            {requests.map((r, index) => {
               const meta = REQUEST_STATUS_MAP[r.status] ?? {
                 label: r.status,
                 variant: "secondary" as const,
@@ -136,8 +136,8 @@ export function OwnerRequestsHistoryTab({
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-mono text-muted-foreground">
-                      #{r.id.slice(0, 8)}
+                    <span className="text-sm font-medium">
+                      Yêu cầu #{index + 1}
                     </span>
                     <Badge variant={meta.variant} className="text-[10px]">
                       {meta.label}

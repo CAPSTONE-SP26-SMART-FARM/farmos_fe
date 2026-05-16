@@ -51,7 +51,10 @@ type Props =
 
 export default function FarmFormDialog(props: Props) {
   return (
-    <Dialog open={props.open} onOpenChange={props.onOpenChange}>
+    <Dialog
+      open={props.open}
+      onOpenChange={props.onOpenChange}
+    >
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
@@ -113,8 +116,14 @@ function CreateFarmBody({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-      <FarmFields control={form.control} mode="create" />
+    <form
+      onSubmit={form.handleSubmit(handleSubmit)}
+      className="space-y-6"
+    >
+      <FarmFields
+        control={form.control}
+        mode="create"
+      />
       <DialogFooter>
         <Button
           type="button"
@@ -124,7 +133,10 @@ function CreateFarmBody({ onClose }: { onClose: () => void }) {
         >
           Hủy
         </Button>
-        <Button type="submit" disabled={isPending}>
+        <Button
+          type="submit"
+          disabled={isPending}
+        >
           {isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -195,8 +207,14 @@ function UpdateFarmBody({
   };
 
   return (
-    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-      <FarmFields control={form.control} mode="update" />
+    <form
+      onSubmit={form.handleSubmit(handleSubmit)}
+      className="space-y-6"
+    >
+      <FarmFields
+        control={form.control}
+        mode="update"
+      />
       <DialogFooter>
         <Button
           type="button"
@@ -206,7 +224,10 @@ function UpdateFarmBody({
         >
           Hủy
         </Button>
-        <Button type="submit" disabled={isPending}>
+        <Button
+          type="submit"
+          disabled={isPending}
+        >
           {isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -222,8 +243,14 @@ function UpdateFarmBody({
 }
 
 type FarmFieldsControl =
-  | { control: ReturnType<typeof useForm<CreateFarmBodyType>>["control"]; mode: "create" }
-  | { control: ReturnType<typeof useForm<UpdateFarmBodyType>>["control"]; mode: "update" };
+  | {
+      control: ReturnType<typeof useForm<CreateFarmBodyType>>["control"];
+      mode: "create";
+    }
+  | {
+      control: ReturnType<typeof useForm<UpdateFarmBodyType>>["control"];
+      mode: "update";
+    };
 
 function FarmFields(props: FarmFieldsControl) {
   // Both schemas share the same field shape; we cast control loosely to share UI.
@@ -238,10 +265,12 @@ function FarmFields(props: FarmFieldsControl) {
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor="farm-code">Mã nông trại</FieldLabel>
-              <Input {...field} id="farm-code" placeholder="Ví dụ: FARM-001" />
-              {fieldState.invalid && (
-                <FieldError errors={[fieldState.error]} />
-              )}
+              <Input
+                {...field}
+                id="farm-code"
+                placeholder="Ví dụ: FARM-001"
+              />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
         />
@@ -256,9 +285,7 @@ function FarmFields(props: FarmFieldsControl) {
                 id="farm-name"
                 placeholder="Ví dụ: Nông trại Thung Lũng Xanh"
               />
-              {fieldState.invalid && (
-                <FieldError errors={[fieldState.error]} />
-              )}
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
         />
@@ -275,9 +302,7 @@ function FarmFields(props: FarmFieldsControl) {
               id="farm-address"
               placeholder="Ví dụ: 123 Đường Nông Trại, Quận 9"
             />
-            {fieldState.invalid && (
-              <FieldError errors={[fieldState.error]} />
-            )}
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
           </Field>
         )}
       />
@@ -301,9 +326,7 @@ function FarmFields(props: FarmFieldsControl) {
               }}
               disabled={props.mode === "update"}
             />
-            {fieldState.invalid && (
-              <FieldError errors={[fieldState.error]} />
-            )}
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
           </Field>
         )}
       />
@@ -320,9 +343,7 @@ function FarmFields(props: FarmFieldsControl) {
               placeholder="Mô tả ngắn về nông trại"
               className="min-h-20"
             />
-            {fieldState.invalid && (
-              <FieldError errors={[fieldState.error]} />
-            )}
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
           </Field>
         )}
       />

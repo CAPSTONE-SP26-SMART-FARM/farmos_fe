@@ -43,7 +43,7 @@ function OperationsTodayStrip({ data }: OperationsTodayStripProps) {
       <StatCard
         label="Cột mốc đang chạy"
         value={data.milestonesInProgress}
-        hint="Trạng thái in_progress"
+        hint="Đang trong quá trình thực hiện"
         icon={Milestone}
         tone="default"
       />

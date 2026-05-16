@@ -41,18 +41,13 @@ export default function IotKitPurchaseDialog({
         id: kit.id,
         data: body,
       });
-      const { paymentUrl, orderId } = res.data;
+      const { invoiceId, orderId } = res.data;
       onOpenChange(false);
       toast.success("Đã tạo đơn mua bộ Kit IoT.");
-      if (paymentUrl) {
-        const opened = window.open(paymentUrl, "_blank", "noopener,noreferrer");
-        if (!opened) {
-          toast.warning(
-            "Trình duyệt chặn cửa sổ bật lên. Vui lòng dùng nút 'Thanh toán' ở trang theo dõi đơn.",
-          );
-        }
+      if (invoiceId) {
+        navigate(`/dashboard/owner/payments/${invoiceId}`);
+        return;
       }
-      // SPA navigate để giữ socket / cache, không reload toàn trang.
       navigate(`/dashboard/owner/iot-kits/orders/${orderId}`);
     } catch (error) {
       if (isApiErrorUnprocessableEntityResponse(error)) {
@@ -100,8 +95,8 @@ export default function IotKitPurchaseDialog({
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Sau khi xác nhận, một tab mới sẽ mở cổng thanh toán PayOS. Trang theo
-          dõi đơn sẽ tự cập nhật tình trạng trong vòng 3-6 giây.
+          Sau khi xác nhận, bạn sẽ được chuyển sang trang hoá đơn để thanh
+          toán qua PayOS.
         </p>
 
         <DialogFooter>

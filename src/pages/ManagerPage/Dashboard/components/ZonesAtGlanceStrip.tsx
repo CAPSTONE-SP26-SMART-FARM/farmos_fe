@@ -26,7 +26,7 @@ function ZonesAtGlanceStrip({ data }: ZonesAtGlanceStripProps) {
       <StatCard
         label="Mùa vụ đang chạy"
         value={data.activeCropSeasons}
-        hint="Trạng thái active"
+        hint="Đang trong giai đoạn canh tác"
         icon={Sprout}
         tone={data.activeCropSeasons > 0 ? "success" : "default"}
       />

@@ -3,7 +3,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarDays, ClipboardList, Cpu, Info, XCircle } from "lucide-react";
+import { CalendarDays, ClipboardList, Cpu, XCircle } from "lucide-react";
 import { useState } from "react";
 import { useOwnerMilestoneAssignment } from "@/queries/useProductionMilestone";
 import type { ProductionMilestoneResType } from "@/schemaValidatation/productionMilestone";
@@ -184,49 +184,29 @@ function MilestoneInfoTab({
 }: {
   milestone: ProductionMilestoneResType;
 }) {
-  const meta = MILESTONE_STATUS_META[milestone.status] ?? {
-    label: milestone.status,
-    variant: "secondary" as const,
-  };
   return (
-    <div className="space-y-3 pt-1">
-      <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-md border bg-muted/30 px-3 py-2.5 space-y-0.5">
-          <p className="text-xs text-muted-foreground">Thứ tự</p>
-          <p className="text-sm font-medium">#{milestone.milestoneOrder}</p>
-        </div>
-        <div className="rounded-md border bg-muted/30 px-3 py-2.5 space-y-0.5">
-          <p className="text-xs text-muted-foreground">Trạng thái</p>
-          <Badge variant={meta.variant} className="text-xs">
-            {meta.label}
-          </Badge>
-        </div>
-      </div>
+    <dl className="space-y-1.5 pt-1 text-sm">
       {(milestone.expectedStartDate || milestone.expectedEndDate) && (
-        <div className="rounded-md border bg-muted/30 px-3 py-2.5 space-y-1">
-          <p className="text-xs text-muted-foreground flex items-center gap-1">
-            <CalendarDays className="h-3 w-3" />
-            Kế hoạch
-          </p>
-          <p className="text-sm">
+        <div className="flex items-baseline gap-2">
+          <CalendarDays className="h-3.5 w-3.5 shrink-0 translate-y-0.5 text-muted-foreground" />
+          <dt className="text-muted-foreground">Kế hoạch:</dt>
+          <dd>
             {formatDate(milestone.expectedStartDate)} →{" "}
             {formatDate(milestone.expectedEndDate)}
-          </p>
+          </dd>
         </div>
       )}
       {(milestone.actualStartDate || milestone.actualEndDate) && (
-        <div className="rounded-md border bg-muted/30 px-3 py-2.5 space-y-1">
-          <p className="text-xs text-muted-foreground flex items-center gap-1">
-            <CalendarDays className="h-3 w-3 opacity-60" />
-            Thực tế
-          </p>
-          <p className="text-sm">
+        <div className="flex items-baseline gap-2">
+          <CalendarDays className="h-3.5 w-3.5 shrink-0 translate-y-0.5 text-muted-foreground opacity-60" />
+          <dt className="text-muted-foreground">Thực tế:</dt>
+          <dd>
             {formatDate(milestone.actualStartDate)} →{" "}
             {formatDate(milestone.actualEndDate)}
-          </p>
+          </dd>
         </div>
       )}
-    </div>
+    </dl>
   );
 }
 
@@ -256,18 +236,13 @@ export function OwnerMilestoneDetailPane({
         </div>
       </div>
 
+      <MilestoneInfoTab milestone={milestone} />
+
       <Separator />
 
       {!isWizardState ? (
-        <Tabs defaultValue="detail">
+        <Tabs defaultValue="tasks">
           <TabsList className="h-8">
-            <TabsTrigger
-              value="detail"
-              className="text-xs h-7 flex items-center gap-1.5"
-            >
-              <Info className="h-3.5 w-3.5" />
-              Chi tiết
-            </TabsTrigger>
             <TabsTrigger
               value="tasks"
               className="text-xs h-7 flex items-center gap-1.5"
@@ -283,10 +258,6 @@ export function OwnerMilestoneDetailPane({
               Cấu hình IoT
             </TabsTrigger>
           </TabsList>
-
-          <TabsContent value="detail" className="mt-3">
-            <MilestoneInfoTab milestone={milestone} />
-          </TabsContent>
 
           <TabsContent value="tasks" className="mt-3">
             <OwnerMilestoneTasksSection

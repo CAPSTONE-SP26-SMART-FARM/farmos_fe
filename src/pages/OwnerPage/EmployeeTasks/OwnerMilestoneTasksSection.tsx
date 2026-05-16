@@ -942,12 +942,6 @@ export default function OwnerMilestoneTasksSection({
             >
               Task thực thi theo mốc
             </Badge>
-            <Badge
-              variant="secondary"
-              className="text-[10px]"
-            >
-              Template chỉ dùng để tạo nháp
-            </Badge>
           </div>
         </div>
         {canEdit && (

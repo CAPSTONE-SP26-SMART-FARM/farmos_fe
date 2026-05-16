@@ -76,18 +76,15 @@ export default function OwnerIotKitDetailPage() {
           <ArrowLeft className="h-4 w-4" />
           Quay lại marketplace
         </Button>
-        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div className="space-y-2">
-            <Badge className="mb-2">Chủ trang trại</Badge>
-            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-              {kit.name}
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
-              {kit.description ??
-                "Bộ Kit IoT cho phép mở rộng hạn mức thiết bị của bạn."}
-            </p>
-          </div>
-          <Button onClick={() => setPurchaseOpen(true)}>Mua ngay</Button>
+        <div className="space-y-2">
+          <Badge className="mb-2">Chủ trang trại</Badge>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+            {kit.name}
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
+            {kit.description ??
+              "Bộ Kit IoT cho phép mở rộng hạn mức thiết bị của bạn."}
+          </p>
         </div>
       </section>
 

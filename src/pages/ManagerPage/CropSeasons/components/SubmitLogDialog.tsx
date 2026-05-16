@@ -85,7 +85,7 @@ export function SubmitLogDialog() {
         ) : pendingTasks.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-8 text-center">
             <CheckCircle2 className="h-10 w-10 text-emerald-500/60" />
-            <p className="text-sm font-medium">Không có task nào cần log hôm nay</p>
+            <p className="text-sm font-medium">Không có nhiệm vụ nào cần ghi nhận hôm nay</p>
             <p className="text-xs text-muted-foreground">Bạn đã ghi nhật ký đầy đủ.</p>
           </div>
         ) : (
@@ -119,7 +119,7 @@ export function SubmitLogDialog() {
             {selectedTask && (
               <div className="space-y-3 border-t pt-3">
                 <p className="text-xs text-muted-foreground">
-                  Task đã chọn:{" "}
+                  Nhiệm vụ đã chọn:{" "}
                   <span className="font-medium text-foreground">
                     {selectedTask.title}
                   </span>

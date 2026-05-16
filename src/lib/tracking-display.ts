@@ -219,6 +219,17 @@ export function getEnumValueLabel(
   return ENUM_VALUE_LABEL[key] ?? value;
 }
 
+// Fields whose raw value is a user UUID — show a friendly label instead of
+// dumping the raw ID into the UI.
+const USER_REF_FIELDS = new Set([
+  "assignedTo",
+  "assignedBy",
+  "createdBy",
+  "updatedBy",
+  "approvedBy",
+  "completedBy",
+]);
+
 // ── Format raw plan/actual value by dataType ──────────────────────────────
 export function formatTrackingValue(
   value: unknown,
@@ -226,6 +237,15 @@ export function formatTrackingValue(
   ctx?: EnumLookupContext,
 ): string {
   if (value === null || value === undefined) return "—";
+
+  if (
+    ctx?.fieldName &&
+    USER_REF_FIELDS.has(ctx.fieldName) &&
+    typeof value === "string" &&
+    value.length > 0
+  ) {
+    return `Nông dân #${value.slice(0, 8)}`;
+  }
 
   switch (dataType) {
     case "date":
