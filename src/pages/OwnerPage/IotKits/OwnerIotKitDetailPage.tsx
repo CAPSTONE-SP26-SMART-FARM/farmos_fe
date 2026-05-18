@@ -21,6 +21,7 @@ import { ArrowLeft, Boxes, Cpu, Sprout } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import IotKitPurchaseDialog from "./components/IotKitPurchaseDialog";
+import { SENSOR_TYPE_ICON } from "@/constants/iotDeviceDisplay";
 
 export default function OwnerIotKitDetailPage() {
   const { kitId } = useParams<{ kitId: string }>();
@@ -76,18 +77,15 @@ export default function OwnerIotKitDetailPage() {
           <ArrowLeft className="h-4 w-4" />
           Quay lại marketplace
         </Button>
-        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div className="space-y-2">
-            <Badge className="mb-2">Chủ trang trại</Badge>
-            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-              {kit.name}
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
-              {kit.description ??
-                "Bộ Kit IoT cho phép mở rộng hạn mức thiết bị của bạn."}
-            </p>
-          </div>
-          <Button onClick={() => setPurchaseOpen(true)}>Mua ngay</Button>
+        <div className="space-y-2">
+          <Badge className="mb-2">Chủ trang trại</Badge>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+            {kit.name}
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
+            {kit.description ??
+              "Bộ Kit IoT cho phép mở rộng hạn mức thiết bị của bạn."}
+          </p>
         </div>
       </section>
 
@@ -151,11 +149,15 @@ export default function OwnerIotKitDetailPage() {
                 {sensors.length === 0 ? (
                   <span className="text-muted-foreground">—</span>
                 ) : (
-                  sensors.map((s) => (
-                    <Badge key={s} variant="outline">
-                      {SENSOR_TYPE_LABEL_VI[s] ?? s}
-                    </Badge>
-                  ))
+                  sensors.map((s) => {
+                    const SIcon = SENSOR_TYPE_ICON[s];
+                    return (
+                      <Badge key={s} variant="outline" className="gap-1">
+                        {SIcon && <SIcon className="h-3 w-3" />}
+                        {SENSOR_TYPE_LABEL_VI[s] ?? s}
+                      </Badge>
+                    );
+                  })
                 )}
               </div>
             </div>

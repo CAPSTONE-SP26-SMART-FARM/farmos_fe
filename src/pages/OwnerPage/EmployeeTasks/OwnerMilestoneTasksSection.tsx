@@ -21,6 +21,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
@@ -29,13 +30,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -54,6 +48,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CheckCircle2,
+  Search,
 } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import {
@@ -542,35 +537,34 @@ function TaskDetailSheet({
 
   return (
     <>
-      <Sheet
+      <Dialog
         open={!!task}
         onOpenChange={(v) => !v && onClose()}
       >
-        <SheetContent
-          side="right"
-          className="sm:max-w-md overflow-y-auto"
-        >
-          <SheetHeader>
-            <SheetTitle className="text-base">{task.title}</SheetTitle>
-            <SheetDescription>
-              <Badge
-                variant={STATUS_META[task.status].variant}
-                className="text-xs"
-              >
-                {STATUS_META[task.status].label}
-              </Badge>
-              {isOverdue(task) && (
+        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-base">{task.title}</DialogTitle>
+            <DialogDescription asChild>
+              <div className="flex flex-wrap gap-1.5 pt-1">
                 <Badge
-                  variant="destructive"
-                  className="text-xs ml-1"
+                  variant={STATUS_META[task.status].variant}
+                  className="text-xs"
                 >
-                  Quá hạn
+                  {STATUS_META[task.status].label}
                 </Badge>
-              )}
-            </SheetDescription>
-          </SheetHeader>
+                {isOverdue(task) && (
+                  <Badge
+                    variant="destructive"
+                    className="text-xs"
+                  >
+                    Quá hạn
+                  </Badge>
+                )}
+              </div>
+            </DialogDescription>
+          </DialogHeader>
 
-          <div className="px-4 space-y-4">
+          <div className="space-y-4">
             {!isEditing ? (
               /* ── Read-only view ── */
               <div className="space-y-3">
@@ -783,8 +777,8 @@ function TaskDetailSheet({
               </form>
             )}
           </div>
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
 
       {/* Assign farmer dialog */}
       <Dialog
@@ -942,12 +936,6 @@ export default function OwnerMilestoneTasksSection({
             >
               Task thực thi theo mốc
             </Badge>
-            <Badge
-              variant="secondary"
-              className="text-[10px]"
-            >
-              Template chỉ dùng để tạo nháp
-            </Badge>
           </div>
         </div>
         {canEdit && (
@@ -964,16 +952,19 @@ export default function OwnerMilestoneTasksSection({
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-2">
-        <Input
-          placeholder="Tìm kiếm..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setQuery((q) => ({ ...q, page: 1 }));
-          }}
-          className="h-7 text-xs w-36"
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr] gap-2 items-stretch">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <Input
+            placeholder="Tìm theo tiêu đề nhiệm vụ"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setQuery((q) => ({ ...q, page: 1 }));
+            }}
+            className="h-9 text-sm pl-8"
+          />
+        </div>
         <Select
           value={statusFilter}
           onValueChange={(v) => {
@@ -981,11 +972,11 @@ export default function OwnerMilestoneTasksSection({
             setQuery((q) => ({ ...q, page: 1 }));
           }}
         >
-          <SelectTrigger className="h-7 text-xs w-32">
+          <SelectTrigger className="h-9 w-full text-sm">
             <SelectValue placeholder="Trạng thái" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tất cả</SelectItem>
+            <SelectItem value="all">Tất cả trạng thái</SelectItem>
             <SelectItem value="pending">Chờ xử lý</SelectItem>
             <SelectItem value="in_progress">Đang thực hiện</SelectItem>
             <SelectItem value="completed">Hoàn thành</SelectItem>
@@ -1000,11 +991,11 @@ export default function OwnerMilestoneTasksSection({
             setQuery((q) => ({ ...q, page: 1 }));
           }}
         >
-          <SelectTrigger className="h-7 text-xs w-32">
+          <SelectTrigger className="h-9 w-full text-sm">
             <SelectValue placeholder="Ưu tiên" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tất cả</SelectItem>
+            <SelectItem value="all">Tất cả mức ưu tiên</SelectItem>
             <SelectItem value="low">Thấp</SelectItem>
             <SelectItem value="normal">Bình thường</SelectItem>
             <SelectItem value="high">Cao</SelectItem>

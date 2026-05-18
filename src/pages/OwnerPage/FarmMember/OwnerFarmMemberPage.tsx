@@ -4,36 +4,24 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useOwnerGetMyFarm } from "@/queries/useOwner";
 import type { FarmMemberResType } from "@/schemaValidatation/farmMember";
 import { useState } from "react";
-import AddMemberPanel from "./components/AddMemberPanel";
-import MemberDetailPanel from "./components/MemberDetailPanel";
+import AddMemberDialog from "./components/AddMemberPanel";
+import MemberDetailDialog from "./components/MemberDetailPanel";
 import MemberListSection from "./components/MemberListSection";
 
 function OwnerFarmMemberPage() {
-  const [showAdd, setShowAdd] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
   const [viewingMember, setViewingMember] = useState<FarmMemberResType | null>(
     null,
   );
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const { data, isLoading, isError } = useOwnerGetMyFarm();
   const farm = data?.data;
 
-  if (showAdd && farm) {
-    return (
-      <AddMemberPanel
-        farmCode={farm.code}
-        onBack={() => setShowAdd(false)}
-      />
-    );
-  }
-
-  if (viewingMember) {
-    return (
-      <MemberDetailPanel
-        member={viewingMember}
-        onBack={() => setViewingMember(null)}
-      />
-    );
-  }
+  const handleViewMember = (member: FarmMemberResType) => {
+    setViewingMember(member);
+    setDetailOpen(true);
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -63,11 +51,26 @@ function OwnerFarmMemberPage() {
           </CardContent>
         </Card>
       ) : (
-        <MemberListSection
-          farmId={farm.id}
-          onAddMember={() => setShowAdd(true)}
-          onViewMember={setViewingMember}
-        />
+        <>
+          <MemberListSection
+            farmId={farm.id}
+            onAddMember={() => setAddOpen(true)}
+            onViewMember={handleViewMember}
+          />
+          <AddMemberDialog
+            farmCode={farm.code}
+            open={addOpen}
+            onOpenChange={setAddOpen}
+          />
+          <MemberDetailDialog
+            member={viewingMember}
+            open={detailOpen}
+            onOpenChange={(open) => {
+              setDetailOpen(open);
+              if (!open) setViewingMember(null);
+            }}
+          />
+        </>
       )}
     </div>
   );

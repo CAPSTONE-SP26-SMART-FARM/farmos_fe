@@ -2,11 +2,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useOwnerGetMyFarm } from "@/queries/useOwner";
 import { useFarmStore } from "@/stores/farmStore";
 import { Building2, Pencil, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router";
 import FarmDetailCard from "./components/FarmDetailCard";
 import FarmFormDialog from "./components/FarmFormDialog";
 import ZonesPane from "./components/ZonesPane";
@@ -51,10 +51,11 @@ export default function OwnerFarmPage() {
   const { data, isLoading } = useOwnerGetMyFarm();
   const farm = data?.data;
   const setFarm = useFarmStore((s) => s.setFarm);
+  const [searchParams] = useSearchParams();
+  const isViewingZone = Boolean(searchParams.get("zoneId"));
 
   const [createOpen, setCreateOpen] = useState(false);
   const [updateOpen, setUpdateOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("detail");
 
   useEffect(() => {
     if (farm) setFarm(farm);
@@ -70,7 +71,7 @@ export default function OwnerFarmPage() {
             Thông tin nông trại, khu vực và phân công quản lý.
           </p>
         </div>
-        {farm && activeTab === "detail" && (
+        {farm && !isViewingZone && (
           <Button onClick={() => setUpdateOpen(true)}>
             <Pencil className="mr-2 h-4 w-4" />
             Chỉnh sửa nông trại
@@ -83,28 +84,20 @@ export default function OwnerFarmPage() {
       ) : !farm ? (
         <EmptyFarmState onCreate={() => setCreateOpen(true)} />
       ) : (
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="space-y-4"
-        >
-          <TabsList>
-            <TabsTrigger value="detail">Chi tiết nông trại</TabsTrigger>
-            <TabsTrigger value="zones">Khu vực</TabsTrigger>
-          </TabsList>
-          <TabsContent
-            value="detail"
-            className="space-y-4 animate-in fade-in duration-300"
-          >
-            <FarmDetailCard farm={farm} />
-          </TabsContent>
-          <TabsContent
-            value="zones"
-            className="animate-in fade-in duration-300"
-          >
+        <div className="space-y-6">
+          {!isViewingZone && <FarmDetailCard farm={farm} />}
+          <div className="space-y-3">
+            {!isViewingZone && (
+              <div>
+                <h2 className="text-lg font-semibold">Khu vực</h2>
+                <p className="text-sm text-muted-foreground">
+                  Danh sách khu vực thuộc nông trại và phân công quản lý.
+                </p>
+              </div>
+            )}
             <ZonesPane farm={farm} />
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       )}
 
       <FarmFormDialog

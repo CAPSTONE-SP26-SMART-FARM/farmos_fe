@@ -21,7 +21,11 @@ import {
   isApiErrorResponse,
   isApiErrorUnprocessableEntityResponse,
 } from "@/lib/utils";
-import { useOwnerCreateZone, useOwnerUpdateZone } from "@/queries/useZone";
+import {
+  useOwnerCreateZone,
+  useOwnerListZones,
+  useOwnerUpdateZone,
+} from "@/queries/useZone";
 import {
   CreateZoneBodySchema,
   UpdateZoneBodySchema,
@@ -32,7 +36,7 @@ import {
 import { useFarmStore } from "@/stores/farmStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -95,6 +99,16 @@ function CreateZoneBody({
   onClose: () => void;
 }) {
   const farmAreaSqm = useFarmStore((s) => s.farm?.areaSqm ?? null);
+  const { data: zonesData } = useOwnerListZones(farmId, {
+    page: 1,
+    limit: 100,
+  });
+  const usedAreaSqm = useMemo(() => {
+    const list = zonesData?.data.data ?? [];
+    return list.reduce((sum, z) => sum + (z.areaSqm ?? 0), 0);
+  }, [zonesData]);
+  const availableAreaSqm =
+    farmAreaSqm != null ? Math.max(0, farmAreaSqm - usedAreaSqm) : null;
 
   const form = useForm<CreateZoneBodyType>({
     resolver: zodResolver(CreateZoneBodySchema),
@@ -110,9 +124,13 @@ function CreateZoneBody({
   const { mutateAsync, isPending } = useOwnerCreateZone(farmId);
 
   const handleSubmit = async (data: CreateZoneBodyType) => {
-    if (farmAreaSqm && data.areaSqm && data.areaSqm > farmAreaSqm) {
+    if (
+      availableAreaSqm != null &&
+      data.areaSqm &&
+      data.areaSqm > availableAreaSqm
+    ) {
       form.setError("areaSqm", {
-        message: `Diện tích khu vực không được vượt quá diện tích nông trại (${farmAreaSqm.toLocaleString()} m²)`,
+        message: `Diện tích khu vực không được vượt quá diện tích còn lại (${availableAreaSqm.toLocaleString()} m²)`,
       });
       return;
     }
@@ -137,7 +155,12 @@ function CreateZoneBody({
 
   return (
     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-      <ZoneFields control={form.control} farmAreaSqm={farmAreaSqm} />
+      <ZoneFields
+        control={form.control}
+        farmAreaSqm={farmAreaSqm}
+        usedAreaSqm={usedAreaSqm}
+        availableAreaSqm={availableAreaSqm}
+      />
       <DialogFooter>
         <Button
           type="button"
@@ -172,6 +195,18 @@ function UpdateZoneBody({
   onClose: () => void;
 }) {
   const farmAreaSqm = useFarmStore((s) => s.farm?.areaSqm ?? null);
+  const { data: zonesData } = useOwnerListZones(farmId, {
+    page: 1,
+    limit: 100,
+  });
+  const usedAreaSqm = useMemo(() => {
+    const list = zonesData?.data.data ?? [];
+    return list
+      .filter((z) => z.id !== zone.id)
+      .reduce((sum, z) => sum + (z.areaSqm ?? 0), 0);
+  }, [zonesData, zone.id]);
+  const availableAreaSqm =
+    farmAreaSqm != null ? Math.max(0, farmAreaSqm - usedAreaSqm) : null;
 
   const form = useForm<UpdateZoneBodyType>({
     resolver: zodResolver(UpdateZoneBodySchema),
@@ -196,9 +231,13 @@ function UpdateZoneBody({
   const { mutateAsync, isPending } = useOwnerUpdateZone(zone.id, farmId);
 
   const handleSubmit = async (data: UpdateZoneBodyType) => {
-    if (farmAreaSqm && data.areaSqm && data.areaSqm > farmAreaSqm) {
+    if (
+      availableAreaSqm != null &&
+      data.areaSqm &&
+      data.areaSqm > availableAreaSqm
+    ) {
       form.setError("areaSqm", {
-        message: `Diện tích khu vực không được vượt quá diện tích nông trại (${farmAreaSqm.toLocaleString()} m²)`,
+        message: `Diện tích khu vực không được vượt quá diện tích còn lại (${availableAreaSqm.toLocaleString()} m²)`,
       });
       return;
     }
@@ -225,7 +264,12 @@ function UpdateZoneBody({
 
   return (
     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-      <ZoneFields control={form.control} farmAreaSqm={farmAreaSqm} />
+      <ZoneFields
+        control={form.control}
+        farmAreaSqm={farmAreaSqm}
+        usedAreaSqm={usedAreaSqm}
+        availableAreaSqm={availableAreaSqm}
+      />
       <DialogFooter>
         <Button
           type="button"
@@ -253,10 +297,14 @@ function UpdateZoneBody({
 function ZoneFields({
   control,
   farmAreaSqm,
+  usedAreaSqm,
+  availableAreaSqm,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: any;
   farmAreaSqm: number | null;
+  usedAreaSqm: number;
+  availableAreaSqm: number | null;
 }) {
   return (
     <FieldGroup>
@@ -281,9 +329,9 @@ function ZoneFields({
         control={control}
         render={({ field, fieldState }) => {
           const exceeds =
-            farmAreaSqm != null &&
+            availableAreaSqm != null &&
             field.value != null &&
-            field.value > farmAreaSqm;
+            field.value > availableAreaSqm;
           return (
             <Field data-invalid={fieldState.invalid || exceeds}>
               <FieldLabel htmlFor="zone-area">
@@ -294,21 +342,36 @@ function ZoneFields({
                 type="number"
                 step="0.01"
                 min="0"
-                max={farmAreaSqm ?? undefined}
-                placeholder="Ví dụ: 5000"
+                max={availableAreaSqm ?? undefined}
+                placeholder={
+                  availableAreaSqm != null
+                    ? `Tối đa ${availableAreaSqm.toLocaleString()} m²`
+                    : "Ví dụ: 5000"
+                }
                 value={field.value ?? ""}
                 onChange={(e) => {
                   const val = e.target.value;
                   field.onChange(val === "" ? undefined : Number(val));
                 }}
               />
-              {farmAreaSqm != null && (
+              {farmAreaSqm != null && availableAreaSqm != null && (
                 <p
                   className={`text-xs ${exceeds ? "text-destructive" : "text-muted-foreground"}`}
                 >
-                  {exceeds
-                    ? `Vượt quá diện tích nông trại (${farmAreaSqm.toLocaleString()} m²)`
-                    : `Tổng diện tích nông trại: ${farmAreaSqm.toLocaleString()} m²`}
+                  {exceeds ? (
+                    <>
+                      Vượt quá diện tích còn lại (
+                      {availableAreaSqm.toLocaleString()} m²)
+                    </>
+                  ) : (
+                    <>
+                      Tổng nông trại: {farmAreaSqm.toLocaleString()} m² • Đã
+                      dùng: {usedAreaSqm.toLocaleString()} m² • Còn lại:{" "}
+                      <span className="font-medium">
+                        {availableAreaSqm.toLocaleString()} m²
+                      </span>
+                    </>
+                  )}
                 </p>
               )}
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}

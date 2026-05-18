@@ -80,9 +80,15 @@ const formatDateTimeVi = (value: string) => {
   return format(date, "dd/MM/yyyy HH:mm");
 };
 
-function AdminSubscriptionPlanDetailPage() {
+interface Props {
+  planId?: string;
+  inDialog?: boolean;
+}
+
+function AdminSubscriptionPlanDetailPage({ planId: planIdProp, inDialog }: Props = {}) {
   const navigate = useNavigate();
-  const { planId = "" } = useParams();
+  const params = useParams();
+  const planId = planIdProp ?? params.planId ?? "";
 
   const [versionSearchKeyword, setVersionSearchKeyword] = useState("");
   const debouncedVersionSearch = useDebounce(versionSearchKeyword, 400);
@@ -105,7 +111,7 @@ function AdminSubscriptionPlanDetailPage() {
   const plan = planDetailQuery.data?.data;
 
   useDynamicBreadcrumb(
-    `/dashboard/admin/subscription-plans/${planId}`,
+    inDialog ? "" : `/dashboard/admin/subscription-plans/${planId}`,
     plan?.name,
   );
 
@@ -121,61 +127,79 @@ function AdminSubscriptionPlanDetailPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <div className="space-y-3">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink
-                className="cursor-pointer"
-                onClick={() => navigate("/dashboard/admin")}
-              >
-                Admin
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink
-                className="cursor-pointer"
-                onClick={() =>
-                  navigate("/dashboard/admin/subscription-plans")
-                }
-              >
-                Gói đăng ký
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>
-                {plan?.name ?? "Chi tiết gói"}
-              </BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
+      {!inDialog && (
+        <div className="space-y-3">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink
+                  className="cursor-pointer"
+                  onClick={() => navigate("/dashboard/admin")}
+                >
+                  Admin
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink
+                  className="cursor-pointer"
+                  onClick={() =>
+                    navigate("/dashboard/admin/subscription-plans")
+                  }
+                >
+                  Gói đăng ký
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>
+                  {plan?.name ?? "Chi tiết gói"}
+                </BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Button
-            variant="outline"
-            onClick={() => navigate("/dashboard/admin/subscription-plans")}
-          >
-            <MoveLeft className="mr-2 h-4 w-4" />
-            Quay lại danh sách
-          </Button>
-
-          {plan?.status !== "ARCHIVED" && (
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <Button
-              onClick={() =>
-                navigate(
-                  `/dashboard/admin/subscription-plans/${planId}/versions/new`,
-                )
-              }
-              disabled={!planId}
+              variant="outline"
+              onClick={() => navigate("/dashboard/admin/subscription-plans")}
             >
-              <FilePlus2 className="mr-2 h-4 w-4" />
-              Tạo phiên bản mới
+              <MoveLeft className="mr-2 h-4 w-4" />
+              Quay lại danh sách
             </Button>
-          )}
+
+            {plan?.status !== "ARCHIVED" && (
+              <Button
+                onClick={() =>
+                  navigate(
+                    `/dashboard/admin/subscription-plans/${planId}/versions/new`,
+                  )
+                }
+                disabled={!planId}
+              >
+                <FilePlus2 className="mr-2 h-4 w-4" />
+                Tạo phiên bản mới
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
+
+      {inDialog && plan?.status !== "ARCHIVED" && (
+        <div className="flex justify-end">
+          <Button
+            onClick={() =>
+              navigate(
+                `/dashboard/admin/subscription-plans/${planId}/versions/new`,
+              )
+            }
+            disabled={!planId}
+          >
+            <FilePlus2 className="mr-2 h-4 w-4" />
+            Tạo phiên bản mới
+          </Button>
+        </div>
+      )}
 
       <Card>
         <CardHeader>

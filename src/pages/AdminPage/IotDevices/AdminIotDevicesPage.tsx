@@ -13,6 +13,7 @@ import EmptyState from "@/components/common/EmptyState";
 import ErrorState from "@/components/common/ErrorState";
 import {
   Cpu,
+  Info,
   LayoutDashboard,
   Loader2,
   Plus,
@@ -21,7 +22,22 @@ import {
 import useDebounce from "@/hooks/useDebounce";
 import { toast } from "sonner";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import IotDeviceDetail from "@/pages/OwnerPage/IotDevices/IotDeviceDetail";
+import IotDeviceForm from "@/pages/OwnerPage/IotDevices/IotDeviceForm";
+import {
   useAdminDeleteIotDevice,
+  useAdminIotDeviceDetail,
   useAdminListIotDevices,
 } from "@/queries/useIotDevice";
 import type {
@@ -65,6 +81,14 @@ function parsePositiveInt(value: string | null, fallback: number): number {
 export default function AdminIotDevicesPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | undefined>(
+    undefined,
+  );
+  const [dialogMode, setDialogMode] = useState<"view" | "edit">("view");
+  const detailQuery = useAdminIotDeviceDetail(
+    selectedDeviceId ?? "",
+    Boolean(selectedDeviceId) && dialogMode === "edit",
+  );
 
   // ── URL = source of truth ──────────────────────────────────────────
   const urlSearch = searchParams.get("search") ?? "";
@@ -216,16 +240,26 @@ export default function AdminIotDevicesPage() {
 
       <Card className="overflow-hidden border-border/70">
         <CardHeader className="bg-muted/30">
-          <CardTitle className="flex items-center gap-2">
-            <Cpu className="h-5 w-5 text-primary" />
-            Danh sách thiết bị
-            {listQuery.isFetching && !listQuery.isLoading && (
-              <Loader2
-                className="h-3.5 w-3.5 animate-spin text-muted-foreground"
-                aria-label="Đang làm mới"
-              />
-            )}
-          </CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
+              <Cpu className="h-5 w-5 text-primary" />
+              Danh sách thiết bị
+              {listQuery.isFetching && !listQuery.isLoading && (
+                <Loader2
+                  className="h-3.5 w-3.5 animate-spin text-muted-foreground"
+                  aria-label="Đang làm mới"
+                />
+              )}
+            </CardTitle>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent>
+                Dữ liệu lấy từ API gán Iot kit dành cho quản trị viên.
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </CardHeader>
 
         <CardContent className="pt-5">
@@ -283,6 +317,14 @@ export default function AdminIotDevicesPage() {
                         key={device.id}
                         device={device}
                         onDelete={setDeleteTarget}
+                        onView={(d) => {
+                          setSelectedDeviceId(d.id);
+                          setDialogMode("view");
+                        }}
+                        onEdit={(d) => {
+                          setSelectedDeviceId(d.id);
+                          setDialogMode("edit");
+                        }}
                       />
                     ))
                   )}
@@ -325,6 +367,50 @@ export default function AdminIotDevicesPage() {
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}
       />
+
+      <Dialog
+        open={!!selectedDeviceId}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedDeviceId(undefined);
+            setDialogMode("view");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[95vw] max-h-[95vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {dialogMode === "edit" ? "Chỉnh sửa thiết bị IoT" : "Chi tiết thiết bị IoT"}
+            </DialogTitle>
+            <DialogDescription>
+              {dialogMode === "edit"
+                ? "Cập nhật thông tin thiết bị, cảm biến và sub-devices."
+                : "Xem thông tin thiết bị, lịch sử log và trạng thái gán."}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedDeviceId && dialogMode === "view" && (
+            <IotDeviceDetail
+              deviceId={selectedDeviceId}
+              farmId=""
+              actor="admin"
+              onBack={() => {
+                setSelectedDeviceId(undefined);
+                setDialogMode("view");
+              }}
+              onEdit={() => setDialogMode("edit")}
+            />
+          )}
+          {selectedDeviceId && dialogMode === "edit" && detailQuery.data?.data && (
+            <IotDeviceForm
+              farmId=""
+              actor="admin"
+              device={detailQuery.data.data}
+              onBack={() => setDialogMode("view")}
+              onBackRequested={() => setDialogMode("view")}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -15,7 +15,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import { SENSOR_TYPE_LABEL } from "@/constants/iotDeviceDisplay";
+import { SENSOR_TYPE_ICON, SENSOR_TYPE_LABEL } from "@/constants/iotDeviceDisplay";
 import {
   SENSOR_TYPE_VALUES,
   type SensorBatchFormType,
@@ -70,18 +70,26 @@ export function SensorRowFields({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {SENSOR_TYPE_VALUES.map((type) => (
-                      <SelectItem
-                        key={type}
-                        value={type}
-                        disabled={watchedItems.some(
-                          (item, i) =>
-                            i !== index && item?.sensorType === type,
-                        )}
-                      >
-                        {SENSOR_TYPE_LABEL[type] ?? type}
-                      </SelectItem>
-                    ))}
+                    {SENSOR_TYPE_VALUES.map((type) => {
+                      const SIcon = SENSOR_TYPE_ICON[type];
+                      return (
+                        <SelectItem
+                          key={type}
+                          value={type}
+                          disabled={watchedItems.some(
+                            (item, i) =>
+                              i !== index && item?.sensorType === type,
+                          )}
+                        >
+                          <span className="inline-flex items-center gap-1.5">
+                            {SIcon && (
+                              <SIcon className="h-3.5 w-3.5 text-primary" />
+                            )}
+                            {SENSOR_TYPE_LABEL[type] ?? type}
+                          </span>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
                 <FieldError>{fieldState.error?.message}</FieldError>

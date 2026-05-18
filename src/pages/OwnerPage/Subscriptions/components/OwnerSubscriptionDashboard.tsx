@@ -21,7 +21,10 @@ import {
 } from "@/queries/useSubscription";
 import { useListSubscriptionPlans } from "@/queries/useSubscriptionPlan";
 import type { PlanResType } from "@/schemaValidatation/subscriptionPlan";
-import { useOwnerInvoices, useSubscriptionPaymentStatus } from "@/queries/useInvoice";
+import {
+  useOwnerInvoices,
+  useSubscriptionPaymentStatus,
+} from "@/queries/useInvoice";
 import type { SubscriptionResType } from "@/schemaValidatation/subscription";
 import { ArrowLeft, Package } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -87,7 +90,9 @@ function OwnerSubscriptionDashboard({
   const isLoading = isDetailMode
     ? detailQuery.isLoading
     : mySubscriptionQuery.isLoading;
-  const isError = isDetailMode ? detailQuery.isError : mySubscriptionQuery.isError;
+  const isError = isDetailMode
+    ? detailQuery.isError
+    : mySubscriptionQuery.isError;
   const errorObj = isDetailMode ? detailQuery.error : mySubscriptionQuery.error;
   const refetch = isDetailMode
     ? () => detailQuery.refetch()
@@ -116,8 +121,7 @@ function OwnerSubscriptionDashboard({
   );
 
   const unpaidInvoice = useMemo(
-    () =>
-      invoicesQuery.data?.data?.data?.find((inv) => inv.status === "OPEN"),
+    () => invoicesQuery.data?.data?.data?.find((inv) => inv.status === "OPEN"),
     [invoicesQuery.data?.data?.data],
   );
 
@@ -138,7 +142,11 @@ function OwnerSubscriptionDashboard({
     setSearchParams(params, { replace: false });
   };
 
-  const plansQuery = useListSubscriptionPlans({ page: 1, limit: 100, status: "ACTIVE" });
+  const plansQuery = useListSubscriptionPlans({
+    page: 1,
+    limit: 100,
+    status: "ACTIVE",
+  });
 
   const renewMutation = useOwnerRenewSubscription();
 
@@ -262,9 +270,7 @@ function OwnerSubscriptionDashboard({
             >
               Về gói của tôi
             </Button>
-            <Button onClick={() => navigate(PLANS_PATH)}>
-              Xem bảng giá
-            </Button>
+            <Button onClick={() => navigate(PLANS_PATH)}>Xem bảng giá</Button>
           </div>
         )}
       </div>
@@ -292,9 +298,11 @@ function OwnerSubscriptionDashboard({
   const paymentPending =
     paymentStatusQuery.data?.data?.subscriptionStatus === "PENDING";
   const paymentOrderCode =
-    (paymentStatusQuery.data?.data?.latestTransaction
-      ?.gatewayResponse as { orderCode?: string | number } | null)?.orderCode ??
-    null;
+    (
+      paymentStatusQuery.data?.data?.latestTransaction?.gatewayResponse as {
+        orderCode?: string | number;
+      } | null
+    )?.orderCode ?? null;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -332,29 +340,33 @@ function OwnerSubscriptionDashboard({
           <TabsTrigger value="credits">Credit &amp; Bổ trợ</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="mt-4">
+        <TabsContent
+          value="overview"
+          className="mt-4"
+        >
           <OverviewTab
             subscriptionId={subscriptionId}
             enabled={Boolean(subscriptionId)}
           />
         </TabsContent>
 
-        <TabsContent value="usage" className="mt-4">
+        <TabsContent
+          value="usage"
+          className="mt-4"
+        >
           <UsageTab
             enabled={Boolean(subscriptionId)}
             featureCodes={featureCodes}
           />
         </TabsContent>
 
-        <TabsContent value="credits" className="mt-4">
+        <TabsContent
+          value="credits"
+          className="mt-4"
+        >
           <CreditsAddonsTab />
         </TabsContent>
       </Tabs>
-
-      <DangerZoneSection
-        subscription={subscription}
-        onOpenCancel={() => setIsCancelOpen(true)}
-      />
 
       <CancelSubscriptionSheet
         open={isCancelOpen}
@@ -370,6 +382,11 @@ function OwnerSubscriptionDashboard({
       />
 
       {!isDetailMode && <HistoryTab />}
+
+      <DangerZoneSection
+        subscription={subscription}
+        onOpenCancel={() => setIsCancelOpen(true)}
+      />
     </div>
   );
 }

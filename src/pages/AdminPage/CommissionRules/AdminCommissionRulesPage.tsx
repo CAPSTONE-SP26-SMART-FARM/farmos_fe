@@ -1,645 +1,78 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { DataTable } from "@/components/common/DataTable";
-import type { ColumnDef } from "@tanstack/react-table";
-import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
-import { handleApiErrorUnprocessentity } from "@/lib/axios";
-import { getApiErrorMessageVi } from "@/lib/error-message";
-import {
-  useCommissionRuleList,
-  useSoftDeleteCommissionRule,
-  useUpdateCommissionRule,
-} from "@/queries/useCommissionRule";
-import {
-  CommissionScopeSchema,
-  UpdateCommissionRuleBodySchema,
-  type CommissionRuleType,
-  type CommissionScopeType,
-  type ListCommissionRulesQueryType,
-  type UpdateCommissionRuleBodyType,
-} from "@/schemaValidatation/commissionRule";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { isAxiosError } from "axios";
-import {
-  AlertTriangle,
-  Ban,
-  CalendarDays,
-  Loader2,
-  Pencil,
-  Plus,
-} from "lucide-react";
-import { format, isValid, parse } from "date-fns";
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router";
-import { useForm, Controller } from "react-hook-form";
-import { toast } from "sonner";
+import { Plus } from "lucide-react";
+import { useState } from "react";
+import AdminCommissionRuleFormPanel from "./AdminCommissionRuleFormPanel";
+import AdminCommissionRuleListSection from "./AdminCommissionRuleListSection";
+import type { CommissionRuleType } from "@/schemaValidatation/commissionRule";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-const SCOPE_LABELS: Record<CommissionScopeType, string> = {
-  CATEGORY_DEFAULT: "Mặc định danh mục",
-  DOCTOR_TIER: "Cấp bậc bác sĩ",
-  DOCTOR: "Bác sĩ cụ thể",
-};
+type DialogState =
+  | { mode: "closed" }
+  | { mode: "create" }
+  | { mode: "detail"; rule: CommissionRuleType };
 
-const DATE_DISPLAY_FORMAT = "dd/MM/yyyy";
-const DATE_PAYLOAD_FORMAT = "yyyy-MM-dd";
-
-function parseBackendDate(value: string | null | undefined) {
-  if (!value) return undefined;
-  const parsed = parse(value, DATE_PAYLOAD_FORMAT, new Date());
-  if (isValid(parsed)) return parsed;
-
-  const fallback = new Date(value);
-  return isValid(fallback) ? fallback : undefined;
-}
-
-function formatPickerDate(value: string | null | undefined) {
-  const parsed = parseBackendDate(value);
-  return parsed ? format(parsed, DATE_DISPLAY_FORMAT) : "";
-}
-
-function DatePickerField({
-  label,
-  value,
-  onChange,
-  error,
-  helperText,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  error?: string;
-  helperText?: string;
-  placeholder?: string;
-}) {
-  return (
-    <div className="space-y-1">
-      <Label>{label}</Label>
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full justify-between text-left font-normal"
-          >
-            {value ? (
-              formatPickerDate(value)
-            ) : (
-              <span className="text-muted-foreground">
-                {placeholder ?? "Chọn ngày"}
-              </span>
-            )}
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent
-          className="w-auto p-0"
-          align="start"
-        >
-          <Calendar
-            mode="single"
-            selected={parseBackendDate(value)}
-            onSelect={(date) =>
-              onChange(date ? format(date, DATE_PAYLOAD_FORMAT) : "")
-            }
-            initialFocus
-          />
-        </PopoverContent>
-      </Popover>
-      {error ? (
-        <p className="text-destructive text-xs">{error}</p>
-      ) : helperText ? (
-        <p className="text-xs text-muted-foreground">{helperText}</p>
-      ) : null}
-    </div>
-  );
-}
-
-function formatDateRange(from?: string | null, to?: string | null) {
-  if (!from && !to) return "—";
-  const f = from
-    ? new Date(from).toLocaleDateString("vi-VN")
-    : "không xác định";
-  const t = to ? new Date(to).toLocaleDateString("vi-VN") : "không xác định";
-  return `${f} → ${t}`;
-}
-
-// ── Overlap detection ─────────────────────────────────────────────────────────
-function hasOverlappingRules(rules: CommissionRuleType[]): Set<string> {
-  const overlapping = new Set<string>();
-  for (let i = 0; i < rules.length; i++) {
-    for (let j = i + 1; j < rules.length; j++) {
-      const a = rules[i];
-      const b = rules[j];
-      if (a.scope !== b.scope) continue;
-      // Check same discriminator
-      if (a.scope === "CATEGORY_DEFAULT" && a.categoryId !== b.categoryId)
-        continue;
-      if (a.scope === "DOCTOR_TIER" && a.doctorTier !== b.doctorTier) continue;
-      if (a.scope === "DOCTOR" && a.doctorId !== b.doctorId) continue;
-      // Check date overlap: both have effective ranges that overlap
-      const aFrom = a.effectiveFrom
-        ? new Date(a.effectiveFrom).getTime()
-        : null;
-      const aTo = a.effectiveTo ? new Date(a.effectiveTo).getTime() : null;
-      const bFrom = b.effectiveFrom
-        ? new Date(b.effectiveFrom).getTime()
-        : null;
-      const bTo = b.effectiveTo ? new Date(b.effectiveTo).getTime() : null;
-      // Ranges overlap unless one ends before the other starts
-      const aEnd = aTo ?? Infinity;
-      const bEnd = bTo ?? Infinity;
-      const aStart = aFrom ?? -Infinity;
-      const bStart = bFrom ?? -Infinity;
-      if (aStart < bEnd && bStart < aEnd) {
-        overlapping.add(a.id);
-        overlapping.add(b.id);
-      }
-    }
-  }
-  return overlapping;
-}
-
-// ── Edit form ─────────────────────────────────────────────────────────────────
-function EditRuleForm({
-  rule,
-  onClose,
-}: {
-  rule: CommissionRuleType;
-  onClose: () => void;
-}) {
-  const updateMutation = useUpdateCommissionRule();
-
-  const form = useForm<UpdateCommissionRuleBodyType>({
-    resolver: zodResolver(UpdateCommissionRuleBodySchema),
-    defaultValues: {
-      commissionPercent: rule.commissionPercent,
-      effectiveFrom: rule.effectiveFrom?.split("T")[0] ?? "",
-      effectiveTo: rule.effectiveTo?.split("T")[0] ?? "",
-      note: rule.note ?? "",
-    },
-  });
-  useClearServerFieldErrors(form);
-
-  const {
-    register,
-    handleSubmit,
-    control,
-    formState: { errors, isSubmitting },
-  } = form;
-
-  const onSubmit = async (data: UpdateCommissionRuleBodyType) => {
-    const payload = {
-      ...data,
-      effectiveFrom: data.effectiveFrom
-        ? new Date(`${data.effectiveFrom}T00:00:00.000Z`).toISOString()
-        : undefined,
-      effectiveTo: data.effectiveTo
-        ? new Date(`${data.effectiveTo}T00:00:00.000Z`).toISOString()
-        : null,
-      note: data.note?.trim() ? data.note : null,
-    };
-    try {
-      await updateMutation.mutateAsync({ id: rule.id, body: payload });
-      toast.success("Cập nhật quy tắc hoa hồng thành công.");
-      onClose();
-    } catch (err) {
-      if (isAxiosError(err) && err.response?.status === 422) {
-        handleApiErrorUnprocessentity<UpdateCommissionRuleBodyType>(
-          err.response.data.errors,
-          form.setError,
-          { getValues: form.getValues },
-        );
-      } else {
-        toast.error(getApiErrorMessageVi(err));
-      }
-    }
-  };
-
-  return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="space-y-4"
-    >
-      {/* Read-only scope info */}
-      <div className="rounded-md border bg-muted/50 p-3 space-y-1">
-        <p className="text-xs text-muted-foreground font-medium">
-          Phạm vi (không thể sửa)
-        </p>
-        <Badge variant="secondary">{SCOPE_LABELS[rule.scope]}</Badge>
-        {rule.category && (
-          <p className="text-xs text-muted-foreground">
-            Danh mục: {rule.category.name}
-          </p>
-        )}
-        {rule.doctorTier && (
-          <p className="text-xs text-muted-foreground">
-            Cấp bậc: {rule.doctorTier}
-          </p>
-        )}
-      </div>
-
-      <div className="space-y-1">
-        <Label>
-          Hoa hồng (%) <span className="text-destructive">*</span>
-        </Label>
-        <Input
-          type="number"
-          min={0}
-          max={100}
-          step={0.01}
-          {...register("commissionPercent", { valueAsNumber: true })}
-          aria-invalid={Boolean(errors.commissionPercent)}
-        />
-        {errors.commissionPercent && (
-          <p className="text-destructive text-xs">
-            {errors.commissionPercent.message}
-          </p>
-        )}
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <Controller
-          name="effectiveFrom"
-          control={control}
-          render={({ field, fieldState }) => (
-            <DatePickerField
-              label="Hiệu lực từ"
-              value={field.value ?? ""}
-              onChange={field.onChange}
-              error={fieldState.error?.message}
-            />
-          )}
-        />
-        <Controller
-          name="effectiveTo"
-          control={control}
-          render={({ field, fieldState }) => (
-            <DatePickerField
-              label="Hiệu lực đến"
-              value={field.value ?? ""}
-              onChange={field.onChange}
-              error={fieldState.error?.message}
-            />
-          )}
-        />
-      </div>
-
-      <div className="space-y-1">
-        <Label>Ghi chú</Label>
-        <Textarea
-          {...register("note")}
-          rows={2}
-        />
-      </div>
-
-      <div className="border-t pt-4 flex items-center justify-end gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onClose}
-          disabled={isSubmitting}
-        >
-          Huỷ
-        </Button>
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          className="min-w-28"
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Lưu...
-            </>
-          ) : (
-            "Lưu thay đổi"
-          )}
-        </Button>
-      </div>
-    </form>
-  );
-}
-
-// ── Main page ──────────────────────────────────────────────────────────────────
 export default function AdminCommissionRulesPage() {
-  const [query, setQuery] = useState<ListCommissionRulesQueryType>({
-    page: 1,
-    limit: 20,
-  });
-  const [scopeFilter, setScopeFilter] = useState<CommissionScopeType | "ALL">(
-    "ALL",
-  );
-  const navigate = useNavigate();
-  const [editTarget, setEditTarget] = useState<CommissionRuleType | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<CommissionRuleType | null>(
-    null,
-  );
-
-  const listQuery = useCommissionRuleList(
-    scopeFilter === "ALL" ? query : { ...query, scope: scopeFilter },
-  );
-  const deleteMutation = useSoftDeleteCommissionRule();
-
-  const rules = listQuery.data?.data?.data ?? [];
-  const meta = listQuery.data?.data?.meta;
-  const overlapping = hasOverlappingRules(rules);
-
-  const columns = useMemo<ColumnDef<CommissionRuleType>[]>(
-    () => [
-      {
-        accessorKey: "scope",
-        header: "Phạm vi",
-        cell: ({ row }) => {
-          const isOverlap = overlapping.has(row.original.id);
-          return (
-            <div className="flex items-center gap-1.5">
-              <Badge variant="secondary">
-                {SCOPE_LABELS[row.original.scope]}
-              </Badge>
-              {isOverlap && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span
-                        role="img"
-                        aria-label="Trùng khoảng hiệu lực"
-                        className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200"
-                      >
-                        <AlertTriangle className="h-3 w-3" />
-                        Trùng hiệu lực
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="right"
-                      className="max-w-xs"
-                    >
-                      <p className="text-xs">
-                        Quy tắc này có khoảng thời gian hiệu lực trùng với một
-                        hoặc nhiều quy tắc khác cùng phạm vi. Hệ thống có thể
-                        áp dụng sai % hoa hồng — vui lòng điều chỉnh để các
-                        khoảng không chồng lấn.
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </div>
-          );
-        },
-      },
-      {
-        id: "subject",
-        header: "Đối tượng",
-        cell: ({ row }) => {
-          const rule = row.original;
-          return (
-            <span className="text-sm">
-              {rule.scope === "CATEGORY_DEFAULT" &&
-                (rule.category?.name ?? rule.categoryId ?? "—")}
-              {rule.scope === "DOCTOR_TIER" && (rule.doctorTier ?? "—")}
-              {rule.scope === "DOCTOR" &&
-                (rule.doctor?.name ?? rule.doctorId ?? "—")}
-            </span>
-          );
-        },
-      },
-      {
-        accessorKey: "commissionPercent",
-        header: () => <div className="text-right">Hoa hồng</div>,
-        cell: ({ row }) => (
-          <div className="text-right font-semibold tabular-nums">
-            {row.original.commissionPercent}%
-          </div>
-        ),
-      },
-      {
-        id: "effective",
-        header: "Thời gian hiệu lực",
-        cell: ({ row }) => (
-          <span className="text-xs text-muted-foreground">
-            {formatDateRange(
-              row.original.effectiveFrom,
-              row.original.effectiveTo,
-            )}
-          </span>
-        ),
-      },
-      {
-        accessorKey: "note",
-        header: "Ghi chú",
-        cell: ({ row }) => (
-          <span className="text-xs text-muted-foreground max-w-50 truncate block">
-            {row.original.note ?? "—"}
-          </span>
-        ),
-      },
-      {
-        accessorKey: "isActive",
-        header: "Trạng thái",
-        cell: ({ row }) =>
-          row.original.isActive ? (
-            <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100">
-              Đang hiệu lực
-            </Badge>
-          ) : (
-            <Badge
-              variant="outline"
-              className="text-muted-foreground"
-            >
-              Đã ngưng
-            </Badge>
-          ),
-      },
-    ],
-    [overlapping],
-  );
-
-  const handleDelete = async () => {
-    if (!deleteTarget) return;
-    try {
-      await deleteMutation.mutateAsync(deleteTarget.id);
-      toast.success("Ngưng hiệu lực quy tắc hoa hồng thành công.");
-      setDeleteTarget(null);
-    } catch (err) {
-      toast.error(getApiErrorMessageVi(err));
-    }
-  };
+  const [state, setState] = useState<DialogState>({ mode: "closed" });
+  const close = () => setState({ mode: "closed" });
 
   return (
-    <div className="p-6 space-y-6 animate-in fade-in duration-300">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Quy Tắc Hoa Hồng</CardTitle>
-              <CardDescription>
-                Mapping % hoa hong theo pham vi ap dung — danh muc, hang bac si
-                hoac bac si cu the.
-              </CardDescription>
-            </div>
-            <Button
-              onClick={() =>
-                navigate("/dashboard/admin/commission-rules/create")
-              }
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Thêm quy tắc
-            </Button>
+    <div className="space-y-6 animate-in fade-in duration-300">
+      <section className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div className="space-y-2">
+            <Badge className="mb-2">Cổng quản trị</Badge>
+            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+              Quy Tắc Hoa Hồng
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
+              Mapping % hoa hồng theo phạm vi áp dụng. Độ ưu tiên: Bác sĩ cụ thể
+              → Cấp bậc → Mặc định danh mục.
+            </p>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Scope filter */}
-          <Tabs
-            value={scopeFilter}
-            onValueChange={(v) => {
-              setScopeFilter(v as CommissionScopeType | "ALL");
-              setQuery((prev) => ({ ...prev, page: 1 }));
-            }}
-          >
-            <TabsList className="flex flex-wrap">
-              <TabsTrigger value="ALL">Tất cả</TabsTrigger>
-              {CommissionScopeSchema.options.map((s) => (
-                <TabsTrigger
-                  key={s}
-                  value={s}
-                >
-                  {SCOPE_LABELS[s]}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+          <Button onClick={() => setState({ mode: "create" })}>
+            <Plus className="mr-2 h-4 w-4" />
+            Thêm quy tắc
+          </Button>
+        </div>
+      </section>
 
-          {overlapping.size > 0 && (
-            <div className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
-              ⚠ Có {overlapping.size} quy tắc đang có khoảng thời gian hiệu lực
-              trùng nhau. Kiểm tra lại để tránh áp dụng sai hoa hồng.
-            </div>
-          )}
+      <AdminCommissionRuleListSection
+        onViewDetail={(rule) => setState({ mode: "detail", rule })}
+        onEdit={(rule) => setState({ mode: "detail", rule })}
+      />
 
-          <DataTable
-            columns={columns}
-            data={rules}
-            isLoading={listQuery.isLoading}
-            rowClassName={(rule) =>
-              overlapping.has(rule.id) ? "bg-yellow-50" : undefined
-            }
-            actions={[
-              {
-                key: "edit",
-                label: "Chỉnh sửa",
-                icon: Pencil,
-                onSelect: (rule) => setEditTarget(rule),
-              },
-              {
-                key: "delete",
-                label: "Ngưng hiệu lực",
-                icon: Ban,
-                variant: "destructive",
-                onSelect: (rule) => setDeleteTarget(rule),
-                // Rule đã ngưng (`isActive=false`) thì không cho ngưng tiếp.
-                // BE soft-delete cũng sẽ trả 404/422 nếu gọi lại.
-                hidden: (rule) => !rule.isActive,
-              },
-            ]}
-            emptyText="Chưa có quy tắc hoa hồng nào."
-          />
-
-          {meta && meta.totalPages > 1 && (
-            <div className="flex items-center justify-between pt-2">
-              <p className="text-sm text-muted-foreground">
-                {meta.totalItems} quy tắc · Trang {meta.page}/{meta.totalPages}
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={!meta.hasPreviousPage}
-                  onClick={() =>
-                    setQuery((prev) => ({ ...prev, page: prev.page! - 1 }))
-                  }
-                >
-                  Trước
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={!meta.hasNextPage}
-                  onClick={() =>
-                    setQuery((prev) => ({ ...prev, page: prev.page! + 1 }))
-                  }
-                >
-                  Tiếp
-                </Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Edit dialog */}
       <Dialog
-        open={Boolean(editTarget)}
-        onOpenChange={(open) => !open && setEditTarget(null)}
+        open={state.mode !== "closed"}
+        onOpenChange={(open) => !open && close()}
       >
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Chỉnh Sửa Quy Tắc</DialogTitle>
+            <DialogTitle>
+              {state.mode === "create"
+                ? "Thêm quy tắc hoa hồng"
+                : "Chi tiết quy tắc hoa hồng"}
+            </DialogTitle>
             <DialogDescription>
-              Cập nhật hoa hồng và thời gian hiệu lực.
+              {state.mode === "create"
+                ? "Định nghĩa % hoa hồng bác sĩ nhận theo phạm vi (danh mục / cấp bậc / cá nhân)."
+                : "Xem và chỉnh sửa quy tắc. Phạm vi không thể thay đổi sau khi tạo."}
             </DialogDescription>
           </DialogHeader>
-          {editTarget && (
-            <EditRuleForm
-              rule={editTarget}
-              onClose={() => setEditTarget(null)}
-            />
+          {state.mode === "create" && (
+            <AdminCommissionRuleFormPanel onBack={close} />
+          )}
+          {state.mode === "detail" && (
+            <AdminCommissionRuleFormPanel rule={state.rule} onBack={close} />
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Delete confirm */}
-      <ConfirmDialog
-        open={Boolean(deleteTarget)}
-        title="Xoá quy tắc hoa hồng?"
-        description={`Quy tắc "${deleteTarget ? SCOPE_LABELS[deleteTarget.scope] : ""}" sẽ bị xoá. Thao tác này không thể hoàn tác.`}
-        confirmLabel="Xoá"
-        variant="destructive"
-        onConfirm={handleDelete}
-        onCancel={() => setDeleteTarget(null)}
-      />
     </div>
   );
 }

@@ -22,6 +22,7 @@ import {
 import { Cpu, CreditCard } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useIotKitOrderPaymentStatus } from "@/queries/useIotKit";
+import { SENSOR_TYPE_ICON } from "@/constants/iotDeviceDisplay";
 
 interface IotKitOrderDetailDialogProps {
   order: OwnerKitOrderTrackingType | null;
@@ -30,10 +31,27 @@ interface IotKitOrderDetailDialogProps {
 }
 
 const DEVICE_STATUS_LABEL: Record<string, string> = {
+  available: "Có thể sử dụng",
+  purchase: "Đã mua, chưa lắp",
+  install: "Đang cài đặt",
   active: "Đang hoạt động",
-  inactive: "Tạm ngừng",
-  maintenance: "Bảo trì",
-  decommissioned: "Đã ngưng dùng",
+  error: "Lỗi",
+  revoked: "Đã thu hồi",
+};
+
+const DEVICE_STATUS_BADGE_CLASS: Record<string, string> = {
+  available:
+    "border-slate-300 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200",
+  purchase:
+    "border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",
+  install:
+    "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300",
+  active:
+    "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
+  error:
+    "border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300",
+  revoked:
+    "border-zinc-300 bg-zinc-100 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300",
 };
 
 function IotKitOrderDetailDialog({
@@ -97,14 +115,15 @@ function IotKitOrderDetailDialog({
             <Badge variant="outline">
               {BOARD_TYPE_LABEL_VI[order.kit.boardType] ?? order.kit.boardType}
             </Badge>
-            {order.kit.includedSensors?.map((s) => (
-              <Badge
-                key={s}
-                variant="secondary"
-              >
-                {SENSOR_TYPE_LABEL_VI[s] ?? s}
-              </Badge>
-            ))}
+            {order.kit.includedSensors?.map((s) => {
+              const SIcon = SENSOR_TYPE_ICON[s];
+              return (
+                <Badge key={s} variant="secondary" className="gap-1">
+                  {SIcon && <SIcon className="h-3 w-3" />}
+                  {SENSOR_TYPE_LABEL_VI[s] ?? s}
+                </Badge>
+              );
+            })}
             {order.kit.includedModules?.map((m) => (
               <Badge
                 key={m}
@@ -198,10 +217,17 @@ function IotKitOrderDetailDialog({
                           {d.deviceName}
                         </td>
                         <td className="px-3 py-2 text-muted-foreground">
-                          {d.deviceType}
+                          {BOARD_TYPE_LABEL_VI[
+                            d.deviceType as keyof typeof BOARD_TYPE_LABEL_VI
+                          ] ?? d.deviceType}
                         </td>
                         <td className="px-3 py-2">
-                          {DEVICE_STATUS_LABEL[d.status] ?? d.status}
+                          <Badge
+                            variant="outline"
+                            className={DEVICE_STATUS_BADGE_CLASS[d.status]}
+                          >
+                            {DEVICE_STATUS_LABEL[d.status] ?? d.status}
+                          </Badge>
                         </td>
                         <td className="px-3 py-2 text-muted-foreground">
                           {formatDateVi(d.provisionedAt)}

@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -23,9 +22,15 @@ import {
   ArchiveRestore,
   Boxes,
   Eye,
+  Info,
   PackageOpen,
   Search,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useMemo, useState } from "react";
 import useDebounce from "@/hooks/useDebounce";
 import {
@@ -183,64 +188,80 @@ export default function AdminIotKitListSection({
   return (
     <Card className="overflow-hidden border-border/70">
       <CardHeader className="bg-muted/30">
-        <CardTitle className="flex items-center gap-2">
-          <Boxes className="h-5 w-5 text-primary" />
-          Danh mục các gói Kit IoT
-        </CardTitle>
-        <CardDescription>
-          Bộ Kit bán lẻ giúp Chủ trang trại mở rộng hạn mức thiết bị bao gồm
-          trong gói đăng ký.
-        </CardDescription>
-
-        <div className="mt-2 grid gap-2 md:grid-cols-[1fr_200px_140px]">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Tìm theo tên hoặc mã bộ Kit"
-              className="pl-9"
-            />
-          </div>
-          <Select
-            value={status}
-            onValueChange={(value) => {
-              setStatus(value as StatusFilter);
-              setPage(1);
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Trạng thái" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
-              <SelectItem value="active">Đang hoạt động</SelectItem>
-              <SelectItem value="archived">Đã lưu trữ</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
-            value={String(limit)}
-            onValueChange={(value) => {
-              setLimit(Number(value));
-              setPage(1);
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="10">10 / trang</SelectItem>
-              <SelectItem value="20">20 / trang</SelectItem>
-              <SelectItem value="50">50 / trang</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2">
+            <Boxes className="h-5 w-5 text-primary" />
+            Danh mục các gói Kit IoT
+          </CardTitle>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+            </TooltipTrigger>
+            <TooltipContent>
+              Bộ Kit bán lẻ giúp Chủ trang trại mở rộng hạn mức thiết bị bao gồm
+              trong gói đăng ký.
+            </TooltipContent>
+          </Tooltip>
         </div>
       </CardHeader>
 
       <CardContent className="space-y-4 pt-5">
+        <div className="grid gap-3 md:grid-cols-[1fr_200px_140px]">
+          <div className="space-y-1.5">
+            <p className="text-sm font-medium">Tìm kiếm</p>
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Tìm theo tên hoặc mã bộ Kit"
+                className="pl-9"
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <p className="text-sm font-medium">Trạng thái</p>
+            <Select
+              value={status}
+              onValueChange={(value) => {
+                setStatus(value as StatusFilter);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Trạng thái" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả</SelectItem>
+                <SelectItem value="active">Đang hoạt động</SelectItem>
+                <SelectItem value="archived">Đã lưu trữ</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <p className="text-sm font-medium">Số mục</p>
+            <Select
+              value={String(limit)}
+              onValueChange={(value) => {
+                setLimit(Number(value));
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10 / trang</SelectItem>
+                <SelectItem value="20">20 / trang</SelectItem>
+                <SelectItem value="50">50 / trang</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         {!listQuery.isLoading && kits.length === 0 ? (
           <EmptyState
             icon={PackageOpen}
@@ -275,6 +296,7 @@ export default function AdminIotKitListSection({
                   onSelect: (kit) => setUnarchiveTarget(kit),
                 },
               ]}
+              onRowClick={(kit) => onViewDetail?.(kit)}
               emptyText="Chưa có bộ Kit nào."
             />
           </div>

@@ -1,7 +1,12 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Eye } from "lucide-react";
+import { Eye, Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import InvoiceStatusBadge, {
   type InvoiceStatus,
 } from "@/components/common/InvoiceStatusBadge";
@@ -13,7 +18,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -231,83 +235,96 @@ function AdminInvoicesPage() {
     <div className="space-y-6 animate-in fade-in duration-300">
       <Card>
         <CardHeader>
-          <CardTitle>Quản lý hóa đơn</CardTitle>
-          <CardDescription>
-            Admin có thể xem toàn bộ hóa đơn subscription, gói dịch vụ và đơn
-            mua bộ kit IoT — kèm thông tin khách hàng, tham chiếu và tình trạng
-            thanh toán mới nhất.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-3">
-          <Input
-            placeholder="Tìm theo mã hóa đơn..."
-            value={query.search ?? ""}
-            onChange={(event) =>
-              setQuery((prev) => ({
-                ...prev,
-                page: 1,
-                search: event.target.value || undefined,
-              }))
-            }
-          />
-          <Select
-            value={query.status ?? "ALL"}
-            onValueChange={(value) =>
-              setQuery((prev) => ({
-                ...prev,
-                page: 1,
-                status:
-                  value === "ALL" ? undefined : (value as InvoiceStatusType),
-              }))
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Lọc trạng thái" />
-            </SelectTrigger>
-            <SelectContent>
-              {STATUS_OPTIONS.map((status) => (
-                <SelectItem
-                  key={status.value}
-                  value={status.value}
-                >
-                  {status.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={query.referenceType ?? "ALL"}
-            onValueChange={(value) =>
-              setQuery((prev) => ({
-                ...prev,
-                page: 1,
-                referenceType: value === "ALL" ? undefined : value,
-              }))
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Lọc loại tham chiếu" />
-            </SelectTrigger>
-            <SelectContent>
-              {REFERENCE_TYPE_OPTIONS.map((opt) => (
-                <SelectItem
-                  key={opt.value}
-                  value={opt.value}
-                >
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Danh sách hóa đơn</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle>Danh sách hóa đơn</CardTitle>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent>
+                Admin có thể xem toàn bộ hóa đơn subscription, gói dịch vụ và
+                đơn mua bộ kit IoT — kèm thông tin khách hàng, tham chiếu và
+                tình trạng thanh toán mới nhất.
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="overflow-x-auto">
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium">Tìm kiếm</p>
+              <Input
+                placeholder="Tìm theo mã hóa đơn..."
+                value={query.search ?? ""}
+                onChange={(event) =>
+                  setQuery((prev) => ({
+                    ...prev,
+                    page: 1,
+                    search: event.target.value || undefined,
+                  }))
+                }
+              />
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium">Trạng thái</p>
+              <Select
+                value={query.status ?? "ALL"}
+                onValueChange={(value) =>
+                  setQuery((prev) => ({
+                    ...prev,
+                    page: 1,
+                    status:
+                      value === "ALL"
+                        ? undefined
+                        : (value as InvoiceStatusType),
+                  }))
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Lọc trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((status) => (
+                    <SelectItem
+                      key={status.value}
+                      value={status.value}
+                    >
+                      {status.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium">Loại tham chiếu</p>
+              <Select
+                value={query.referenceType ?? "ALL"}
+                onValueChange={(value) =>
+                  setQuery((prev) => ({
+                    ...prev,
+                    page: 1,
+                    referenceType: value === "ALL" ? undefined : value,
+                  }))
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Lọc loại tham chiếu" />
+                </SelectTrigger>
+                <SelectContent>
+                  {REFERENCE_TYPE_OPTIONS.map((opt) => (
+                    <SelectItem
+                      key={opt.value}
+                      value={opt.value}
+                    >
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto min-h-150">
             <DataTable
               columns={columns}
               data={invoices}

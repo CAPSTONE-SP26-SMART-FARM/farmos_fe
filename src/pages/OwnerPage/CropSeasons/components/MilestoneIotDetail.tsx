@@ -3,6 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Cpu, Radio } from "lucide-react";
 import { format } from "date-fns";
 import { useOwnerMilestoneAssignment } from "@/queries/useProductionMilestone";
+import { SENSOR_TYPE_ICON } from "@/constants/iotDeviceDisplay";
 import {
   formatMilestoneIotDeviceWithOptionalCode,
   milestoneIotModuleTypeVi,
@@ -89,13 +90,16 @@ export function MilestoneIotDetail({ milestoneId }: { milestoneId: string }) {
           <p className="text-xs text-muted-foreground">Chưa liên kết cảm biến.</p>
         ) : (
           <div className="space-y-1">
-            {sensors.map((s) => (
+            {sensors.map((s) => {
+              const SIcon = SENSOR_TYPE_ICON[s.sensorType];
+              return (
               <div
                 key={s.bindingId}
                 className="flex items-center justify-between rounded-md border px-2.5 py-1.5 text-xs bg-background"
               >
                 <div>
-                  <span className="font-medium">
+                  <span className="font-medium inline-flex items-center gap-1.5">
+                    {SIcon && <SIcon className="h-3 w-3 text-primary" />}
                     {s.sensorName || SENSOR_TYPE_LABELS[s.sensorType] || s.sensorType}
                   </span>
                   <Badge variant="outline" className="text-[10px] capitalize ml-2">
@@ -106,7 +110,8 @@ export function MilestoneIotDetail({ milestoneId }: { milestoneId: string }) {
                   </p>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

@@ -20,9 +20,16 @@ import type { IotDeviceResType } from "@/schemaValidatation/iotDevice";
 interface Props {
   device: IotDeviceResType;
   onDelete: (device: IotDeviceResType) => void;
+  onView?: (device: IotDeviceResType) => void;
+  onEdit?: (device: IotDeviceResType) => void;
 }
 
-export function IotDeviceRowActions({ device, onDelete }: Props) {
+export function IotDeviceRowActions({
+  device,
+  onDelete,
+  onView,
+  onEdit,
+}: Props) {
   const navigate = useNavigate();
   const triggerLabel = `Tùy chọn cho ${device.label ?? device.deviceName}`;
 
@@ -48,14 +55,20 @@ export function IotDeviceRowActions({ device, onDelete }: Props) {
           Trang quyết định
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => navigate(`/dashboard/admin/iot-devices/${device.id}`)}
+          onClick={() =>
+            onView
+              ? onView(device)
+              : navigate(`/dashboard/admin/iot-devices/${device.id}`)
+          }
         >
           <Eye className="mr-2 h-4 w-4" />
           Xem chi tiết
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() =>
-            navigate(`/dashboard/admin/iot-devices/${device.id}/edit`)
+            onEdit
+              ? onEdit(device)
+              : navigate(`/dashboard/admin/iot-devices/${device.id}/edit`)
           }
         >
           <PencilLine className="mr-2 h-4 w-4" />

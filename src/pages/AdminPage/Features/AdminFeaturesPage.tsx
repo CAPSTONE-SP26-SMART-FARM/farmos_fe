@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -31,7 +30,12 @@ import type {
   FeatureMenuType,
   ListFeaturesQueryType,
 } from "@/schemaValidatation/feature";
-import { Pencil, Search, Trash2 } from "lucide-react";
+import { Info, Pencil, Search, Trash2 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import {
   type FormState,
@@ -194,11 +198,16 @@ export default function AdminFeaturesPage() {
         <Card>
           <CardHeader className="space-y-4">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div>
+              <div className="flex items-center gap-2">
                 <CardTitle>Danh sách tính năng</CardTitle>
-                <CardDescription>
-                  Quản lý tính năng dùng cho các gói dịch vụ.
-                </CardDescription>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Quản lý tính năng dùng cho các gói dịch vụ. Nhấn vào dòng để chỉnh sửa.
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </div>
             <div className="grid gap-3 md:grid-cols-[1fr_140px]">
@@ -256,6 +265,7 @@ export default function AdminFeaturesPage() {
                     setDeletingFeatureCode(feature.code),
                 },
               ]}
+              onRowClick={(feature) => onEdit(feature)}
               emptyText="Không có tính năng phù hợp bộ lọc."
             />
             <div className="flex items-center justify-between">

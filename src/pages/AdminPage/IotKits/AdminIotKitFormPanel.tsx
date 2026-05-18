@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,7 +18,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft } from "lucide-react";
 import {
   BOARD_TYPE_LABEL_VI,
   CreateIotKitBodySchema,
@@ -43,6 +41,7 @@ import { isApiErrorUnprocessableEntityResponse } from "@/lib/utils";
 import { formatCurrencyVnd } from "@/lib/format";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { SENSOR_TYPE_ICON } from "@/constants/iotDeviceDisplay";
 
 interface AdminIotKitFormPanelProps {
   kit?: IotDeviceKitResType;
@@ -139,27 +138,6 @@ export default function AdminIotKitFormPanel({
         show ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
       )}
     >
-      <section className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleBack}
-          className="mb-3 -ml-2 gap-1 text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Quay lại danh sách
-        </Button>
-        <Badge className="mb-2">Cổng quản trị</Badge>
-        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-          {isEdit ? "Cập nhật bộ Kit IoT" : "Tạo bộ Kit IoT"}
-        </h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
-          {isEdit
-            ? "Một số trường (mã, số bộ, loại board) bị khoá khi đã có đơn đã thanh toán."
-            : "Mỗi bộ Kit IoT mặc định gồm 1 board chính + 3 module truyền dẫn + 4 cảm biến."}
-        </p>
-      </section>
-
       <Card>
         <CardHeader>
           <CardTitle>Thông tin bộ Kit</CardTitle>
@@ -299,6 +277,7 @@ export default function AdminIotKitFormPanel({
                       <div className="grid gap-2 sm:grid-cols-2">
                         {ALL_SENSORS.map((s) => {
                           const checked = value.includes(s);
+                          const SIcon = SENSOR_TYPE_ICON[s];
                           return (
                             <label
                               key={s}
@@ -315,7 +294,10 @@ export default function AdminIotKitFormPanel({
                                 }}
                                 className="h-4 w-4 accent-primary"
                               />
-                              <span>{SENSOR_TYPE_LABEL_VI[s]}</span>
+                              <span className="inline-flex items-center gap-1.5">
+                                {SIcon && <SIcon className="h-3.5 w-3.5 text-primary" />}
+                                {SENSOR_TYPE_LABEL_VI[s]}
+                              </span>
                             </label>
                           );
                         })}

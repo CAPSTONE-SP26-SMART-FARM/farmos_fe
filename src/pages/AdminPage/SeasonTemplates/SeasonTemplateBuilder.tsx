@@ -44,6 +44,7 @@ import {
   newThreshold,
   type BuilderModel,
 } from "./seasonTemplate.helpers";
+import { SENSOR_TYPE_ICON } from "@/constants/iotDeviceDisplay";
 
 const ALL_SENSOR_TYPES = Object.keys(SENSOR_TYPE_LABEL) as SensorTypeT[];
 
@@ -506,14 +507,20 @@ function MilestoneThresholdList({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {available.map((s) => (
-                  <SelectItem
-                    key={s}
-                    value={s}
-                  >
-                    {SENSOR_TYPE_LABEL[s]}
-                  </SelectItem>
-                ))}
+                {available.map((s) => {
+                  const SIcon = SENSOR_TYPE_ICON[s];
+                  return (
+                    <SelectItem
+                      key={s}
+                      value={s}
+                    >
+                      <span className="inline-flex items-center gap-1.5">
+                        {SIcon && <SIcon className="h-3.5 w-3.5 text-primary" />}
+                        {SENSOR_TYPE_LABEL[s]}
+                      </span>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
             <Input

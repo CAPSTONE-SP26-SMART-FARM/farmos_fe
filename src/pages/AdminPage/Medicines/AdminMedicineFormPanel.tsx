@@ -33,11 +33,11 @@ import { Loader2 } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-// Form Sheet dùng chung create / edit. Schema 1-1 với BE
+// Form dùng chung create / edit. Schema 1-1 với BE
 // `farm_os_be/src/modules/medicine/medicine.model.ts` — tuyệt đối không thêm
 // field thừa (BE `.strict()` → 422 UNRECOGNIZED).
 
-interface AdminMedicineFormSheetProps {
+interface AdminMedicineFormPanelProps {
   mode: "create" | "edit";
   initialData: MedicineResType | null;
   onSuccess: () => void;
@@ -48,13 +48,13 @@ interface AdminMedicineFormSheetProps {
 
 const FORM_OPTIONS = MedicineFormSchema.options;
 
-export default function AdminMedicineFormSheet({
+export default function AdminMedicineFormPanel({
   mode,
   initialData,
   onSuccess,
   onCancel,
   prefillName,
-}: AdminMedicineFormSheetProps) {
+}: AdminMedicineFormPanelProps) {
   const createMutation = useCreateMedicine();
   const updateMutation = useUpdateMedicine();
 
@@ -140,11 +140,8 @@ export default function AdminMedicineFormSheet({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="flex flex-col flex-1 overflow-hidden"
-    >
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div className="space-y-4">
         {/* Read-only badge — chỉ ở mode edit */}
         {mode === "edit" && initialData && (
           <div className="rounded-md border bg-muted/50 p-3 space-y-2">
@@ -357,8 +354,8 @@ export default function AdminMedicineFormSheet({
         </div>
       </div>
 
-      {/* Footer sticky */}
-      <div className="border-t bg-background px-6 py-3 flex justify-end gap-2">
+      <Separator />
+      <div className="flex justify-end gap-2">
         <Button
           type="button"
           variant="outline"
@@ -367,10 +364,7 @@ export default function AdminMedicineFormSheet({
         >
           Huỷ
         </Button>
-        <Button
-          type="submit"
-          disabled={isPending}
-        >
+        <Button type="submit" disabled={isPending} className="min-w-32">
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {mode === "create" ? "Tạo thuốc" : "Cập nhật"}
         </Button>

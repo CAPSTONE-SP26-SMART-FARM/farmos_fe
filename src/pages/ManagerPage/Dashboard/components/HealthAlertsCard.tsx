@@ -74,10 +74,10 @@ function HealthAlertsCard({ data, className }: HealthAlertsCardProps) {
               {data.criticalAlerts} cảnh báo
             </Badge>
             <Badge className="bg-amber-500/10 text-amber-600 border-transparent">
-              {data.openTickets} ticket
+              {data.openTickets} yêu cầu
             </Badge>
             <Badge className="bg-slate-500/10 text-slate-600 border-transparent">
-              {data.devicesOffline} offline
+              {data.devicesOffline} mất kết nối
             </Badge>
           </div>
         </div>

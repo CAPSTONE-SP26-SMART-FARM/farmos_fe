@@ -122,16 +122,11 @@ export default function ZoneManagersSection({
 
   return (
     <Card className="space-y-4">
-      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h3 className="text-base font-semibold flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Quản lý được phân công
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Danh sách quản lý phụ trách khu vực này.
-          </p>
-        </div>
+      <CardHeader className="flex flex-row items-center justify-between gap-3">
+        <h3 className="text-base font-semibold flex items-center gap-2 shrink-0">
+          <Users className="h-4 w-4" />
+          Quản lý
+        </h3>
         <div className="flex gap-2 shrink-0">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />

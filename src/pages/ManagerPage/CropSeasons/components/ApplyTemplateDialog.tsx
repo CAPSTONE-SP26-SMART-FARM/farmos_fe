@@ -47,6 +47,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { SENSOR_TYPE_ICON } from "@/constants/iotDeviceDisplay";
 
 export interface AppliedTemplateResult {
   preview: PreviewFromTemplateResT;
@@ -353,20 +354,24 @@ function PreviewBody({ preview }: { preview: PreviewFromTemplateResT }) {
                   <Gauge className="h-3 w-3" /> Ngưỡng cảm biến
                 </div>
                 <div className="grid grid-cols-2 gap-1 md:grid-cols-3">
-                  {m.thresholds.map((th, ti) => (
-                    <div
-                      key={ti}
-                      className="rounded border bg-muted/30 px-2 py-1 text-xs"
-                    >
-                      <div className="font-medium">
-                        {SENSOR_TYPE_LABEL[th.sensorType as SensorTypeT] ??
-                          th.sensorType}
+                  {m.thresholds.map((th, ti) => {
+                    const SIcon = SENSOR_TYPE_ICON[th.sensorType];
+                    return (
+                      <div
+                        key={ti}
+                        className="rounded border bg-muted/30 px-2 py-1 text-xs"
+                      >
+                        <div className="font-medium inline-flex items-center gap-1">
+                          {SIcon && <SIcon className="h-3 w-3 text-primary" />}
+                          {SENSOR_TYPE_LABEL[th.sensorType as SensorTypeT] ??
+                            th.sensorType}
+                        </div>
+                        <div className="text-muted-foreground tabular-nums">
+                          {th.optimalMin} – {th.optimalMax}
+                        </div>
                       </div>
-                      <div className="text-muted-foreground tabular-nums">
-                        {th.optimalMin} – {th.optimalMax}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -382,20 +387,24 @@ function PreviewBody({ preview }: { preview: PreviewFromTemplateResT }) {
               Ngưỡng chung toàn vụ
             </div>
             <div className="grid grid-cols-2 gap-1 md:grid-cols-3">
-              {preview.seasonLevelThresholds.map((th, ti) => (
-                <div
-                  key={ti}
-                  className="rounded border bg-background px-2 py-1 text-xs"
-                >
-                  <div className="font-medium">
-                    {SENSOR_TYPE_LABEL[th.sensorType as SensorTypeT] ??
-                      th.sensorType}
+              {preview.seasonLevelThresholds.map((th, ti) => {
+                const SIcon = SENSOR_TYPE_ICON[th.sensorType];
+                return (
+                  <div
+                    key={ti}
+                    className="rounded border bg-background px-2 py-1 text-xs"
+                  >
+                    <div className="font-medium inline-flex items-center gap-1">
+                      {SIcon && <SIcon className="h-3 w-3 text-primary" />}
+                      {SENSOR_TYPE_LABEL[th.sensorType as SensorTypeT] ??
+                        th.sensorType}
+                    </div>
+                    <div className="text-muted-foreground tabular-nums">
+                      {th.optimalMin} – {th.optimalMax}
+                    </div>
                   </div>
-                  <div className="text-muted-foreground tabular-nums">
-                    {th.optimalMin} – {th.optimalMax}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>

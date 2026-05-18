@@ -22,17 +22,28 @@ import {
   type OwnerKitOrderTrackingType,
   type ProvisionedDeviceSummaryType,
 } from "@/schemaValidatation/iotKit";
+import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  ArrowRight,
   ChevronRight,
   CircleSlash,
   Cpu,
   Package,
   PackagePlus,
+  Search,
   ShoppingBag,
   Wifi,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import IotKitOrderDetailDialog from "@/pages/OwnerPage/Subscriptions/components/IotKitOrderDetailDialog";
+import ProvisionedDeviceDetailDialog from "./components/ProvisionedDeviceDetailDialog";
 import { Link, useNavigate } from "react-router";
 
 const ORDER_STATUS_META: Record<
@@ -95,6 +106,27 @@ export default function OwnerIotTrackingPage({
   const trackingQuery = useMyIotTracking();
   const [selectedOrder, setSelectedOrder] =
     useState<OwnerKitOrderTrackingType | null>(null);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
+  const [orderSearch, setOrderSearch] = useState("");
+  const [orderStatusFilter, setOrderStatusFilter] = useState<
+    "ALL" | IotKitOrderStatus
+  >("ALL");
+
+  const kitOrders = trackingQuery.data?.data?.kitOrders ?? [];
+  const filteredKitOrders = useMemo(() => {
+    const q = orderSearch.trim().toLowerCase();
+    return kitOrders.filter((o) => {
+      if (orderStatusFilter !== "ALL" && o.status !== orderStatusFilter) {
+        return false;
+      }
+      if (!q) return true;
+      return (
+        o.orderNumber.toLowerCase().includes(q) ||
+        o.kit.name.toLowerCase().includes(q) ||
+        o.kit.code.toLowerCase().includes(q)
+      );
+    });
+  }, [kitOrders, orderSearch, orderStatusFilter]);
 
   if (trackingQuery.isLoading) {
     return (
@@ -143,7 +175,7 @@ export default function OwnerIotTrackingPage({
   const data = trackingQuery.data?.data;
   if (!data) return null;
 
-  const { quota, kitOrders, subscriptionDevices } = data;
+  const { quota, subscriptionDevices } = data;
   const totalCapacity = quota.subscriptionMax + quota.kitBonus;
   const usageRatio = totalCapacity > 0 ? quota.used / totalCapacity : 0;
 
@@ -211,22 +243,36 @@ export default function OwnerIotTrackingPage({
         </CardContent>
       </Card>
 
-      {/* Subscription devices */}
+      {/* Subscription devices — devices admin gán trực tiếp qua hạn mức gói */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Wifi className="h-5 w-5 text-primary" />
-            Thiết bị từ gói đăng ký ({subscriptionDevices.length})
-          </CardTitle>
-          <CardDescription>
-            Các bo mạch được admin gán Iot kit trực tiếp qua hạn mức gói (không
-            qua đơn kit).
-          </CardDescription>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <CardTitle className="flex items-center gap-2">
+                <Wifi className="h-5 w-5 text-primary" />
+                Thiết bị từ gói đăng ký ({subscriptionDevices.length})
+              </CardTitle>
+              <CardDescription>
+                Các thiết bị nằm trong hạn mức của gói đăng ký. Khi gói hết
+                hạn, các thiết bị này sẽ bị thu hồi.
+              </CardDescription>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="shrink-0"
+              onClick={() => navigate("/dashboard/owner/iot?tab=devices")}
+            >
+              Xem tất cả thiết bị
+              <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <DeviceTable
             devices={subscriptionDevices}
             emptyText="Chưa có thiết bị nào được cấp qua gói đăng ký."
+            onRowClick={(d) => setSelectedDeviceId(d.id)}
           />
         </CardContent>
       </Card>
@@ -255,13 +301,55 @@ export default function OwnerIotTrackingPage({
               }}
             />
           ) : (
-            kitOrders.map((order) => (
-              <KitOrderCard
-                key={order.orderId}
-                order={order}
-                onOpen={() => setSelectedOrder(order)}
-              />
-            ))
+            <>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <div className="relative flex-1">
+                  <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={orderSearch}
+                    onChange={(e) => setOrderSearch(e.target.value)}
+                    placeholder="Tìm theo mã đơn, tên kit hoặc mã kit…"
+                    className="pl-8"
+                  />
+                </div>
+                <Select
+                  value={orderStatusFilter}
+                  onValueChange={(v) =>
+                    setOrderStatusFilter(v as typeof orderStatusFilter)
+                  }
+                >
+                  <SelectTrigger className="w-full sm:w-48">
+                    <SelectValue placeholder="Trạng thái" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Tất cả trạng thái</SelectItem>
+                    {(
+                      Object.entries(ORDER_STATUS_META) as Array<
+                        [IotKitOrderStatus, { label: string }]
+                      >
+                    ).map(([value, meta]) => (
+                      <SelectItem key={value} value={value}>
+                        {meta.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {filteredKitOrders.length === 0 ? (
+                <p className="rounded-md border border-dashed py-6 text-center text-sm text-muted-foreground">
+                  Không có đơn nào khớp với bộ lọc hiện tại.
+                </p>
+              ) : (
+                filteredKitOrders.map((order) => (
+                  <KitOrderCard
+                    key={order.orderId}
+                    order={order}
+                    onOpen={() => setSelectedOrder(order)}
+                  />
+                ))
+              )}
+            </>
           )}
         </CardContent>
       </Card>
@@ -271,6 +359,14 @@ export default function OwnerIotTrackingPage({
         open={selectedOrder !== null}
         onOpenChange={(open) => {
           if (!open) setSelectedOrder(null);
+        }}
+      />
+
+      <ProvisionedDeviceDetailDialog
+        deviceId={selectedDeviceId}
+        open={selectedDeviceId !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedDeviceId(null);
         }}
       />
     </div>
@@ -369,10 +465,12 @@ function DeviceTable({
   devices,
   emptyText,
   compact = false,
+  onRowClick,
 }: {
   devices: ProvisionedDeviceSummaryType[];
   emptyText: string;
   compact?: boolean;
+  onRowClick?: (device: ProvisionedDeviceSummaryType) => void;
 }) {
   const [page, setPage] = useState(1);
   const totalPages = Math.max(1, Math.ceil(devices.length / DEVICES_PER_PAGE));
@@ -439,6 +537,7 @@ function DeviceTable({
           columns={columns}
           data={pageItems}
           emptyText={emptyText}
+          onRowClick={onRowClick}
         />
       </div>
       {totalPages > 1 && (
@@ -469,3 +568,4 @@ function DeviceTable({
     </div>
   );
 }
+

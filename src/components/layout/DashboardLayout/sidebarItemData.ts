@@ -9,7 +9,6 @@ import {
   HandCoins,
   LayoutDashboard,
   Map,
-  Milestone,
   Package,
   PackagePlus,
   Pill,
@@ -31,6 +30,21 @@ export const sidebarData: SidebarData = {
   // Admin
   // ──────────────────────────────────────────────────────────────────────
   navAdmin: [
+    {
+      label: "Tài chính",
+      items: [
+        {
+          title: "Quản Lý Doanh Thu",
+          url: "/dashboard/admin/revenue",
+          icon: Coins,
+        },
+        {
+          title: "Thanh Toán Bác Sĩ",
+          url: "/dashboard/admin/doctor-payouts",
+          icon: HandCoins,
+        },
+      ],
+    },
     {
       label: "Tổng quan",
       items: [
@@ -79,21 +93,6 @@ export const sidebarData: SidebarData = {
           title: "Hóa Đơn",
           url: "/dashboard/admin/invoices",
           icon: ReceiptText,
-        },
-      ],
-    },
-    {
-      label: "Tài chính",
-      items: [
-        {
-          title: "Quản Lý Doanh Thu",
-          url: "/dashboard/admin/revenue",
-          icon: Coins,
-        },
-        {
-          title: "Thanh Toán Bác Sĩ",
-          url: "/dashboard/admin/doctor-payouts",
-          icon: HandCoins,
         },
       ],
     },
@@ -149,11 +148,11 @@ export const sidebarData: SidebarData = {
         //   url: "/dashboard/admin/season-templates",
         //   icon: Sprout,
         // },
-        {
-          title: "Mẫu Cột Mốc",
-          url: "/dashboard/admin/milestone-templates",
-          icon: Milestone,
-        },
+        // {
+        //   title: "Mẫu Cột Mốc",
+        //   url: "/dashboard/admin/milestone-templates",
+        //   icon: Milestone,
+        // },
         {
           title: "Mẫu Nhiệm Vụ Nhân Viên",
           url: "/dashboard/admin/employee-task-templates",

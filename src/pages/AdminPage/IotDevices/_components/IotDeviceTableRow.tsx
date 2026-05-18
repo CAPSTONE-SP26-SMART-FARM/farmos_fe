@@ -11,13 +11,23 @@ import { IotDeviceRowActions } from "./IotDeviceRowActions";
 interface Props {
   device: IotDeviceResType;
   onDelete: (device: IotDeviceResType) => void;
+  onView?: (device: IotDeviceResType) => void;
+  onEdit?: (device: IotDeviceResType) => void;
 }
 
-export function IotDeviceTableRow({ device, onDelete }: Props) {
+export function IotDeviceTableRow({
+  device,
+  onDelete,
+  onView,
+  onEdit,
+}: Props) {
   const Icon = DEVICE_TYPE_ICON[device.deviceType] ?? Cpu;
 
   return (
-    <TableRow>
+    <TableRow
+      className={onView ? "cursor-pointer hover:bg-muted/40" : undefined}
+      onClick={onView ? () => onView(device) : undefined}
+    >
       <TableCell className="w-30">
         {device.label ? (
           <span className="inline-flex items-center rounded-md border-2 border-primary bg-primary px-2 py-0.5 font-mono text-sm font-extrabold tracking-wider text-primary-foreground shadow-sm">
@@ -73,10 +83,15 @@ export function IotDeviceTableRow({ device, onDelete }: Props) {
         )}
       </TableCell>
 
-      <TableCell className="w-14 text-right">
+      <TableCell
+        className="w-14 text-right"
+        onClick={(e) => e.stopPropagation()}
+      >
         <IotDeviceRowActions
           device={device}
           onDelete={onDelete}
+          onView={onView}
+          onEdit={onEdit}
         />
       </TableCell>
     </TableRow>

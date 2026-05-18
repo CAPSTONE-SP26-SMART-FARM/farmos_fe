@@ -85,7 +85,7 @@ function TaskCard({ task }: { task: ManagerTaskWithLogStatusType }) {
             variant={task.hasLoggedToday ? "default" : "secondary"}
             className={`text-[10px] ${task.hasLoggedToday ? "bg-emerald-600" : "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300"}`}
           >
-            {task.hasLoggedToday ? "Đã log" : "Chưa log"}
+            {task.hasLoggedToday ? "Đã ghi nhận" : "Chưa ghi nhận"}
           </Badge>
         </div>
       </div>
@@ -159,12 +159,12 @@ export function TodayZoneTasksPanel({ zoneId }: { zoneId: string }) {
           </p>
           {!isLoading && meta && (
             <p className="text-xs text-muted-foreground mt-0.5">
-              {meta.totalItems} task ·{" "}
-              <span className="text-emerald-600">{loggedCount} đã log</span>
+              {meta.totalItems} nhiệm vụ ·{" "}
+              <span className="text-emerald-600">{loggedCount} đã ghi nhận</span>
               {unloggedCount > 0 && (
                 <>
                   {" "}·{" "}
-                  <span className="text-amber-600">{unloggedCount} chưa log</span>
+                  <span className="text-amber-600">{unloggedCount} chưa ghi nhận</span>
                 </>
               )}
             </p>
@@ -184,8 +184,8 @@ export function TodayZoneTasksPanel({ zoneId }: { zoneId: string }) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả</SelectItem>
-              <SelectItem value="logged">Đã log</SelectItem>
-              <SelectItem value="unlogged">Chưa log</SelectItem>
+              <SelectItem value="logged">Đã ghi nhận</SelectItem>
+              <SelectItem value="unlogged">Chưa ghi nhận</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -207,7 +207,7 @@ export function TodayZoneTasksPanel({ zoneId }: { zoneId: string }) {
           <CheckCircle2 className="h-8 w-8 text-emerald-500/60 mx-auto" />
           <p className="text-sm font-medium">
             {logFilter === "unlogged"
-              ? "Tất cả task đã được ghi nhật ký hôm nay"
+              ? "Tất cả nhiệm vụ đã được ghi nhận hôm nay"
               : "Không có nhiệm vụ nào đang thực hiện hôm nay"}
           </p>
         </div>

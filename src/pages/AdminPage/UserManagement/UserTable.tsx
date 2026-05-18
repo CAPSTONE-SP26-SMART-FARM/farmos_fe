@@ -231,6 +231,7 @@ const UserTable = ({ onViewDetail }: UserTableProps) => {
         data={data}
         isLoading={listResult.isLoading}
         actions={actions}
+        onRowClick={(row) => onViewDetail(row.id)}
       />
 
       <div className="py-4">

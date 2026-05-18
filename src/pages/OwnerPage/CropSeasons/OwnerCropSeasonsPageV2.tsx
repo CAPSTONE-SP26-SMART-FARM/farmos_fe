@@ -102,10 +102,16 @@ function NowSeasonContent({
               Yêu cầu phê duyệt
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="milestones" className="mt-4">
+          <TabsContent
+            value="milestones"
+            className="mt-4"
+          >
             <OwnerMilestonesWithDetailTab cropSeason={season} />
           </TabsContent>
-          <TabsContent value="requests" className="mt-4">
+          <TabsContent
+            value="requests"
+            className="mt-4"
+          >
             <OwnerRequestsHistoryTab
               cropSeasonId={season.id}
               initialRequestId={openRequestId}
@@ -163,26 +169,47 @@ function NowSeasonContent({
               Yêu cầu duyệt
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="milestones" className="mt-4">
+          <TabsContent
+            value="milestones"
+            className="mt-4"
+          >
             <OwnerMilestonesWithDetailTab cropSeason={season} />
           </TabsContent>
-          <TabsContent value="sensors" className="mt-4">
+          <TabsContent
+            value="sensors"
+            className="mt-4"
+          >
             <OwnerSensorOverviewTab cropSeason={season} />
           </TabsContent>
-          <TabsContent value="incidents" className="mt-4">
+          <TabsContent
+            value="incidents"
+            className="mt-4"
+          >
             <OwnerIncidentTab cropSeason={season} />
           </TabsContent>
-          <TabsContent value="daily-logs" className="mt-4">
+          <TabsContent
+            value="daily-logs"
+            className="mt-4"
+          >
             <OwnerDailyLogsTab
               zoneId={zoneId}
               zoneName={zoneName}
               cropSeason={season}
             />
           </TabsContent>
-          <TabsContent value="harvest" className="mt-4">
-            <HarvestRecordTab cropSeason={season} />
+          <TabsContent
+            value="harvest"
+            className="mt-4"
+          >
+            <HarvestRecordTab
+              cropSeason={season}
+              readOnly={true}
+            />
           </TabsContent>
-          <TabsContent value="requests" className="mt-4">
+          <TabsContent
+            value="requests"
+            className="mt-4"
+          >
             <OwnerRequestsHistoryTab
               cropSeasonId={season.id}
               initialRequestId={openRequestId}
@@ -197,10 +224,11 @@ function NowSeasonContent({
 export default function OwnerCropSeasonsPageV2() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [sidebarTab, setSidebarTab] = useState<"now" | "history">("now");
-  const [historyDetail, setHistoryDetail] = useState<CropSeasonType | null>(null);
+  const [historyDetail, setHistoryDetail] = useState<CropSeasonType | null>(
+    null,
+  );
   const zoneId = searchParams.get("zoneId")?.trim() ?? "";
-  const openRequestId =
-    searchParams.get("openRequestId")?.trim() || undefined;
+  const openRequestId = searchParams.get("openRequestId")?.trim() || undefined;
 
   // Legacy deep-link redirect: notifications/emails may reference the old
   // 4-param URL (?zoneId&zoneName&cropSeasonId&requestId). The new page only
@@ -237,13 +265,7 @@ export default function OwnerCropSeasonsPageV2() {
     const next = new URLSearchParams(searchParams);
     next.delete("zoneId");
     setSearchParams(next, { replace: true });
-  }, [
-    zones,
-    isZonesLoading,
-    searchParams,
-    setSearchParams,
-    zoneId,
-  ]);
+  }, [zones, isZonesLoading, searchParams, setSearchParams, zoneId]);
 
   useEffect(() => {
     setHistoryDetail(null);
@@ -285,7 +307,10 @@ export default function OwnerCropSeasonsPageV2() {
         <Skeleton className="h-8 w-48" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-36 w-full rounded-xl" />
+            <Skeleton
+              key={i}
+              className="h-36 w-full rounded-xl"
+            />
           ))}
         </div>
       </div>
@@ -366,9 +391,7 @@ export default function OwnerCropSeasonsPageV2() {
               <Card>
                 <CardContent className="py-16 text-center">
                   <Wheat className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
-                  <p className="text-sm font-medium">
-                    Chưa có vụ mùa hiện tại
-                  </p>
+                  <p className="text-sm font-medium">Chưa có vụ mùa hiện tại</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     Quản lý sẽ tạo vụ mùa khi bắt đầu sản xuất.
                   </p>
@@ -462,13 +485,22 @@ export default function OwnerCropSeasonsPageV2() {
                     Yêu cầu duyệt
                   </TabsTrigger>
                 </TabsList>
-                <TabsContent value="milestones" className="mt-4">
+                <TabsContent
+                  value="milestones"
+                  className="mt-4"
+                >
                   <OwnerMilestonesWithDetailTab cropSeason={historyDetail} />
                 </TabsContent>
-                <TabsContent value="incidents" className="mt-4">
+                <TabsContent
+                  value="incidents"
+                  className="mt-4"
+                >
                   <OwnerIncidentTab cropSeason={historyDetail} />
                 </TabsContent>
-                <TabsContent value="daily-logs" className="mt-4">
+                <TabsContent
+                  value="daily-logs"
+                  className="mt-4"
+                >
                   <OwnerDailyLogsTab
                     zoneId={zoneId}
                     zoneName={selectedZoneName}
@@ -476,13 +508,19 @@ export default function OwnerCropSeasonsPageV2() {
                     readOnly={true}
                   />
                 </TabsContent>
-                <TabsContent value="harvest" className="mt-4">
+                <TabsContent
+                  value="harvest"
+                  className="mt-4"
+                >
                   <HarvestRecordTab
                     cropSeason={historyDetail}
                     readOnly={true}
                   />
                 </TabsContent>
-                <TabsContent value="requests" className="mt-4">
+                <TabsContent
+                  value="requests"
+                  className="mt-4"
+                >
                   <OwnerRequestsHistoryTab cropSeasonId={historyDetail.id} />
                 </TabsContent>
               </Tabs>

@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -45,6 +46,7 @@ export default function ManagerCropSeasonsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [showCreate, setShowCreate] = useState(false);
+  const [confirmReplacePlan, setConfirmReplacePlan] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<"now" | "history">("now");
   const [historyDetail, setHistoryDetail] = useState<CropSeasonType | null>(null);
   const zoneId = searchParams.get("zoneId")?.trim() ?? "";
@@ -131,6 +133,19 @@ export default function ManagerCropSeasonsPage() {
     nowSeason?.status === ProductionStatusName.Planning ||
     nowSeason?.status === ProductionStatusName.Rejected;
 
+  // Quy tắc nút "Tạo mùa vụ":
+  //   - Không có vụ hiện tại → tạo trực tiếp
+  //   - Vụ đang ở plan/rejected → cảnh báo sẽ thay thế kế hoạch hiện tại
+  //   - Vụ đã active/sent/approved → ẩn nút, không cho tạo song song
+  const canStartCreateDirect = !nowSeason;
+  const requiresReplacePlanConfirm = !!nowSeason && isPlanningState;
+  const showCreateButton = canStartCreateDirect || requiresReplacePlanConfirm;
+
+  const handleCreateClick = () => {
+    if (requiresReplacePlanConfirm) setConfirmReplacePlan(true);
+    else setShowCreate(true);
+  };
+
   const tabMotion = {
     initial: { opacity: 0, y: 6 },
     animate: { opacity: 1, y: 0 },
@@ -197,15 +212,19 @@ export default function ManagerCropSeasonsPage() {
                 {tab === "now" ? "Vụ mùa hiện tại" : "Lịch sử"}
               </button>
             ))}
-            <Separator className="my-3" />
-            <button
-              type="button"
-              onClick={() => setShowCreate(true)}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors text-left hover:bg-accent text-foreground"
-            >
-              <Plus className="h-4 w-4 shrink-0" />
-              Tạo mùa vụ
-            </button>
+            {showCreateButton && (
+              <>
+                <Separator className="my-3" />
+                <button
+                  type="button"
+                  onClick={handleCreateClick}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors text-left hover:bg-accent text-foreground"
+                >
+                  <Plus className="h-4 w-4 shrink-0" />
+                  Tạo mùa vụ
+                </button>
+              </>
+            )}
           </nav>
         </div>
 
@@ -226,7 +245,7 @@ export default function ManagerCropSeasonsPage() {
                   </p>
                   <Button
                     size="sm"
-                    onClick={() => setShowCreate(true)}
+                    onClick={handleCreateClick}
                   >
                     <Plus className="h-3 w-3 mr-1" />
                     Tạo mùa vụ
@@ -585,6 +604,20 @@ export default function ManagerCropSeasonsPage() {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmReplacePlan}
+        title="Thay thế kế hoạch hiện tại?"
+        description="Vụ mùa đang ở trạng thái lập kế hoạch sẽ bị huỷ và thay bằng vụ mới. Hành động này không thể hoàn tác."
+        confirmLabel="Tiếp tục tạo mới"
+        cancelLabel="Huỷ"
+        variant="destructive"
+        onCancel={() => setConfirmReplacePlan(false)}
+        onConfirm={() => {
+          setConfirmReplacePlan(false);
+          setShowCreate(true);
+        }}
+      />
     </div>
   );
 }

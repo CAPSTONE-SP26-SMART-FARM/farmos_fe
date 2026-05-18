@@ -4,8 +4,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useAdminFarmDetail } from "@/queries/useAdmin";
-import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
+import { getRoleLabelVi } from "@/constants/role";
+import {
+  FARM_TYPE_LABEL,
+  type FarmTypeT,
+} from "@/schemaValidatation/seasonTemplate";
 
 interface FarmDetailPanelProps {
   id: string;
@@ -63,23 +67,7 @@ const FarmDetailPanel = ({ id, onBack }: FarmDetailPanelProps) => {
         show ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
       }`}
     >
-      <div className="space-y-6">
-        <div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBack}
-            className="mb-3 -ml-2 gap-1 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Quay lại danh sách nông trại
-          </Button>
-          <h2 className="text-2xl font-bold">Chi tiết nông trại</h2>
-          <p className="text-muted-foreground">
-            Xem thông tin nông trại và chủ trang trại.
-          </p>
-        </div>
-
+      <div className="space-y-4">
         {detailQuery.isLoading ? (
           <DetailSkeleton />
         ) : !farm ? (
@@ -120,8 +108,9 @@ const FarmDetailPanel = ({ id, onBack }: FarmDetailPanelProps) => {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <div className="text-muted-foreground">Loại</div>
-                    <div className="font-medium capitalize">
-                      {farm.farmType}
+                    <div className="font-medium">
+                      {FARM_TYPE_LABEL[farm.farmType as FarmTypeT] ??
+                        farm.farmType}
                     </div>
                   </div>
                   <InfoRow
@@ -200,8 +189,8 @@ const FarmDetailPanel = ({ id, onBack }: FarmDetailPanelProps) => {
                 />
                 <div className="space-y-1">
                   <div className="text-muted-foreground">Vai trò</div>
-                  <div className="font-medium capitalize">
-                    {farm.owner.role}
+                  <div className="font-medium">
+                    {getRoleLabelVi(farm.owner.role)}
                   </div>
                 </div>
               </CardContent>
