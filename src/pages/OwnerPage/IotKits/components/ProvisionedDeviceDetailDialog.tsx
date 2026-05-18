@@ -15,6 +15,7 @@ import {
   IOT_ACTION_BADGE_CLASS,
   IOT_ACTION_LABEL,
   SENSOR_STATUS_LABEL,
+  SENSOR_TYPE_ICON,
   SENSOR_TYPE_LABEL,
   STATUS_META,
 } from "@/constants/iotDeviceDisplay";
@@ -135,10 +136,15 @@ export default function ProvisionedDeviceDetailDialog({
                       </tr>
                     </thead>
                     <tbody>
-                      {device.sensors.map((s) => (
+                      {device.sensors.map((s) => {
+                        const SIcon = SENSOR_TYPE_ICON[s.sensorType];
+                        return (
                         <tr key={s.id} className="border-t">
                           <td className="px-3 py-2 font-medium">
-                            {SENSOR_TYPE_LABEL[s.sensorType] ?? s.sensorType}
+                            <span className="inline-flex items-center gap-1.5">
+                              {SIcon && <SIcon className="h-3.5 w-3.5 text-primary" />}
+                              {SENSOR_TYPE_LABEL[s.sensorType] ?? s.sensorType}
+                            </span>
                           </td>
                           <td className="px-3 py-2">
                             {SENSOR_STATUS_LABEL[s.status] ?? s.status}
@@ -147,7 +153,8 @@ export default function ProvisionedDeviceDetailDialog({
                             {s.minValue} – {s.maxValue}
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

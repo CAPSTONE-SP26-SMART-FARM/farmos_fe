@@ -2151,11 +2151,17 @@ function EditDeviceForm({
                               <Select value={f.value} onValueChange={f.onChange}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
-                                  {Object.entries(SENSOR_TYPE_LABEL).map(([val, label]) => (
-                                    <SelectItem key={val} value={val} disabled={existingSensorTypes.has(val) || currentSensorItems.some((item, idx) => idx !== index && item?.sensorType === val)}>
-                                      {label}
-                                    </SelectItem>
-                                  ))}
+                                  {Object.entries(SENSOR_TYPE_LABEL).map(([val, label]) => {
+                                    const SIcon = SENSOR_TYPE_ICON[val];
+                                    return (
+                                      <SelectItem key={val} value={val} disabled={existingSensorTypes.has(val) || currentSensorItems.some((item, idx) => idx !== index && item?.sensorType === val)}>
+                                        <span className="inline-flex items-center gap-1.5">
+                                          {SIcon && <SIcon className="h-3.5 w-3.5 text-primary" />}
+                                          {label}
+                                        </span>
+                                      </SelectItem>
+                                    );
+                                  })}
                                 </SelectContent>
                               </Select>
                               <FieldError>{fieldState.error?.message}</FieldError>

@@ -34,6 +34,7 @@ import {
 import { useManagerCropSeasonDetail } from "@/queries/useCropSeason";
 import { useDynamicBreadcrumb } from "@/stores/breadcrumbStore";
 import ManagerMilestoneTasksSection from "@/pages/ManagerPage/EmployeeTasks/ManagerMilestoneTasksSection";
+import { SENSOR_TYPE_ICON } from "@/constants/iotDeviceDisplay";
 import type {
   ProductionMilestoneResType,
   ProductionMilestoneStatusType,
@@ -256,13 +257,16 @@ function IotSensorSection({
                 Chi tiết cảm biến
               </p>
               <div className="space-y-1">
-                {sensors.map((s, i) => (
+                {sensors.map((s, i) => {
+                  const SIcon = SENSOR_TYPE_ICON[s.sensorType];
+                  return (
                   <div
                     key={i}
                     className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
                   >
                     <div>
-                      <span className="font-medium">
+                      <span className="font-medium inline-flex items-center gap-1.5">
+                        {SIcon && <SIcon className="h-3.5 w-3.5 text-primary" />}
                         {s.sensorName ||
                           SENSOR_TYPE_LABELS[s.sensorType] ||
                           s.sensorType}
@@ -278,7 +282,8 @@ function IotSensorSection({
                       {formatThresholdText(s)}
                     </span>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </>

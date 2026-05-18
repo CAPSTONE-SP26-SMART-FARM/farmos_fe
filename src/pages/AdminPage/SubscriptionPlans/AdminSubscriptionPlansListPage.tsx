@@ -47,6 +47,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { DataTable } from "@/components/common/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import EmptyState from "@/components/common/EmptyState";
+import AdminSubscriptionPlanDetailPage from "./AdminSubscriptionPlanDetailPage";
 import useDebounce from "@/hooks/useDebounce";
 import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
@@ -79,6 +80,11 @@ import {
   Shield,
   X,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const STATUS_OPTIONS: Array<{ value: "ALL" | PlanStatusType; label: string }> =
   [
@@ -122,6 +128,9 @@ function AdminSubscriptionPlansListPage() {
   const [activePlan, setActivePlan] = useState<PlanResType | null>(null);
   const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false);
   const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState<string | undefined>(
+    undefined,
+  );
 
   const debouncedSearchKeyword = useDebounce(searchKeyword, 400);
 
@@ -250,61 +259,18 @@ function AdminSubscriptionPlansListPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Bộ lọc danh sách</CardTitle>
-          <CardDescription>
-            Tìm nhanh theo tên/mã gói và lọc theo trạng thái.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-2">
-          <InputGroup>
-            <InputGroupInput
-              placeholder="Tìm theo mã hoặc tên gói..."
-              value={searchKeyword}
-              onChange={(event) => setSearchKeyword(event.target.value)}
-            />
-            {searchKeyword.length > 0 && (
-              <InputGroupAddon align="inline-end">
-                <InputGroupButton onClick={() => setSearchKeyword("")}>
-                  <X />
-                </InputGroupButton>
-              </InputGroupAddon>
-            )}
-          </InputGroup>
-
-          <Select
-            value={planQuery.status ?? "ALL"}
-            onValueChange={(value) =>
-              setPlanQuery((prev) => ({
-                ...prev,
-                page: 1,
-                status: value === "ALL" ? undefined : (value as PlanStatusType),
-              }))
-            }
-          >
-            <SelectTrigger className="w-full max-w-xs">
-              <SelectValue placeholder="Chọn trạng thái" />
-            </SelectTrigger>
-            <SelectContent>
-              {STATUS_OPTIONS.map((status) => (
-                <SelectItem
-                  key={status.value}
-                  value={status.value}
-                >
-                  {status.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Danh sách gói</CardTitle>
-          <CardDescription>
-            Mỗi gói có menu hành động để xem chi tiết hoặc lưu trữ. Thay đổi
-            tính năng và giá thực hiện qua tạo phiên bản mới.
-          </CardDescription>
+          <div className="flex items-center gap-2">
+            <CardTitle>Danh sách gói</CardTitle>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent>
+                Mỗi gói có menu hành động để xem chi tiết hoặc lưu trữ. Thay đổi
+                tính năng và giá thực hiện qua tạo phiên bản mới.
+              </TooltipContent>
+            </Tooltip>
+          </div>
           <CardAction>
             <Button
               onClick={openCreatePlanDialog}
@@ -316,6 +282,53 @@ function AdminSubscriptionPlansListPage() {
           </CardAction>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="grid gap-3 md:grid-cols-[1fr_200px]">
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium">Tìm kiếm</p>
+              <InputGroup>
+                <InputGroupInput
+                  placeholder="Tìm theo mã hoặc tên gói..."
+                  value={searchKeyword}
+                  onChange={(event) => setSearchKeyword(event.target.value)}
+                />
+                {searchKeyword.length > 0 && (
+                  <InputGroupAddon align="inline-end">
+                    <InputGroupButton onClick={() => setSearchKeyword("")}>
+                      <X />
+                    </InputGroupButton>
+                  </InputGroupAddon>
+                )}
+              </InputGroup>
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium">Trạng thái</p>
+              <Select
+                value={planQuery.status ?? "ALL"}
+                onValueChange={(value) =>
+                  setPlanQuery((prev) => ({
+                    ...prev,
+                    page: 1,
+                    status:
+                      value === "ALL" ? undefined : (value as PlanStatusType),
+                  }))
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((status) => (
+                    <SelectItem
+                      key={status.value}
+                      value={status.value}
+                    >
+                      {status.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           {!listPlansQuery.isLoading && plans.length === 0 ? (
             <EmptyState
               icon={Package}
@@ -392,8 +405,7 @@ function AdminSubscriptionPlansListPage() {
                   key: "view",
                   label: "Chi tiết gói",
                   icon: Eye,
-                  onSelect: (plan) =>
-                    navigate(`/dashboard/admin/subscription-plans/${plan.id}`),
+                  onSelect: (plan) => setSelectedPlanId(plan.id),
                 },
                 {
                   key: "archive",
@@ -407,6 +419,7 @@ function AdminSubscriptionPlansListPage() {
                   },
                 },
               ]}
+              onRowClick={(plan) => setSelectedPlanId(plan.id)}
               emptyText="Chưa có gói nào."
             />
           )}
@@ -669,6 +682,26 @@ function AdminSubscriptionPlansListPage() {
         onCancel={() => setIsArchiveConfirmOpen(false)}
         onConfirm={handleArchivePlan}
       />
+
+      <Dialog
+        open={!!selectedPlanId}
+        onOpenChange={(open) => !open && setSelectedPlanId(undefined)}
+      >
+        <DialogContent className="sm:max-w-[95vw] max-h-[95vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Chi tiết gói đăng ký</DialogTitle>
+            <DialogDescription>
+              Xem thông tin gói và lịch sử phiên bản.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedPlanId && (
+            <AdminSubscriptionPlanDetailPage
+              planId={selectedPlanId}
+              inDialog
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

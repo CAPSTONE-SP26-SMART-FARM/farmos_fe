@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -28,6 +27,7 @@ import {
   AlertCircle,
   Cpu,
   Eye,
+  Info,
   Loader2,
   MoreHorizontal,
   PencilLine,
@@ -36,7 +36,22 @@ import {
   Trash2,
 } from "lucide-react";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import IotDeviceDetail from "@/pages/OwnerPage/IotDevices/IotDeviceDetail";
+import IotDeviceForm from "@/pages/OwnerPage/IotDevices/IotDeviceForm";
+import {
   useAdminDeleteIotDevice,
+  useAdminIotDeviceDetail,
   useAdminListIotDevices,
 } from "@/queries/useIotDevice";
 import type {
@@ -63,6 +78,14 @@ export default function AdminIotDevicesPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<DeviceStatusType | "all">("all");
   const [deleteTarget, setDeleteTarget] = useState<IotDeviceResType | null>(null);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | undefined>(
+    undefined,
+  );
+  const [dialogMode, setDialogMode] = useState<"view" | "edit">("view");
+  const detailQuery = useAdminIotDeviceDetail(
+    selectedDeviceId ?? "",
+    Boolean(selectedDeviceId) && dialogMode === "edit",
+  );
 
   const debouncedSearch = useDebounce(search, 500);
 
@@ -108,86 +131,86 @@ export default function AdminIotDevicesPage() {
         </div>
       </section>
 
-      {/* ── Filter bar ─────────────────────────────────────────────────────── */}
-      {/*
-        Lý do filter bar đứng độc lập giữa header và danh sách:
-          CardHeader = nơi mô tả "đây là section gì" — không phải nơi đặt controls.
-          Đặt filter nằm ngoài Card tạo visual hierarchy rõ ràng:
-            [identity] → [narrow down] → [results].
-          Admin thấy filter ngay dưới header = mental model tự nhiên (Google, admin panels).
-          Filter collapse được trên mobile nhờ flex-wrap.
-      */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative min-w-45 flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setQuery((prev) => ({ ...prev, page: 1 }));
-            }}
-            placeholder="Tìm theo tên thiết bị"
-            className="pl-9"
-          />
-        </div>
-        <Select
-          value={status}
-          onValueChange={(value) => {
-            setStatus(value as DeviceStatusType | "all");
-            setQuery((prev) => ({ ...prev, page: 1 }));
-          }}
-        >
-          <SelectTrigger className="w-50">
-            <SelectValue placeholder="Trạng thái" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tất cả trạng thái</SelectItem>
-            {(Object.keys(DEVICE_STATUS_LABEL_ADMIN) as DeviceStatusType[]).map((s) => (
-              <SelectItem key={s} value={s}>
-                {DEVICE_STATUS_LABEL_ADMIN[s]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          value={String(query.limit)}
-          onValueChange={(value) =>
-            setQuery((prev) => ({ ...prev, page: 1, limit: Number(value) }))
-          }
-        >
-          <SelectTrigger className="w-32.5">
-            <SelectValue placeholder="Số mục" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="10">10 / trang</SelectItem>
-            <SelectItem value="20">20 / trang</SelectItem>
-            <SelectItem value="50">50 / trang</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* ── Device list card ───────────────────────────────────────────────── */}
       <Card className="overflow-hidden border-border/70">
-        {/*
-          CardHeader chỉ còn title + description (không có filter).
-          Lý do: header của card = label nhận dạng section, không phải toolbar.
-          isFetching spinner cạnh title = phản hồi background refresh không
-          block UI, user vẫn thấy data cũ trong khi chờ.
-        */}
         <CardHeader className="bg-muted/30">
-          <CardTitle className="flex items-center gap-2">
-            <Cpu className="h-5 w-5 text-primary" />
-            Danh sách thiết bị
-            {listQuery.isFetching && !listQuery.isLoading && (
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
-            )}
-          </CardTitle>
-          <CardDescription>
-            Dữ liệu lấy từ API gán Iot kit dành cho quản trị viên.
-          </CardDescription>
+          <div className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
+              <Cpu className="h-5 w-5 text-primary" />
+              Danh sách thiết bị
+              {listQuery.isFetching && !listQuery.isLoading && (
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+              )}
+            </CardTitle>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent>
+                Dữ liệu lấy từ API gán Iot kit dành cho quản trị viên.
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </CardHeader>
 
-        <CardContent className="pt-5">
+        <CardContent className="pt-5 space-y-4">
+          <div className="grid gap-3 md:grid-cols-[1fr_200px_140px]">
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium">Tìm kiếm</p>
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setQuery((prev) => ({ ...prev, page: 1 }));
+                  }}
+                  placeholder="Tìm theo tên thiết bị"
+                  className="pl-9"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium">Trạng thái</p>
+              <Select
+                value={status}
+                onValueChange={(value) => {
+                  setStatus(value as DeviceStatusType | "all");
+                  setQuery((prev) => ({ ...prev, page: 1 }));
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                  {(Object.keys(DEVICE_STATUS_LABEL_ADMIN) as DeviceStatusType[]).map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {DEVICE_STATUS_LABEL_ADMIN[s]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium">Số mục</p>
+              <Select
+                value={String(query.limit)}
+                onValueChange={(value) =>
+                  setQuery((prev) => ({ ...prev, page: 1, limit: Number(value) }))
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Số mục" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10 / trang</SelectItem>
+                  <SelectItem value="20">20 / trang</SelectItem>
+                  <SelectItem value="50">50 / trang</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           {listQuery.isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -219,7 +242,8 @@ export default function AdminIotDevicesPage() {
                 return (
                   <div
                     key={device.id}
-                    className="flex items-center gap-3 rounded-xl border border-border/70 bg-background p-3.5"
+                    className="flex items-center gap-3 rounded-xl border border-border/70 bg-background p-3.5 cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => setSelectedDeviceId(device.id)}
                   >
                     {/* Icon avatar — visual anchor theo loại thiết bị */}
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
@@ -282,23 +306,27 @@ export default function AdminIotDevicesPage() {
                           size="icon"
                           className="shrink-0"
                           aria-label={`Tùy chọn cho ${device.deviceName}`}
+                          onClick={(e) => e.stopPropagation()}
                         >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                          onClick={() =>
-                            navigate(`/dashboard/admin/iot-devices/${device.id}`)
-                          }
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedDeviceId(device.id);
+                          }}
                         >
                           <Eye className="mr-2 h-4 w-4" />
                           Xem chi tiết
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() =>
-                            navigate(`/dashboard/admin/iot-devices/${device.id}/edit`)
-                          }
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedDeviceId(device.id);
+                            setDialogMode("edit");
+                          }}
                         >
                           <PencilLine className="mr-2 h-4 w-4" />
                           Chỉnh sửa
@@ -377,6 +405,50 @@ export default function AdminIotDevicesPage() {
           setDeleteTarget(null);
         }}
       />
+
+      <Dialog
+        open={!!selectedDeviceId}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedDeviceId(undefined);
+            setDialogMode("view");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[95vw] max-h-[95vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {dialogMode === "edit" ? "Chỉnh sửa thiết bị IoT" : "Chi tiết thiết bị IoT"}
+            </DialogTitle>
+            <DialogDescription>
+              {dialogMode === "edit"
+                ? "Cập nhật thông tin thiết bị, cảm biến và sub-devices."
+                : "Xem thông tin thiết bị, lịch sử log và trạng thái gán."}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedDeviceId && dialogMode === "view" && (
+            <IotDeviceDetail
+              deviceId={selectedDeviceId}
+              farmId=""
+              actor="admin"
+              onBack={() => {
+                setSelectedDeviceId(undefined);
+                setDialogMode("view");
+              }}
+              onEdit={() => setDialogMode("edit")}
+            />
+          )}
+          {selectedDeviceId && dialogMode === "edit" && detailQuery.data?.data && (
+            <IotDeviceForm
+              farmId=""
+              actor="admin"
+              device={detailQuery.data.data}
+              onBack={() => setDialogMode("view")}
+              onBackRequested={() => setDialogMode("view")}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

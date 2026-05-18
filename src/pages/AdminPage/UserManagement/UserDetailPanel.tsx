@@ -5,7 +5,6 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useAdminUserDetail } from "@/queries/useAdmin";
 import { RoleLabelVi } from "@/constants/role";
-import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface UserDetailPanelProps {
@@ -92,28 +91,12 @@ const UserDetailPanel = ({ id, onBack }: UserDetailPanelProps) => {
         show ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
       }`}
     >
-      <div className="space-y-6">
-        <div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBack}
-            className="mb-3 -ml-2 gap-1 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Quay về danh sách người dùng
-          </Button>
-          <h2 className="text-2xl font-bold">Chi tiết người dùng</h2>
-          <p className="text-muted-foreground">
-            Xem thông tin chi tiết của tài khoản người dùng này.
-          </p>
-        </div>
-
+      <div className="space-y-4">
         {detailQuery.isLoading ? (
           <DetailSkeleton />
         ) : !user ? (
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
               <h3 className="text-lg font-semibold mb-1">
                 Không tìm thấy dữ liệu
               </h3>
@@ -124,7 +107,7 @@ const UserDetailPanel = ({ id, onBack }: UserDetailPanelProps) => {
                 variant="outline"
                 onClick={handleBack}
               >
-                Quay lại
+                Đóng
               </Button>
             </CardContent>
           </Card>

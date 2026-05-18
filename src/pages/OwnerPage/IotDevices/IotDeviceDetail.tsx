@@ -32,6 +32,7 @@ import {
   DEVICE_TYPE_ICON,
   DEVICE_TYPE_LABEL,
   SENSOR_STATUS_LABEL,
+  SENSOR_TYPE_ICON,
   SENSOR_TYPE_LABEL,
   STATUS_META,
 } from "@/constants/iotDeviceDisplay";
@@ -263,16 +264,8 @@ export default function IotDeviceDetail({
         </CardContent>
       </Card>
 
-      {/* ── Admin: nhật ký ngay sau thông tin chính ────────────────────────── */}
-      {/*
-        Lý do đặt nhật ký trước sensors/sub-devices với admin:
-          Admin vào trang chi tiết chủ yếu để điều tra sự cố hoặc kiểm tra
-          lịch sử hoạt động. Hardware details (sensors, sub-devices) ít khi
-          cần xem ngay. Đưa logs lên sớm = bớt scroll cho tác vụ phổ biến nhất.
-          Owner/Manager không thấy logs nên thứ tự không ảnh hưởng họ.
-      */}
-      {actor === "admin" && <DeviceLogCard deviceId={deviceId} />}
-
+      {/* ── Cảm biến + Thiết bị con (2 cột) ────────────────────────────────── */}
+      <div className="grid gap-4 md:grid-cols-2">
       {/* ── Cảm biến ───────────────────────────────────────────────────────── */}
       {/*
         Lý do dùng Collapsible defaultOpen:
@@ -299,7 +292,7 @@ export default function IotDeviceDetail({
               {device.sensors.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Chưa có cảm biến.</p>
               ) : (
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="space-y-3">
                   {device.sensors.map((sensor) => (
                     <SensorCard key={sensor.id} sensor={sensor} />
                   ))}
@@ -342,6 +335,10 @@ export default function IotDeviceDetail({
           </CollapsibleContent>
         </Card>
       </Collapsible>
+      </div>
+
+      {/* ── Nhật ký thiết bị (admin) — đặt cuối cùng ──────────────────────── */}
+      {actor === "admin" && <DeviceLogCard deviceId={deviceId} />}
     </div>
   );
 }
@@ -353,11 +350,15 @@ function SensorCard({
 }) {
   const label = SENSOR_TYPE_LABEL[sensor.sensorType] ?? sensor.sensorType;
   const status = SENSOR_STATUS_LABEL[sensor.status] ?? sensor.status;
+  const SIcon = SENSOR_TYPE_ICON[sensor.sensorType] ?? Cpu;
 
   return (
     <div className="space-y-2 rounded-lg border bg-background p-3">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-medium">{label}</span>
+        <div className="flex items-center gap-2">
+          <SIcon className="h-4 w-4 text-primary" />
+          <span className="text-sm font-medium">{label}</span>
+        </div>
         <Badge variant="outline">{status}</Badge>
       </div>
       <div className="text-xs text-muted-foreground">

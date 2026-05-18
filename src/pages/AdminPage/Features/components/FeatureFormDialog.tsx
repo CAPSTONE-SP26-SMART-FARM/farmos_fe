@@ -58,12 +58,12 @@ export function FeatureFormDialog({
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>
-            {editingFeatureCode ? "Cập nhật feature" : "Tạo feature mới"}
+            {editingFeatureCode ? "Cập nhật tính năng" : "Tạo tính năng mới"}
           </DialogTitle>
           <DialogDescription>
             {editingFeatureCode
-              ? "PATCH /features/{featureCode}"
-              : "POST /features"}
+              ? "Chỉnh sửa thông tin tính năng hiện có."
+              : "Thêm tính năng mới vào danh mục."}
           </DialogDescription>
         </DialogHeader>
 

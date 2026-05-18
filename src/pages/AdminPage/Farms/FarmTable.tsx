@@ -110,6 +110,7 @@ const FarmTable = ({ onViewDetail }: FarmTableProps) => {
         data={data}
         isLoading={listResult.isLoading}
         actions={actions}
+        onRowClick={(row) => onViewDetail(row.id)}
       />
 
       <DataTablePagination

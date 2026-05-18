@@ -52,6 +52,7 @@ import {
   isApiErrorUnprocessableEntityResponse,
 } from "@/lib/utils";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
+import { SENSOR_TYPE_ICON } from "@/constants/iotDeviceDisplay";
 
 const SENSOR_TYPE_LABEL: Record<string, string> = {
   soil_moisture: "Độ ẩm đất",
@@ -414,18 +415,24 @@ function SensorStep({
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              {SENSOR_TYPE_VALUES.map((type) => (
-                                <SelectItem
-                                  key={type}
-                                  value={type}
-                                  disabled={watched.some(
-                                    (item, i) =>
-                                      i !== index && item?.sensorType === type,
-                                  )}
-                                >
-                                  {SENSOR_TYPE_LABEL[type]}
-                                </SelectItem>
-                              ))}
+                              {SENSOR_TYPE_VALUES.map((type) => {
+                                const SIcon = SENSOR_TYPE_ICON[type];
+                                return (
+                                  <SelectItem
+                                    key={type}
+                                    value={type}
+                                    disabled={watched.some(
+                                      (item, i) =>
+                                        i !== index && item?.sensorType === type,
+                                    )}
+                                  >
+                                    <span className="inline-flex items-center gap-1.5">
+                                      {SIcon && <SIcon className="h-3.5 w-3.5 text-primary" />}
+                                      {SENSOR_TYPE_LABEL[type]}
+                                    </span>
+                                  </SelectItem>
+                                );
+                              })}
                             </SelectContent>
                           </Select>
                           <FieldError>{fieldState.error?.message}</FieldError>

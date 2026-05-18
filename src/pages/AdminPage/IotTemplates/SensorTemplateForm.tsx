@@ -45,6 +45,7 @@ import {
   SENSOR_TYPE_LABEL,
 } from "./sensorTemplateSchemas";
 import { SensorItemCard } from "./components/SensorItemCard";
+import { SENSOR_TYPE_ICON } from "@/constants/iotDeviceDisplay";
 
 interface SensorTemplateFormProps {
   template?: SensorTemplateResType;
@@ -187,10 +188,15 @@ export default function SensorTemplateForm({
             biến.
           </p>
         </div>
-        <Badge variant="secondary" className="gap-1">
-          <Activity className="h-3 w-3" />
-          {SENSOR_TYPE_LABEL[currentType] ?? currentType}
-        </Badge>
+        {(() => {
+          const SIcon = SENSOR_TYPE_ICON[currentType] ?? Activity;
+          return (
+            <Badge variant="secondary" className="gap-1">
+              <SIcon className="h-3 w-3" />
+              {SENSOR_TYPE_LABEL[currentType] ?? currentType}
+            </Badge>
+          );
+        })()}
       </div>
 
       <form onSubmit={form.handleSubmit(onValidSubmit)}>
@@ -235,11 +241,17 @@ export default function SensorTemplateForm({
                         </SelectTrigger>
                         <SelectContent>
                           {Object.entries(SENSOR_TYPE_LABEL).map(
-                            ([val, label]) => (
-                              <SelectItem key={val} value={val}>
-                                {label}
-                              </SelectItem>
-                            ),
+                            ([val, label]) => {
+                              const SIcon = SENSOR_TYPE_ICON[val];
+                              return (
+                                <SelectItem key={val} value={val}>
+                                  <span className="inline-flex items-center gap-1.5">
+                                    {SIcon && <SIcon className="h-3.5 w-3.5 text-primary" />}
+                                    {label}
+                                  </span>
+                                </SelectItem>
+                              );
+                            },
                           )}
                         </SelectContent>
                       </Select>

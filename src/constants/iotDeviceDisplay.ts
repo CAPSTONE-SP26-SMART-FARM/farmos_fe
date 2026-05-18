@@ -1,12 +1,16 @@
 import {
   AlertCircle,
   CircuitBoard,
+  CloudRain,
   Cpu,
+  Droplets,
   Package,
   PackageCheck,
   Power,
   Radio,
   ShieldOff,
+  Sun,
+  Thermometer,
   Wifi,
   Wrench,
 } from "lucide-react";
@@ -101,6 +105,17 @@ export const SENSOR_TYPE_LABEL: Record<string, string> = {
   air_temperature: "Nhiệt độ không khí",
   air_humidity: "Độ ẩm không khí",
   light_intensity: "Cường độ ánh sáng",
+};
+
+export const SENSOR_TYPE_ICON: Record<string, typeof Cpu> = {
+  soil_moisture: Droplets,
+  air_temperature: Thermometer,
+  air_humidity: CloudRain,
+  light_intensity: Sun,
+  soil_moisture_sensor: Droplets,
+  air_temperature_sensor: Thermometer,
+  air_humidity_sensor: CloudRain,
+  light_intensity_sensor: Sun,
 };
 
 export const SENSOR_STATUS_LABEL: Record<string, string> = {

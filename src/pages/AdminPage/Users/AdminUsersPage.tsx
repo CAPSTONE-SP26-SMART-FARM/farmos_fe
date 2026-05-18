@@ -6,6 +6,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import UserTable from "../UserManagement/UserTable";
 import UserDetailPanel from "../UserManagement/UserDetailPanel";
 
@@ -13,15 +20,6 @@ const AdminUsersPage = () => {
   const [selectedUserId, setSelectedUserId] = useState<string | undefined>(
     undefined,
   );
-
-  if (selectedUserId) {
-    return (
-      <UserDetailPanel
-        id={selectedUserId}
-        onBack={() => setSelectedUserId(undefined)}
-      />
-    );
-  }
 
   return (
     <div className="animate-in fade-in duration-300">
@@ -38,6 +36,26 @@ const AdminUsersPage = () => {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog
+        open={!!selectedUserId}
+        onOpenChange={(open) => !open && setSelectedUserId(undefined)}
+      >
+        <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Chi tiết người dùng</DialogTitle>
+            <DialogDescription>
+              Xem thông tin chi tiết của tài khoản người dùng này.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedUserId && (
+            <UserDetailPanel
+              id={selectedUserId}
+              onBack={() => setSelectedUserId(undefined)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
