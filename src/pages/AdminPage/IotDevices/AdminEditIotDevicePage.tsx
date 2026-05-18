@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router";
-import IotDeviceForm from "@/pages/OwnerPage/IotDevices/IotDeviceForm";
+import AdminIotDeviceForm from "./_components/admin-form/AdminIotDeviceForm";
 import { useAdminIotDeviceDetail } from "@/queries/useIotDevice";
 import { useDynamicBreadcrumb } from "@/stores/breadcrumbStore";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,7 +13,7 @@ export default function AdminEditIotDevicePage() {
 
   useDynamicBreadcrumb(
     `/dashboard/admin/iot-devices/${deviceId}/edit`,
-    device ? `Chỉnh sửa: ${device.deviceName}` : undefined,
+    device ? `Chỉnh sửa: ${device.label ?? device.deviceName}` : undefined,
   );
 
   const handleBack = () =>
@@ -29,9 +29,7 @@ export default function AdminEditIotDevicePage() {
   }
 
   return (
-    <IotDeviceForm
-      farmId=""
-      actor="admin"
+    <AdminIotDeviceForm
       device={device}
       onBack={handleBack}
       onBackRequested={handleBack}

@@ -129,7 +129,7 @@ export default function IotDeviceList({
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tìm theo tên thiết bị"
+              placeholder="Tìm theo tên hoặc mã thiết bị (K###)"
               className="pl-9"
             />
           </div>

@@ -189,6 +189,7 @@ export const IotDeviceResSchema = z.object({
   id: z.string().uuid(),
   deviceName: z.string(),
   deviceType: IotDeviceTypeSchema,
+  label: z.string().nullable().optional(),
   macAddress: z.string().nullable(),
   status: DeviceStatusSchema,
   installedAt: z.string(),

@@ -216,9 +216,13 @@ export const useAdminUnassignIotOwner = () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.admin.iotDevices.detail(body.iotDeviceId),
       });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.admin.iotDevices.decisionContext(body.iotDeviceId),
+      });
+      toast.success("Đã gỡ phân bổ chủ trang trại");
     },
     onError: (error) =>
-      onMutationError(error, "Thu hồi Chủ trang trại khỏi thiết bị thất bại"),
+      onMutationError(error, "Gỡ phân bổ chủ trang trại thất bại"),
   });
 };
 

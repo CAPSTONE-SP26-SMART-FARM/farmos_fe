@@ -1,0 +1,405 @@
+import { useMemo } from "react";
+import { Link } from "react-router";
+import {
+  AlertCircle,
+  ArrowRight,
+  Boxes,
+  CheckCircle2,
+  ChevronRight,
+  Clock3,
+  CreditCard,
+  Package,
+  PackageCheck,
+  Power,
+  RefreshCw,
+  ShieldOff,
+  Truck,
+  Wrench,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import KpiCard from "@/components/common/KpiCard";
+import LoadingCard from "@/components/common/LoadingCard";
+import ErrorState from "@/components/common/ErrorState";
+import { useAdminIotOverview } from "@/queries/useIotDeviceAdminOps";
+import { cn } from "@/lib/utils";
+
+const LIST_BASE = "/dashboard/admin/iot-devices";
+
+export default function AdminIotDashboardPage() {
+  const overviewQuery = useAdminIotOverview();
+  const overview = overviewQuery.data?.data;
+
+  const handleRefresh = () => {
+    overviewQuery.refetch();
+  };
+
+  const inventoryItems = useMemo(() => {
+    const inv = overview?.inventoryHealth;
+    return [
+      {
+        key: "available",
+        label: "Có thể sử dụng",
+        value: inv?.available ?? 0,
+        icon: Package,
+        tone: "default" as const,
+        href: `${LIST_BASE}?status=available`,
+      },
+      {
+        key: "purchase",
+        label: "Đã cho thuê",
+        value: inv?.purchase ?? 0,
+        icon: PackageCheck,
+        tone: "default" as const,
+        href: `${LIST_BASE}?status=purchase`,
+      },
+      {
+        key: "install",
+        label: "Đang lắp đặt",
+        value: inv?.install ?? 0,
+        icon: Wrench,
+        tone: "warning" as const,
+        href: `${LIST_BASE}?status=install`,
+      },
+      {
+        key: "active",
+        label: "Hoạt động",
+        value: inv?.active ?? 0,
+        icon: Power,
+        tone: "success" as const,
+        href: `${LIST_BASE}?status=active`,
+      },
+      {
+        key: "error",
+        label: "Có lỗi",
+        value: inv?.error ?? 0,
+        icon: AlertCircle,
+        tone: "danger" as const,
+        href: `${LIST_BASE}?status=error`,
+      },
+      {
+        key: "revoked",
+        label: "Đã thu hồi",
+        value: inv?.revoked ?? 0,
+        icon: ShieldOff,
+        tone: "default" as const,
+        href: `${LIST_BASE}?status=revoked`,
+      },
+    ];
+  }, [overview?.inventoryHealth]);
+
+  if (overviewQuery.isLoading) {
+    return (
+      <div className="space-y-4 p-4 md:p-6">
+        <LoadingCard rows={4} />
+        <LoadingCard rows={6} />
+      </div>
+    );
+  }
+
+  if (overviewQuery.isError || !overview) {
+    return (
+      <div className="p-4 md:p-6">
+        <ErrorState
+          message="Không thể tải tổng quan IoT. Vui lòng thử lại."
+          onRetry={() => overviewQuery.refetch()}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 p-4 md:p-6">
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Tổng quan thiết bị IoT
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Landing buổi sáng — xem nhanh "có gì cần làm hôm nay" và tình trạng
+            kho.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefresh}
+          aria-label="Tải lại dashboard"
+        >
+          <RefreshCw className="mr-1.5 h-4 w-4" aria-hidden />
+          Làm mới
+        </Button>
+      </header>
+
+      {/* ── Hôm nay cần xử lý ───────────────────────────────────── */}
+      <section aria-labelledby="action-required-heading" className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2
+            id="action-required-heading"
+            className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
+          >
+            Hôm nay cần xử lý
+          </h2>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          <ActionRequiredCard
+            tone="danger"
+            icon={AlertCircle}
+            title={`${overview.actionRequired.errorDevices.count} thiết bị có lỗi cần xử lý`}
+            description={
+              overview.actionRequired.errorDevices.oldest
+                ? `Thiết bị cũ nhất: ${overview.actionRequired.errorDevices.oldest.label} · đã lỗi ${overview.actionRequired.errorDevices.oldest.ageDays} ngày`
+                : "Không có thiết bị lỗi nào."
+            }
+            actionLabel="Xem danh sách thiết bị lỗi"
+            href={`${LIST_BASE}?status=error`}
+          />
+          <ActionRequiredCard
+            tone="warning"
+            icon={Clock3}
+            title={`${overview.actionRequired.pendingInstall.count} thiết bị đợi xuất kho`}
+            description={
+              overview.actionRequired.pendingInstall.oldest
+                ? `Thiết bị cũ nhất: ${overview.actionRequired.pendingInstall.oldest.label} · đã chờ ${overview.actionRequired.pendingInstall.oldest.ageDays} ngày`
+                : "Không có thiết bị nào đang chờ."
+            }
+            actionLabel="Mở hàng đợi xuất kho"
+            href={`${LIST_BASE}/install-queue`}
+          />
+        </div>
+      </section>
+
+      {/* ── Tình trạng kho ──────────────────────────────────────── */}
+      <section aria-labelledby="inventory-heading" className="space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <h2
+            id="inventory-heading"
+            className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
+          >
+            Tình trạng kho
+          </h2>
+          <span className="text-xs text-muted-foreground">
+            Tổng: <strong>{overview.inventoryHealth.total}</strong> thiết bị
+          </span>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          {inventoryItems.map((item) => (
+            <Link
+              key={item.key}
+              to={item.href}
+              className="group rounded-lg outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label={`Lọc danh sách: ${item.label}`}
+            >
+              <KpiCard
+                icon={item.icon}
+                label={item.label}
+                value={item.value}
+                tone={item.tone}
+                className="h-full transition-shadow group-hover:shadow-sm"
+              />
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Hoạt động 24h ───────────────────────────────────────── */}
+      <section aria-labelledby="activity-heading" className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2
+            id="activity-heading"
+            className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
+          >
+            Hoạt động 24 giờ qua
+          </h2>
+        </div>
+        <div className="grid gap-3 md:grid-cols-3">
+          <ActivityStat
+            icon={RefreshCw}
+            label="Lượt thay thế thiết bị"
+            value={overview.recentActivity.newSwaps}
+            hint="Số lần thay vi xử lý"
+          />
+          <ActivityStat
+            icon={CreditCard}
+            label="Đơn kit đã thanh toán"
+            value={overview.recentActivity.newPaidOrders}
+            hint="Đơn chuyển sang PAID"
+          />
+          <ActivityStat
+            icon={CheckCircle2}
+            label="Thiết bị bắt đầu hoạt động"
+            value={overview.recentActivity.devicesActivated}
+            hint="Số vi xử lý chuyển sang Hoạt động"
+          />
+        </div>
+      </section>
+
+      {/* ── Lối tắt ─────────────────────────────────────────────── */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Lối tắt</CardTitle>
+          <CardDescription>
+            Truy cập nhanh các trang quản lý liên quan.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <QuickLink
+            to={LIST_BASE}
+            icon={Boxes}
+            title="Quản lý thiết bị"
+            hint="Tìm kiếm, lọc, thao tác hàng loạt"
+          />
+          <QuickLink
+            to={`${LIST_BASE}/install-queue`}
+            icon={Truck}
+            title="Hàng đợi xuất kho"
+            hint="Nhóm theo trang trại"
+          />
+          <QuickLink
+            to="/dashboard/admin/iot-kits"
+            icon={Package}
+            title="Bộ kit IoT"
+            hint="Danh mục bộ kit"
+          />
+          <QuickLink
+            to="/dashboard/admin/iot-device-logs"
+            icon={Wrench}
+            title="Nhật ký thiết bị"
+            hint="Lịch sử toàn hệ thống"
+          />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ── Sub-components ─────────────────────────────────────────────
+
+interface ActionRequiredCardProps {
+  tone: "danger" | "warning";
+  icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+  title: string;
+  description: string;
+  actionLabel: string;
+  href: string;
+}
+
+const ACTION_TONE: Record<
+  ActionRequiredCardProps["tone"],
+  { ring: string; iconBg: string; iconColor: string }
+> = {
+  danger: {
+    ring: "border-red-200 dark:border-red-900/60",
+    iconBg: "bg-red-100 dark:bg-red-950",
+    iconColor: "text-red-600 dark:text-red-400",
+  },
+  warning: {
+    ring: "border-amber-200 dark:border-amber-900/60",
+    iconBg: "bg-amber-100 dark:bg-amber-950",
+    iconColor: "text-amber-600 dark:text-amber-400",
+  },
+};
+
+function ActionRequiredCard({
+  tone,
+  icon: Icon,
+  title,
+  description,
+  actionLabel,
+  href,
+}: ActionRequiredCardProps) {
+  const styles = ACTION_TONE[tone];
+  return (
+    <Card className={cn("border-l-4", styles.ring)}>
+      <CardContent className="flex items-start gap-4 p-4">
+        <div
+          className={cn(
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
+            styles.iconBg,
+          )}
+          aria-hidden
+        >
+          <Icon className={cn("h-5 w-5", styles.iconColor)} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold leading-tight">{title}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+        </div>
+        <Button asChild variant="outline" size="sm">
+          <Link to={href} aria-label={actionLabel}>
+            Xem
+            <ArrowRight className="ml-1 h-4 w-4" aria-hidden />
+          </Link>
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+interface ActivityStatProps {
+  icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+  label: string;
+  value: number;
+  hint?: string;
+}
+
+function ActivityStat({ icon: Icon, label, value, hint }: ActivityStatProps) {
+  return (
+    <Card>
+      <CardContent className="flex items-center gap-3 p-4">
+        <div
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground"
+          aria-hidden
+        >
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            {label}
+          </p>
+          <p className="text-2xl font-semibold tabular-nums">{value}</p>
+          {hint && (
+            <p className="text-xs text-muted-foreground">{hint}</p>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+interface QuickLinkProps {
+  to: string;
+  icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+  title: string;
+  hint: string;
+}
+
+function QuickLink({ to, icon: Icon, title, hint }: QuickLinkProps) {
+  return (
+    <Link
+      to={to}
+      className="group flex items-center gap-3 rounded-md border p-3 transition hover:border-foreground/30 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <div
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground"
+        aria-hidden
+      >
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium leading-tight">{title}</p>
+        <p className="text-xs text-muted-foreground">{hint}</p>
+      </div>
+      <ChevronRight
+        className="h-4 w-4 text-muted-foreground transition group-hover:translate-x-0.5"
+        aria-hidden
+      />
+    </Link>
+  );
+}

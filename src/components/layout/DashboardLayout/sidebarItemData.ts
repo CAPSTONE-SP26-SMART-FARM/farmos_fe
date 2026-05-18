@@ -100,19 +100,43 @@ export const sidebarData: SidebarData = {
       label: "IoT & Thiết bị",
       items: [
         {
-          title: "Bộ kit IoT",
+          title: "Tổng quan IoT",
+          url: "/dashboard/admin/iot-devices/dashboard",
+          icon: ChartColumnIncreasing,
+        },
+        {
+          title: "Thiết bị",
           url: "/dashboard/admin/iot-devices",
           icon: Cpu,
+          items: [
+            {
+              title: "Danh sách thiết bị",
+              url: "/dashboard/admin/iot-devices",
+            },
+            {
+              title: "Hàng đợi xuất kho",
+              url: "/dashboard/admin/iot-devices/install-queue",
+            },
+            {
+              title: "Hàng đợi thu hồi",
+              url: "/dashboard/admin/iot-devices/recovery-queue",
+            },
+          ],
         },
         {
-          title: "Quản Lý Gói Kit IoT",
+          title: "Gói Kit",
           url: "/dashboard/admin/iot-kits",
           icon: PackagePlus,
-        },
-        {
-          title: "Gán Iot kit",
-          url: "/dashboard/admin/iot-kits/assignments",
-          icon: PackagePlus,
+          items: [
+            {
+              title: "Danh mục Kit",
+              url: "/dashboard/admin/iot-kits",
+            },
+            {
+              title: "Gán Kit cho Owner",
+              url: "/dashboard/admin/iot-kits/assignments",
+            },
+          ],
         },
       ],
     },
