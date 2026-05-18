@@ -16,7 +16,12 @@ import type {
   ListIotDevicesQueryType,
   UpdateIotDeviceBodyType,
 } from "@/schemaValidatation/iotDevice";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { onMutationError } from "@/lib/axios";
 import { toast } from "sonner";
 
@@ -30,6 +35,7 @@ export const useAdminListIotDevices = (
     queryKey: QUERY_KEYS.admin.iotDevices.list(query),
     queryFn: () => adminIotDeviceService.list(query),
     enabled,
+    placeholderData: keepPreviousData,
   });
 };
 
