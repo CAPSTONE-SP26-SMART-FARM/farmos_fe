@@ -31,6 +31,7 @@ import AdminSubscriptionsPage from "@/pages/AdminPage/Subscriptions/AdminSubscri
 import AdminSubscriptionDetailPage from "@/pages/AdminPage/Subscriptions/AdminSubscriptionDetailPage";
 import AdminTicketAnalyticsPage from "@/pages/AdminPage/TicketAnalytics/AdminTicketAnalyticsPage";
 import AdminTicketCategoriesPage from "@/pages/AdminPage/TicketCategories/AdminTicketCategoriesPage";
+import AdminCropCategoriesPage from "@/pages/AdminPage/CropCategories/AdminCropCategoriesPage";
 import AdminCommissionRulesPage from "@/pages/AdminPage/CommissionRules/AdminCommissionRulesPage";
 import AdminMedicinesPage from "@/pages/AdminPage/Medicines/AdminMedicinesPage";
 // import AdminSeasonTemplatesPage from "@/pages/AdminPage/SeasonTemplates/AdminSeasonTemplatesPage";
@@ -288,6 +289,11 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/admin/ticket-categories",
         component: AdminTicketCategoriesPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/crop-categories",
+        component: AdminCropCategoriesPage,
         allowedRoles: [RoleName.Admin],
       },
       {

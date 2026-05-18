@@ -57,7 +57,9 @@ export default function ManagerCropSeasonsPage() {
   });
   const assignedZones = assignedZonesQuery.data?.data.data ?? [];
   const hasAssignedZones = assignedZones.length > 0;
-  const selectedZoneName = assignedZones.find((z) => z.id === zoneId)?.name;
+  const selectedZone = assignedZones.find((z) => z.id === zoneId);
+  const selectedZoneName = selectedZone?.name;
+  const selectedZoneAreaSqm = selectedZone?.areaSqm ?? null;
 
   useEffect(() => {
     if (!zoneId || assignedZonesQuery.isLoading) return;
@@ -124,6 +126,7 @@ export default function ManagerCropSeasonsPage() {
       <CreateCropSeasonScreen
         zoneId={zoneId}
         zoneName={selectedZoneName}
+        zoneAreaSqm={selectedZoneAreaSqm}
         onBack={() => setShowCreate(false)}
       />
     );

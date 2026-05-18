@@ -314,6 +314,24 @@ const BACKEND_ERROR_MAP: Record<string, string> = {
   "error.cannotdowngradeplan":
     "Không thể đăng ký gói thấp hơn gói đã sử dụng trước đó.",
 
+  // ── Crop Category (catalog mật độ + chu kỳ vụ) ──────────────────────
+  "error.cropcategorynotfound": "Không tìm thấy loại cây trồng.",
+  "error.cropcategorycodealreadyexists": "Mã loại cây đã tồn tại.",
+  "error.cropcategorymindensityexceedsmax":
+    "Mật độ tối thiểu phải nhỏ hơn hoặc bằng mật độ tối đa.",
+  "error.cropcategoryrecommendeddensityoutofrange":
+    "Mật độ khuyến nghị phải nằm giữa mật độ tối thiểu và tối đa.",
+  "error.cropdensitybelowmin":
+    "Số cây quá ít so với diện tích đang trồng. Vui lòng tăng số cây hoặc giảm diện tích.",
+  "error.cropdensityabovemax":
+    "Số cây quá nhiều so với diện tích đang trồng. Vui lòng giảm số cây hoặc tăng diện tích.",
+  "error.cropdensityrequiresareaandcount":
+    "Vui lòng nhập đầy đủ diện tích và số lượng cây để hệ thống kiểm tra mật độ.",
+  "error.cropcycleoutofdefaultrange":
+    "Chu kỳ vụ (từ ngày trồng đến ngày thu hoạch) nằm ngoài khoảng phù hợp của loại cây đã chọn.",
+  "error.cropareaexceedszonearea":
+    "Tổng diện tích trồng vượt quá diện tích còn lại của khu vực.",
+
   // ── IoT Kit Add-on ──────────────────────────────────────────────────
   "error.iotkitnotfound": "Không tìm thấy bộ Kit IoT.",
   "error.iotkitcodealreadyexists": "Mã bộ Kit IoT đã tồn tại.",

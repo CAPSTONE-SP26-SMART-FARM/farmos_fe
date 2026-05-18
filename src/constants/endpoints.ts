@@ -469,6 +469,14 @@ export const API_ENDPOINTS = {
     ADMIN_UPDATE: (id: string) => `/admin/commission-rules/${id}`,
     ADMIN_DELETE: (id: string) => `/admin/commission-rules/${id}`,
   },
+  // ── Crop Category (catalog mật độ + chu kỳ vụ) ───────────────────────
+  CROP_CATEGORIES: {
+    ADMIN_LIST: "/admin/crop-categories",
+    ADMIN_CREATE: "/admin/crop-categories",
+    ADMIN_UPDATE: (id: string) => `/admin/crop-categories/${id}`,
+    ADMIN_TOGGLE: (id: string) => `/admin/crop-categories/${id}/toggle`,
+    ACTIVE_LIST: "/crop-categories/active",
+  },
   TICKET_V2: {
     CANCEL: (id: string) => `/tickets/${id}/cancel`,
     // ADMIN_CLAWBACK: gỡ khỏi web FE — xem docs/ticket-v2/ticket-v2.md (2026-05-09)
@@ -1429,6 +1437,17 @@ export const QUERY_KEYS = {
       ] as const,
     activeList: () => ["ticket-categories-v2", "active"] as const,
     adminDetail: (id: string) => ["ticket-categories-v2", "admin", id] as const,
+  },
+  cropCategories: {
+    root: ["crop-categories"] as const,
+    adminList: (query?: Record<string, unknown>) =>
+      [
+        "crop-categories",
+        "admin",
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ] as const,
+    activeList: () => ["crop-categories", "active"] as const,
   },
   commissionRules: {
     root: ["commission-rules-v2"] as const,

@@ -12,6 +12,7 @@ import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
 import { isApiErrorResponse, isApiErrorUnprocessableEntityResponse } from "@/lib/utils";
 import { useUpdateCropSeason } from "@/queries/useCropSeason";
+import { useActiveCropCategoryList } from "@/queries/useCropCategory";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -19,7 +20,7 @@ import {
   type UpdateCropSeasonBodyType,
   type CropSeasonType,
 } from "@/types/cropSeason";
-import { addMonths, format, startOfDay } from "date-fns";
+import { addDays, format } from "date-fns";
 import { useState } from "react";
 import { Loader2, Pencil } from "lucide-react";
 import { toast } from "sonner";
@@ -30,14 +31,27 @@ import {
   validateCropSeasonFormDates,
   getCropSeasonEditMode,
   canEdit,
+  findCategory,
+  sortActiveCategories,
+  mapCropSeasonServerError,
 } from "./helpers";
+import {
+  CropCategoryPicker,
+  DensityBadge,
+  CycleHintLine,
+  DensitySnapshotChip,
+} from "./CropSeasonFormParts";
 
 export function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
   const [open, setOpen] = useState(false);
   const { mutateAsync, isPending } = useUpdateCropSeason(season.id);
+  const { data: catData } = useActiveCropCategoryList();
+  const categories = sortActiveCategories(catData?.data?.data);
+
   const form = useForm<UpdateCropSeasonBodyType>({
     resolver: zodResolver(UpdateCropSeasonBodySchema),
     defaultValues: {
+      cropCategoryId: season.cropCategoryId ?? undefined,
       cropName: season.cropName,
       variety: season.variety ?? "",
       plantDate: season.plantDate ? season.plantDate.slice(0, 10) : undefined,
@@ -47,17 +61,26 @@ export function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
       actualHarvestDate: season.actualHarvestDate
         ? season.actualHarvestDate.slice(0, 10)
         : null,
+      totalAreaSqm: season.totalAreaSqm ?? undefined,
       plantCount: season.plantCount ?? undefined,
       notes: season.notes ?? "",
     },
   });
   useClearServerFieldErrors(form);
+
   const plantDateValue = form.watch("plantDate");
+  const expectedHarvestDateValue = form.watch("expectedHarvestDate");
+  const cropCategoryIdValue = form.watch("cropCategoryId");
+  const totalAreaSqmValue = form.watch("totalAreaSqm");
+  const plantCountValue = form.watch("plantCount");
+
   const minPlantDate = getMinPlantDate();
   const parsedPlantDate = parseBackendDate(plantDateValue);
   const minExpectedHarvestDate = parsedPlantDate
-    ? addMonths(startOfDay(parsedPlantDate), 1)
+    ? addDays(parsedPlantDate, 1)
     : undefined;
+
+  const selectedCategory = findCategory(categories, cropCategoryIdValue);
 
   const editMode = getCropSeasonEditMode(season.status);
   const planOnlyDisabled = editMode !== "all";
@@ -93,8 +116,14 @@ export function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
       setOpen(false);
     } catch (error) {
       if (isApiErrorUnprocessableEntityResponse<UpdateCropSeasonBodyType>(error)) {
+        const mapped = mapCropSeasonServerError(
+          error.response!.data.errors as Array<{
+            field?: string;
+            message?: string;
+          }>,
+        );
         handleApiErrorUnprocessentity<UpdateCropSeasonBodyType>(
-          error.response!.data.errors,
+          mapped,
           form.setError,
           { getValues: form.getValues },
         );
@@ -116,22 +145,51 @@ export function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
           Sửa
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Cập nhật mùa vụ</DialogTitle>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
           {planOnlyDisabled && (
-            <p className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-md border border-amber-200">
-              Các trường kế hoạch đã khóa sau khi phê duyệt. Chỉ có thể cập nhật ghi chú và ngày thu hoạch thực tế.
+            <p className="text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded-md border border-amber-200">
+              Các trường kế hoạch đã khóa sau khi phê duyệt. Chỉ có thể cập
+              nhật ghi chú và ngày thu hoạch thực tế.
             </p>
           )}
-          <Field label="Tên cây trồng" error={form.formState.errors.cropName?.message}>
-            <Input {...form.register("cropName")} autoComplete="off" disabled={planOnlyDisabled} />
-          </Field>
-          <Field label="Giống / Loại">
-            <Input {...form.register("variety")} autoComplete="off" disabled={planOnlyDisabled} />
-          </Field>
+
+          {(season.minDensitySnapshot != null ||
+            season.maxDensitySnapshot != null) && (
+            <div>
+              <DensitySnapshotChip
+                minDensitySnapshot={season.minDensitySnapshot}
+                maxDensitySnapshot={season.maxDensitySnapshot}
+              />
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Tên cây trồng" error={form.formState.errors.cropName?.message}>
+              <Input {...form.register("cropName")} autoComplete="off" disabled={planOnlyDisabled} />
+            </Field>
+            <Field label="Giống / Loại">
+              <Input {...form.register("variety")} autoComplete="off" disabled={planOnlyDisabled} />
+            </Field>
+          </div>
+
+          <Controller
+            name="cropCategoryId"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <CropCategoryPicker
+                value={field.value}
+                onChange={field.onChange}
+                error={fieldState.error?.message}
+                disabled={planOnlyDisabled}
+                required={false}
+              />
+            )}
+          />
+
           <div className="grid grid-cols-2 gap-3">
             <Controller
               name="plantDate"
@@ -162,7 +220,7 @@ export function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
                   minDate={minExpectedHarvestDate}
                   helperText={
                     minExpectedHarvestDate
-                      ? `Từ ngày ${format(minExpectedHarvestDate, "dd/MM/yyyy")}`
+                      ? `Sau ngày ${format(parsedPlantDate!, "dd/MM/yyyy")}`
                       : "Chọn ngày trồng trước"
                   }
                   disabled={planOnlyDisabled}
@@ -170,6 +228,13 @@ export function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
               )}
             />
           </div>
+
+          <CycleHintLine
+            plantDate={plantDateValue}
+            expectedHarvestDate={expectedHarvestDateValue}
+            category={selectedCategory}
+          />
+
           {planOnlyDisabled && (
             <Controller
               name="actualHarvestDate"
@@ -185,17 +250,55 @@ export function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
               )}
             />
           )}
-          <Field label="Số lượng cây">
-            <Input
-              type="number"
-              {...form.register("plantCount", { valueAsNumber: true })}
-              autoComplete="off"
-              disabled={planOnlyDisabled}
-            />
-          </Field>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Field
+              label="Diện tích trồng (m²)"
+              error={form.formState.errors.totalAreaSqm?.message}
+            >
+              <Input
+                type="number"
+                step="0.01"
+                min={0.01}
+                {...form.register("totalAreaSqm", { valueAsNumber: true })}
+                autoComplete="off"
+                disabled={planOnlyDisabled}
+              />
+            </Field>
+            <Field
+              label="Số lượng cây"
+              error={form.formState.errors.plantCount?.message}
+            >
+              <Input
+                type="number"
+                min={1}
+                {...form.register("plantCount", { valueAsNumber: true })}
+                autoComplete="off"
+                disabled={planOnlyDisabled}
+              />
+            </Field>
+          </div>
+
+          {!planOnlyDisabled && (
+            <div className="flex flex-wrap gap-2">
+              <DensityBadge
+                totalAreaSqm={totalAreaSqmValue}
+                plantCount={plantCountValue}
+                category={selectedCategory}
+                onSuggestCount={(count) =>
+                  form.setValue("plantCount", count, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+              />
+            </div>
+          )}
+
           <Field label="Ghi chú">
             <Textarea {...form.register("notes")} rows={2} className="resize-none" />
           </Field>
+
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Huỷ

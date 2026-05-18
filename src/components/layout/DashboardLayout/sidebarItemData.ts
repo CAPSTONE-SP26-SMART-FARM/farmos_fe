@@ -154,6 +154,11 @@ export const sidebarData: SidebarData = {
         //   icon: Milestone,
         // },
         {
+          title: "Loại Cây Trồng",
+          url: "/dashboard/admin/crop-categories",
+          icon: Sprout,
+        },
+        {
           title: "Mẫu Nhiệm Vụ Nhân Viên",
           url: "/dashboard/admin/employee-task-templates",
           icon: ClipboardList,

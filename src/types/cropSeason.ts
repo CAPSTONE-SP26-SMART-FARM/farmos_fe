@@ -26,6 +26,7 @@ export type ProductionRequestStatusNameType =
 export const CropSeasonSchema = z.object({
   id: z.string().uuid(),
   zoneId: z.string().uuid(),
+  cropCategoryId: z.string().uuid().nullable().optional(),
   cropName: z.string(),
   variety: z.string().nullable(),
   plantDate: z.string(),
@@ -34,6 +35,8 @@ export const CropSeasonSchema = z.object({
   stageChangedAt: z.string(),
   totalAreaSqm: z.number().nullable(),
   plantCount: z.number().nullable(),
+  minDensitySnapshot: z.number().nullable().optional(),
+  maxDensitySnapshot: z.number().nullable().optional(),
   status: z.enum([
     "planning",
     "sent",
@@ -65,43 +68,82 @@ export const ProductionRequestSchema = z.object({
 
 export type ProductionRequestType = z.infer<typeof ProductionRequestSchema>;
 
-export const CreateCropSeasonBodySchema = z.object({
-  zoneId: z.string().uuid("Zone ID không hợp lệ"),
-  cropName: z.string().min(1, "Tên cây trồng không được để trống").max(255),
-  variety: z.string().optional(),
-  plantDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
-  expectedHarvestDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
-  totalAreaSqm: z.number().positive().optional(),
-  plantCount: z.number().int().positive().optional(),
-  notes: z.string().optional(),
-});
+export const CreateCropSeasonBodySchema = z
+  .object({
+    zoneId: z.string().uuid("Khu vực không hợp lệ."),
+    cropCategoryId: z
+      .string()
+      .uuid("Vui lòng chọn loại cây trồng."),
+    cropName: z
+      .string()
+      .min(1, "Tên cây trồng không được để trống.")
+      .max(255, "Tên cây trồng tối đa 255 ký tự."),
+    variety: z.string().optional(),
+    plantDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Vui lòng chọn ngày trồng."),
+    expectedHarvestDate: z
+      .string()
+      .regex(
+        /^\d{4}-\d{2}-\d{2}$/,
+        "Vui lòng chọn ngày thu hoạch dự kiến.",
+      ),
+    totalAreaSqm: z
+      .number({ message: "Vui lòng nhập diện tích trồng." })
+      .positive("Diện tích phải lớn hơn 0."),
+    plantCount: z
+      .number()
+      .int("Số lượng cây phải là số nguyên.")
+      .positive("Số lượng cây phải lớn hơn 0.")
+      .optional(),
+    notes: z.string().optional(),
+  })
+  .superRefine((v, ctx) => {
+    // Density yêu cầu cả area + count để BE validate. Nếu user nhập area
+    // nhưng chưa nhập count thì BE skip density validate → nhắc trước.
+    if (typeof v.totalAreaSqm === "number" && v.plantCount === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["plantCount"],
+        message: "Vui lòng nhập đủ số lượng cây để hệ thống kiểm tra mật độ.",
+      });
+    }
+  });
 
 export type CreateCropSeasonBodyType = z.infer<
   typeof CreateCropSeasonBodySchema
 >;
 
 export const UpdateCropSeasonBodySchema = z.object({
-  cropName: z.string().min(1).max(255).optional(),
+  cropCategoryId: z.string().uuid().optional(),
+  cropName: z
+    .string()
+    .min(1, "Tên cây trồng không được để trống.")
+    .max(255, "Tên cây trồng tối đa 255 ký tự.")
+    .optional(),
   variety: z.string().optional(),
   plantDate: z
     .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format")
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Ngày trồng không hợp lệ.")
     .optional(),
   expectedHarvestDate: z
     .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format")
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Ngày thu hoạch dự kiến không hợp lệ.")
     .optional(),
   actualHarvestDate: z
     .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format")
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Ngày thu hoạch thực tế không hợp lệ.")
     .nullable()
     .optional(),
-  totalAreaSqm: z.number().positive().optional(),
-  plantCount: z.number().int().positive().optional(),
+  totalAreaSqm: z
+    .number()
+    .positive("Diện tích phải lớn hơn 0.")
+    .optional(),
+  plantCount: z
+    .number()
+    .int("Số lượng cây phải là số nguyên.")
+    .positive("Số lượng cây phải lớn hơn 0.")
+    .optional(),
   notes: z.string().optional(),
 });
 

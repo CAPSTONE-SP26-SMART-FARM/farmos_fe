@@ -3,10 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Layers } from "lucide-react";
 import { useNavigate } from "react-router";
 import { type CropSeasonType, ProductionStatusName } from "@/types/cropSeason";
+import { useActiveCropCategoryList } from "@/queries/useCropCategory";
 import { StatusBadge } from "./StatusBadge";
-import { formatDate } from "./helpers";
+import { formatDate, findCategory } from "./helpers";
 import { UpdateCropSeasonDialog } from "./UpdateCropSeasonDialog";
 import { SendRequestDialog } from "./SendRequestDialog";
+import { DensitySnapshotChip } from "./CropSeasonFormParts";
 
 export function CropSeasonSummaryCard({
   season,
@@ -20,11 +22,16 @@ export function CropSeasonSummaryCard({
   footer?: React.ReactNode;
 }) {
   const navigate = useNavigate();
+  const { data: catData } = useActiveCropCategoryList(!!season.cropCategoryId);
+  const category = findCategory(catData?.data?.data, season.cropCategoryId);
   const showDefaultManagerActions = actions === undefined;
   const showDefaultManagerFooter =
     footer === undefined &&
     (season.status === ProductionStatusName.Planning ||
       season.status === ProductionStatusName.Rejected);
+
+  const hasSnapshot =
+    season.minDensitySnapshot != null || season.maxDensitySnapshot != null;
 
   return (
     <Card className="border-l-4 border-l-primary">
@@ -35,9 +42,24 @@ export function CropSeasonSummaryCard({
               <CardTitle className="text-xl leading-tight">{season.cropName}</CardTitle>
               <StatusBadge status={season.status} />
             </div>
-            {season.variety && (
-              <p className="text-sm text-muted-foreground mt-0.5">Giống: {season.variety}</p>
-            )}
+            <div className="mt-0.5 space-y-0.5">
+              {category && (
+                <p className="text-sm text-muted-foreground">
+                  Loại cây: <span className="font-medium text-foreground">{category.name}</span>
+                </p>
+              )}
+              {season.variety && (
+                <p className="text-sm text-muted-foreground">Giống: {season.variety}</p>
+              )}
+              {hasSnapshot && (
+                <div className="pt-1">
+                  <DensitySnapshotChip
+                    minDensitySnapshot={season.minDensitySnapshot}
+                    maxDensitySnapshot={season.maxDensitySnapshot}
+                  />
+                </div>
+              )}
+            </div>
           </div>
           <div className="flex gap-2 shrink-0 flex-wrap">
             {showDefaultManagerActions ? (
@@ -65,10 +87,20 @@ export function CropSeasonSummaryCard({
             <p className="text-xs text-muted-foreground">Thu hoạch thực tế</p>
             <p className="font-medium mt-0.5">{formatDate(season.actualHarvestDate)}</p>
           </div>
+          {season.totalAreaSqm != null && (
+            <div>
+              <p className="text-xs text-muted-foreground">Diện tích</p>
+              <p className="font-medium mt-0.5">
+                {season.totalAreaSqm.toLocaleString("vi-VN")} m²
+              </p>
+            </div>
+          )}
           {season.plantCount != null && (
             <div>
               <p className="text-xs text-muted-foreground">Số cây</p>
-              <p className="font-medium mt-0.5">{season.plantCount}</p>
+              <p className="font-medium mt-0.5">
+                {season.plantCount.toLocaleString("vi-VN")}
+              </p>
             </div>
           )}
         </div>
