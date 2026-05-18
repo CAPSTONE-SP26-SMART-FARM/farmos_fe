@@ -1,10 +1,13 @@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarDays, ClipboardList, Cpu, XCircle } from "lucide-react";
-import { useState } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { CalendarDays, ClipboardList, Cpu, HelpCircle, XCircle } from "lucide-react";
 import { useOwnerMilestoneAssignment } from "@/queries/useProductionMilestone";
 import type { ProductionMilestoneResType } from "@/schemaValidatation/productionMilestone";
 import type { AssignmentBoundSensorResSchema } from "@/schemaValidatation/milestoneIotDevice";
@@ -18,6 +21,7 @@ import {
 import {
   formatMilestoneIotLinkedSensorsSubtitle,
 } from "@/lib/milestone-iot-display";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type BoundSensor = z.infer<typeof AssignmentBoundSensorResSchema>;
 
@@ -30,72 +34,96 @@ type BoundSensor = z.infer<typeof AssignmentBoundSensorResSchema>;
  *   hook exists; the list row already carries the fields we render).
  */
 
-function SensorConfigRow({ sensor }: { sensor: BoundSensor }) {
-  const [showDeviceRange, setShowDeviceRange] = useState(false);
+function normalizeUnit(unit: string | null | undefined) {
+  if (!unit) return "";
+  if (unit.toLowerCase() === "degc") return "°C";
+  if (unit.toLowerCase() === "degf") return "°F";
+  return unit;
+}
 
+function SensorConfigRow({ sensor }: { sensor: BoundSensor }) {
   const meta = getSensorMeta(sensor.sensorType);
   const Icon = meta.icon;
-  const unit = sensor.unit || meta.unit;
+  const unit = normalizeUnit(sensor.unit || meta.unit);
   const { optimalMin, optimalMax } = sensor.threshold;
   const deviceMin = sensor.minValue ?? null;
   const deviceMax = sensor.maxValue ?? null;
   const hasDeviceRange = deviceMin !== null && deviceMax !== null;
 
-  const withUnit = (v: number | null) =>
-    v !== null ? `${v}${unit ? ` ${unit}` : ""}` : "—";
+  const formatRange = (min: number | null, max: number | null) => {
+    const minStr = min !== null ? String(min) : "—";
+    const maxStr = max !== null ? String(max) : "—";
+    return (
+      <>
+        {minStr} – {maxStr}
+        {unit && <span className="text-muted-foreground ml-1">{unit}</span>}
+      </>
+    );
+  };
 
   return (
-    <div className="rounded-md border bg-muted/20 px-3 py-2.5 space-y-2.5">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
-          <p className="text-sm font-medium truncate">
-            {sensor.sensorName || meta.label}
-          </p>
+    <TooltipProvider delayDuration={200}>
+      <div className="rounded-md border bg-muted/20 px-3 py-2.5 space-y-2.5">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+            <p className="text-sm font-medium truncate">
+              {sensor.sensorName || meta.label}
+            </p>
+          </div>
+          <Badge
+            variant={sensor.status === "active" ? "default" : "secondary"}
+            className="text-[10px] shrink-0"
+          >
+            {sensor.status === "active" ? "Hoạt động" : sensor.status}
+          </Badge>
         </div>
-        <Badge
-          variant={sensor.status === "active" ? "default" : "secondary"}
-          className="text-[10px] shrink-0"
-        >
-          {sensor.status === "active" ? "Hoạt động" : sensor.status}
-        </Badge>
-      </div>
 
-      <Separator className="opacity-50" />
+        <Separator className="opacity-50" />
 
-      <div className="flex items-center justify-between text-xs">
-        <span className="text-muted-foreground">Ngưỡng an toàn</span>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <span>Ngưỡng an toàn</span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-3 w-3 cursor-help opacity-70 hover:opacity-100" />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                Khoảng giá trị tối ưu cho mốc công việc này. Cảm biến ra ngoài
+                khoảng này sẽ tạo cảnh báo.
+              </TooltipContent>
+            </Tooltip>
+          </div>
           <span className="font-medium">
             {optimalMin !== null || optimalMax !== null
-              ? `${withUnit(optimalMin)} – ${withUnit(optimalMax)}`
+              ? formatRange(optimalMin, optimalMax)
               : "Chưa cấu hình"}
           </span>
         </div>
-      </div>
 
-      <div className="flex items-center justify-between text-xs">
-        <span className="text-muted-foreground">Ngưỡng thiết bị</span>
-        {hasDeviceRange ? (
-          <div className="flex items-center gap-1.5">
-            {showDeviceRange && (
-              <span className="font-medium">
-                {withUnit(deviceMin)} – {withUnit(deviceMax)}
-              </span>
-            )}
-            <Switch
-              checked={showDeviceRange}
-              onCheckedChange={setShowDeviceRange}
-              className="scale-75 origin-right"
-            />
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <span>Ngưỡng thiết bị</span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-3 w-3 cursor-help opacity-70 hover:opacity-100" />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                Dải đo lý thuyết của phần cứng cảm biến (do nhà sản xuất quy
+                định). Giá trị thực tế không thể vượt khoảng này.
+              </TooltipContent>
+            </Tooltip>
           </div>
-        ) : (
-          <span className="text-muted-foreground italic text-[10px]">
-            Chờ backend bổ sung
-          </span>
-        )}
+          {hasDeviceRange ? (
+            <span className="font-medium">{formatRange(deviceMin, deviceMax)}</span>
+          ) : (
+            <span className="text-muted-foreground italic text-[10px]">
+              Chưa có dữ liệu
+            </span>
+          )}
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
 
@@ -266,25 +294,24 @@ export function OwnerMilestoneDetailPane({
             />
           </TabsContent>
 
-          <TabsContent value="iot" className="mt-3">
+          <Separator />
+
+          <section className="space-y-2">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+              <Cpu className="h-3.5 w-3.5" />
+              Cấu hình IoT
+            </h4>
             <IotConfigTab milestoneId={milestone.id} />
-          </TabsContent>
+          </section>
         </Tabs>
       ) : (
-        <Tabs defaultValue="iot">
-          <TabsList className="h-8">
-            <TabsTrigger
-              value="iot"
-              className="text-xs h-7 flex items-center gap-1.5"
-            >
-              <Cpu className="h-3.5 w-3.5" />
-              IoT &amp; Cảm biến
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="iot" className="mt-3">
-            <IotConfigTab milestoneId={milestone.id} />
-          </TabsContent>
-        </Tabs>
+        <section className="space-y-2">
+          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+            <Cpu className="h-3.5 w-3.5" />
+            IoT &amp; Cảm biến
+          </h4>
+          <IotConfigTab milestoneId={milestone.id} />
+        </section>
       )}
     </div>
   );

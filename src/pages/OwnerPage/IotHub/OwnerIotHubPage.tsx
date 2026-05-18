@@ -76,7 +76,7 @@ export default function OwnerIotHubPage() {
         <TabsList>
           <TabsTrigger value="overview" className="gap-1.5">
             <Activity className="h-4 w-4" />
-            Tổng quan & Đơn kit
+            Hạn mức & Đơn kit
           </TabsTrigger>
           <TabsTrigger value="devices" className="gap-1.5">
             <Cpu className="h-4 w-4" />
