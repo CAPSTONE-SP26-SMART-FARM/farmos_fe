@@ -30,7 +30,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router";
 import {
   Dialog,
   DialogContent,
@@ -62,8 +61,6 @@ const STATUS_FILTER_OPTIONS: Array<{
 ];
 
 function AdminSubscriptionsWorkspace() {
-  const navigate = useNavigate();
-
   const [status, setStatus] = useState<"ALL" | SubscriptionStatusType>("ALL");
   const [ownerSearchInput, setOwnerSearchInput] = useState("");
   const [appliedOwnerSearch, setAppliedOwnerSearch] = useState<
