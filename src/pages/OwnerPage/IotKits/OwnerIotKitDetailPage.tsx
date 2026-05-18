@@ -63,7 +63,15 @@ export default function OwnerIotKitDetailPage() {
 
   const sensors = kit.includedSensors ?? [];
   const modules = kit.includedModules ?? [];
-  const coverageM2 = kit.deviceCount * 4;
+  // BE cung cấp diện tích bao phủ trên từng kit. Nếu admin chưa cấu hình
+  // (`coverageSqm == null`) fallback về ước lượng cũ (mỗi board ~4 m²)
+  // để không vỡ trang cho dữ liệu cũ.
+  const coveragePerKit = kit.coverageSqm ?? null;
+  const totalCoverageM2 =
+    coveragePerKit != null
+      ? coveragePerKit * kit.deviceCount
+      : kit.deviceCount * 4;
+  const isCoverageEstimated = coveragePerKit == null;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -94,7 +102,9 @@ export default function OwnerIotKitDetailPage() {
           <CardHeader>
             <CardTitle>Thông số bộ Kit</CardTitle>
             <CardDescription>
-              Mỗi board chính phủ ~4 m² và đi kèm cảm biến tiêu chuẩn.
+              {coveragePerKit != null
+                ? `Mỗi bộ board phủ ${coveragePerKit.toLocaleString("vi-VN")} m² (theo cấu hình hệ thống) và đi kèm cảm biến tiêu chuẩn.`
+                : "Bộ kit này chưa được khai báo diện tích bao phủ — diện tích bên dưới là ước lượng."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
@@ -121,8 +131,24 @@ export default function OwnerIotKitDetailPage() {
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   Phủ diện tích
                 </p>
-                <p>~{coverageM2} m²</p>
+                <p>
+                  {isCoverageEstimated ? "~" : ""}
+                  {totalCoverageM2.toLocaleString("vi-VN")} m²
+                  {isCoverageEstimated && (
+                    <span className="ml-1 text-xs text-muted-foreground">
+                      (ước lượng)
+                    </span>
+                  )}
+                </p>
               </div>
+              {kit.recommendedMinKits != null && (
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Khuyến nghị tối thiểu
+                  </p>
+                  <p>{kit.recommendedMinKits} bộ</p>
+                </div>
+              )}
             </div>
             <Separator />
             <div className="space-y-2">

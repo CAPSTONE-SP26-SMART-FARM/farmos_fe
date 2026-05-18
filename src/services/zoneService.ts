@@ -18,6 +18,7 @@ import type {
   ZoneManagerResType,
 } from "@/schemaValidatation/zoneMember";
 import type { MessageResType } from "@/types/api";
+import type { IotCoverageResType } from "@/schemaValidatation/iotCoverage";
 
 const ZONES = API_ENDPOINTS.ZONES;
 const MANAGER = API_ENDPOINTS.MANAGER;
@@ -49,6 +50,17 @@ export const zoneService = {
     ),
 
   getDetail: (id: string) => api.get<ZoneType>(ZONES.DETAIL(id)),
+
+  // Tính độ phủ thiết bị IoT cho zone. Truyền `kitId` để biết "cần thêm
+  // bao nhiêu bộ loại này". Không truyền kitId → vẫn nhận currentActive +
+  // zoneArea + status (sufficient/under_covered/unknown).
+  getIotCoverage: (zoneId: string, kitId?: string | null) =>
+    api.get<IotCoverageResType>(
+      `${ZONES.IOT_COVERAGE(zoneId)}?${queryString.stringify(
+        { kitId: kitId || undefined },
+        { skipEmptyString: true, skipNull: true },
+      )}`,
+    ),
 
   create: (body: CreateZoneBodyType) => api.post<ZoneType>(ZONES.CREATE, body),
 

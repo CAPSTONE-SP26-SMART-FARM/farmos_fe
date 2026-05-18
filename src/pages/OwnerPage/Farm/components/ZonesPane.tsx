@@ -38,6 +38,8 @@ import { useNavigate, useSearchParams } from "react-router";
 import ZoneManagersSection from "./ZoneManagersSection";
 import AssignManagerDialog from "./AssignManagerDialog";
 import ZoneFormDialog from "./ZoneFormDialog";
+import IotCoverageWidget from "@/components/common/IotCoverageWidget";
+import { useOwnerIotKits } from "@/queries/useIotKit";
 
 const ZONE_TYPE_LABELS: Record<string, string> = {
   cultivation: "Canh tác",
@@ -367,6 +369,14 @@ function ZoneInlineDetail({
   const [editOpen, setEditOpen] = useState(false);
   const [assignSingleOpen, setAssignSingleOpen] = useState(false);
 
+  // Lấy danh sách kit owner đã mua / có quyền xem để render picker cho
+  // widget độ phủ. Filter active để khớp marketplace.
+  const ownerKitsQuery = useOwnerIotKits(
+    { page: 1, limit: 100, isActive: true, sortBy: "name", sortOrder: "asc" },
+    !!detail,
+  );
+  const ownerKits = ownerKitsQuery.data?.data?.data ?? [];
+
   if (isLoading || !detail) {
     return (
       <div className="space-y-4">
@@ -460,6 +470,14 @@ function ZoneInlineDetail({
           )}
         </CardContent>
       </Card>
+
+      <IotCoverageWidget
+        zoneId={detail.id}
+        zoneName={detail.name}
+        kitOptions={ownerKits}
+        onEditZoneArea={() => setEditOpen(true)}
+        onBuyKit={(kitId) => navigate(`/dashboard/owner/iot-kits/${kitId}`)}
+      />
 
       <ZoneManagersSection
         zoneId={detail.id}

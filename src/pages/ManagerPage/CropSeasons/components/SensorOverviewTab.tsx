@@ -18,6 +18,7 @@ import type { ProductionMilestoneResType } from "@/schemaValidatation/production
 import type { CropSeasonType } from "@/types/cropSeason";
 import SensorCard from "@/pages/SensorReadings/components/SensorCard";
 import { MILESTONE_STATUS_META } from "./helpers";
+import IotCoverageWidget from "@/components/common/IotCoverageWidget";
 
 const ALERTS_PAGE_SIZE = 5;
 
@@ -284,7 +285,10 @@ export function SensorOverviewTab({ cropSeason }: { cropSeason: CropSeasonType }
 
   return (
     <div className="flex gap-5 min-h-90">
-      <div className="flex-1 min-w-0 space-y-8">
+      <div className="flex-1 min-w-0 space-y-6">
+        {/* Manager không có endpoint kit-list nên không hiển thị picker —
+            vẫn xem được zoneArea / currentActive / status. */}
+        <IotCoverageWidget zoneId={cropSeason.zoneId} />
         {milestones.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center border rounded-md bg-muted/20">
             <Radio className="h-10 w-10 text-muted-foreground/30 mb-3" />

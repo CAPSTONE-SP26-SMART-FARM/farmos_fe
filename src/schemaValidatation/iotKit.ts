@@ -44,6 +44,11 @@ export const IotDeviceKitResSchema = z.object({
   includedSensors: z.array(SensorTypeEnum).nullable(),
   includedModules: z.array(KitModuleNameEnum).nullable(),
   deviceCount: z.number().int().positive(),
+  // Diện tích (m²) mà 1 bộ kit phủ được — dùng để tính độ phủ IoT cho khu vực.
+  // Nullable vì admin có thể chưa cấu hình cho các kit cũ.
+  coverageSqm: z.number().positive().nullable().optional(),
+  // Số bộ kit tối thiểu admin khuyến nghị (override công thức tự động).
+  recommendedMinKits: z.number().int().positive().nullable().optional(),
   isActive: z.boolean(),
   inStock: z.boolean(),
   thumbnailUrl: z.string().nullable(),
@@ -121,6 +126,17 @@ export const CreateIotKitBodySchema = z
       .number()
       .int("Số bộ phải là số nguyên.")
       .positive("Số bộ phải lớn hơn 0."),
+    // Input rỗng được normalize về undefined tại RHF (xem `setValueAs` ở
+    // AdminIotKitFormPanel) — Zod chỉ thấy `undefined` hoặc số hợp lệ.
+    coverageSqm: z
+      .number({ message: "Vui lòng nhập số m² hợp lệ." })
+      .positive("Diện tích bao phủ phải lớn hơn 0 m².")
+      .optional(),
+    recommendedMinKits: z
+      .number({ message: "Vui lòng nhập số bộ hợp lệ." })
+      .int("Số bộ tối thiểu phải là số nguyên.")
+      .positive("Số bộ tối thiểu phải lớn hơn 0.")
+      .optional(),
     thumbnailUrl: z
       .string()
       .max(500, "URL không được vượt quá 500 ký tự.")
@@ -144,6 +160,17 @@ export const UpdateIotKitBodySchema = z
     includedSensors: z.array(SensorTypeEnum).nullable().optional(),
     includedModules: z.array(KitModuleNameEnum).nullable().optional(),
     deviceCount: z.number().int().positive().optional(),
+    coverageSqm: z
+      .number()
+      .positive("Diện tích bao phủ phải lớn hơn 0 m².")
+      .nullable()
+      .optional(),
+    recommendedMinKits: z
+      .number()
+      .int("Số bộ tối thiểu phải là số nguyên.")
+      .positive("Số bộ tối thiểu phải lớn hơn 0.")
+      .nullable()
+      .optional(),
     thumbnailUrl: z
       .string()
       .max(500)

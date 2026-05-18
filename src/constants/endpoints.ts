@@ -452,6 +452,8 @@ export const API_ENDPOINTS = {
       SOFT_DELETE: (zoneId: string, userId: string) =>
         `/zones/${zoneId}/members/${userId}`,
     },
+    // BE: GET /zones/:id/iot-coverage?kitId=... (admin, owner, manager)
+    IOT_COVERAGE: (zoneId: string) => `/zones/${zoneId}/iot-coverage`,
   },
   // ── Ticket v2 ─────────────────────────────────────────────────────────
   TICKET_CATEGORIES: {
@@ -1377,6 +1379,16 @@ export const QUERY_KEYS = {
       "admin",
       "available-by-owner",
       ...(query !== undefined ? [query] : []),
+    ],
+  },
+  iotCoverage: {
+    all: ["iot-coverage"] as const,
+    byZone: (zoneId: string, kitId?: string | null) => [
+      "iot-coverage",
+      "zone",
+      zoneId,
+      // Phân biệt query "không kit" với query có kitId — BE trả khác nhau.
+      kitId ?? null,
     ],
   },
   tickets: {

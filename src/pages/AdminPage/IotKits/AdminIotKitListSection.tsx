@@ -122,6 +122,24 @@ export default function AdminIotKitListSection({
         ),
       },
       {
+        accessorKey: "coverageSqm",
+        header: () => <div className="text-right">Phủ (m²/bộ)</div>,
+        cell: ({ row }) => {
+          const cov = row.original.coverageSqm;
+          return (
+            <div className="text-right">
+              {cov != null ? (
+                <span className="font-medium">{cov.toLocaleString("vi-VN")}</span>
+              ) : (
+                <span className="text-xs text-muted-foreground italic">
+                  Chưa cấu hình
+                </span>
+              )}
+            </div>
+          );
+        },
+      },
+      {
         accessorKey: "price",
         header: () => <div className="text-right">Giá</div>,
         cell: ({ row }) => (

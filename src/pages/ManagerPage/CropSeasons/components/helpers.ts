@@ -170,19 +170,25 @@ export function mapCropSeasonServerError(
   errors:
     | Array<{ field?: string; message?: string } & Record<string, unknown>>
     | undefined,
-) {
-  if (!errors) return errors;
+): Array<{ field?: string; message: string; code?: string }> {
+  if (!errors) return [];
   return errors.map((e) => {
-    if (e.field) return e;
-    const msg = String(e.message ?? "").toLowerCase();
-    if (msg.includes("cropdensity")) return { ...e, field: "plantCount" };
+    const message = String(e.message ?? "");
+    const base: { field?: string; message: string; code?: string } = {
+      field: e.field,
+      message,
+      code: typeof e.code === "string" ? e.code : undefined,
+    };
+    if (base.field) return base;
+    const msg = message.toLowerCase();
+    if (msg.includes("cropdensity")) return { ...base, field: "plantCount" };
     if (msg.includes("cropcycleoutofdefaultrange"))
-      return { ...e, field: "expectedHarvestDate" };
+      return { ...base, field: "expectedHarvestDate" };
     if (msg.includes("cropareaexceedszonearea"))
-      return { ...e, field: "totalAreaSqm" };
+      return { ...base, field: "totalAreaSqm" };
     if (msg.includes("cropcategorynotfound"))
-      return { ...e, field: "cropCategoryId" };
-    return e;
+      return { ...base, field: "cropCategoryId" };
+    return base;
   });
 }
 

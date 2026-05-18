@@ -88,6 +88,8 @@ export default function AdminIotKitFormPanel({
       includedSensors: kit?.includedSensors ?? [...ALL_SENSORS],
       includedModules: kit?.includedModules ?? [...ALL_MODULES],
       deviceCount: kit?.deviceCount ?? 1,
+      coverageSqm: kit?.coverageSqm ?? undefined,
+      recommendedMinKits: kit?.recommendedMinKits ?? undefined,
       thumbnailUrl: kit?.thumbnailUrl ?? undefined,
     }),
     [kit],
@@ -324,6 +326,66 @@ export default function AdminIotKitFormPanel({
                   được khi đã có đơn đã thanh toán.
                 </FieldDescription>
                 <FieldError errors={[form.formState.errors.deviceCount]} />
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="kit-coverage-sqm">
+                  Diện tích bao phủ (m²)
+                </FieldLabel>
+                <Input
+                  id="kit-coverage-sqm"
+                  type="number"
+                  min={1}
+                  step="0.01"
+                  inputMode="decimal"
+                  placeholder="VD: 600"
+                  {...form.register("coverageSqm", {
+                    // Input rỗng / không phải số → undefined để field thật
+                    // sự optional (tránh `NaN` lọt vào Zod).
+                    setValueAs: (v) => {
+                      if (v === "" || v === null || v === undefined)
+                        return undefined;
+                      const n = typeof v === "number" ? v : Number(v);
+                      return Number.isFinite(n) ? n : undefined;
+                    },
+                  })}
+                />
+                <FieldDescription>
+                  Mỗi bộ kit này phủ được bao nhiêu m². Bắt buộc nhập nếu muốn
+                  Chủ trang trại và Quản lý khu vực kiểm tra được "Khu vực này
+                  đã đủ thiết bị IoT chưa". Giá trị sẽ áp dụng cho các lần lắp
+                  đặt mới — thiết bị đã lắp giữ nguyên cấu hình cũ.
+                </FieldDescription>
+                <FieldError errors={[form.formState.errors.coverageSqm]} />
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="kit-recommended-min-kits">
+                  Số bộ tối thiểu khuyến nghị
+                </FieldLabel>
+                <Input
+                  id="kit-recommended-min-kits"
+                  type="number"
+                  min={1}
+                  step="1"
+                  inputMode="numeric"
+                  placeholder="Bỏ trống để hệ thống tự tính"
+                  {...form.register("recommendedMinKits", {
+                    setValueAs: (v) => {
+                      if (v === "" || v === null || v === undefined)
+                        return undefined;
+                      const n = typeof v === "number" ? v : Number(v);
+                      return Number.isFinite(n) ? n : undefined;
+                    },
+                  })}
+                />
+                <FieldDescription>
+                  Tuỳ chọn. Khi để trống, hệ thống tự tính theo diện tích khu
+                  vực và diện tích bao phủ.
+                </FieldDescription>
+                <FieldError
+                  errors={[form.formState.errors.recommendedMinKits]}
+                />
               </Field>
 
               <Field>

@@ -349,6 +349,16 @@ const BACKEND_ERROR_MAP: Record<string, string> = {
   "error.ownernoactivesubscription":
     "Bạn cần có gói đăng ký đang hoạt động để xem hạn mức bộ Kit IoT.",
 
+  // ── IoT Coverage (kiểm tra độ phủ thiết bị IoT theo khu vực) ────────
+  "error.zonenotfound":
+    "Không tìm thấy khu vực. Có thể khu vực đã bị xoá hoặc bạn không có quyền xem.",
+  "error.iotcoveragezoneareamissing":
+    "Khu vực chưa có thông tin diện tích. Vui lòng cập nhật diện tích khu vực trước khi tính độ phủ thiết bị.",
+  "error.iotcoveragekitcoveragemissing":
+    "Bộ Kit IoT này chưa được khai báo diện tích bao phủ. Vui lòng liên hệ quản trị viên hoặc chọn bộ Kit khác.",
+  "error.iotcoverageinsufficient":
+    "Số bộ Kit hiện tại chưa đủ phủ toàn bộ khu vực. Hệ thống đã gợi ý số bộ cần bổ sung.",
+
   // ── Raw Error.* keys (missing i18n, sent as-is) ──────────────────────
   tasktitleduplicate: "Tiêu đề công việc đã tồn tại trong mốc sản xuất này.",
   macaddressrequiredforwifimodule:
