@@ -1,6 +1,12 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataTable } from "@/components/common/DataTable";
@@ -10,7 +16,6 @@ import { useOwnerGetZoneDetail, useOwnerListZones } from "@/queries/useZone";
 import type { FarmResType } from "@/schemaValidatation/farmManagement";
 import { format } from "date-fns";
 import {
-  ArrowLeft,
   ArrowRight,
   Calendar,
   Eye,
@@ -21,7 +26,14 @@ import {
   Ruler,
   Sprout,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useNavigate, useSearchParams } from "react-router";
 import ZoneManagersSection from "./ZoneManagersSection";
 import AssignManagerDialog from "./AssignManagerDialog";
@@ -31,23 +43,44 @@ const ZONE_TYPE_LABELS: Record<string, string> = {
   cultivation: "Canh tác",
 };
 
+type SortKey = "updatedAt-desc" | "areaSqm-desc" | "areaSqm-asc" | "zoneType-asc";
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: "updatedAt-desc", label: "Cập nhật mới nhất" },
+  { value: "areaSqm-desc", label: "Diện tích lớn → nhỏ" },
+  { value: "areaSqm-asc", label: "Diện tích nhỏ → lớn" },
+  { value: "zoneType-asc", label: "Loại (A → Z)" },
+];
+
 interface Props {
   farm: FarmResType;
 }
 
 export default function ZonesPane({ farm }: Props) {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const zoneIdParam = searchParams.get("zoneId");
 
-  if (zoneIdParam) {
-    return (
-      <ZoneInlineDetail
-        farm={farm}
-        zoneId={zoneIdParam}
-      />
-    );
-  }
-  return <ZonesTable farm={farm} />;
+  const handleClose = (open: boolean) => {
+    if (open) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("zoneId");
+    setSearchParams(next, { replace: true });
+  };
+
+  return (
+    <>
+      <ZonesTable farm={farm} />
+      <Dialog open={!!zoneIdParam} onOpenChange={handleClose}>
+        <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Chi tiết khu vực</DialogTitle>
+          </DialogHeader>
+          {zoneIdParam && (
+            <ZoneInlineDetail farm={farm} zoneId={zoneIdParam} />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -76,9 +109,35 @@ function ZonesTable({ farm }: { farm: FarmResType }) {
   };
 
   const { data, isLoading, isError } = useOwnerListZones(farm.id, query);
-  const zones = data?.data.data ?? [];
+  const rawZones = data?.data.data ?? [];
   const meta = data?.data.meta;
   const hasFilter = Boolean(search);
+
+  const sortKey = (searchParams.get("sort") as SortKey) ?? "updatedAt-desc";
+  const zones = useMemo(() => {
+    const arr = [...rawZones];
+    switch (sortKey) {
+      case "areaSqm-desc":
+        return arr.sort((a, b) => (b.areaSqm ?? 0) - (a.areaSqm ?? 0));
+      case "areaSqm-asc":
+        return arr.sort((a, b) => (a.areaSqm ?? 0) - (b.areaSqm ?? 0));
+      case "zoneType-asc":
+        return arr.sort((a, b) => a.zoneType.localeCompare(b.zoneType));
+      case "updatedAt-desc":
+      default:
+        return arr.sort(
+          (a, b) =>
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+        );
+    }
+  }, [rawZones, sortKey]);
+
+  const setSort = (value: SortKey) => {
+    const next = new URLSearchParams(searchParams);
+    if (value === "updatedAt-desc") next.delete("sort");
+    else next.set("sort", value);
+    setSearchParams(next);
+  };
 
   const applySearch = () => {
     const next = new URLSearchParams(searchParams);
@@ -129,6 +188,22 @@ function ZonesTable({ farm }: { farm: FarmResType }) {
                   }
                 }}
               />
+            </div>
+
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium">Sắp xếp</p>
+              <Select value={sortKey} onValueChange={(v) => setSort(v as SortKey)}>
+                <SelectTrigger className="w-50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SORT_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex gap-2">
@@ -286,23 +361,15 @@ function ZoneInlineDetail({
   zoneId: string;
 }) {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   const { data, isLoading } = useOwnerGetZoneDetail(zoneId);
   const detail = data?.data;
 
   const [editOpen, setEditOpen] = useState(false);
   const [assignSingleOpen, setAssignSingleOpen] = useState(false);
 
-  const handleBack = () => {
-    const next = new URLSearchParams(searchParams);
-    next.delete("zoneId");
-    setSearchParams(next, { replace: true });
-  };
-
   if (isLoading || !detail) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-9 w-72" />
         <Skeleton className="h-48 w-full" />
         <Skeleton className="h-32 w-full" />
       </div>
@@ -312,22 +379,8 @@ function ZoneInlineDetail({
   const zoneTypeLabel = ZONE_TYPE_LABELS[detail.zoneType] ?? detail.zoneType;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleBack}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <p className="text-xs text-muted-foreground">Khu vực</p>
-            <h2 className="text-xl font-bold leading-tight">{detail.name}</h2>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
+    <div className="space-y-6">
+      <div className="flex flex-wrap gap-2 justify-end">
           <Button
             variant="outline"
             className="gap-1.5"
@@ -346,7 +399,6 @@ function ZoneInlineDetail({
             <Pencil className="h-4 w-4" />
             Sửa khu vực
           </Button>
-        </div>
       </div>
 
       <Card>
