@@ -25,9 +25,7 @@ import AdminSubscriptionsPage from "@/pages/AdminPage/Subscriptions/AdminSubscri
 import AdminSubscriptionDetailPage from "@/pages/AdminPage/Subscriptions/AdminSubscriptionDetailPage";
 import AdminTicketAnalyticsPage from "@/pages/AdminPage/TicketAnalytics/AdminTicketAnalyticsPage";
 import AdminTicketCategoriesPage from "@/pages/AdminPage/TicketCategories/AdminTicketCategoriesPage";
-import AdminCreateTicketCategoryPage from "@/pages/AdminPage/TicketCategories/AdminCreateTicketCategoryPage";
 import AdminCommissionRulesPage from "@/pages/AdminPage/CommissionRules/AdminCommissionRulesPage";
-import AdminCreateCommissionRulePage from "@/pages/AdminPage/CommissionRules/AdminCreateCommissionRulePage";
 import AdminMedicinesPage from "@/pages/AdminPage/Medicines/AdminMedicinesPage";
 // import AdminSeasonTemplatesPage from "@/pages/AdminPage/SeasonTemplates/AdminSeasonTemplatesPage";
 // import AdminSeasonTemplateCreatePage from "@/pages/AdminPage/SeasonTemplates/AdminSeasonTemplateCreatePage";
@@ -257,18 +255,8 @@ const routes: AppRoutes = [
         allowedRoles: [RoleName.Admin],
       },
       {
-        path: "/dashboard/admin/ticket-categories/create",
-        component: AdminCreateTicketCategoryPage,
-        allowedRoles: [RoleName.Admin],
-      },
-      {
         path: "/dashboard/admin/commission-rules",
         component: AdminCommissionRulesPage,
-        allowedRoles: [RoleName.Admin],
-      },
-      {
-        path: "/dashboard/admin/commission-rules/create",
-        component: AdminCreateCommissionRulePage,
         allowedRoles: [RoleName.Admin],
       },
       {

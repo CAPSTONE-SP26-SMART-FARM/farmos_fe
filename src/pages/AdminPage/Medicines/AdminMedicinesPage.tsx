@@ -3,11 +3,17 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -17,14 +23,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import EmptyState from "@/components/common/EmptyState";
 import { DataTable } from "@/components/common/DataTable";
+import useDebounce from "@/hooks/useDebounce";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   useAdminMedicineList,
@@ -36,32 +41,43 @@ import {
   type MedicineResType,
 } from "@/schemaValidatation/medicine";
 import { getApiErrorMessageVi } from "@/lib/error-message";
-import { Pencil, Pill, Plus, Power, Search } from "lucide-react";
+import { Info, Pill, Plus, Power, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import AdminMedicineFormSheet from "./AdminMedicineFormSheet";
-
-// ── Page Admin — Danh mục thuốc (B11/B12) ─────────────────────────────────
-// Card description: mô tả chức năng card (KHÔNG nói role permission).
+import AdminMedicineFormPanel from "./AdminMedicineFormPanel";
 
 type IsActiveFilter = "all" | "true" | "false";
 
+type DialogState =
+  | { mode: "closed" }
+  | { mode: "create" }
+  | { mode: "detail"; medicine: MedicineResType };
+
 export default function AdminMedicinesPage() {
-  const [query, setQuery] = useState<ListMedicinesQueryType>({
-    page: 1,
-    limit: 20,
-    q: "",
-  });
-  const [searchInput, setSearchInput] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [search, setSearch] = useState("");
   const [isActiveFilter, setIsActiveFilter] = useState<IsActiveFilter>("all");
+  const debouncedSearch = useDebounce(search, 500);
 
-  // Sheet state — dùng chung cho cả create & edit. `editTarget` null = create.
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<MedicineResType | null>(null);
+  const [dialogState, setDialogState] = useState<DialogState>({
+    mode: "closed",
+  });
+  const close = () => setDialogState({ mode: "closed" });
 
-  // Confirm toggle isActive — lưu pending để render copy đúng tên.
   const [toggleTarget, setToggleTarget] = useState<MedicineResType | null>(
     null,
+  );
+
+  const query: ListMedicinesQueryType = useMemo(
+    () => ({
+      page,
+      limit,
+      q: debouncedSearch || "",
+      isActive:
+        isActiveFilter === "all" ? undefined : isActiveFilter === "true",
+    }),
+    [page, limit, debouncedSearch, isActiveFilter],
   );
 
   const listQuery = useAdminMedicineList(query);
@@ -69,26 +85,6 @@ export default function AdminMedicinesPage() {
 
   const items = listQuery.data?.data?.data ?? [];
   const meta = listQuery.data?.data?.meta;
-
-  const handleApplyFilter = () => {
-    setQuery((prev) => ({
-      ...prev,
-      page: 1,
-      q: searchInput,
-      isActive:
-        isActiveFilter === "all" ? undefined : isActiveFilter === "true",
-    }));
-  };
-
-  const handleOpenCreate = () => {
-    setEditTarget(null);
-    setSheetOpen(true);
-  };
-
-  const handleOpenEdit = (medicine: MedicineResType) => {
-    setEditTarget(medicine);
-    setSheetOpen(true);
-  };
 
   const columns = useMemo<ColumnDef<MedicineResType>[]>(
     () => [
@@ -127,9 +123,7 @@ export default function AdminMedicinesPage() {
       {
         accessorKey: "unit",
         header: "Đơn vị",
-        cell: ({ row }) => (
-          <span className="text-sm">{row.original.unit}</span>
-        ),
+        cell: ({ row }) => <span className="text-sm">{row.original.unit}</span>,
       },
       {
         accessorKey: "strength",
@@ -195,170 +189,211 @@ export default function AdminMedicinesPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 animate-in fade-in duration-300">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Pill className="h-5 w-5" />
-                Danh Mục Thuốc
-              </CardTitle>
-              <CardDescription>
-                Quản lý danh mục thuốc dùng cho đơn thuốc — bao gồm liều khuyến
-                nghị, đường dùng, thời gian ngừng thuốc và trạng thái sử dụng.
-              </CardDescription>
-            </div>
-            <Button onClick={handleOpenCreate}>
-              <Plus className="mr-2 h-4 w-4" />
-              Tạo thuốc
-            </Button>
+    <div className="space-y-6 animate-in fade-in duration-300">
+      <section className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div className="space-y-2">
+            <Badge className="mb-2">Cổng quản trị</Badge>
+            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+              Danh Mục Thuốc
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
+              Quản lý danh mục thuốc dùng cho đơn thuốc — liều khuyến nghị, đường
+              dùng, thời gian ngừng thuốc và trạng thái sử dụng.
+            </p>
+          </div>
+          <Button onClick={() => setDialogState({ mode: "create" })}>
+            <Plus className="mr-2 h-4 w-4" />
+            Tạo thuốc
+          </Button>
+        </div>
+      </section>
+
+      <Card className="overflow-hidden border-border/70">
+        <CardHeader className="bg-muted/30">
+          <div className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
+              <Pill className="h-5 w-5 text-primary" />
+              Danh sách thuốc
+            </CardTitle>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent>
+                Danh mục thuốc chuẩn để bác sĩ chọn khi kê đơn. Trạng thái vô
+                hiệu chỉ ẩn ở đơn mới, không ảnh hưởng đơn đã kê.
+              </TooltipContent>
+            </Tooltip>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Filter bar */}
-          <div className="flex flex-wrap gap-2">
-            <Input
-              placeholder="Tìm theo mã, tên hoặc tên khoa học..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleApplyFilter()}
-              className="max-w-sm"
-            />
-            <Select
-              value={isActiveFilter}
-              onValueChange={(v) => setIsActiveFilter(v as IsActiveFilter)}
-            >
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Trạng thái" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value="true">Hoạt động</SelectItem>
-                <SelectItem value="false">Vô hiệu</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button
-              variant="outline"
-              onClick={handleApplyFilter}
-            >
-              <Search className="h-4 w-4" />
-            </Button>
-          </div>
 
-          {!listQuery.isLoading && items.length === 0 ? (
-            <EmptyState
-              icon={Pill}
-              title="Chưa có thuốc nào"
-              description="Bắt đầu bằng cách tạo thuốc đầu tiên cho danh mục."
-              action={{ label: "Tạo thuốc", onClick: handleOpenCreate }}
-            />
-          ) : (
-            <div className="overflow-x-auto">
-              <DataTable
-                columns={columns}
-                data={items}
-                isLoading={listQuery.isLoading}
-                actions={[
-                  {
-                    key: "edit",
-                    label: "Chỉnh sửa",
-                    icon: Pencil,
-                    onSelect: (med) => handleOpenEdit(med),
-                  },
-                  {
-                    key: "toggle-off",
-                    label: "Vô hiệu hoá",
-                    icon: Power,
-                    variant: "destructive",
-                    hidden: (med) => !med.isActive,
-                    disabled: () => toggleMutation.isPending,
-                    onSelect: (med) => setToggleTarget(med),
-                  },
-                  {
-                    key: "toggle-on",
-                    label: "Kích hoạt",
-                    icon: Power,
-                    hidden: (med) => med.isActive,
-                    disabled: () => toggleMutation.isPending,
-                    onSelect: (med) => setToggleTarget(med),
-                  },
-                ]}
-                emptyText="Chưa có thuốc nào."
-              />
-            </div>
-          )}
-
-          {/* Pagination */}
-          {meta && meta.totalPages > 1 && (
-            <div className="flex items-center justify-between pt-2">
-              <p className="text-sm text-muted-foreground">
-                {meta.totalItems} thuốc · Trang {meta.page}/{meta.totalPages}
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={!meta.hasPreviousPage}
-                  onClick={() =>
-                    setQuery((prev) => ({ ...prev, page: prev.page - 1 }))
-                  }
-                >
-                  Trước
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={!meta.hasNextPage}
-                  onClick={() =>
-                    setQuery((prev) => ({ ...prev, page: prev.page + 1 }))
-                  }
-                >
-                  Tiếp
-                </Button>
+        <CardContent className="space-y-4 pt-5">
+          <div className="grid gap-3 md:grid-cols-[1fr_200px_140px]">
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium">Tìm kiếm</p>
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                  }}
+                  placeholder="Tìm theo mã, tên hoặc tên khoa học"
+                  className="pl-9"
+                />
               </div>
             </div>
-          )}
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium">Trạng thái</p>
+              <Select
+                value={isActiveFilter}
+                onValueChange={(v) => {
+                  setIsActiveFilter(v as IsActiveFilter);
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả</SelectItem>
+                  <SelectItem value="true">Hoạt động</SelectItem>
+                  <SelectItem value="false">Vô hiệu</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium">Số mục</p>
+              <Select
+                value={String(limit)}
+                onValueChange={(v) => {
+                  setLimit(Number(v));
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10 / trang</SelectItem>
+                  <SelectItem value="20">20 / trang</SelectItem>
+                  <SelectItem value="50">50 / trang</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="min-h-150">
+            {!listQuery.isLoading && items.length === 0 ? (
+              <EmptyState
+                icon={Pill}
+                title="Chưa có thuốc nào"
+                description="Bắt đầu bằng cách tạo thuốc đầu tiên cho danh mục."
+                action={{
+                  label: "Tạo thuốc",
+                  onClick: () => setDialogState({ mode: "create" }),
+                }}
+              />
+            ) : (
+              <div className="overflow-x-auto">
+                <DataTable
+                  columns={columns}
+                  data={items}
+                  isLoading={listQuery.isLoading}
+                  actions={[
+                    {
+                      key: "toggle-off",
+                      label: "Vô hiệu hoá",
+                      icon: Power,
+                      variant: "destructive",
+                      hidden: (med) => !med.isActive,
+                      disabled: () => toggleMutation.isPending,
+                      onSelect: (med) => setToggleTarget(med),
+                    },
+                    {
+                      key: "toggle-on",
+                      label: "Kích hoạt",
+                      icon: Power,
+                      hidden: (med) => med.isActive,
+                      disabled: () => toggleMutation.isPending,
+                      onSelect: (med) => setToggleTarget(med),
+                    },
+                  ]}
+                  onRowClick={(med) =>
+                    setDialogState({ mode: "detail", medicine: med })
+                  }
+                  emptyText="Chưa có thuốc nào."
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between pt-2 text-xs text-muted-foreground">
+            <span>
+              {meta
+                ? `Trang ${meta.page} / ${meta.totalPages} (${meta.totalItems} mục)`
+                : "—"}
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={!meta?.hasPreviousPage}
+                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              >
+                Trước
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={!meta?.hasNextPage}
+                onClick={() => setPage((prev) => prev + 1)}
+              >
+                Sau
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Form Sheet — dùng chung create/edit */}
-      <Sheet
-        open={sheetOpen}
-        onOpenChange={(open) => {
-          setSheetOpen(open);
-          if (!open) setEditTarget(null);
-        }}
+      <Dialog
+        open={dialogState.mode !== "closed"}
+        onOpenChange={(open) => !open && close()}
       >
-        <SheetContent
-          className="sm:max-w-lg p-0 flex flex-col"
-          showCloseButton
-        >
-          <SheetHeader className="px-6 pt-6 pb-2">
-            <SheetTitle>
-              {editTarget ? "Chỉnh Sửa Thuốc" : "Tạo Thuốc Mới"}
-            </SheetTitle>
-            <SheetDescription>
-              Thông tin thuốc dùng cho đơn thuốc của bác sĩ. Các trường bắt
-              buộc được đánh dấu sao.
-            </SheetDescription>
-          </SheetHeader>
-          <AdminMedicineFormSheet
-            mode={editTarget ? "edit" : "create"}
-            initialData={editTarget}
-            onSuccess={() => {
-              setSheetOpen(false);
-              setEditTarget(null);
-            }}
-            onCancel={() => {
-              setSheetOpen(false);
-              setEditTarget(null);
-            }}
-          />
-        </SheetContent>
-      </Sheet>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {dialogState.mode === "create"
+                ? "Tạo thuốc mới"
+                : "Chi tiết thuốc"}
+            </DialogTitle>
+            <DialogDescription>
+              {dialogState.mode === "create"
+                ? "Thông tin thuốc dùng cho đơn thuốc của bác sĩ. Trường bắt buộc đánh dấu sao."
+                : "Xem và chỉnh sửa thuốc. Mã thuốc không thể thay đổi sau khi tạo."}
+            </DialogDescription>
+          </DialogHeader>
+          {dialogState.mode === "create" && (
+            <AdminMedicineFormPanel
+              mode="create"
+              initialData={null}
+              onSuccess={close}
+              onCancel={close}
+            />
+          )}
+          {dialogState.mode === "detail" && (
+            <AdminMedicineFormPanel
+              mode="edit"
+              initialData={dialogState.medicine}
+              onSuccess={close}
+              onCancel={close}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
-      {/* Toggle confirm */}
       <ConfirmDialog
         open={Boolean(toggleTarget)}
         title={

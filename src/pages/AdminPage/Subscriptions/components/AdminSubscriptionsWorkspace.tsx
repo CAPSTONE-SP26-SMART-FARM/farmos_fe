@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -24,12 +23,43 @@ import type {
   SubscriptionResType,
   SubscriptionStatusType,
 } from "@/schemaValidatation/subscription";
-import { Eye, Filter, Inbox, Shield } from "lucide-react";
+import { Eye, Filter, Inbox, Info, Shield } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import StatusFilterPills from "./StatusFilterPills";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import SubscriptionLifecycleManagementPage from "@/pages/SubscriptionLifecycle/SubscriptionLifecycleManagementPage";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import SubscriptionsKpiStrip, { type KpiCounts } from "./SubscriptionsKpiStrip";
 import SubscriptionsLifecycleInsights from "./SubscriptionsLifecycleInsights";
+
+const STATUS_FILTER_OPTIONS: Array<{
+  value: "ALL" | SubscriptionStatusType;
+  label: string;
+}> = [
+  { value: "ALL", label: "Tất cả trạng thái" },
+  { value: "ACTIVE", label: "Đang hoạt động" },
+  { value: "PENDING", label: "Chờ thanh toán" },
+  { value: "SUSPENDED", label: "Tạm ngưng" },
+  { value: "CANCELLED", label: "Đã hủy" },
+  { value: "EXPIRED", label: "Hết hạn" },
+];
 
 function AdminSubscriptionsWorkspace() {
   const navigate = useNavigate();
@@ -40,6 +70,9 @@ function AdminSubscriptionsWorkspace() {
     string | undefined
   >(undefined);
   const [page, setPage] = useState(1);
+  const [selectedSubId, setSelectedSubId] = useState<string | undefined>(
+    undefined,
+  );
 
   const query = useMemo<ListSubscriptionsQueryType>(
     () => ({
@@ -125,32 +158,57 @@ function AdminSubscriptionsWorkspace() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Bộ lọc</CardTitle>
-          <CardDescription>
-            Chọn trạng thái và (nếu cần) dán ID Chủ trang trại để thu hẹp kết quả.
-          </CardDescription>
+          <div className="flex items-center gap-2">
+            <CardTitle>Danh sách đăng ký</CardTitle>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent>
+                Nhấn “Mở” để xem chi tiết hoặc hủy gói.
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <StatusFilterPills
-            value={status}
-            onChange={(next) => {
-              setPage(1);
-              setStatus(next);
-            }}
-          />
-          <div className="grid gap-3 md:grid-cols-[1fr_auto_auto]">
-            <Input
-              placeholder="Tên hoặc email Chủ trang trại"
-              value={ownerSearchInput}
-              onChange={(e) => setOwnerSearchInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") applyOwnerSearch();
-              }}
-            />
+          <div className="grid gap-3 md:grid-cols-[200px_1fr_auto_auto]">
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium">Trạng thái</p>
+              <Select
+                value={status}
+                onValueChange={(v) => {
+                  setPage(1);
+                  setStatus(v as "ALL" | SubscriptionStatusType);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_FILTER_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium">Chủ trang trại</p>
+              <Input
+                placeholder="Tên hoặc email..."
+                value={ownerSearchInput}
+                onChange={(e) => setOwnerSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") applyOwnerSearch();
+                }}
+              />
+            </div>
             <Button
               variant="outline"
               onClick={applyOwnerSearch}
               disabled={!ownerSearchInput.trim()}
+              className="md:self-end"
             >
               <Filter className="mr-2 h-4 w-4" />
               Áp dụng
@@ -159,22 +217,13 @@ function AdminSubscriptionsWorkspace() {
               <Button
                 variant="ghost"
                 onClick={clearOwnerSearch}
+                className="md:self-end"
               >
                 Xoá bộ lọc
               </Button>
             )}
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Danh sách đăng ký</CardTitle>
-          <CardDescription>
-            Nhấn “Mở” để xem chi tiết hoặc hủy gói.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          <div className="min-h-150 flex flex-col">
           {listQuery.isError ? (
             <ErrorState
               message={getApiErrorMessageVi(
@@ -272,45 +321,63 @@ function AdminSubscriptionsWorkspace() {
                       key: "view",
                       label: "Xem chi tiết",
                       icon: Eye,
-                      onSelect: (sub) =>
-                        navigate(`/dashboard/admin/subscriptions/${sub.id}`),
+                      onSelect: (sub) => setSelectedSubId(sub.id),
                     },
                   ]}
-                  onRowClick={(sub) =>
-                    navigate(`/dashboard/admin/subscriptions/${sub.id}`)
-                  }
+                  onRowClick={(sub) => setSelectedSubId(sub.id)}
                   emptyText="Không có đăng ký phù hợp."
                 />
               </div>
-              {meta && meta.totalPages > 1 && (
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm text-muted-foreground">
-                    Trang {meta.page}/{meta.totalPages} · Tổng {meta.totalItems}
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={!meta.hasPreviousPage}
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    >
-                      Trang trước
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={!meta.hasNextPage}
-                      onClick={() => setPage((p) => p + 1)}
-                    >
-                      Trang sau
-                    </Button>
-                  </div>
+              <div className="flex items-center justify-between gap-3 mt-4">
+                <p className="text-sm text-muted-foreground">
+                  Trang {meta?.page ?? 1}/{meta?.totalPages ?? 1} · Tổng {meta?.totalItems ?? 0}
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!meta?.hasPreviousPage}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  >
+                    Trang trước
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!meta?.hasNextPage}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    Trang sau
+                  </Button>
                 </div>
-              )}
+              </div>
             </>
           )}
+          </div>
         </CardContent>
       </Card>
+
+      <Dialog
+        open={!!selectedSubId}
+        onOpenChange={(open) => !open && setSelectedSubId(undefined)}
+      >
+        <DialogContent className="sm:max-w-[95vw] max-h-[95vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Chi tiết đăng ký</DialogTitle>
+            <DialogDescription>
+              Xem thông tin chi tiết của đăng ký này.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedSubId && (
+            <SubscriptionLifecycleManagementPage
+              mode="admin"
+              detailOnly
+              initialSubscriptionId={selectedSubId}
+              onBack={() => setSelectedSubId(undefined)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

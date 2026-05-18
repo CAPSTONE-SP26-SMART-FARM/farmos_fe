@@ -22,6 +22,7 @@ import {
 import { Cpu, CreditCard } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useIotKitOrderPaymentStatus } from "@/queries/useIotKit";
+import { SENSOR_TYPE_ICON } from "@/constants/iotDeviceDisplay";
 
 interface IotKitOrderDetailDialogProps {
   order: OwnerKitOrderTrackingType | null;
@@ -114,14 +115,15 @@ function IotKitOrderDetailDialog({
             <Badge variant="outline">
               {BOARD_TYPE_LABEL_VI[order.kit.boardType] ?? order.kit.boardType}
             </Badge>
-            {order.kit.includedSensors?.map((s) => (
-              <Badge
-                key={s}
-                variant="secondary"
-              >
-                {SENSOR_TYPE_LABEL_VI[s] ?? s}
-              </Badge>
-            ))}
+            {order.kit.includedSensors?.map((s) => {
+              const SIcon = SENSOR_TYPE_ICON[s];
+              return (
+                <Badge key={s} variant="secondary" className="gap-1">
+                  {SIcon && <SIcon className="h-3 w-3" />}
+                  {SENSOR_TYPE_LABEL_VI[s] ?? s}
+                </Badge>
+              );
+            })}
             {order.kit.includedModules?.map((m) => (
               <Badge
                 key={m}

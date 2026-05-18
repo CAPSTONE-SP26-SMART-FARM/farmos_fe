@@ -122,6 +122,7 @@ import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 import { toast } from "sonner";
 import { QUERY_KEYS } from "@/constants";
+import { SENSOR_TYPE_ICON } from "@/constants/iotDeviceDisplay";
 import { sensorThresholdService } from "@/services/sensorThresholdService";
 import type { ApiResponseType } from "@/types/api";
 
@@ -908,6 +909,7 @@ const IotConfigSection = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-xl">
           {IOT_CONFIG_ALLOWED_SENSOR_TYPES.map((t) => {
             const checked = form.sensorTypes.includes(t);
+            const SIcon = SENSOR_TYPE_ICON[t];
             return (
               <label
                 key={t}
@@ -923,7 +925,8 @@ const IotConfigSection = ({
                   disabled={!isPlanning}
                   onCheckedChange={(v) => toggleSensor(t, !!v)}
                 />
-                <span className="font-medium leading-snug pt-px">
+                <span className="font-medium leading-snug pt-px inline-flex items-center gap-1.5">
+                  {SIcon && <SIcon className="h-3.5 w-3.5 text-primary" />}
                   {SENSOR_TYPE_LABELS[t] ?? "—"}
                 </span>
               </label>
@@ -1365,6 +1368,7 @@ function ZoneBulkThresholdRow({
   const zoneLocked = merged.source === "zone";
   const viLabel =
     SENSOR_TYPE_LABELS[sensorType] ?? "Chỉ báo không xác định";
+  const SIcon = SENSOR_TYPE_ICON[sensorType];
   const bindings = bindingsForEligibleSensorType(
     zoneAssignments,
     sensorType,
@@ -1381,7 +1385,10 @@ function ZoneBulkThresholdRow({
     <div className="rounded-md border bg-background px-3 py-3 text-sm space-y-2 shadow-sm">
       <div className="flex flex-wrap items-start gap-2 gap-y-1">
         <div className="min-w-0 flex-1">
-          <p className="font-medium leading-snug">{viLabel}</p>
+          <p className="font-medium leading-snug inline-flex items-center gap-1.5">
+            {SIcon && <SIcon className="h-3.5 w-3.5 text-primary" />}
+            {viLabel}
+          </p>
           {saved && (
             <p className="text-[11px] text-muted-foreground mt-1">
               Đang lưu: {saved}

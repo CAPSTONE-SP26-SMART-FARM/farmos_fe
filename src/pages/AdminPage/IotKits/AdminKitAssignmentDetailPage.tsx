@@ -60,6 +60,7 @@ import {
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
+import { SENSOR_TYPE_ICON } from "@/constants/iotDeviceDisplay";
 
 const STATUS_ASSIGNED_LABEL: Record<IotKitAssignedStatus, string> = {
   UNASSIGNED: "Chưa gán",
@@ -702,11 +703,15 @@ export default function AdminKitAssignmentDetailPage() {
                       Cảm biến đi kèm
                     </p>
                     <div className="flex flex-wrap gap-1">
-                      {orderDetail.includedSensors.map((s) => (
-                        <Badge key={s} variant="secondary">
-                          {SENSOR_TYPE_LABEL_VI[s]}
-                        </Badge>
-                      ))}
+                      {orderDetail.includedSensors.map((s) => {
+                        const SIcon = SENSOR_TYPE_ICON[s];
+                        return (
+                          <Badge key={s} variant="secondary" className="gap-1">
+                            {SIcon && <SIcon className="h-3 w-3" />}
+                            {SENSOR_TYPE_LABEL_VI[s]}
+                          </Badge>
+                        );
+                      })}
                     </div>
                   </div>
                 )}

@@ -106,6 +106,7 @@ interface Props {
   mode: PageMode;
   detailOnly?: boolean;
   initialSubscriptionId?: string;
+  onBack?: () => void;
 }
 
 const SUBSCRIPTION_STATUS_LABEL: Record<SubscriptionStatusType, string> = {
@@ -146,6 +147,7 @@ function SubscriptionLifecyclePanel({
   mode,
   detailOnly = false,
   initialSubscriptionId,
+  onBack,
 }: Props) {
   const isAdmin = mode === "admin";
   const navigate = useNavigate();
@@ -420,6 +422,10 @@ function SubscriptionLifecyclePanel({
   };
 
   const backToListPage = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
     navigate(subscriptionBasePath);
   };
 
@@ -606,7 +612,7 @@ function SubscriptionLifecyclePanel({
 
       {(detailOnly || !isAdmin) && (
         <>
-          {detailOnly && (
+          {detailOnly && !onBack && (
             <Card>
               <CardContent className="flex items-center justify-between gap-3 py-4">
                 <div>

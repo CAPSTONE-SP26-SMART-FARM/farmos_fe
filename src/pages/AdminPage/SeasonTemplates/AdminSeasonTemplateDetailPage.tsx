@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router";
 import { fromItems, summarize } from "./seasonTemplate.helpers";
+import { SENSOR_TYPE_ICON } from "@/constants/iotDeviceDisplay";
 
 export default function AdminSeasonTemplateDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
@@ -229,21 +230,25 @@ export default function AdminSeasonTemplateDetailPage() {
                             Ngưỡng cảm biến
                           </div>
                           <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-                            {g.thresholds.map((th, ti) => (
-                              <div
-                                key={ti}
-                                className="rounded border bg-muted/30 px-2 py-1 text-xs"
-                              >
-                                <div className="font-medium">
-                                  {SENSOR_TYPE_LABEL[
-                                    th.sensorType as SensorTypeT
-                                  ] ?? th.sensorType}
+                            {g.thresholds.map((th, ti) => {
+                              const SIcon = SENSOR_TYPE_ICON[th.sensorType];
+                              return (
+                                <div
+                                  key={ti}
+                                  className="rounded border bg-muted/30 px-2 py-1 text-xs"
+                                >
+                                  <div className="font-medium inline-flex items-center gap-1">
+                                    {SIcon && <SIcon className="h-3 w-3 text-primary" />}
+                                    {SENSOR_TYPE_LABEL[
+                                      th.sensorType as SensorTypeT
+                                    ] ?? th.sensorType}
+                                  </div>
+                                  <div className="text-muted-foreground tabular-nums">
+                                    {th.optimalMin} – {th.optimalMax}
+                                  </div>
                                 </div>
-                                <div className="text-muted-foreground tabular-nums">
-                                  {th.optimalMin} – {th.optimalMax}
-                                </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       </>

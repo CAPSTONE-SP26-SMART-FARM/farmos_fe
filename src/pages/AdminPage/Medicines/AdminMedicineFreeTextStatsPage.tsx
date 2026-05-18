@@ -1,5 +1,4 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,19 +7,19 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import EmptyState from "@/components/common/EmptyState";
 import { DataTable } from "@/components/common/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMedicineFreetextStats } from "@/queries/useMedicine";
 import { Plus, Sparkles } from "lucide-react";
 import { useState } from "react";
-import AdminMedicineFormSheet from "./AdminMedicineFormSheet";
+import AdminMedicineFormPanel from "./AdminMedicineFormPanel";
 
 // ── Page Admin — Thuốc tự nhập của bác sĩ (B13) ──────────────────────────
 // BE endpoint: GET /admin/medicines/freetext-stats — KHÔNG pagination/sort,
@@ -102,37 +101,30 @@ export default function AdminMedicineFreeTextStatsPage() {
               />
             </div>
           )}
-          {/* avoid unused-import warning if any */}
-          <Button className="hidden" />
-          <Badge className="hidden" />
         </CardContent>
       </Card>
 
-      {/* Reuse Form Sheet A1 với prefill name */}
-      <Sheet
+      <Dialog
         open={Boolean(prefillName)}
         onOpenChange={(open) => !open && setPrefillName(null)}
       >
-        <SheetContent
-          className="sm:max-w-lg p-0 flex flex-col"
-          showCloseButton
-        >
-          <SheetHeader className="px-6 pt-6 pb-2">
-            <SheetTitle>Tạo Thuốc Từ Tên Tự Nhập</SheetTitle>
-            <SheetDescription>
-              Bổ sung thuốc bác sĩ đã tự nhập vào danh mục chuẩn để dùng lại
-              cho các đơn thuốc sau. Vui lòng điền mã, dạng và đơn vị.
-            </SheetDescription>
-          </SheetHeader>
-          <AdminMedicineFormSheet
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Tạo thuốc từ tên tự nhập</DialogTitle>
+            <DialogDescription>
+              Bổ sung thuốc bác sĩ đã tự nhập vào danh mục chuẩn để dùng lại cho
+              các đơn thuốc sau. Vui lòng điền mã, dạng và đơn vị.
+            </DialogDescription>
+          </DialogHeader>
+          <AdminMedicineFormPanel
             mode="create"
             initialData={null}
             prefillName={prefillName}
             onSuccess={() => setPrefillName(null)}
             onCancel={() => setPrefillName(null)}
           />
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

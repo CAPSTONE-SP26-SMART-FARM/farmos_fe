@@ -3,11 +3,15 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -52,7 +56,14 @@ import {
   type UpdateServicePackageBodyType,
 } from "@/schemaValidatation/credit";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Archive, ArchiveRestore, Loader2, Pencil, Search } from "lucide-react";
+import {
+  Archive,
+  ArchiveRestore,
+  Info,
+  Loader2,
+  Pencil,
+  Search,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -216,11 +227,17 @@ export default function AdminPackagesPage() {
 
         <Card>
           <CardHeader className="space-y-4">
-            <div>
+            <div className="flex items-center gap-2">
               <CardTitle>Danh sách gói dịch vụ</CardTitle>
-              <CardDescription>
-                Mỗi gói gắn với một loại credit và số lượng credit cấp khi mua.
-              </CardDescription>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  Mỗi gói gắn với một loại credit và số lượng credit cấp khi
+                  mua.
+                </TooltipContent>
+              </Tooltip>
             </div>
             <div className="grid gap-3 md:grid-cols-[1fr_140px]">
               <div className="relative">
@@ -257,36 +274,40 @@ export default function AdminPackagesPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <DataTable
-              columns={columns}
-              data={packages}
-              isLoading={listQuery.isLoading}
-              actions={[
-                {
-                  key: "edit",
-                  label: "Chỉnh sửa",
-                  icon: Pencil,
-                  onSelect: (pkg) => openEdit(pkg),
-                },
-                {
-                  key: "archive",
-                  label: "Lưu trữ",
-                  icon: Archive,
-                  variant: "destructive",
-                  hidden: (pkg) => !pkg.isActive,
-                  onSelect: (pkg) => setConfirmState({ type: "archive", pkg }),
-                },
-                {
-                  key: "unarchive",
-                  label: "Khôi phục",
-                  icon: ArchiveRestore,
-                  hidden: (pkg) => pkg.isActive,
-                  onSelect: (pkg) =>
-                    setConfirmState({ type: "unarchive", pkg }),
-                },
-              ]}
-              emptyText="Chưa có gói dịch vụ nào."
-            />
+            <div className="min-h-150">
+              <DataTable
+                columns={columns}
+                data={packages}
+                isLoading={listQuery.isLoading}
+                actions={[
+                  {
+                    key: "edit",
+                    label: "Chỉnh sửa",
+                    icon: Pencil,
+                    onSelect: (pkg) => openEdit(pkg),
+                  },
+                  {
+                    key: "archive",
+                    label: "Lưu trữ",
+                    icon: Archive,
+                    variant: "destructive",
+                    hidden: (pkg) => !pkg.isActive,
+                    onSelect: (pkg) =>
+                      setConfirmState({ type: "archive", pkg }),
+                  },
+                  {
+                    key: "unarchive",
+                    label: "Khôi phục",
+                    icon: ArchiveRestore,
+                    hidden: (pkg) => pkg.isActive,
+                    onSelect: (pkg) =>
+                      setConfirmState({ type: "unarchive", pkg }),
+                  },
+                ]}
+                onRowClick={(pkg) => openEdit(pkg)}
+                emptyText="Chưa có gói dịch vụ nào."
+              />
+            </div>
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
                 Trang {meta?.page ?? query.page ?? 1}/{meta?.totalPages ?? 1}

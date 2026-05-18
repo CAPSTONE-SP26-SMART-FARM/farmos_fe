@@ -21,6 +21,7 @@ import { ArrowLeft, Boxes, Cpu, Sprout } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import IotKitPurchaseDialog from "./components/IotKitPurchaseDialog";
+import { SENSOR_TYPE_ICON } from "@/constants/iotDeviceDisplay";
 
 export default function OwnerIotKitDetailPage() {
   const { kitId } = useParams<{ kitId: string }>();
@@ -148,11 +149,15 @@ export default function OwnerIotKitDetailPage() {
                 {sensors.length === 0 ? (
                   <span className="text-muted-foreground">—</span>
                 ) : (
-                  sensors.map((s) => (
-                    <Badge key={s} variant="outline">
-                      {SENSOR_TYPE_LABEL_VI[s] ?? s}
-                    </Badge>
-                  ))
+                  sensors.map((s) => {
+                    const SIcon = SENSOR_TYPE_ICON[s];
+                    return (
+                      <Badge key={s} variant="outline" className="gap-1">
+                        {SIcon && <SIcon className="h-3 w-3" />}
+                        {SENSOR_TYPE_LABEL_VI[s] ?? s}
+                      </Badge>
+                    );
+                  })
                 )}
               </div>
             </div>

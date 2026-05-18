@@ -33,6 +33,7 @@ import {
   Search,
   Trash2,
 } from "lucide-react";
+import { SENSOR_TYPE_ICON } from "@/constants/iotDeviceDisplay";
 import { useState, useMemo } from "react";
 import useDebounce from "@/hooks/useDebounce";
 import {
@@ -327,16 +328,20 @@ export default function SensorTemplateList({
 
                   {template.items.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-1.5">
-                      {template.items.slice(0, 2).map((item) => (
-                        <Badge
-                          key={item.id}
-                          variant="secondary"
-                          className="max-w-[200px] truncate"
-                        >
-                          {SENSOR_TYPE_LABEL[item.sensorType] ??
-                            item.sensorType}
-                        </Badge>
-                      ))}
+                      {template.items.slice(0, 2).map((item) => {
+                        const SIcon = SENSOR_TYPE_ICON[item.sensorType];
+                        return (
+                          <Badge
+                            key={item.id}
+                            variant="secondary"
+                            className="max-w-[200px] truncate gap-1"
+                          >
+                            {SIcon && <SIcon className="h-3 w-3" />}
+                            {SENSOR_TYPE_LABEL[item.sensorType] ??
+                              item.sensorType}
+                          </Badge>
+                        );
+                      })}
                       {template.items.length > 2 && (
                         <Badge variant="secondary">
                           +{template.items.length - 2}
