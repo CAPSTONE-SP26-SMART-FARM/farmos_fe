@@ -112,7 +112,8 @@ function ZonesTable({ farm }: { farm: FarmResType }) {
   return (
     <div className="space-y-4">
       <Card>
-        <CardContent className="pt-4">
+        <CardHeader className="space-y-4">
+          <CardTitle className="text-base">Danh sách khu vực</CardTitle>
           <div className="flex flex-col gap-3 md:flex-row md:items-end">
             <div className="flex-1 space-y-1.5">
               <p className="text-sm font-medium">Tìm kiếm khu vực</p>
@@ -146,12 +147,6 @@ function ZonesTable({ farm }: { farm: FarmResType }) {
               </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Danh sách khu vực</CardTitle>
         </CardHeader>
         <CardContent>
           {isError ? (

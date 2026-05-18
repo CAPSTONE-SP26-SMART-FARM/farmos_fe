@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  ArrowRight,
   ChevronRight,
   CircleSlash,
   Cpu,
@@ -242,17 +243,30 @@ export default function OwnerIotTrackingPage({
         </CardContent>
       </Card>
 
-      {/* Subscription devices */}
+      {/* Subscription devices — devices admin gán trực tiếp qua hạn mức gói */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Wifi className="h-5 w-5 text-primary" />
-            Thiết bị từ gói đăng ký ({subscriptionDevices.length})
-          </CardTitle>
-          <CardDescription>
-            Các bo mạch được admin gán Iot kit trực tiếp qua hạn mức gói (không
-            qua đơn kit).
-          </CardDescription>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <CardTitle className="flex items-center gap-2">
+                <Wifi className="h-5 w-5 text-primary" />
+                Thiết bị từ gói đăng ký ({subscriptionDevices.length})
+              </CardTitle>
+              <CardDescription>
+                Các thiết bị nằm trong hạn mức của gói đăng ký. Khi gói hết
+                hạn, các thiết bị này sẽ bị thu hồi.
+              </CardDescription>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="shrink-0"
+              onClick={() => navigate("/dashboard/owner/iot?tab=devices")}
+            >
+              Xem tất cả thiết bị
+              <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <DeviceTable
@@ -554,3 +568,4 @@ function DeviceTable({
     </div>
   );
 }
+
