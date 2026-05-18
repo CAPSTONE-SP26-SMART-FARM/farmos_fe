@@ -26,7 +26,7 @@ export function getSocket(): Socket {
 
   // Namespace "/realtime" phải khớp BE RealtimeGateway.
   socket = io(`${base}/realtime`, {
-    auth: { token: token ? `Bearer ${token}` : "" },
+    auth: { token: token ?? "" },
     transports: ["websocket", "polling"],
     reconnection: true,
     reconnectionAttempts: Infinity,

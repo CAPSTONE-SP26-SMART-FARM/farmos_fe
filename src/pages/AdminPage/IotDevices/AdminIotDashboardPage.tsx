@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { Link } from "react-router";
 import {
   AlertCircle,
@@ -9,12 +8,9 @@ import {
   Clock3,
   CreditCard,
   Package,
-  PackageCheck,
-  Power,
   RefreshCw,
-  ShieldOff,
   Truck,
-  Wrench,
+  Undo2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,10 +20,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import KpiCard from "@/components/common/KpiCard";
 import LoadingCard from "@/components/common/LoadingCard";
 import ErrorState from "@/components/common/ErrorState";
-import { useAdminIotOverview } from "@/queries/useIotDeviceAdminOps";
+import {
+  useAdminIotOverview,
+  useAdminRecoveryQueue,
+} from "@/queries/useIotDeviceAdminOps";
 import { cn } from "@/lib/utils";
 
 const LIST_BASE = "/dashboard/admin/iot-devices";
@@ -36,63 +34,20 @@ export default function AdminIotDashboardPage() {
   const overviewQuery = useAdminIotOverview();
   const overview = overviewQuery.data?.data;
 
+  // Summary nhẹ cho task thu hồi — pageSize=1 chỉ lấy meta
+  const recoveryQuery = useAdminRecoveryQueue({
+    groupBy: "farm-zone",
+    page: 1,
+    pageSize: 1,
+  });
+  const recoveryPending = recoveryQuery.data?.data?.totalDevicesPending ?? 0;
+  const recoveryOldestDays =
+    recoveryQuery.data?.data?.oldestOverdueDays ?? 0;
+
   const handleRefresh = () => {
     overviewQuery.refetch();
+    recoveryQuery.refetch();
   };
-
-  const inventoryItems = useMemo(() => {
-    const inv = overview?.inventoryHealth;
-    return [
-      {
-        key: "available",
-        label: "Có thể sử dụng",
-        value: inv?.available ?? 0,
-        icon: Package,
-        tone: "default" as const,
-        href: `${LIST_BASE}?status=available`,
-      },
-      {
-        key: "purchase",
-        label: "Đã cho thuê",
-        value: inv?.purchase ?? 0,
-        icon: PackageCheck,
-        tone: "default" as const,
-        href: `${LIST_BASE}?status=purchase`,
-      },
-      {
-        key: "install",
-        label: "Đang lắp đặt",
-        value: inv?.install ?? 0,
-        icon: Wrench,
-        tone: "warning" as const,
-        href: `${LIST_BASE}?status=install`,
-      },
-      {
-        key: "active",
-        label: "Hoạt động",
-        value: inv?.active ?? 0,
-        icon: Power,
-        tone: "success" as const,
-        href: `${LIST_BASE}?status=active`,
-      },
-      {
-        key: "error",
-        label: "Có lỗi",
-        value: inv?.error ?? 0,
-        icon: AlertCircle,
-        tone: "danger" as const,
-        href: `${LIST_BASE}?status=error`,
-      },
-      {
-        key: "revoked",
-        label: "Đã thu hồi",
-        value: inv?.revoked ?? 0,
-        icon: ShieldOff,
-        tone: "default" as const,
-        href: `${LIST_BASE}?status=revoked`,
-      },
-    ];
-  }, [overview?.inventoryHealth]);
 
   if (overviewQuery.isLoading) {
     return (
@@ -147,7 +102,7 @@ export default function AdminIotDashboardPage() {
             Hôm nay cần xử lý
           </h2>
         </div>
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           <ActionRequiredCard
             tone="danger"
             icon={AlertCircle}
@@ -163,48 +118,27 @@ export default function AdminIotDashboardPage() {
           <ActionRequiredCard
             tone="warning"
             icon={Clock3}
-            title={`${overview.actionRequired.pendingInstall.count} thiết bị đợi xuất kho`}
+            title={`${overview.actionRequired.pendingInstall.count} thiết bị đợi cài đặt`}
             description={
               overview.actionRequired.pendingInstall.oldest
                 ? `Thiết bị cũ nhất: ${overview.actionRequired.pendingInstall.oldest.label} · đã chờ ${overview.actionRequired.pendingInstall.oldest.ageDays} ngày`
                 : "Không có thiết bị nào đang chờ."
             }
-            actionLabel="Mở hàng đợi xuất kho"
+            actionLabel="Mở hàng đợi cài đặt"
             href={`${LIST_BASE}/install-queue`}
           />
-        </div>
-      </section>
-
-      {/* ── Tình trạng kho ──────────────────────────────────────── */}
-      <section aria-labelledby="inventory-heading" className="space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <h2
-            id="inventory-heading"
-            className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
-          >
-            Tình trạng kho
-          </h2>
-          <span className="text-xs text-muted-foreground">
-            Tổng: <strong>{overview.inventoryHealth.total}</strong> thiết bị
-          </span>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-          {inventoryItems.map((item) => (
-            <Link
-              key={item.key}
-              to={item.href}
-              className="group rounded-lg outline-none ring-offset-background transition focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label={`Lọc danh sách: ${item.label}`}
-            >
-              <KpiCard
-                icon={item.icon}
-                label={item.label}
-                value={item.value}
-                tone={item.tone}
-                className="h-full transition-shadow group-hover:shadow-sm"
-              />
-            </Link>
-          ))}
+          <ActionRequiredCard
+            tone="warning"
+            icon={Undo2}
+            title={`${recoveryPending} thiết bị cần thu hồi`}
+            description={
+              recoveryPending > 0
+                ? `Quá hạn lâu nhất: ${recoveryOldestDays} ngày`
+                : "Không có thiết bị nào quá hạn cần thu hồi."
+            }
+            actionLabel="Mở hàng đợi thu hồi"
+            href={`${LIST_BASE}/recovery-queue`}
+          />
         </div>
       </section>
 
@@ -258,20 +192,20 @@ export default function AdminIotDashboardPage() {
           <QuickLink
             to={`${LIST_BASE}/install-queue`}
             icon={Truck}
-            title="Hàng đợi xuất kho"
+            title="Hàng đợi cài đặt"
             hint="Nhóm theo trang trại"
+          />
+          <QuickLink
+            to={`${LIST_BASE}/recovery-queue`}
+            icon={Undo2}
+            title="Hàng đợi thu hồi"
+            hint="Thiết bị quá hạn cần thu hồi"
           />
           <QuickLink
             to="/dashboard/admin/iot-kits"
             icon={Package}
             title="Bộ kit IoT"
             hint="Danh mục bộ kit"
-          />
-          <QuickLink
-            to="/dashboard/admin/iot-device-logs"
-            icon={Wrench}
-            title="Nhật ký thiết bị"
-            hint="Lịch sử toàn hệ thống"
           />
         </CardContent>
       </Card>

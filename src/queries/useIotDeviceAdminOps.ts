@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { toast } from "sonner";
 import { QUERY_KEYS } from "@/constants";
 import { onMutationError } from "@/lib/axios";
@@ -44,6 +49,7 @@ export const useAdminInstallQueue = (
     queryKey: QUERY_KEYS.admin.iotDevices.installQueue(query),
     queryFn: () => iotDeviceAdminOpsService.getInstallQueue(query),
     enabled,
+    placeholderData: keepPreviousData,
   });
 
 // ─────────────────────────────────────────────────────────────
@@ -143,6 +149,7 @@ export const useAdminRecoveryQueue = (
     queryKey: QUERY_KEYS.admin.iotDevices.recoveryQueue(query),
     queryFn: () => iotDeviceAdminOpsService.getRecoveryQueue(query),
     enabled,
+    placeholderData: keepPreviousData,
   });
 
 // ─────────────────────────────────────────────────────────────

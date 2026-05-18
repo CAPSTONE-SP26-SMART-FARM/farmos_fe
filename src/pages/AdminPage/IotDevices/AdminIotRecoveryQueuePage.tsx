@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { ArrowLeft, CheckCircle2, Package, Truck } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, Package, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import LoadingCard from "@/components/common/LoadingCard";
@@ -226,14 +226,22 @@ export default function AdminIotRecoveryQueuePage() {
           <Badge variant="outline" className="px-2 py-1">
             {totalFarms} nông trại · {totalZones} khu vực
           </Badge>
-          {oldestOverdueDays > 0 && (
-            <Badge
-              variant="outline"
-              className="px-2 py-1 text-destructive"
-            >
-              Quá hạn lâu nhất {oldestOverdueDays} ngày
-            </Badge>
-          )}
+          <Badge
+            variant="outline"
+            className={`px-2 py-1 text-destructive transition-opacity ${
+              oldestOverdueDays > 0 ? "opacity-100" : "invisible"
+            }`}
+          >
+            Quá hạn lâu nhất {oldestOverdueDays} ngày
+          </Badge>
+          <Loader2
+            className={`h-4 w-4 animate-spin text-muted-foreground transition-opacity ${
+              queueQuery.isFetching && !queueQuery.isLoading
+                ? "opacity-100"
+                : "opacity-0"
+            }`}
+            aria-label="Đang làm mới"
+          />
         </div>
       </div>
 

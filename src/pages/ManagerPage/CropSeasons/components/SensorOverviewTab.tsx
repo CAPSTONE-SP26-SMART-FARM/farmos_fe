@@ -11,7 +11,8 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useManagerListProductionMilestones, useManagerMilestoneAssignment } from "@/queries/useProductionMilestone";
-import { useManagerLatestSensorReadings } from "@/queries/useSensorReading";
+import { useManagerLatestSensorReadings, useSensorReadingRealtime } from "@/queries/useSensorReading";
+import { useZoneSubscription } from "@/hooks/useZoneSubscription";
 import { useListAlerts } from "@/queries/useAlert";
 import type { AlertResType } from "@/schemaValidatation/alert";
 import type { ProductionMilestoneResType } from "@/schemaValidatation/productionMilestone";
@@ -219,6 +220,8 @@ function MilestoneSensorSection({ milestone }: { milestone: ProductionMilestoneR
   const assignment = assignmentQuery.data?.data?.data ?? null;
   const assignmentId = assignment?.assignmentId ?? "";
   const readingsQuery = useManagerLatestSensorReadings(assignmentId, !!assignmentId);
+  useSensorReadingRealtime(assignmentId || undefined, "manager");
+  useZoneSubscription(assignment?.zoneId ?? undefined);
   const readings = readingsQuery.data?.data ?? [];
   const meta = MILESTONE_STATUS_META[milestone.status] ?? {
     label: milestone.status,

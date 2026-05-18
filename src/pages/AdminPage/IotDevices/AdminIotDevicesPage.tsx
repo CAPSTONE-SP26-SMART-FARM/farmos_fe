@@ -1,31 +1,35 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import KpiCard from "@/components/common/KpiCard";
 import ProPagination from "@/components/common/pro-pagination";
 import EmptyState from "@/components/common/EmptyState";
 import ErrorState from "@/components/common/ErrorState";
 import {
+  AlertCircle,
+  ChevronDown,
   Cpu,
-  Info,
   LayoutDashboard,
   Loader2,
+  Package,
+  PackageCheck,
   Plus,
+  Power,
+  ShieldOff,
   Truck,
+  Undo2,
+  Wrench,
 } from "lucide-react";
 import useDebounce from "@/hooks/useDebounce";
 import { toast } from "sonner";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +44,7 @@ import {
   useAdminIotDeviceDetail,
   useAdminListIotDevices,
 } from "@/queries/useIotDevice";
+import { useAdminIotOverview } from "@/queries/useIotDeviceAdminOps";
 import type {
   DeviceStatusType,
   IotDeviceResType,
@@ -163,7 +168,57 @@ export default function AdminIotDevicesPage() {
   );
 
   const listQuery = useAdminListIotDevices(effectiveQuery);
+  const overviewQuery = useAdminIotOverview();
+  const inv = overviewQuery.data?.data?.inventoryHealth;
   const deleteMutation = useAdminDeleteIotDevice();
+
+  const kpiItems = useMemo(
+    () => [
+      {
+        key: "available" as const,
+        label: "Có thể sử dụng",
+        value: inv?.available ?? 0,
+        icon: Package,
+        tone: "default" as const,
+      },
+      {
+        key: "purchase" as const,
+        label: "Đã cho thuê",
+        value: inv?.purchase ?? 0,
+        icon: PackageCheck,
+        tone: "default" as const,
+      },
+      {
+        key: "install" as const,
+        label: "Đang lắp đặt",
+        value: inv?.install ?? 0,
+        icon: Wrench,
+        tone: "warning" as const,
+      },
+      {
+        key: "active" as const,
+        label: "Hoạt động",
+        value: inv?.active ?? 0,
+        icon: Power,
+        tone: "success" as const,
+      },
+      {
+        key: "error" as const,
+        label: "Có lỗi",
+        value: inv?.error ?? 0,
+        icon: AlertCircle,
+        tone: "danger" as const,
+      },
+      {
+        key: "revoked" as const,
+        label: "Đã thu hồi",
+        value: inv?.revoked ?? 0,
+        icon: ShieldOff,
+        tone: "default" as const,
+      },
+    ],
+    [inv],
+  );
 
   const devices = listQuery.data?.data?.data ?? [];
   const meta = listQuery.data?.data?.meta;
@@ -185,85 +240,112 @@ export default function AdminIotDevicesPage() {
   }, [deleteMutation, deleteTarget]);
 
   return (
-    <div className="space-y-4 animate-in fade-in duration-300">
-      {/* Page header */}
-      <section className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div>
-            <Badge className="mb-2">Cổng quản trị</Badge>
-            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-              Quản lý các bộ kit IoT
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
-              Tạo, cập nhật, xóa và cấu hình vòng đời thiết bị IoT.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() =>
-                navigate("/dashboard/admin/iot-devices/dashboard")
-              }
-            >
-              <LayoutDashboard className="mr-2 h-4 w-4" />
-              Tổng quan IoT
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() =>
-                navigate("/dashboard/admin/iot-devices/install-queue")
-              }
-            >
-              <Truck className="mr-2 h-4 w-4" />
-              Đợi xuất kho
-            </Button>
-            <Button
-              onClick={() => navigate("/dashboard/admin/iot-devices/create")}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Tạo bộ kit mới
-            </Button>
-          </div>
+    <div className="space-y-4">
+      {/* Page header — compact */}
+      <section className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl font-semibold tracking-tight md:text-2xl">
+            Quản lý bộ kit IoT
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Tạo, cập nhật và theo dõi vòng đời thiết bị IoT.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Truck className="mr-2 h-4 w-4" />
+                Hàng đợi & tổng quan
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Điều hướng IoT</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() =>
+                  navigate("/dashboard/admin/iot-devices/dashboard")
+                }
+              >
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                Tổng quan IoT
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  navigate("/dashboard/admin/iot-devices/install-queue")
+                }
+              >
+                <Truck className="mr-2 h-4 w-4" />
+                Hàng đợi cài đặt
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  navigate("/dashboard/admin/iot-devices/recovery-queue")
+                }
+              >
+                <Undo2 className="mr-2 h-4 w-4" />
+                Hàng đợi thu hồi
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button
+            onClick={() => navigate("/dashboard/admin/iot-devices/create")}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Tạo bộ kit mới
+          </Button>
         </div>
       </section>
 
-      <IotDeviceFilterBar
-        searchValue={searchInput}
-        onSearchChange={setSearchInput}
-        status={status}
-        onStatusChange={handleStatusChange}
-        limit={limit}
-        onLimitChange={handleLimitChange}
-        hasActiveFilter={hasActiveFilter}
-        onClear={handleClearFilters}
-      />
+      {/* KPI strip — click to filter by status */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        {kpiItems.map((item) => (
+          <KpiCard
+            key={item.key}
+            icon={item.icon}
+            label={item.label}
+            value={overviewQuery.isLoading ? "…" : item.value}
+            tone={item.tone}
+            active={status === item.key}
+            onClick={() =>
+              handleStatusChange(status === item.key ? "all" : item.key)
+            }
+          />
+        ))}
+      </div>
 
-      <Card className="overflow-hidden border-border/70">
-        <CardHeader className="bg-muted/30">
-          <div className="flex items-center gap-2">
-            <CardTitle className="flex items-center gap-2">
-              <Cpu className="h-5 w-5 text-primary" />
-              Danh sách thiết bị
-              {listQuery.isFetching && !listQuery.isLoading && (
-                <Loader2
-                  className="h-3.5 w-3.5 animate-spin text-muted-foreground"
-                  aria-label="Đang làm mới"
-                />
-              )}
-            </CardTitle>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent>
-                Dữ liệu lấy từ API gán Iot kit dành cho quản trị viên.
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        </CardHeader>
+      {/* Filter bar with inline title + count */}
+      <div className="flex flex-col gap-3 rounded-lg border bg-card p-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <Cpu className="h-4 w-4 text-primary" aria-hidden />
+          <span>Danh sách thiết bị</span>
+          <span className="text-xs font-normal text-muted-foreground">
+            · {meta ? `${meta.totalItems} kết quả` : "—"}
+          </span>
+          <Loader2
+            className={`h-3.5 w-3.5 animate-spin text-muted-foreground transition-opacity ${
+              listQuery.isFetching && !listQuery.isLoading
+                ? "opacity-100"
+                : "opacity-0"
+            }`}
+            aria-label="Đang làm mới"
+          />
+        </div>
+        <IotDeviceFilterBar
+          searchValue={searchInput}
+          onSearchChange={setSearchInput}
+          status={status}
+          onStatusChange={handleStatusChange}
+          limit={limit}
+          onLimitChange={handleLimitChange}
+          hasActiveFilter={hasActiveFilter}
+          onClear={handleClearFilters}
+        />
+      </div>
 
-        <CardContent className="pt-5">
-          {listQuery.isError ? (
+      <div className="min-h-[420px]">
+        {listQuery.isError ? (
             <ErrorState
               message="Không thể tải danh sách thiết bị. Thử lại sau."
               onRetry={() => listQuery.refetch()}
@@ -358,8 +440,7 @@ export default function AdminIotDevicesPage() {
               />
             )}
           </div>
-        </CardContent>
-      </Card>
+      </div>
 
       <DeleteIotDeviceAlert
         device={deleteTarget}
