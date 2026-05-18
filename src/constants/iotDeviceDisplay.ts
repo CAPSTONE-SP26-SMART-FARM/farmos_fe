@@ -13,7 +13,7 @@ import {
 import type { DeviceStatusType } from "@/schemaValidatation/iotDevice";
 
 export const DEVICE_TYPE_LABEL: Record<string, string> = {
-  board_module: "Bo mạch",
+  board_module: "Vi xử lý",
   wifi_module: "Mô-đun WiFi",
   lora_module: "Mô-đun LoRa",
 };

@@ -7,6 +7,12 @@ export interface NavItem {
   url: string;
   icon: LucideIcon;
   isActive?: boolean;
+  items?: NavSubItem[];
+}
+
+export interface NavSubItem {
+  title: string;
+  url: string;
 }
 
 export interface NavGroup {

@@ -208,7 +208,7 @@ export default function IotDeviceDetail({
               />
               {device.iotDeviceBoardId && (
                 <InfoRow
-                  label="Mã bo mạch"
+                  label="Mã vi xử lý"
                   value={<span className="font-mono">{device.iotDeviceBoardId}</span>}
                 />
               )}
@@ -286,11 +286,11 @@ export default function IotDeviceDetail({
           <CollapsibleTrigger className="w-full text-left">
             <CardHeader className="hover:bg-muted/30 transition-colors rounded-t-xl">
               <CardTitle className="flex items-center justify-between">
-                <span>Cảm biến trên bo mạch ({device.sensors.length}/4)</span>
+                <span>Cảm biến trên vi xử lý ({device.sensors.length}/4)</span>
                 <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 in-data-[state=open]:rotate-180" />
               </CardTitle>
               <CardDescription>
-                Cảm biến được trả trực tiếp từ chi tiết gán Iot kit. Không thể chỉnh sửa từ trang này.
+                Danh sách cảm biến đã cấu hình. Không thể chỉnh sửa từ trang này.
               </CardDescription>
             </CardHeader>
           </CollapsibleTrigger>
@@ -324,7 +324,7 @@ export default function IotDeviceDetail({
                 <span>Thiết bị con ({device.subDevices.length})</span>
                 <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 in-data-[state=open]:rotate-180" />
               </CardTitle>
-              <CardDescription>WiFi/LoRa được liên kết cùng board module.</CardDescription>
+              <CardDescription>Các mô-đun phụ kết nối cùng vi xử lý chính.</CardDescription>
             </CardHeader>
           </CollapsibleTrigger>
           <CollapsibleContent>
@@ -334,7 +334,7 @@ export default function IotDeviceDetail({
               ) : (
                 <div className="space-y-3">
                   {device.subDevices.map((sub) => (
-                    <SubDeviceCard key={sub.id} device={sub} actor={actor} />
+                    <SubDeviceCard key={sub.id} device={sub} />
                   ))}
                 </div>
               )}
@@ -369,42 +369,29 @@ function SensorCard({
 
 function SubDeviceCard({
   device,
-  actor,
 }: {
   device: IotDeviceDetailResType["subDevices"][number];
-  actor: IotActor;
 }) {
   const DIcon = useMemo(
     () => DEVICE_TYPE_ICON[device.deviceType] ?? Cpu,
     [device.deviceType],
   );
-  const sMeta = STATUS_META[device.status] ?? STATUS_META.available;
-  const SIcon = sMeta.icon;
-  const statusLabel = actor === "admin" ? sMeta.labelAdmin : sMeta.labelUser;
 
   return (
     <div className="space-y-3 rounded-lg border bg-background p-3">
+      {/*
+        Sub-device là module phụ thuộc board chính (WiFi/LoRa). Status và
+        installedAt của sub-device không tự đứng nghĩa — admin/owner chỉ cần
+        biết status của board chính. Bỏ status badge + ngày cài để giảm noise.
+      */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <DIcon className="h-4 w-4 text-primary" />
           <span className="font-medium">{device.deviceName}</span>
         </div>
-        <div className="flex flex-wrap items-center gap-1">
-          <Badge variant="outline">
-            {DEVICE_TYPE_LABEL[device.deviceType] ?? device.deviceType}
-          </Badge>
-          <span
-            className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium ${sMeta.badgeClass}`}
-          >
-            <SIcon className="h-3 w-3" />
-            {statusLabel}
-          </span>
-        </div>
-      </div>
-
-      <div className="text-xs text-muted-foreground">
-        <span className="font-medium text-foreground">Cài đặt: </span>
-        {new Date(device.installedAt).toLocaleDateString("vi-VN")}
+        <Badge variant="outline">
+          {DEVICE_TYPE_LABEL[device.deviceType] ?? device.deviceType}
+        </Badge>
       </div>
 
       {device.deviceType === "wifi_module" && device.macAddress && (

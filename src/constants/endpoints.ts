@@ -175,6 +175,24 @@ export const API_ENDPOINTS = {
       LOG_LIST: "/iot-device-provisioning/admin/iot-device-log",
       LOG_DETAIL: (logId: string) =>
         `/iot-device-provisioning/admin/iot-device-log/${logId}`,
+      // ── A1–A5 UX endpoints (xem qa-iot-flows/admin-ux-api-contracts.html)
+      IOT_OVERVIEW: "/dashboard/admin/iot-overview", // A1
+      DECISION_CONTEXT: (deviceId: string) =>
+        `/iot-device-provisioning/admin/iot-device/${deviceId}/decision-context`, // A2
+      INSTALL_QUEUE: "/iot-device-provisioning/admin/iot-device/install-queue", // A3a
+      BULK_SET_STATUS:
+        "/iot-device-provisioning/admin/iot-device/bulk-set-status", // A3b
+      RECOVERY_QUEUE:
+        "/iot-device-provisioning/admin/iot-device/recovery-queue",
+      RECOVERY_BULK_COMPLETE:
+        "/iot-device-provisioning/admin/iot-device/recovery/bulk-complete",
+      INSTALL_MARK_BLOCKED:
+        "/iot-device-provisioning/admin/iot-device/install/mark-blocked",
+      OWNER_OVERVIEW: (ownerId: string) =>
+        `/iot-device-provisioning/admin/owner/${ownerId}/iot-overview`, // A4
+      TIMELINE: (deviceId: string) =>
+        `/iot-device-provisioning/admin/iot-device/${deviceId}/timeline`, // A5
+      SWAP: "/iot-device-provisioning/admin/iot-device/swap",
     },
     WITHDRAWALS: {
       LIST: "/admin/withdrawals",
@@ -823,6 +841,39 @@ export const QUERY_KEYS = {
         ...(query !== undefined ? [query] : []),
       ],
       logDetail: (logId: string) => ["admin", "iot-device-logs", logId],
+      // ── A1–A5 UX query keys ──────────────────────────────────────────
+      iotOverview: () => ["admin", "iot-overview"], // A1
+      decisionContext: (deviceId: string) => [
+        "admin",
+        "iot-devices",
+        deviceId,
+        "decision-context",
+      ], // A2
+      installQueue: (query?: Record<string, unknown>) => [
+        "admin",
+        "iot-devices",
+        "install-queue",
+        ...(query !== undefined ? [query] : []),
+      ], // A3a
+      recoveryQueue: (query?: Record<string, unknown>) => [
+        "admin",
+        "iot-devices",
+        "recovery-queue",
+        ...(query !== undefined ? [query] : []),
+      ],
+      ownerOverview: (ownerId: string) => [
+        "admin",
+        "owners",
+        ownerId,
+        "iot-overview",
+      ], // A4
+      timeline: (deviceId: string, query?: Record<string, unknown>) => [
+        "admin",
+        "iot-devices",
+        deviceId,
+        "timeline",
+        ...(query !== undefined ? [query] : []),
+      ], // A5
     },
     withdrawals: {
       list: (query?: Record<string, unknown>) => [

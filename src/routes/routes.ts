@@ -12,6 +12,12 @@ import AdminKitAssignmentDetailPage from "@/pages/AdminPage/IotKits/AdminKitAssi
 import AdminInvoiceDetailPage from "@/pages/AdminPage/Invoices/AdminInvoiceDetailPage";
 import AdminInvoicesPage from "@/pages/AdminPage/Invoices/AdminInvoicesPage";
 import AdminIotDevicesPage from "@/pages/AdminPage/IotDevices/AdminIotDevicesPage";
+import AdminIotDashboardPage from "@/pages/AdminPage/IotDevices/AdminIotDashboardPage";
+import AdminIotDeviceDecisionPage from "@/pages/AdminPage/IotDevices/AdminIotDeviceDecisionPage";
+import AdminIotInstallQueuePage from "@/pages/AdminPage/IotDevices/AdminIotInstallQueuePage";
+import AdminIotRecoveryQueuePage from "@/pages/AdminPage/IotDevices/AdminIotRecoveryQueuePage";
+import AdminIotDeviceTimelinePage from "@/pages/AdminPage/IotDevices/AdminIotDeviceTimelinePage";
+import AdminOwnerIotOverviewPage from "@/pages/AdminPage/Users/AdminOwnerIotOverviewPage";
 import AdminCreateIotDevicesPage from "@/pages/AdminPage/IotDevices/AdminCreateIotDevicesPage";
 import AdminIotDeviceDetailPage from "@/pages/AdminPage/IotDevices/AdminIotDeviceDetailPage";
 import AdminEditIotDevicePage from "@/pages/AdminPage/IotDevices/AdminEditIotDevicePage";
@@ -187,6 +193,21 @@ const routes: AppRoutes = [
         allowedRoles: [RoleName.Admin],
       },
       {
+        path: "/dashboard/admin/iot-devices/dashboard",
+        component: AdminIotDashboardPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/iot-devices/install-queue",
+        component: AdminIotInstallQueuePage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/iot-devices/recovery-queue",
+        component: AdminIotRecoveryQueuePage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
         path: "/dashboard/admin/iot-kits",
         component: AdminIotKitsPage,
         allowedRoles: [RoleName.Admin],
@@ -209,6 +230,21 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/admin/iot-devices/:deviceId",
         component: AdminIotDeviceDetailPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/iot-devices/:deviceId/decision",
+        component: AdminIotDeviceDecisionPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/iot-devices/:deviceId/timeline",
+        component: AdminIotDeviceTimelinePage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/owners/:ownerId/iot",
+        component: AdminOwnerIotOverviewPage,
         allowedRoles: [RoleName.Admin],
       },
       {
