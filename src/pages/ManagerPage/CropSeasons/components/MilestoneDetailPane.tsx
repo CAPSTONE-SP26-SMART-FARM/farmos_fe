@@ -2,200 +2,45 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarDays, CheckCircle2, ClipboardList, Cpu, Info, Loader2, PlayCircle, Settings, XCircle } from "lucide-react";
+import { CalendarDays, CheckCircle2, ClipboardList, Cpu, Info, Loader2, PlayCircle, Settings } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  useManagerMilestoneAssignment,
+  useManagerIotConfig,
   useManagerGetMilestoneDetail,
   useManagerUpdateProductionMilestone,
 } from "@/queries/useProductionMilestone";
+import { MilestoneIotConfigSummary } from "./MilestoneIotConfigSummary";
 import type { ProductionMilestoneResType } from "@/schemaValidatation/productionMilestone";
-import type {
-  AssignmentBoundSensorResSchema,
-  AssignmentDeviceResSchema,
-} from "@/schemaValidatation/milestoneIotDevice";
-import type { z } from "zod";
 import type { CropSeasonType } from "@/types/cropSeason";
 import ManagerMilestoneTasksSection from "@/pages/ManagerPage/EmployeeTasks/ManagerMilestoneTasksSection";
-import { getSensorMeta } from "@/pages/SensorReadings/utils/sensorDashboard";
 import { MILESTONE_STATUS_META, formatDate } from "./helpers";
-import {
-  formatMilestoneIotLinkedSensorsSubtitle,
-} from "@/lib/milestone-iot-display";
-
-type BoundSensor = z.infer<typeof AssignmentBoundSensorResSchema>;
-type AssignmentDeviceType = z.infer<typeof AssignmentDeviceResSchema>;
 
 // ─────────────────────────────────────────────────────────────
 // Sensor row with device threshold + safe threshold + toggle
 // ─────────────────────────────────────────────────────────────
 
-function SensorConfigRow({ sensor }: { sensor: BoundSensor }) {
-  const [showDeviceRange, setShowDeviceRange] = useState(false);
-
-  const meta = getSensorMeta(sensor.sensorType);
-  const Icon = meta.icon;
-  const unit = sensor.unit || meta.unit;
-  const { optimalMin, optimalMax } = sensor.threshold;
-  const deviceMin = sensor.minValue ?? null;
-  const deviceMax = sensor.maxValue ?? null;
-  const hasDeviceRange = deviceMin !== null && deviceMax !== null;
-
-  const withUnit = (v: number | null) =>
-    v !== null ? `${v}${unit ? ` ${unit}` : ""}` : "—";
-
-  return (
-    <div className="rounded-md border bg-muted/20 px-3 py-2.5 space-y-2.5">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
-          <p className="text-sm font-medium truncate">
-            {sensor.sensorName || meta.label}
-          </p>
-        </div>
-        <Badge
-          variant={sensor.status === "active" ? "default" : "secondary"}
-          className="text-[10px] shrink-0"
-        >
-          {sensor.status === "active" ? "Hoạt động" : sensor.status}
-        </Badge>
-      </div>
-
-      <Separator className="opacity-50" />
-
-      {/* Ngưỡng an toàn */}
-      <div className="flex items-center justify-between text-xs">
-        <span className="text-muted-foreground">Ngưỡng an toàn</span>
-        <div className="flex items-center gap-1.5">
-          <span className="font-medium">
-            {optimalMin !== null || optimalMax !== null
-              ? `${withUnit(optimalMin)} – ${withUnit(optimalMax)}`
-              : "Chưa cấu hình"}
-          </span>
-        </div>
-      </div>
-
-      {/* Ngưỡng thiết bị */}
-      <div className="flex items-center justify-between text-xs">
-        <span className="text-muted-foreground">Ngưỡng thiết bị</span>
-        {hasDeviceRange ? (
-          <div className="flex items-center gap-1.5">
-            {showDeviceRange && (
-              <span className="font-medium">
-                {withUnit(deviceMin)} – {withUnit(deviceMax)}
-              </span>
-            )}
-            <Switch
-              checked={showDeviceRange}
-              onCheckedChange={setShowDeviceRange}
-              className="scale-75 origin-right"
-            />
-          </div>
-        ) : (
-          <span className="text-muted-foreground italic text-[10px]">
-            Chờ backend bổ sung
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// IoT Config Tab
-// ─────────────────────────────────────────────────────────────
-
-function IotConfigContent({
-  sensors,
-  device,
-}: {
-  sensors: BoundSensor[];
-  device: AssignmentDeviceType;
-}) {
-  return (
-    <div className="space-y-3">
-      {/* Device info */}
-      <div className="flex items-center gap-3 rounded-md border px-3 py-2.5 text-sm">
-        <Cpu className="h-4 w-4 text-muted-foreground shrink-0" />
-        <div className="min-w-0">
-          <p className="font-medium truncate">
-            {device.deviceName?.trim() || "Thiết bị không xác định"}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {formatMilestoneIotLinkedSensorsSubtitle(device, sensors.length)}
-          </p>
-        </div>
-        <div className="ml-auto flex items-center gap-1.5 shrink-0">
-          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-xs text-muted-foreground">Hoạt động</span>
-        </div>
-      </div>
-
-      {/* Sensors */}
-      {sensors.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-4">
-          Chưa có cảm biến nào được liên kết
-        </p>
-      ) : (
-        <div className="space-y-2">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            Cảm biến & Ngưỡng
-          </p>
-          {sensors.map((sensor) => (
-            <SensorConfigRow key={sensor.sensorId} sensor={sensor} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function IotConfigTab({
+  cropSeasonId,
   milestoneId,
   isWizardState,
   onGoConfig,
 }: {
+  cropSeasonId: string;
   milestoneId: string;
   isWizardState: boolean;
   onGoConfig: () => void;
 }) {
-  const assignmentQuery = useManagerMilestoneAssignment(milestoneId, true);
-  const assignment = assignmentQuery.data?.data?.data ?? null;
-
-  if (assignmentQuery.isLoading) {
-    return (
-      <div className="space-y-2">
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-20 w-full" />
-        <Skeleton className="h-20 w-full" />
-      </div>
-    );
-  }
-
-  if (!assignment) {
-    return (
-      <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-950/20 px-3 py-2.5 text-sm">
-        <XCircle className="h-4 w-4 text-amber-500 shrink-0" />
-        <span className="text-amber-700 dark:text-amber-400">Chưa gán thiết bị IoT</span>
-        {isWizardState && (
-          <Button size="sm" variant="outline" onClick={onGoConfig} className="ml-auto h-7 text-xs">
-            Cấu hình IoT
-          </Button>
-        )}
-      </div>
-    );
-  }
-
+  const cfgQuery = useManagerIotConfig(cropSeasonId, milestoneId, true);
+  const config = cfgQuery.data?.data;
   return (
-    <IotConfigContent
-      sensors={assignment.sensors}
-      device={assignment.device}
+    <MilestoneIotConfigSummary
+      config={config}
+      isLoading={cfgQuery.isLoading}
+      isWizardState={isWizardState}
+      onGoConfig={onGoConfig}
     />
   );
 }
@@ -487,7 +332,7 @@ export function MilestoneDetailPane({
           </TabsContent>
 
           <TabsContent value="iot" className="mt-3">
-            <IotConfigTab milestoneId={milestone.id} isWizardState={false} onGoConfig={onGoConfig} />
+            <IotConfigTab cropSeasonId={cropSeason.id} milestoneId={milestone.id} isWizardState={false} onGoConfig={onGoConfig} />
           </TabsContent>
         </Tabs>
       ) : (
@@ -499,7 +344,7 @@ export function MilestoneDetailPane({
             </TabsTrigger>
           </TabsList>
           <TabsContent value="iot" className="mt-3">
-            <IotConfigTab milestoneId={milestone.id} isWizardState={true} onGoConfig={onGoConfig} />
+            <IotConfigTab cropSeasonId={cropSeason.id} milestoneId={milestone.id} isWizardState={true} onGoConfig={onGoConfig} />
           </TabsContent>
         </Tabs>
       )}

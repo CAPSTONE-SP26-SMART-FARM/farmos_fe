@@ -39,11 +39,26 @@ export const AssignmentBoundSensorResSchema = z.object({
   }),
 });
 
+export const DEVICE_STATUS_VALUES = [
+  "available",
+  "purchase",
+  "install",
+  "active",
+  "error",
+  "revoked",
+] as const;
+export const DeviceStatusSchema = z.enum(DEVICE_STATUS_VALUES);
+export type DeviceStatusType = z.infer<typeof DeviceStatusSchema>;
+
 export const AssignmentDeviceResSchema = z.object({
   deviceId: z.string().uuid(),
   deviceName: z.string(),
   deviceCode: z.string(),
+  /** Nhãn dán vật lý unique tự tăng (K001, W001...). */
+  label: z.string(),
   deviceType: z.string(),
+  /** Real device status (active/error/install/...). */
+  status: z.string(),
   isDeleted: z.boolean(),
 });
 
@@ -70,6 +85,15 @@ export const GetMilestoneAssignmentDetailResSchema = z.object({
 export const ListMilestoneAssignmentsResSchema = z.object({
   data: z.array(MilestoneAssignmentDetailResSchema),
 });
+
+// Paginated/filtered search of active assignments for a milestone.
+export const SearchMilestoneAssignmentsQuerySchema = PagingRequestSchema.extend({
+  q: z.string().trim().min(1).optional(),
+  status: DeviceStatusSchema.optional(),
+});
+export const SearchMilestoneAssignmentsResSchema = PagingResponseSchema(
+  MilestoneAssignmentDetailResSchema,
+);
 
 // ── Assign / Unassign Bodies ──────────────────────────────────────────────────
 
@@ -162,6 +186,12 @@ export type MilestoneAssignmentDetailItemType = z.infer<
 >;
 export type ListMilestoneAssignmentsResType = z.infer<
   typeof ListMilestoneAssignmentsResSchema
+>;
+export type SearchMilestoneAssignmentsQueryType = z.infer<
+  typeof SearchMilestoneAssignmentsQuerySchema
+>;
+export type SearchMilestoneAssignmentsResType = z.infer<
+  typeof SearchMilestoneAssignmentsResSchema
 >;
 export type AssignIotDeviceBodyType = z.infer<typeof AssignIotDeviceBodySchema>;
 export type UnassignIotDeviceBodyType = z.infer<
