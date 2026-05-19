@@ -33,6 +33,27 @@ export const GetLatestReadingsByAssignmentResSchema = z.object({
   data: z.array(LatestSensorReadingResSchema),
 });
 
+// ── Time-series readings (per-sensor chart) ────────────────────────────
+
+export const ListSensorReadingsQuerySchema = z.object({
+  from: z.string().datetime().optional(),
+  to: z.string().datetime().optional(),
+  limit: z.number().int().positive().max(50).optional(),
+});
+
+export const SensorReadingPointSchema = z.object({
+  timestamp: z.string(),
+  value: z.number(),
+});
+
+export const ListSensorReadingsResSchema = z.object({
+  assignmentId: z.string().uuid(),
+  sensorId: z.string().uuid(),
+  sensorType: SensorTypeSchema,
+  unit: z.string().nullable(),
+  data: z.array(SensorReadingPointSchema),
+});
+
 // ── Type exports ───────────────────────────────────────────────────────
 
 export type ThresholdSourceType = z.infer<typeof ThresholdSourceSchema>;
@@ -41,4 +62,11 @@ export type LatestSensorReadingResType = z.infer<
 >;
 export type GetLatestReadingsByAssignmentResType = z.infer<
   typeof GetLatestReadingsByAssignmentResSchema
+>;
+export type ListSensorReadingsQueryType = z.infer<
+  typeof ListSensorReadingsQuerySchema
+>;
+export type SensorReadingPointType = z.infer<typeof SensorReadingPointSchema>;
+export type ListSensorReadingsResType = z.infer<
+  typeof ListSensorReadingsResSchema
 >;

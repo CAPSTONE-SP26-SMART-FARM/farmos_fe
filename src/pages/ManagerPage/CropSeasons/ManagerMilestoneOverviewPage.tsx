@@ -1,3 +1,9 @@
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import {
   Breadcrumb,
@@ -29,7 +35,7 @@ import {
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import {
   useManagerListProductionMilestones,
-  useManagerMilestoneAssignment,
+  useManagerListMilestoneAssignments,
 } from "@/queries/useProductionMilestone";
 import { useManagerCropSeasonDetail } from "@/queries/useCropSeason";
 import { useDynamicBreadcrumb } from "@/stores/breadcrumbStore";
@@ -343,8 +349,8 @@ export default function ManagerMilestoneOverviewPage() {
     milestone?.stageName,
   );
 
-  const assignmentQuery = useManagerMilestoneAssignment(msId, !!msId);
-  const assignment = assignmentQuery.data?.data?.data ?? null;
+  const assignmentsQuery = useManagerListMilestoneAssignments(msId, !!msId);
+  const assignments = assignmentsQuery.data?.data?.data ?? [];
 
   // Loading
   if (listQuery.isLoading || cropSeasonQuery.isLoading) {
@@ -514,7 +520,39 @@ export default function ManagerMilestoneOverviewPage() {
       </Card>
 
       {/* IoT & Sensors */}
-      <IotSensorSection assignment={assignment} />
+      {assignments.length === 0 ? (
+        <IotSensorSection assignment={null} />
+      ) : assignments.length === 1 ? (
+        <IotSensorSection assignment={assignments[0]} />
+      ) : (
+        <Accordion
+          type="multiple"
+          defaultValue={[assignments[0].assignmentId]}
+          className="rounded-md border divide-y bg-card"
+        >
+          {assignments.map((a) => (
+            <AccordionItem key={a.assignmentId} value={a.assignmentId} className="px-3">
+              <AccordionTrigger className="py-2.5">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Cpu className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="text-sm font-semibold shrink-0">
+                    {a.device.label}
+                  </span>
+                  <span className="text-xs text-muted-foreground truncate">
+                    {a.device.deviceName?.trim() || "Thiết bị không xác định"}
+                  </span>
+                  <Badge variant="outline" className="text-[10px] shrink-0">
+                    {a.sensors.length} cảm biến
+                  </Badge>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <IotSensorSection assignment={a} />
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      )}
 
       {/* Tasks — read-only */}
       <Card>

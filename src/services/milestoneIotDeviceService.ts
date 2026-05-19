@@ -10,6 +10,8 @@ import type {
   ListAvailableIotDevicesResType,
   ListBoundSensorsResType,
   ListMilestoneAssignmentsResType,
+  SearchMilestoneAssignmentsQueryType,
+  SearchMilestoneAssignmentsResType,
   UnassignIotDeviceBodyType,
   UnbindSensorsBodyType,
 } from "@/schemaValidatation/milestoneIotDevice";
@@ -31,6 +33,19 @@ export const milestoneIotDeviceService = {
   listAssignments: (milestoneId: string) =>
     api.get<ListMilestoneAssignmentsResType>(
       MANAGER.MILESTONE_IOT_DEVICE.ASSIGNMENTS(milestoneId),
+    ),
+
+  searchAssignments: (
+    milestoneId: string,
+    query: SearchMilestoneAssignmentsQueryType,
+  ) =>
+    api.get<SearchMilestoneAssignmentsResType>(
+      MANAGER.MILESTONE_IOT_DEVICE.ASSIGNMENTS_SEARCH(milestoneId) +
+        "?" +
+        queryString.stringify(
+          { ...query },
+          { skipEmptyString: true, skipNull: true },
+        ),
     ),
 
   listAvailable: (
@@ -87,6 +102,19 @@ export const ownerMilestoneIotDeviceService = {
   listAssignments: (milestoneId: string) =>
     api.get<ListMilestoneAssignmentsResType>(
       OWNER.MILESTONE_IOT_DEVICE.ASSIGNMENTS(milestoneId),
+    ),
+
+  searchAssignments: (
+    milestoneId: string,
+    query: SearchMilestoneAssignmentsQueryType,
+  ) =>
+    api.get<SearchMilestoneAssignmentsResType>(
+      OWNER.MILESTONE_IOT_DEVICE.ASSIGNMENTS_SEARCH(milestoneId) +
+        "?" +
+        queryString.stringify(
+          { ...query },
+          { skipEmptyString: true, skipNull: true },
+        ),
     ),
 
   listAvailable: (

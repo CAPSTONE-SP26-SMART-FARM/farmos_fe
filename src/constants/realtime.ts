@@ -40,6 +40,11 @@ export const RealtimeEvents = {
   WalletCredited: "doctor.wallet.credited",
   // BE đã có sẵn — emit khi prescription được tạo/reissue.
   PrescriptionCreated: "prescription.incident.created",
+  // IoT device lifecycle — BE emit khi board chuyển trạng thái (vd: install
+  // → active khi nhận data lần đầu, hoặc các transition khác qua provisioning).
+  IotDeviceActivated: "iot.device.activated",
+  IotDeviceStatusChanged: "iot.device.status.changed",
+  IotDeviceSwapped: "iot.device.swapped",
 } as const;
 export type RealtimeEventName =
   (typeof RealtimeEvents)[keyof typeof RealtimeEvents];
