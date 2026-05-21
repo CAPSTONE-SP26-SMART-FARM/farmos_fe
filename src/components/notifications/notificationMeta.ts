@@ -56,7 +56,9 @@ const META: Partial<Record<RealtimeEventName, EventMeta>> = {
     kind: NotificationKind.SensorAlert,
     severity: "error",
     title: "Cảnh báo cảm biến",
-    shouldToast: true,
+    // Toast được handle riêng trong useRealtimeEvents (rich data + mở dialog
+    // detail global thay vì navigate). Ở đây chỉ build notification cho bell.
+    shouldToast: false,
     buildHref: (p, role) => {
       const zoneId = strField(p, "zoneId");
       return zoneId

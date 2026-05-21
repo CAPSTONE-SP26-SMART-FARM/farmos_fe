@@ -1,5 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
+import { memo, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -33,8 +32,6 @@ type SeverityMeta = {
   bg: string;
   ring: string;
   dot: string;
-  rank: number;
-  toast: "info" | "warning" | "error";
 };
 
 const SEVERITY_META: Record<IncidentSeverityType, SeverityMeta> = {
@@ -45,8 +42,6 @@ const SEVERITY_META: Record<IncidentSeverityType, SeverityMeta> = {
     bg: "bg-blue-50 dark:bg-blue-950/40",
     ring: "ring-blue-200 dark:ring-blue-900/60",
     dot: "bg-blue-500",
-    rank: 0,
-    toast: "info",
   },
   medium: {
     label: "Trung bình",
@@ -55,8 +50,6 @@ const SEVERITY_META: Record<IncidentSeverityType, SeverityMeta> = {
     bg: "bg-amber-50 dark:bg-amber-950/40",
     ring: "ring-amber-200 dark:ring-amber-900/60",
     dot: "bg-amber-500",
-    rank: 1,
-    toast: "warning",
   },
   high: {
     label: "Cao",
@@ -65,8 +58,6 @@ const SEVERITY_META: Record<IncidentSeverityType, SeverityMeta> = {
     bg: "bg-orange-50 dark:bg-orange-950/40",
     ring: "ring-orange-200 dark:ring-orange-900/60",
     dot: "bg-orange-500",
-    rank: 2,
-    toast: "warning",
   },
   critical: {
     label: "Nghiêm trọng",
@@ -75,8 +66,6 @@ const SEVERITY_META: Record<IncidentSeverityType, SeverityMeta> = {
     bg: "bg-red-50 dark:bg-red-950/40",
     ring: "ring-red-200 dark:ring-red-900/60",
     dot: "bg-red-500",
-    rank: 3,
-    toast: "error",
   },
 };
 
@@ -248,44 +237,8 @@ export default memo(function AlertList() {
   const { data, isLoading, isFetching } = useListAlerts({ page: 1, limit: 8 });
   const alerts = useMemo<AlertResType[]>(() => data?.data ?? [], [data]);
 
-  // Toast on new unresolved alerts (compare IDs between refetches). Skip the
-  // very first load so we do not spam the user with backlog notifications on
-  // page open — we only want to announce alerts that arrive live.
-  const seenIdsRef = useRef<Set<string> | null>(null);
-  useEffect(() => {
-    if (isLoading) return;
-    const active = alerts.filter((a) => !a.isResolved);
-
-    if (seenIdsRef.current === null) {
-      seenIdsRef.current = new Set(active.map((a) => a.id));
-      return;
-    }
-
-    const seen = seenIdsRef.current;
-    const fresh = active.filter((a) => !seen.has(a.id));
-    if (fresh.length > 0) {
-      // Sort by severity so the worst one becomes the "headline" toast.
-      fresh.sort(
-        (a, b) => SEVERITY_META[b.severity].rank - SEVERITY_META[a.severity].rank,
-      );
-      const head = fresh[0];
-      const meta = SEVERITY_META[head.severity];
-      const extra = fresh.length - 1;
-      toast[meta.toast](
-        extra > 0 ? `${head.title} (+${extra} cảnh báo khác)` : head.title,
-        {
-          description: `${head.zoneName} • ${head.message}`,
-          duration: head.severity === "critical" ? 10_000 : 6_000,
-          action: {
-            label: "Xem",
-            onClick: () => setSelected(head),
-          },
-        },
-      );
-    }
-
-    seenIdsRef.current = new Set(active.map((a) => a.id));
-  }, [alerts, isLoading]);
+  // Toast khi có alert mới được handle bởi GlobalAlertDetailDialog/useRealtimeEvents
+  // ở cấp layout — không lặp lại ở đây.
 
   const { activeAlerts, severityCounts } = useMemo(() => {
     const active: AlertResType[] = [];
