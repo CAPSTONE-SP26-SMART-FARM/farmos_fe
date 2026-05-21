@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import { AlertTriangle, ChevronLeft, ChevronRight, Radio } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,15 +13,14 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useManagerListProductionMilestones,
-  useManagerSearchMilestoneAssignments,
+  useManagerMilestoneAssignment,
 } from "@/queries/useProductionMilestone";
 import {
-  useManagerSensorReadingSeries,
+  useManagerLatestSensorReadings,
   useMilestoneAssignmentsRealtime,
   useSensorReadingRealtime,
 } from "@/queries/useSensorReading";
-import { MilestoneAssignmentsList } from "./MilestoneAssignmentsList";
-import { SensorChart } from "./SensorChart";
+import SensorCard from "@/pages/SensorReadings/components/SensorCard";
 import { useZoneSubscription } from "@/hooks/useZoneSubscription";
 import { useListAlerts } from "@/queries/useAlert";
 import type { AlertResType } from "@/schemaValidatation/alert";
@@ -224,49 +224,29 @@ function AlertsPanel({ isLoading }: { isLoading: boolean }) {
   );
 }
 
-function AssignmentChartsBlock({
-  assignmentId,
-  zoneId,
-  sensors,
-}: {
-  assignmentId: string;
-  zoneId: string;
-  sensors: Array<{
-    sensorId: string;
-    sensorType: string;
-    sensorName: string;
-    unit: string | null;
-    threshold: { optimalMin: number | null; optimalMax: number | null } | null;
-  }>;
-}) {
-  useZoneSubscription(zoneId);
-  useSensorReadingRealtime(assignmentId, "manager");
-  if (sensors.length === 0) {
-    return <p className="text-sm text-muted-foreground py-4 text-center">Chưa có cảm biến nào được liên kết</p>;
-  }
-  return (
-    <div className="space-y-3">
-      {sensors.map((s) => (
-        <SensorChart
-          key={s.sensorId}
-          assignmentId={assignmentId}
-          sensorId={s.sensorId}
-          sensorType={s.sensorType}
-          sensorName={s.sensorName}
-          unit={s.unit}
-          threshold={s.threshold}
-          useSeries={useManagerSensorReadingSeries}
-        />
-      ))}
-    </div>
-  );
-}
-
 function MilestoneSensorSection({ milestone }: { milestone: ProductionMilestoneResType }) {
+  const navigate = useNavigate();
+  const assignmentQuery = useManagerMilestoneAssignment(milestone.id, true);
+  const assignment = assignmentQuery.data?.data?.data ?? null;
+  const assignmentId = assignment?.assignmentId ?? "";
+  const zoneId = assignment?.zoneId ?? "";
+  const readingsQuery = useManagerLatestSensorReadings(assignmentId, !!assignmentId);
+  const readings = readingsQuery.data?.data ?? [];
+  useZoneSubscription(zoneId || undefined);
+  useSensorReadingRealtime(assignmentId || undefined, "manager");
   const meta = MILESTONE_STATUS_META[milestone.status] ?? {
     label: milestone.status,
     variant: "secondary" as const,
   };
+
+  if (assignmentQuery.isLoading) return <Skeleton className="h-48 w-full rounded-lg" />;
+  if (!assignment) return null;
+
+  function goToDetail(sensorId: string) {
+    navigate(
+      `/dashboard/manager/sensor-readings/${assignmentId}/sensors/${sensorId}`,
+    );
+  }
 
   return (
     <div className="space-y-3">
@@ -280,17 +260,27 @@ function MilestoneSensorSection({ milestone }: { milestone: ProductionMilestoneR
         </div>
         <Separator className="flex-1" />
       </div>
-      <MilestoneAssignmentsList
-        milestoneId={milestone.id}
-        useSearch={useManagerSearchMilestoneAssignments}
-        renderAssignment={(a) => (
-          <AssignmentChartsBlock
-            assignmentId={a.assignmentId}
-            zoneId={a.zoneId}
-            sensors={a.sensors}
-          />
-        )}
-      />
+      {readingsQuery.isLoading ? (
+        <div className="grid grid-cols-2 gap-3">
+          {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-36" />)}
+        </div>
+      ) : readings.length === 0 ? (
+        <p className="text-sm text-muted-foreground py-4 text-center">Chưa có dữ liệu cảm biến</p>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          {readings.map((r) => (
+            <button
+              key={r.sensorId}
+              type="button"
+              onClick={() => goToDetail(r.sensorId)}
+              className="text-left rounded-lg transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+              title="Xem chi tiết cảm biến"
+            >
+              <SensorCard reading={r} />
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

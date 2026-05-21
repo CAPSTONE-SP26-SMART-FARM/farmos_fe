@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Integration — Sensor Detail APIs (FE web + Mobile)</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+<h1>Integration — Sensor Detail APIs</h1>
+
+<p>Tài liệu tích hợp cho <strong>FE web</strong> (role <b>owner</b> + <b>manager</b>) và
+<strong>app mobile</strong> (role <b>farmer</b>). Luồng: danh sách milestone → danh sách thiết bị
+(assignment) → danh sách sensor → biểu đồ &amp; thống kê 1 sensor.</p>
+
+<div class="legend">
+  <span><span class="dot dot-green"></span> Endpoint đã có sẵn</span>
+  <span><span class="dot dot-accent"></span> Endpoint mới</span>
+  <span><span class="dot dot-purple"></span> owner · manager · farmer</span>
+</div>
+
+<blockquote class="bq-info">
+<b>Mô hình truy cập:</b> sensor luôn truy cập <b>trong ngữ cảnh 1 assignment</b> (kit gắn vào milestone).
+Sensor lấy ra từ <b>active binding</b> (<code>ProductionMilestoneIotDeviceSensorBinding</code>). Mọi role
+phải lấy <code>milestoneId</code> → <code>assignmentId</code> trước khi gọi API sensor.
+</blockquote>
+
+<blockquote class="bq-success">
+<b>3 role dùng chung bộ API.</b> Bước 3–4 (sensor) giống hệt nhau cho owner/manager/farmer — chỉ
+bước 1–2 (điều hướng) khác route theo role. <a href="#api2">API 2</a> &amp; <a href="#api3">API 3</a>
+là route chung, không có prefix role.
+</blockquote>
+
+<div class="toc">
+<b>Mục lục</b>
+<ol>
+  <li><a href="#flow">Luồng màn hình &amp; thứ tự gọi API</a></li>
+  <li><a href="#auth">Xác thực &amp; response wrapper</a></li>
+  <li><a href="#nav">Bước 1–2 — Điều hướng tới assignment</a></li>
+  <li><a href="#api1">API 1 — Danh sách sensor của assignment</a></li>
+  <li><a href="#api2">API 2 — Time-series theo interval</a></li>
+  <li><a href="#api3">API 3 — Summary stats (4 badge)</a></li>
+  <li><a href="#errors">Lỗi chung</a></li>
+  <li><a href="#wiring">Ví dụ wiring</a></li>
+</ol>
+</div>
+
+<h2 id="flow">1. Luồng màn hình &amp; thứ tự gọi API</h2>
+
+<p>Có <b>2 luồng screen</b>. <code>owner</code> và <code>manager</code> đi <b>cùng một luồng</b>
+(chỉ khác scope dữ liệu + prefix role trong URL) nên gộp chung; <code>farmer</code> khác entry point
+ở bước 1–2 nên tách riêng. Từ bước 3 (sensor) trở đi cả 3 role <b>giống hệt</b>.</p>
+
+<table>
+<thead><tr><th>Role</th><th>Nền tảng</th><th>Luồng screen</th><th>Khác biệt</th></tr></thead>
+<tbody>
+<tr><td><span class="badge b-role">owner</span></td><td>FE web</td><td><b>Luồng A</b></td><td>—</td></tr>
+<tr><td><span class="badge b-role">manager</span></td><td>FE web</td><td><b>Luồng A</b></td><td>Trùng owner — chỉ khác scope dữ liệu &amp; prefix <code>/manager/</code></td></tr>
+<tr><td><span class="badge b-role">farmer</span></td><td>Mobile</td><td><b>Luồng B</b></td><td>Entry point bước 1–2 khác (milestone-centric)</td></tr>
+</tbody>
+</table>
+
+<h3>Luồng A — owner / manager (FE web)</h3>
+<table>
+<thead><tr><th>#</th><th>Màn hình</th><th>API gọi</th><th>Lấy ra</th></tr></thead>
+<tbody>
+<tr><td>A1</td><td>Mùa vụ → danh sách milestone</td>
+  <td><code>GET production-milestone/{owner|manager}/crop-season</code></td><td><code>milestoneId</code></td></tr>
+<tr><td>A2</td><td>Thiết bị (assignment) của milestone</td>
+  <td><code>GET production-milestone-iot-device/{owner|manager}/milestone/:milestoneId/assignments</code></td><td><code>assignmentId</code></td></tr>
+<tr><td>A3</td><td>Sensor của 1 thiết bị</td>
+  <td><a href="#api1">API 1</a> — <code>sensor-reading/{owner|manager}/assignment/:assignmentId/latest</code></td><td><code>sensorId</code></td></tr>
+<tr><td>A4</td><td>Chi tiết 1 sensor (chart + 4 badge)</td>
+  <td><a href="#api2">API 2</a> series-interval + <a href="#api3">API 3</a> stats</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h3>Luồng B — farmer (mobile)</h3>
+<table>
+<thead><tr><th>#</th><th>Màn hình</th><th>API gọi</th><th>Lấy ra</th></tr></thead>
+<tbody>
+<tr><td>B1</td><td>Tab "Trang trại" → milestone hiện tại/sắp tới</td>
+  <td><code>GET production-milestone/farmer/current-upcoming-milestones</code></td><td><code>milestoneId</code></td></tr>
+<tr><td>B2</td><td>Chi tiết milestone → danh sách thiết bị</td>
+  <td><code>GET production-milestone/farmer/milestones/:milestoneId/assignments</code></td><td><code>assignmentId</code></td></tr>
+<tr><td>B3</td><td>Chi tiết thiết bị → danh sách sensor</td>
+  <td><a href="#api1">API 1</a> — <code>sensor-reading/farmer/assignment/:assignmentId/latest</code></td><td><code>sensorId</code></td></tr>
+<tr><td>B4</td><td>Chi tiết 1 sensor (chart + 4 badge)</td>
+  <td><a href="#api2">API 2</a> series-interval + <a href="#api3">API 3</a> stats</td><td>—</td></tr>
+</tbody>
+</table>
+
+<blockquote class="bq-info">
+<b>Khác biệt:</b> chỉ ở bước 1–2 (điều hướng tới <code>assignmentId</code>) — owner/manager đi qua
+<b>crop-season</b>, farmer đi qua <b>current-upcoming-milestones</b>. Bước 3 (<a href="#api1">API 1</a>)
+chỉ khác <b>prefix role</b> trong route; bước 4 (<a href="#api2">API 2</a>+<a href="#api3">3</a>) là
+<b>route chung</b> y hệt cho cả 3 role.
+</blockquote>
+
+<h2 id="auth">2. Xác thực &amp; response wrapper</h2>
+
+<ul>
+  <li>Mọi request: header <code>Authorization: Bearer &lt;accessToken&gt;</code>.</li>
+  <li>Role: <span class="badge b-role">owner</span> <span class="badge b-role">manager</span> <span class="badge b-role">farmer</span>. Role khác → <code>403</code>.</li>
+  <li><b>owner</b>: sở hữu farm + subscription active. <b>manager / farmer</b>: thành viên active của farm.</li>
+  <li>Response bọc wrapper chuẩn — đọc trường <code>data</code>:
+    <pre><code>{ "statusCode": 200, "message": "Success", "data": { ... } }</code></pre>
+  </li>
+</ul>
+
+<h2 id="nav">3. Bước 1–2 — Điều hướng tới assignment</h2>
+
+<h3>Bước 1 — Danh sách milestone</h3>
+
+<div class="api-card">
+  <div class="api-card-header">
+    <span class="badge b-get">GET</span> /production-milestone/<b>{owner|manager}</b>/crop-season
+    <span class="badge b-role">owner</span> <span class="badge b-role">manager</span>
+  </div>
+  <div class="api-card-body">
+    <p>Danh sách milestone (phân trang) thuộc crop-season caller quản lý — owner: mọi farm sở hữu;
+    manager: zone được giao. Lấy 1 mùa vụ: <code>/crop-season/:cropSeasonId</code>.</p>
+<pre><code>data: {
+  "data": [
+    { "id": "milestone-uuid", "cropSeasonId": "uuid", "stageName": "Ra hoa",
+      "milestoneOrder": 3, "status": "in_progress", "startDate": "ISO", "endDate": "ISO" }
+  ],
+  "meta": { "page": 1, "limit": 10, "totalItems": 12, "totalPages": 2 }
+}</code></pre>
+  </div>
+</div>
+
+<div class="api-card">
+  <div class="api-card-header">
+    <span class="badge b-get">GET</span> /production-milestone/farmer/current-upcoming-milestones
+    <span class="badge b-role">farmer</span>
+  </div>
+  <div class="api-card-body">
+    <p>Milestone <b>hiện tại</b> (<code>in_progress</code>) + <b>sắp tới</b> (<code>pending</code>) của farmer,
+    mọi zone. Không có query param.</p>
+<pre><code>data: {
+  "data": [
+    { "id": "milestone-uuid", "stageName": "Ra hoa", "milestoneOrder": 3,
+      "status": "in_progress", "cropSeasonId": "uuid",
+      "zoneId": "uuid", "zoneName": "Khu A", "farmId": "uuid", "farmName": "Trang trại Hoa Sen" }
+  ]
+}</code></pre>
+    <p class="muted">Group theo <code>zoneName</code> trên UI nếu farmer trải nhiều zone.</p>
+  </div>
+</div>
+
+<h3>Bước 2 — Danh sách assignment của milestone</h3>
+
+<div class="api-card">
+  <div class="api-card-header">
+    <span class="badge b-get">GET</span>
+    /production-milestone-iot-device/<b>{owner|manager}</b>/milestone/<b>:milestoneId</b>/assignments
+    <span class="badge b-role">owner</span> <span class="badge b-role">manager</span>
+  </div>
+  <div class="api-card-body">
+    <p>IoT assignment (kit gắn vào milestone) + sensor đã bound. Bản phân trang + filter:
+    <code>.../assignments/search?q=&amp;status=&amp;page=&amp;limit=</code>.</p>
+<pre><code>data: [
+  {
+    "assignmentId": "5a8d3f02-...",   // ← chìa khoá cho API 1/2/3
+    "iotDeviceId": "uuid", "milestoneId": "uuid", "zoneId": "uuid", "farmId": "uuid",
+    "device": { "id": "uuid", "label": "K013", "status": "active" },
+    "sensors": [ { "sensorId": "uuid", "sensorType": "soil_moisture" } ]
+  }
+]</code></pre>
+  </div>
+</div>
+
+<div class="api-card">
+  <div class="api-card-header">
+    <span class="badge b-get">GET</span>
+    /production-milestone/farmer/milestones/<b>:milestoneId</b>/assignments
+    <span class="badge b-role">farmer</span>
+  </div>
+  <div class="api-card-body">
+    <p>Danh sách thiết bị gắn vào milestone — phân trang + filter <code>q</code> (tên thiết bị) /
+    <code>status</code> (<code>available|purchase|install|active|error|revoked</code>),
+    <code>page</code>, <code>limit</code>.</p>
+<pre><code>data: {
+  "data": [
+    {
+      "assignmentId": "5a8d3f02-...",   // ← chìa khoá cho API 1/2/3
+      "startAt": "ISO" | null, "endAt": "ISO" | null, "assignedAt": "ISO",
+      "device": { "iotDeviceId", "deviceName", "deviceType", "macAddress", "status" },
+      "sensors": [ { "sensorId", "sensorType", "status", "minValue", "maxValue" } ]
+    }
+  ],
+  "meta": { "page", "limit", "totalItems", "totalPages", "hasNextPage", "hasPreviousPage" }
+}</code></pre>
+    <p class="muted">Milestone đã completed / không có quyền → <code>404</code>.</p>
+  </div>
+</div>
+
+<h2 id="api1">4. API 1 — Danh sách sensor của assignment <span class="dot dot-green"></span></h2>
+
+<div class="api-card">
+  <div class="api-card-header">
+    <span class="badge b-get">GET</span>
+    /sensor-reading/<b>{owner|manager|farmer}</b>/assignment/<b>:assignmentId</b>/latest
+    <span class="badge b-info">Bước 3</span>
+  </div>
+  <div class="api-card-body">
+    <h4>Mô tả</h4>
+    <p>Toàn bộ sensor đang <b>active-bound</b> vào assignment, kèm reading mới nhất, ngưỡng an toàn,
+    cờ <code>isSafe</code> và <code>device{id,label}</code>. Đã đủ metadata — không cần API "chi tiết
+    sensor" riêng. Prefix route theo role của caller.</p>
+
+    <h4>Response <code>data</code></h4>
+<pre><code>{
+  "assignmentId": "5a8d3f02-...",
+  "zoneId": "383d5d20-...",
+  "milestoneId": "21339545-...",
+  "data": [
+    {
+      "sensorId": "4ec6f20b-...",
+      "sensorType": "soil_moisture",
+      "device": { "id": "adcbc2e7-...", "label": "K013" },  // label = mã kit; null nếu chưa gán
+      "timestamp": "2026-05-21T06:30:00.000Z",              // null nếu chưa có reading
+      "value": 42.5,                                        // null nếu chưa có reading
+      "minValue": "0", "maxValue": "100",                   // dải vật lý — trục Y (decimal string)
+      "threshold": { "source": "milestone", "optimalMin": 20, "optimalMax": 60 },  // null nếu chưa gắn
+      "isSafe": true,                                       // null nếu thiếu threshold/reading
+      "sensorStatus": "active"                              // active|inactive|calibration|error|damaged
+    }
+  ]
+}</code></pre>
+
+    <h4>Gợi ý render trạng thái</h4>
+    <table>
+      <thead><tr><th>Hiển thị</th><th>Điều kiện</th></tr></thead>
+      <tbody>
+        <tr><td><span class="check">Bình thường</span></td><td><code>sensorStatus = active</code> &amp; <code>isSafe === true</code></td></tr>
+        <tr><td><span class="warn">Cảnh báo</span></td><td><code>isSafe === false</code> (reading vượt ngưỡng an toàn)</td></tr>
+        <tr><td><span class="cross">Lỗi</span></td><td><code>sensorStatus</code> ∈ {error, damaged} hoặc <code>value === null</code></td></tr>
+      </tbody>
+    </table>
+    <p class="muted">Hiển thị tên kit bằng <code>device.label</code> (vd "K013"), không hiện <code>device.id</code>.</p>
+  </div>
+</div>
+
+<h2 id="api2">5. API 2 — Time-series theo interval <span class="dot dot-accent"></span></h2>
+
+<div class="api-card">
+  <div class="api-card-header">
+    <span class="badge b-get">GET</span>
+    /sensor-reading/assignment/<b>:assignmentId</b>/sensor/<b>:sensorId</b>/series-interval<span class="muted">?interval=1h</span>
+    <span class="badge b-info">Bước 4</span>
+  </div>
+  <div class="api-card-body">
+    <h4>Mô tả</h4>
+    <p>Dữ liệu chart, gom nhóm (bucket) theo interval — mỗi điểm là <b>trung bình</b> reading trong
+    bucket. Cửa sổ tính từ reading đầu tiên của sensor (<code>startedAt</code>).
+    <b>Route chung</b> cho cả 3 role, không có prefix.</p>
+
+    <h4>Params</h4>
+    <table>
+      <thead><tr><th>Tham số</th><th>Vị trí</th><th>Giá trị</th><th>Mặc định</th></tr></thead>
+      <tbody>
+        <tr><td><code>assignmentId</code></td><td>path</td><td>UUID</td><td>—</td></tr>
+        <tr><td><code>sensorId</code></td><td>path</td><td>UUID — phải bound vào assignment</td><td>—</td></tr>
+        <tr><td><code>interval</code></td><td>query</td><td><code>10s</code> · <code>1m</code> · <code>1h</code> · <code>1D</code> · <code>1W</code> · <code>1M</code></td><td><code>1h</code></td></tr>
+      </tbody>
+    </table>
+
+    <h4>Response <code>data</code></h4>
+<pre><code>{
+  "assignmentId": "5a8d3f02-...",
+  "sensorId": "4ec6f20b-...",
+  "sensorType": "soil_moisture",
+  "interval": "1h",
+  "startedAt": "2026-05-14T00:00:00.000Z",  // reading đầu tiên; null nếu chưa có data
+  "data": [                                  // sort ASC sẵn — vẽ thẳng
+    { "timestamp": "2026-05-21T05:00:00.000Z", "value": 41.2 },
+    { "timestamp": "2026-05-21T06:00:00.000Z", "value": 43.8 }
+  ]
+}</code></pre>
+    <ul>
+      <li>Tối đa <b>300 điểm</b>; dài hơn → 300 bucket mới nhất.</li>
+      <li>Chưa có reading → <code>data: []</code>, <code>startedAt: null</code>.</li>
+    </ul>
+    <blockquote class="bq-warn">
+    <b>Endpoint cũ vẫn còn:</b> <code>GET sensor-reading/{role}/assignment/:id/sensor/:id/series</code>
+    (raw, <code>from</code>/<code>to</code>/<code>limit≤50</code>) chưa gỡ — app/FE đang dùng thì không vỡ.
+    Khuyến nghị chuyển sang <code>series-interval</code> cho chart mượt hơn.
+    </blockquote>
+  </div>
+</div>
+
+<h2 id="api3">6. API 3 — Summary stats (4 badge) <span class="dot dot-accent"></span></h2>
+
+<div class="api-card">
+  <div class="api-card-header">
+    <span class="badge b-get">GET</span>
+    /sensor-reading/assignment/<b>:assignmentId</b>/sensor/<b>:sensorId</b>/stats<span class="muted">?period=today</span>
+    <span class="badge b-info">Bước 4</span>
+  </div>
+  <div class="api-card-body">
+    <h4>Mô tả</h4>
+    <p>Số liệu cho 4 badge phía trên chart. Một lần gọi trả cả 4 — đổi <code>period</code> gọi lại 1 lần.
+    <b>Route chung</b> cho cả 3 role.</p>
+
+    <h4>Query params</h4>
+    <table>
+      <thead><tr><th>Tham số</th><th>Giá trị</th><th>Mặc định</th></tr></thead>
+      <tbody>
+        <tr><td><code>period</code></td><td><code>today</code> · <code>7d</code> · <code>10d</code></td><td><code>today</code></td></tr>
+      </tbody>
+    </table>
+    <p class="muted"><code>today</code> = từ 00:00 hôm nay; <code>7d</code>/<code>10d</code> = từ 7/10 ngày trước tới hiện tại.</p>
+
+    <h4>Response <code>data</code></h4>
+<pre><code>{
+  "assignmentId": "5a8d3f02-...",
+  "sensorId": "4ec6f20b-...",
+  "period": "7d",
+  "currentValue": 94,    // badge 1 — giá trị mới nhất
+  "minValue": 1,         // badge 2 — thấp nhất trong period
+  "maxValue": 100,       // badge 3 — cao nhất trong period
+  "alertCount": 83       // badge 4 — số lần alert trong period
+}</code></pre>
+
+    <blockquote class="bq-success">
+    <b>Không có data trong period</b> → cả 4 trường trả <code>0</code> (không bao giờ <code>null</code>).
+    </blockquote>
+  </div>
+</div>
+
+<h2 id="errors">7. Lỗi chung</h2>
+
+<table>
+<thead><tr><th>HTTP</th><th>Khi nào</th><th>Xử lý client</th></tr></thead>
+<tbody>
+<tr><td><span class="badge b-fail">401</span></td><td>Thiếu / sai / hết hạn token</td><td>Về màn đăng nhập.</td></tr>
+<tr><td><span class="badge b-fail">403</span></td><td>Role không thuộc owner/manager/farmer</td><td>Ẩn tính năng.</td></tr>
+<tr><td><span class="badge b-fail">404</span></td><td>Milestone/assignment không tồn tại hoặc không có quyền; <code>sensorId</code> không bound vào assignment</td><td>Báo "không tìm thấy", quay lại list.</td></tr>
+<tr><td><span class="badge b-warn">422</span></td><td>Owner không sở hữu farm / manager-farmer không thuộc farm / sub hết hạn</td><td>Báo không có quyền.</td></tr>
+<tr><td><span class="badge b-warn">400/422</span></td><td><code>interval</code> / <code>period</code> không hợp lệ</td><td>Chỉ gửi giá trị trong bảng.</td></tr>
+</tbody>
+</table>
+
+<h2 id="wiring">8. Ví dụ wiring</h2>
+
+<pre><code>// role: "owner" | "manager" | "farmer"
+async function api(path, token) {
+  const res = await fetch(`${BASE}${path}`, { headers: { Authorization: `Bearer ${token}` } });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json?.message ?? `HTTP ${res.status}`);
+  return json.data;                                  // bóc wrapper
+}
+
+// ── Bước 1–2 — lấy assignmentId (route khác nhau theo role) ──────────────
+let milestoneId, assignmentId;
+if (role === "farmer") {
+  const ms = await api('/production-milestone/farmer/current-upcoming-milestones', token);
+  milestoneId = ms.data[0].id;
+  const asg = await api(`/production-milestone/farmer/milestones/${milestoneId}/assignments`, token);
+  assignmentId = asg.data[0].assignmentId;
+} else {
+  const ms = await api(`/production-milestone/${role}/crop-season`, token);
+  milestoneId = ms.data[0].id;
+  const asg = await api(`/production-milestone-iot-device/${role}/milestone/${milestoneId}/assignments`, token);
+  assignmentId = asg[0].assignmentId;
+}
+
+// ── Bước 3 — list sensor (prefix theo role) ──────────────────────────────
+const sensorList = await api(`/sensor-reading/${role}/assignment/${assignmentId}/latest`, token);
+
+// ── Bước 4 — chi tiết 1 sensor: chart + badges (route chung) ─────────────
+async function loadSensorScreen(assignmentId, sensorId, token, { interval = "1h", period = "today" } = {}) {
+  const [series, stats] = await Promise.all([
+    api(`/sensor-reading/assignment/${assignmentId}/sensor/${sensorId}/series-interval?interval=${interval}`, token),
+    api(`/sensor-reading/assignment/${assignmentId}/sensor/${sensorId}/stats?period=${period}`, token),
+  ]);
+  return { series, stats };
+}
+// Đổi interval → gọi lại series-interval ; đổi period → gọi lại stats</code></pre>
+
+<blockquote class="bq-info">
+<b>Trục Y chart:</b> dùng <code>minValue</code>/<code>maxValue</code> của sensor từ API 1 để cố định trục;
+vẽ <code>threshold.optimalMin/optimalMax</code> thành 2 đường ngưỡng an toàn.
+<b>Mobile</b>: chart qua <code>react-native-gifted-charts</code> / <code>victory-native</code>;
+<code>refetchInterval ~30s</code> cho latest/series.
+</blockquote>
+
+<hr>
+<p class="doc-footer">FarmOS — Sensor APIs Integration (owner · manager · farmer / FE web + mobile) · cập nhật 2026-05-21</p>
+
+</body>
+</html>

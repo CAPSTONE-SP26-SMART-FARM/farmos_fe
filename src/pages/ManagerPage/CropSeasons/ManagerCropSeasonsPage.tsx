@@ -50,6 +50,13 @@ export default function ManagerCropSeasonsPage() {
   const [sidebarTab, setSidebarTab] = useState<"now" | "history">("now");
   const [historyDetail, setHistoryDetail] = useState<CropSeasonType | null>(null);
   const zoneId = searchParams.get("zoneId")?.trim() ?? "";
+  const opTab = searchParams.get("tab")?.trim() || "milestones-op";
+  const setOpTab = (v: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (v === "milestones-op") next.delete("tab");
+    else next.set("tab", v);
+    setSearchParams(next, { replace: true });
+  };
 
   const assignedZonesQuery = useManagerListAssignedZones({
     page: 1,
@@ -353,7 +360,7 @@ export default function ManagerCropSeasonsPage() {
                     </TabsContent>
                   </Tabs>
                 ) : (
-                  <Tabs defaultValue="milestones-op">
+                  <Tabs value={opTab} onValueChange={setOpTab}>
                     <TabsList className="w-full md:w-auto flex-wrap h-auto gap-1">
                       <TabsTrigger
                         value="milestones-op"

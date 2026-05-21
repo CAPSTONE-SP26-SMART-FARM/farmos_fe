@@ -1,14 +1,19 @@
 import { API_ENDPOINTS } from "@/constants";
 import { api } from "@/lib/axios";
+import queryString from "query-string";
 import type {
   GetLatestReadingsByAssignmentResType,
   ListSensorReadingsQueryType,
   ListSensorReadingsResType,
+  SensorIntervalType,
+  SensorSeriesIntervalResType,
+  SensorStatsPeriodType,
+  SensorStatsResType,
 } from "@/schemaValidatation/sensorReading";
-import queryString from "query-string";
 
 const OWNER_EP = API_ENDPOINTS.OWNER.SENSOR_READING;
 const MANAGER_EP = API_ENDPOINTS.MANAGER.SENSOR_READING;
+const COMMON_EP = API_ENDPOINTS.COMMON.SENSOR_READING;
 
 export const ownerSensorReadingService = {
   getLatest: (assignmentId: string) =>
@@ -50,4 +55,26 @@ export const managerSensorReadingService = {
           { skipEmptyString: true, skipNull: true },
         ),
     ),
+};
+
+// ── Common (route chung — không prefix role) ───────────────────────────
+
+export const sensorReadingService = {
+  getSeriesInterval: (
+    assignmentId: string,
+    sensorId: string,
+    interval: SensorIntervalType,
+  ) =>
+    api.get<SensorSeriesIntervalResType>(
+      COMMON_EP.SERIES_INTERVAL(assignmentId, sensorId),
+      { params: { interval } },
+    ),
+  getStats: (
+    assignmentId: string,
+    sensorId: string,
+    period: SensorStatsPeriodType,
+  ) =>
+    api.get<SensorStatsResType>(COMMON_EP.STATS(assignmentId, sensorId), {
+      params: { period },
+    }),
 };

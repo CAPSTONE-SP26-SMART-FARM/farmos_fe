@@ -42,7 +42,13 @@ function OwnerSubscriptionPlansPage() {
   const mySubQuery = useOwnerMySubscription(true);
 
   const mySubscription = mySubQuery.data?.data;
-  const canSubscribe = !mySubscription;
+  const hasActiveSubscription =
+    !!mySubscription &&
+    mySubscription.status !== "PENDING" &&
+    mySubscription.status !== "CANCELLED" &&
+    mySubscription.status !== "EXPIRED";
+  const hasPendingSubscription = mySubscription?.status === "PENDING";
+  const canSubscribe = !hasActiveSubscription;
 
   const ownerPricingPlans = useMemo(() => {
     const plans = plansQuery.data?.data?.data ?? [];
@@ -78,7 +84,12 @@ function OwnerSubscriptionPlansPage() {
               {ownerPricingPlans.length} gói đang mở
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              Gói hiện tại: {mySubscription?.plan?.name ?? "Chưa có"}
+              Gói hiện tại:{" "}
+              {hasActiveSubscription
+                ? (mySubscription?.plan?.name ?? "Chưa có")
+                : hasPendingSubscription
+                  ? `${mySubscription?.plan?.name ?? "Gói đăng ký"} (chờ thanh toán)`
+                  : "Chưa có"}
             </p>
           </div>
         </div>
@@ -127,7 +138,8 @@ function OwnerSubscriptionPlansPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {ownerPricingPlans.map((plan, index) => {
-            const isCurrentPlan = mySubscription?.planId === plan.id;
+            const isCurrentPlan =
+              hasActiveSubscription && mySubscription?.planId === plan.id;
             const recommended =
               !isCurrentPlan &&
               ownerPricingPlans.length >= 3 &&

@@ -4,11 +4,16 @@ import { QUERY_KEYS } from "@/constants";
 import {
   ownerSensorReadingService,
   managerSensorReadingService,
+  sensorReadingService,
 } from "@/services/sensorReadingService";
 import { getSocketInstance } from "@/lib/socket";
 import { useSocketStore } from "@/stores/socketStore";
 import { RealtimeEvents } from "@/constants/realtime";
-import type { ListSensorReadingsQueryType } from "@/schemaValidatation/sensorReading";
+import type {
+  ListSensorReadingsQueryType,
+  SensorIntervalType,
+  SensorStatsPeriodType,
+} from "@/schemaValidatation/sensorReading";
 
 // ── Owner ──────────────────────────────────────────────────────────────
 
@@ -44,7 +49,7 @@ export const useManagerLatestSensorReadings = (
   });
 };
 
-// ── Time-series (chart per sensor) ─────────────────────────────────────
+// ── Time-series (legacy raw series per sensor) ─────────────────────────
 
 export const useOwnerSensorReadingSeries = (
   assignmentId: string,
@@ -88,6 +93,67 @@ export const useManagerSensorReadingSeries = (
   });
 };
 
+// ── Common (route chung — owner/manager/farmer) ────────────────────────
+
+/**
+ * Polling cadence theo bucket interval — dot mới xuất hiện đều theo nhịp bucket.
+ * Bucket >= 1D: không poll (data lịch sử, refetch khi focus là đủ).
+ */
+export function refetchIntervalFor(
+  interval: SensorIntervalType,
+): number | false {
+  if (interval === "10s") return 10_000;
+  if (interval === "1m") return 60_000;
+  if (interval === "1h") return 360_000;
+  return false;
+}
+
+export const useSensorSeriesInterval = (
+  assignmentId: string,
+  sensorId: string,
+  interval: SensorIntervalType,
+  enabled = true,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.common.sensorReadings.seriesInterval(
+      assignmentId,
+      sensorId,
+      interval,
+    ),
+    queryFn: () =>
+      sensorReadingService
+        .getSeriesInterval(assignmentId, sensorId, interval)
+        .then((r) => r.data),
+    enabled: !!assignmentId && !!sensorId && enabled,
+    staleTime: 15_000,
+    refetchInterval: refetchIntervalFor(interval),
+    placeholderData: (prev) => prev,
+  });
+};
+
+export const useSensorStats = (
+  assignmentId: string,
+  sensorId: string,
+  period: SensorStatsPeriodType,
+  enabled = true,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.common.sensorReadings.stats(
+      assignmentId,
+      sensorId,
+      period,
+    ),
+    queryFn: () =>
+      sensorReadingService
+        .getStats(assignmentId, sensorId, period)
+        .then((r) => r.data),
+    enabled: !!assignmentId && !!sensorId && enabled,
+    staleTime: 15_000,
+    refetchInterval: period === "today" ? 30_000 : false,
+    placeholderData: (prev) => prev,
+  });
+};
+
 // ── Realtime invalidation ──────────────────────────────────────────────
 
 /**
@@ -107,26 +173,14 @@ export function useSensorReadingRealtime(
 
   const invalidateReadings = useCallback(() => {
     if (!assignmentId) return;
-    const key =
+    const latestKey =
       role === "owner"
         ? QUERY_KEYS.owner.sensorReadings.latest(assignmentId)
         : QUERY_KEYS.manager.sensorReadings.latest(assignmentId);
-    queryClient.invalidateQueries({ queryKey: key });
-    // Invalidate ALL series queries for this assignment (we don't know sensorId
-    // from socket payload; predicate matches role + assignmentId prefix).
-    queryClient.invalidateQueries({
-      predicate: (q) => {
-        const k = q.queryKey;
-        return (
-          Array.isArray(k) &&
-          k[0] === role &&
-          k[1] === "sensor-readings" &&
-          k[2] === "assignment" &&
-          k[3] === assignmentId &&
-          k[6] === "series"
-        );
-      },
-    });
+    queryClient.invalidateQueries({ queryKey: latestKey });
+    // NOTE: `common.sensor-readings.{seriesInterval,stats}` cố ý KHÔNG invalidate
+    // qua socket — giữ nhịp polling cố định để countdown UI dự đoán được.
+    // Chart sẽ refresh theo `refetchInterval` của hook (15s/60s tuỳ interval).
   }, [assignmentId, role, queryClient]);
 
   // Khi board nhận data lần đầu → BE flip status install → active và emit
@@ -196,7 +250,10 @@ export function useSensorReadingRealtime(
       socket.off("alert.created", handleAlertCreated);
       socket.off(RealtimeEvents.SensorTimeoutDetected, handleSensorHealth);
       socket.off(RealtimeEvents.SensorTimeoutRecovered, handleSensorHealth);
-      socket.off(RealtimeEvents.SensorHardwareIssueDetected, handleSensorHealth);
+      socket.off(
+        RealtimeEvents.SensorHardwareIssueDetected,
+        handleSensorHealth,
+      );
       socket.off(RealtimeEvents.SensorAlertRecovered, handleSensorHealth);
       socket.off(RealtimeEvents.IotDeviceActivated, handleDeviceLifecycle);
       socket.off(RealtimeEvents.IotDeviceStatusChanged, handleDeviceLifecycle);

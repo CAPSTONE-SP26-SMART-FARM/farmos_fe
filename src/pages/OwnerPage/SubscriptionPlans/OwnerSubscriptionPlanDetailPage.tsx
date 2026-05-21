@@ -19,6 +19,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { DataTable } from "@/components/common/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -33,6 +41,7 @@ import {
   useOwnerCreateSubscription,
   useOwnerMySubscription,
 } from "@/queries/useSubscription";
+import { useOwnerInvoices } from "@/queries/useInvoice";
 import { useDynamicBreadcrumb } from "@/stores/breadcrumbStore";
 import {
   CalendarClock,
@@ -60,6 +69,7 @@ function OwnerSubscriptionPlanDetailPage() {
   const navigate = useNavigate();
   const { planId = "" } = useParams();
   const [agreed, setAgreed] = useState(false);
+  const [pendingWarningOpen, setPendingWarningOpen] = useState(false);
 
   const planQuery = useSubscriptionPlanDetail(planId, Boolean(planId));
   const versionsQuery = useListSubscriptionPlanVersions(
@@ -78,10 +88,32 @@ function OwnerSubscriptionPlanDetailPage() {
   const versions = versionsQuery.data?.data?.data ?? [];
   const activeVersion = versions.find((v) => v.isActive);
   const mySubscription = mySubQuery.data?.data;
-  const isCurrentPlan = mySubscription?.planId === plan?.id;
-  const hasOtherSubscription = Boolean(mySubscription) && !isCurrentPlan;
 
-  const handleSubscribe = async () => {
+  const hasActiveSubscription =
+    !!mySubscription &&
+    mySubscription.status !== "PENDING" &&
+    mySubscription.status !== "CANCELLED" &&
+    mySubscription.status !== "EXPIRED";
+  const isCurrentPlan =
+    hasActiveSubscription && mySubscription?.planId === plan?.id;
+  const hasOtherSubscription =
+    hasActiveSubscription && mySubscription?.planId !== plan?.id;
+  const hasPendingSubscription = mySubscription?.status === "PENDING";
+
+  const pendingInvoiceQuery = useOwnerInvoices(
+    {
+      page: 1,
+      limit: 1,
+      search: undefined,
+      status: "OPEN",
+      referenceType: "SUBSCRIPTION",
+      referenceId: mySubscription?.id,
+    },
+    hasPendingSubscription && !!mySubscription?.id,
+  );
+  const pendingInvoice = pendingInvoiceQuery.data?.data?.data?.[0];
+
+  const doSubscribe = async () => {
     if (!plan || !activeVersion) return;
     try {
       const result = await createSubscription.mutateAsync({
@@ -95,6 +127,26 @@ function OwnerSubscriptionPlanDetailPage() {
       }
       toast.error(getApiErrorMessageVi(error, "Đăng ký gói thất bại."));
     }
+  };
+
+  const handleSubscribe = async () => {
+    if (!plan || !activeVersion) return;
+    if (hasPendingSubscription && pendingInvoice) {
+      setPendingWarningOpen(true);
+      return;
+    }
+    await doSubscribe();
+  };
+
+  const handleGoPayPendingInvoice = () => {
+    if (!pendingInvoice) return;
+    setPendingWarningOpen(false);
+    navigate(`/dashboard/owner/payments/${pendingInvoice.id}`);
+  };
+
+  const handleContinueCreateNew = async () => {
+    setPendingWarningOpen(false);
+    await doSubscribe();
   };
 
   if (planQuery.isLoading) {
@@ -429,6 +481,64 @@ function OwnerSubscriptionPlanDetailPage() {
           </CardContent>
         </Card>
       </section>
+
+      <Dialog
+        open={pendingWarningOpen}
+        onOpenChange={setPendingWarningOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bạn đang có gói chờ thanh toán</DialogTitle>
+            <DialogDescription>
+              Bạn vẫn có thể đăng ký gói mới, nhưng nên thanh toán hoặc xử lý
+              hóa đơn còn lại trước để tránh trùng lặp.
+            </DialogDescription>
+          </DialogHeader>
+
+          {pendingInvoice && (
+            <div className="space-y-3 rounded-lg border bg-muted/30 p-4 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">Gói đang chờ</span>
+                <span className="font-medium">
+                  {mySubscription?.plan?.name ?? "Gói đăng ký"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">Mã hóa đơn</span>
+                <span className="font-medium">
+                  {pendingInvoice.invoiceNumber}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">Tổng tiền</span>
+                <span className="font-semibold text-primary">
+                  {formatCurrencyVnd(pendingInvoice.totalAmount)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">Trạng thái</span>
+                <Badge variant="outline">Chờ thanh toán</Badge>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={handleContinueCreateNew}
+              disabled={createSubscription.isPending}
+            >
+              Tiếp tục đăng ký gói mới
+            </Button>
+            <Button
+              onClick={handleGoPayPendingInvoice}
+              disabled={!pendingInvoice}
+            >
+              Thanh toán hóa đơn cũ
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
