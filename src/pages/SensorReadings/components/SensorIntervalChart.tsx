@@ -12,9 +12,9 @@ import {
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { RotateCcw } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import type {
   LatestSensorReadingResType,
   SensorIntervalType,
@@ -132,11 +132,6 @@ export default function SensorIntervalChart({
     [points, startIdx],
   );
 
-  const newDotsSincePan =
-    !isLive && panStartLength != null
-      ? Math.max(0, points.length - panStartLength)
-      : 0;
-
   // ── Drag handlers ────────────────────────────────────────────────────
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!canPan) return;
@@ -229,6 +224,54 @@ export default function SensorIntervalChart({
 
   const atOldestEdge = !isLive && startIdx === 0;
 
+  // Custom tooltip — hiện thêm badge "An toàn" / "Nguy hiểm" theo threshold.
+  // Dùng `any` cho prop vì Recharts TooltipContentProps generic phức tạp,
+  // ta chỉ cần đọc `active` + `payload[0].payload.{value,t}`.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const renderTooltip = (props: any) => {
+    const active = props?.active as boolean | undefined;
+    const payload = props?.payload as
+      | ReadonlyArray<{ payload?: { t?: number; value?: number } }>
+      | undefined;
+    if (!active || !payload || payload.length === 0) return null;
+    const point = payload[0]?.payload;
+    const v = point?.value;
+    const t = point?.t;
+    if (v == null || !Number.isFinite(v)) return null;
+    const safe = inSafeRange(v);
+    return (
+      <div className="rounded-md border bg-background px-2.5 py-2 shadow-md text-xs space-y-1.5">
+        {t != null && (
+          <p className="text-muted-foreground tabular-nums">
+            {format(t, "dd/MM/yyyy HH:mm:ss", { locale: vi })}
+          </p>
+        )}
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-muted-foreground">{label}</span>
+          <span className="font-semibold tabular-nums">
+            {v} {unit}
+          </span>
+        </div>
+        {reading.threshold && (
+          <div
+            className={cn(
+              "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium",
+              safe
+                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+                : "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400",
+            )}
+          >
+            <span
+              className="inline-block h-1.5 w-1.5 rounded-full"
+              style={{ backgroundColor: safe ? SAFE_COLOR : UNSAFE_COLOR }}
+            />
+            {safe ? "An toàn" : "Nguy hiểm"}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-2">
       {/* Overlay controls */}
@@ -297,15 +340,7 @@ export default function SensorIntervalChart({
                 width={44}
                 unit={unit}
               />
-              <Tooltip
-                labelFormatter={(v) =>
-                  typeof v === "number"
-                    ? format(v, "dd/MM/yyyy HH:mm:ss", { locale: vi })
-                    : ""
-                }
-                formatter={(v) => [`${v} ${unit}`, label]}
-                contentStyle={{ fontSize: 12 }}
-              />
+              <Tooltip content={renderTooltip} />
               {reading.threshold && (
                 <>
                   <ReferenceLine

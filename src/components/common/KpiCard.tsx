@@ -29,22 +29,29 @@ function KpiCard({
   className,
 }: KpiCardProps) {
   return (
-    <Card className={className}>
-      <CardContent className="pt-6">
-        <div className="flex items-start justify-between gap-2">
-          <div className="space-y-1">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground min-h-10">
-              {label}
-            </p>
-            <p className={cn("text-2xl font-semibold", TONE_CLASS[tone])}>
-              {value}
-            </p>
-            {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
-          </div>
-          <div className="rounded-md border bg-muted p-2 text-muted-foreground">
-            <Icon className="h-4 w-4" aria-hidden />
+    <Card className={cn("h-full", className)}>
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <p className="text-[11px] font-medium text-muted-foreground leading-tight">
+            {label}
+          </p>
+          <div className="rounded-md border bg-muted p-1.5 text-muted-foreground shrink-0">
+            <Icon className="h-3.5 w-3.5" aria-hidden />
           </div>
         </div>
+        <p
+          className={cn(
+            "text-2xl font-bold tabular-nums leading-none",
+            TONE_CLASS[tone],
+          )}
+        >
+          {value}
+        </p>
+        {hint && (
+          <p className="text-[11px] text-muted-foreground mt-2 leading-snug">
+            {hint}
+          </p>
+        )}
       </CardContent>
     </Card>
   );
