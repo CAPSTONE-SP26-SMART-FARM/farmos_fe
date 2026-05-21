@@ -13,8 +13,8 @@ import type { FarmPickerOption } from "./useFarmPickerOptions";
 
 const MIN_AGE_OPTIONS = [
   { value: "all", label: "Mọi thời gian chờ" },
-  { value: "3", label: "Chờ ≥ 3 ngày" },
-  { value: "5", label: "Chờ ≥ 5 ngày" },
+  { value: "3", label: "Chờ ≥ 3 ngày kể từ duyệt vụ mùa" },
+  { value: "5", label: "Chờ ≥ 5 ngày kể từ duyệt vụ mùa" },
 ] as const;
 
 interface Props {
@@ -57,7 +57,12 @@ export function InstallQueueFilters({
         </div>
 
         <div className="space-y-1">
-          <span className="text-xs text-muted-foreground">Thời gian chờ</span>
+          <span
+            className="text-xs text-muted-foreground"
+            title="Số ngày tính từ thời điểm owner duyệt vụ mùa của thiết bị này"
+          >
+            Thời gian chờ (từ duyệt vụ mùa)
+          </span>
           <Select
             value={minAgeValue}
             onValueChange={(v) =>

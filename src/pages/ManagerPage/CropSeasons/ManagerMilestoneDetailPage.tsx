@@ -1301,9 +1301,16 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
                       {r.ok ? "Thành công" : "Thất bại"}
                     </Badge>
                   </div>
-                  {r.error && (
+                  {!r.ok && r.error && (
+                    <p className="text-xs text-destructive mt-1">{r.error}</p>
+                  )}
+                  {r.ok && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      {r.error}
+                      {r.boundSensorTypes.length > 0
+                        ? `Đã liên kết ${r.boundSensorTypes.length} chỉ báo: ${r.boundSensorTypes
+                            .map((x) => SENSOR_TYPE_LABELS[x] ?? x)
+                            .join(" · ")}`
+                        : "Đã gán — chưa có chỉ báo nào khớp cấu hình mốc."}
                     </p>
                   )}
                   {r.missingSensorTypes.length > 0 && (

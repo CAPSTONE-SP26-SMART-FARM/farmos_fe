@@ -247,8 +247,8 @@ export default function AdminIotInstallQueuePage() {
             Hàng đợi xuất kho
           </h1>
           <p className="text-sm text-muted-foreground">
-            Chọn thiết bị theo chuyến đi. Xuất kho hàng loạt hoặc đánh dấu không
-            lắp được.
+            Chỉ hiển thị thiết bị đã được gán vào milestone đang hiệu lực, thuộc
+            vụ mùa owner đã duyệt. Thời gian chờ tính từ lúc duyệt vụ mùa.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -273,6 +273,7 @@ export default function AdminIotInstallQueuePage() {
             className={`px-2 py-1 transition-opacity ${
               oldestAgeDays > 0 ? "opacity-100" : "invisible"
             }`}
+            title="Vụ mùa được duyệt sớm nhất nhưng thiết bị chưa được xuất kho"
           >
             Chờ lâu nhất {oldestAgeDays} ngày
           </Badge>
@@ -313,7 +314,7 @@ export default function AdminIotInstallQueuePage() {
           description={
             hasActiveFilter
               ? "Thử đổi điều kiện lọc hoặc xóa bộ lọc."
-              : "Tất cả thiết bị đã được xuất kho."
+              : "Owner chưa có vụ mùa đã duyệt + milestone đang hiệu lực cần lắp thiết bị mới, hoặc milestone hiện tại dùng chung kit với milestone trước (không cần lắp mới)."
           }
           action={
             hasActiveFilter

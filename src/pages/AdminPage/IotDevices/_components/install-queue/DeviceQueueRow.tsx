@@ -45,7 +45,10 @@ export function DeviceQueueRow({ device, checked, onToggle }: Props) {
       <span className="text-muted-foreground">·</span>
       <span>{device.ownerName}</span>
       <span className="text-muted-foreground">·</span>
-      <span className={cn("font-medium", ageClass(device.ageDays))}>
+      <span
+        className={cn("font-medium", ageClass(device.ageDays))}
+        title="Số ngày kể từ lúc owner duyệt vụ mùa"
+      >
         chờ {device.ageDays} ngày
       </span>
       {device.kitName && (
