@@ -512,6 +512,14 @@ const routes: AppRoutes = [
         requiresActiveSubscription: true,
       },
       {
+        // Reuse SensorDetailPage cho owner — page detect role qua URL prefix
+        // (giống PlanVsActualPage), switch hook manager/owner tương ứng.
+        path: "/dashboard/owner/sensor-readings/:assignmentId/sensors/:sensorId",
+        component: SensorDetailPage,
+        allowedRoles: [RoleName.Owner],
+        requiresActiveSubscription: true,
+      },
+      {
         path: "/dashboard/owner/tickets",
         component: OwnerTicketsPage,
         allowedRoles: [RoleName.Owner],
