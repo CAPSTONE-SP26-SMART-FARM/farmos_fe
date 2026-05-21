@@ -19,6 +19,7 @@ import { useSocketInit } from "@/hooks/useSocket";
 import { useSocketAuthSync } from "@/hooks/useSocketAuthSync";
 import { useRealtimeEvents } from "@/hooks/useRealtimeEvents";
 import NotificationBell from "@/components/notifications/NotificationBell";
+import GlobalAlertDetailDialog from "@/components/notifications/GlobalAlertDetailDialog";
 import { sidebarData } from "./sidebarItemData";
 import { useBreadcrumbStore } from "@/stores/breadcrumbStore";
 import routes from "@/routes/routes";
@@ -208,6 +209,7 @@ export default function DashboardLayout() {
         <DashboardHeader />
         <DashboardContent />
       </SidebarInset>
+      <GlobalAlertDetailDialog />
     </SidebarProvider>
   );
 }

@@ -35,6 +35,86 @@ import type {
   NotificationItem,
   NotificationSeverity,
 } from "@/stores/notificationStore";
+import { useSelectedAlertStore } from "@/stores/selectedAlertStore";
+import type {
+  AlertResType,
+  IncidentSeverityType,
+  ListAlertsResType,
+} from "@/schemaValidatation/alert";
+
+const ALERT_TOAST_BY_SEVERITY: Record<IncidentSeverityType, "info" | "warning" | "error"> = {
+  low: "info",
+  medium: "warning",
+  high: "warning",
+  critical: "error",
+};
+
+const ALERT_SEVERITY_LABEL: Record<IncidentSeverityType, string> = {
+  low: "Thấp",
+  medium: "Trung bình",
+  high: "Cao",
+  critical: "Nghiêm trọng",
+};
+
+function findAlertInCache(
+  queryClient: QueryClient,
+  alertId: string,
+): AlertResType | undefined {
+  const entries = queryClient.getQueriesData<ListAlertsResType>({
+    queryKey: ["alerts"],
+  });
+  for (const [, data] of entries) {
+    const found = data?.data.find((a) => a.id === alertId);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+function buildAlertToastDescription(alert: AlertResType): React.ReactNode {
+  const actual = alert.actualValue != null ? Number(alert.actualValue) : NaN;
+  const threshold =
+    alert.thresholdValue != null ? Number(alert.thresholdValue) : NaN;
+  const hasReading = Number.isFinite(actual) && Number.isFinite(threshold);
+  const arrow = hasReading && actual > threshold ? "↑" : "↓";
+
+  return (
+    <div className="text-foreground/90 space-y-0.5">
+      <div>
+        <span className="font-medium">{ALERT_SEVERITY_LABEL[alert.severity]}</span>
+        {" • "}
+        <span>{alert.zoneName}</span>
+      </div>
+      {hasReading && (
+        <div className="tabular-nums">
+          Đo {actual} {arrow} ngưỡng {threshold}
+        </div>
+      )}
+    </div>
+  );
+}
+
+async function emitRichAlertToast(
+  alertId: string,
+  queryClient: QueryClient,
+  openDialog: (id: string) => void,
+): Promise<void> {
+  // Cache có thể chưa kịp cập nhật ngay sau invalidate — đợi refetch xong
+  // mới lookup. Nếu vẫn không thấy (alert rơi ngoài page 1 / limit) thì
+  // skip rich toast, im lặng vì user vẫn thấy entry trong bell.
+  await queryClient.refetchQueries({ queryKey: ["alerts"] });
+  const alert = findAlertInCache(queryClient, alertId);
+  if (!alert) return;
+
+  const variant = ALERT_TOAST_BY_SEVERITY[alert.severity];
+  toast[variant](alert.title, {
+    description: buildAlertToastDescription(alert),
+    duration: alert.severity === "critical" ? 10_000 : 6_000,
+    action: {
+      label: "Xem chi tiết",
+      onClick: () => openDialog(alert.id),
+    },
+  });
+}
 
 /**
  * Event router trung tâm — mount 1 lần trong DashboardLayout. Trách nhiệm:
@@ -172,6 +252,7 @@ function handleEvent(
     queryClient: QueryClient;
     navigate: NavigateFunction;
     add: (item: NotificationItem) => void;
+    openAlertDialog: (id: string) => void;
   },
 ): void {
   const schema = EVENT_SCHEMAS[event];
@@ -188,6 +269,16 @@ function handleEvent(
   }
 
   invalidateByEvent(event, payload, ctx.queryClient);
+
+  // Toast riêng cho AlertCreated: giàu data + action mở dialog detail
+  // global thay vì navigate (xem GlobalAlertDetailDialog). Vẫn tiếp tục
+  // build notification cho bell qua flow chung phía dưới.
+  if (event === RealtimeEvents.AlertCreated) {
+    const alertId = typeof payload.alertId === "string" ? payload.alertId : null;
+    if (alertId) {
+      void emitRichAlertToast(alertId, ctx.queryClient, ctx.openAlertDialog);
+    }
+  }
 
   if (!NOTIFY_EVENTS.includes(event)) return;
 
@@ -218,13 +309,14 @@ export function useRealtimeEvents(): void {
   const reconnectCount = useSocketStore((s) => s.reconnectCount);
   const role = useAuthStore((s) => s.user?.role) as RoleNameType | undefined;
   const add = useNotificationStore((s) => s.add);
+  const openAlertDialog = useSelectedAlertStore((s) => s.open);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   // Ref để handler không cần rebind mỗi khi navigate/queryClient refresh ref.
-  const ctxRef = useRef({ role, queryClient, navigate, add });
+  const ctxRef = useRef({ role, queryClient, navigate, add, openAlertDialog });
   useLayoutEffect(() => {
-    ctxRef.current = { role, queryClient, navigate, add };
+    ctxRef.current = { role, queryClient, navigate, add, openAlertDialog };
   });
 
   useEffect(() => {
@@ -250,6 +342,7 @@ export function useRealtimeEvents(): void {
           queryClient: ctx.queryClient,
           navigate: ctx.navigate,
           add: ctx.add,
+          openAlertDialog: ctx.openAlertDialog,
         });
       };
       handlers.set(event, handler);

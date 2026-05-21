@@ -36,6 +36,40 @@ import SensorStatBadge from "./components/SensorStatBadge";
 import SensorIntervalChart from "./components/SensorIntervalChart";
 import RefreshCountdown from "./components/RefreshCountdown";
 
+type SensorStatus = NonNullable<LatestSensorReadingResType["sensorStatus"]>;
+
+const SENSOR_STATUS_META: Record<
+  SensorStatus,
+  { label: string; className: string }
+> = {
+  active: {
+    label: "Hoạt động",
+    className:
+      "border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
+  },
+  inactive: {
+    label: "Tạm dừng",
+    className:
+      "border-slate-300 bg-slate-50 text-slate-700 dark:bg-slate-900/40 dark:text-slate-300",
+  },
+  calibration: {
+    label: "Hiệu chuẩn",
+    className:
+      "border-amber-300 bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
+  },
+  // Theo rule FE: gom error + damaged về cùng nhãn "Lỗi" màu đỏ.
+  error: {
+    label: "Lỗi",
+    className:
+      "border-red-300 bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300",
+  },
+  damaged: {
+    label: "Lỗi",
+    className:
+      "border-red-300 bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300",
+  },
+};
+
 const SENSOR_META: Record<
   string,
   { label: string; icon: LucideIcon; unit: string }
@@ -204,25 +238,25 @@ export default function SensorDetailPage() {
             <div className="flex items-center gap-2">
               <Icon className="h-5 w-5 text-muted-foreground shrink-0" />
               <h1 className="text-xl font-semibold truncate">{meta.label}</h1>
-              <Badge
-                variant={
-                  reading.sensorStatus === "active" ? "secondary" : "outline"
-                }
-                className="text-xs shrink-0"
-              >
-                {reading.sensorStatus ?? "—"}
-              </Badge>
+              {reading.sensorStatus && (
+                <Badge
+                  variant="outline"
+                  className={`text-xs shrink-0 ${SENSOR_STATUS_META[reading.sensorStatus].className}`}
+                >
+                  {SENSOR_STATUS_META[reading.sensorStatus].label}
+                </Badge>
+              )}
             </div>
-            {(assignmentDevice || reading.device?.label) && (
+            {(assignmentDevice || reading.device) && (
               <div className="flex items-center gap-1.5 mt-1">
                 <Cpu className="h-3.5 w-3.5 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">
-                  {assignmentDevice?.deviceName ?? reading.device?.label}
-                  {assignmentDevice?.deviceCode && (
+                  {assignmentDevice?.deviceName}
+                  {(assignmentDevice?.deviceCode ?? reading.device?.label) && (
                     <>
-                      {" · "}
+                      {assignmentDevice?.deviceName ? " · " : null}
                       <span className="font-mono">
-                        {assignmentDevice.deviceCode}
+                        {assignmentDevice?.deviceCode ?? reading.device?.label}
                       </span>
                     </>
                   )}
