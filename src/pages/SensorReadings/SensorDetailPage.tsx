@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import {
   ArrowLeft,
   Activity,
@@ -20,11 +20,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   refetchIntervalFor,
   useManagerLatestSensorReadings,
+  useOwnerLatestSensorReadings,
   useSensorReadingRealtime,
   useSensorSeriesInterval,
   useSensorStats,
 } from "@/queries/useSensorReading";
-import { useManagerListMilestoneAssignments } from "@/queries/useProductionMilestone";
+import {
+  useManagerListMilestoneAssignments,
+  useOwnerListMilestoneAssignments,
+} from "@/queries/useProductionMilestone";
 import { useZoneSubscription } from "@/hooks/useZoneSubscription";
 import type {
   LatestSensorReadingResType,
@@ -122,6 +126,10 @@ export default function SensorDetailPage() {
   }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isOwner = location.pathname.startsWith("/dashboard/owner/");
+  const role = isOwner ? "owner" : "manager";
+  const dashboardPrefix = isOwner ? "/dashboard/owner" : "/dashboard/manager";
 
   const intervalParam = searchParams.get("interval");
   const periodParam = searchParams.get("period");
@@ -143,17 +151,27 @@ export default function SensorDetailPage() {
     setSearchParams(next, { replace: true });
   };
 
-  const latestQuery = useManagerLatestSensorReadings(assignmentId);
-  useSensorReadingRealtime(assignmentId || undefined, "manager");
+  // Page phục vụ cả manager và owner — detect role qua URL prefix
+  // (giống PlanVsActualPage). Cùng shape response → switch hook là đủ,
+  // không cần fork component riêng.
+  const managerLatest = useManagerLatestSensorReadings(assignmentId, !isOwner);
+  const ownerLatest = useOwnerLatestSensorReadings(assignmentId, isOwner);
+  const latestQuery = isOwner ? ownerLatest : managerLatest;
+  useSensorReadingRealtime(assignmentId || undefined, role);
   useZoneSubscription(latestQuery.data?.zoneId);
 
   // Lấy deviceName + deviceCode từ assignment list theo milestoneId
   // (latest endpoint chỉ trả `device.label` — không có name).
   const milestoneId = latestQuery.data?.milestoneId ?? "";
-  const assignmentsQuery = useManagerListMilestoneAssignments(
+  const managerAssignments = useManagerListMilestoneAssignments(
     milestoneId,
-    !!milestoneId,
+    !!milestoneId && !isOwner,
   );
+  const ownerAssignments = useOwnerListMilestoneAssignments(
+    milestoneId,
+    !!milestoneId && isOwner,
+  );
+  const assignmentsQuery = isOwner ? ownerAssignments : managerAssignments;
   const assignmentDevice = useMemo(() => {
     const list = assignmentsQuery.data?.data?.data ?? [];
     return list.find((a) => a.assignmentId === assignmentId)?.device;
@@ -162,7 +180,7 @@ export default function SensorDetailPage() {
   const goBack = () => {
     const zid = latestQuery.data?.zoneId;
     if (zid) {
-      navigate(`/dashboard/manager/crop-seasons?zoneId=${zid}&tab=sensors`);
+      navigate(`${dashboardPrefix}/crop-seasons?zoneId=${zid}&tab=sensors`);
     } else {
       navigate(-1);
     }
