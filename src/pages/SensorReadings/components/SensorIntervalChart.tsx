@@ -278,9 +278,7 @@ export default function SensorIntervalChart({
       <div className="flex items-center justify-between gap-2 min-h-7">
         <div className="flex items-center gap-2">
           {atOldestEdge && (
-            <span className="text-[11px] text-muted-foreground">
-              Hết dữ liệu cũ
-            </span>
+            <span className="text-amber-600 font-bold ">Hết dữ liệu cũ</span>
           )}
         </div>
         {!isLive && (

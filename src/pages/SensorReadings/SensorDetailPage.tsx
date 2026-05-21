@@ -6,14 +6,13 @@ import {
   AlertTriangle,
   ArrowDown,
   ArrowUp,
+  Cpu,
   Droplets,
   Sprout,
   Sun,
   Thermometer,
   type LucideIcon,
 } from "lucide-react";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,6 +24,7 @@ import {
   useSensorSeriesInterval,
   useSensorStats,
 } from "@/queries/useSensorReading";
+import { useManagerListMilestoneAssignments } from "@/queries/useProductionMilestone";
 import { useZoneSubscription } from "@/hooks/useZoneSubscription";
 import type {
   LatestSensorReadingResType,
@@ -71,7 +71,7 @@ const PERIOD_OPTIONS: ReadonlyArray<{
   { value: "10d", label: "10 ngày" },
 ];
 
-const DEFAULT_INTERVAL: SensorIntervalType = "1h";
+const DEFAULT_INTERVAL: SensorIntervalType = "10s";
 const DEFAULT_PERIOD: SensorStatsPeriodType = "today";
 
 function isInterval(v: string | null): v is SensorIntervalType {
@@ -112,6 +112,18 @@ export default function SensorDetailPage() {
   const latestQuery = useManagerLatestSensorReadings(assignmentId);
   useSensorReadingRealtime(assignmentId || undefined, "manager");
   useZoneSubscription(latestQuery.data?.zoneId);
+
+  // Lấy deviceName + deviceCode từ assignment list theo milestoneId
+  // (latest endpoint chỉ trả `device.label` — không có name).
+  const milestoneId = latestQuery.data?.milestoneId ?? "";
+  const assignmentsQuery = useManagerListMilestoneAssignments(
+    milestoneId,
+    !!milestoneId,
+  );
+  const assignmentDevice = useMemo(() => {
+    const list = assignmentsQuery.data?.data?.data ?? [];
+    return list.find((a) => a.assignmentId === assignmentId)?.device;
+  }, [assignmentsQuery.data, assignmentId]);
 
   const goBack = () => {
     const zid = latestQuery.data?.zoneId;
@@ -174,10 +186,6 @@ export default function SensorDetailPage() {
     );
   }
 
-  const lastReadingLabel = reading.timestamp
-    ? format(new Date(reading.timestamp), "dd/MM/yyyy HH:mm:ss", { locale: vi })
-    : "—";
-
   return (
     <div className="space-y-5 p-6 max-w-6xl mx-auto">
       {/* Header */}
@@ -205,9 +213,22 @@ export default function SensorDetailPage() {
                 {reading.sensorStatus ?? "—"}
               </Badge>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Cập nhật lần cuối: {lastReadingLabel}
-            </p>
+            {(assignmentDevice || reading.device?.label) && (
+              <div className="flex items-center gap-1.5 mt-1">
+                <Cpu className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">
+                  {assignmentDevice?.deviceName ?? reading.device?.label}
+                  {assignmentDevice?.deviceCode && (
+                    <>
+                      {" · "}
+                      <span className="font-mono">
+                        {assignmentDevice.deviceCode}
+                      </span>
+                    </>
+                  )}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>
