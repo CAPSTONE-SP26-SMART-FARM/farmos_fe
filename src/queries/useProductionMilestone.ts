@@ -24,6 +24,7 @@ import type {
   BindSensorsBodyType,
   BulkAssignIotDevicesBodyType,
   ListAvailableIotDevicesQueryType,
+  SearchMilestoneAssignmentsQueryType,
   UnassignIotDeviceBodyType,
   UnbindSensorsBodyType,
 } from "@/schemaValidatation/milestoneIotDevice";
@@ -217,6 +218,21 @@ export const useManagerListMilestoneAssignments = (
     enabled: !!milestoneId && enabled,
   });
 
+export const useManagerSearchMilestoneAssignments = (
+  milestoneId: string,
+  query: SearchMilestoneAssignmentsQueryType,
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: QUERY_KEYS.manager.productionMilestones.assignmentsSearch(
+      milestoneId,
+      query,
+    ),
+    queryFn: () =>
+      milestoneIotDeviceService.searchAssignments(milestoneId, query),
+    enabled: !!milestoneId && enabled,
+  });
+
 export const useManagerListAvailableIotDevices = (
   milestoneId: string,
   query: ListAvailableIotDevicesQueryType,
@@ -246,6 +262,18 @@ export const useManagerAssignIotDevice = (milestoneId: string) => {
         queryKey:
           QUERY_KEYS.manager.productionMilestones.assignments(milestoneId),
       });
+      qc.invalidateQueries({
+        predicate: (q) => {
+          const k = q.queryKey;
+          return (
+            Array.isArray(k) &&
+            k[0] === "manager" &&
+            k[1] === "production-milestones" &&
+            k[2] === milestoneId &&
+            k[3] === "assignments-search"
+          );
+        },
+      });
       invalidateAllManagerSensorThresholdQueries(qc);
       invalidateManagerEmployeeTasksQueriesForMilestone(qc, milestoneId);
     },
@@ -269,6 +297,18 @@ export const useManagerUnassignIotDevice = (milestoneId: string) => {
       qc.invalidateQueries({
         queryKey:
           QUERY_KEYS.manager.productionMilestones.assignments(milestoneId),
+      });
+      qc.invalidateQueries({
+        predicate: (q) => {
+          const k = q.queryKey;
+          return (
+            Array.isArray(k) &&
+            k[0] === "manager" &&
+            k[1] === "production-milestones" &&
+            k[2] === milestoneId &&
+            k[3] === "assignments-search"
+          );
+        },
       });
       invalidateAllManagerSensorThresholdQueries(qc);
       qc.invalidateQueries({
@@ -318,6 +358,21 @@ export const useOwnerListMilestoneAssignments = (
     enabled: !!milestoneId && enabled,
   });
 
+export const useOwnerSearchMilestoneAssignments = (
+  milestoneId: string,
+  query: SearchMilestoneAssignmentsQueryType,
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: QUERY_KEYS.owner.productionMilestones.assignmentsSearch(
+      milestoneId,
+      query,
+    ),
+    queryFn: () =>
+      ownerMilestoneIotDeviceService.searchAssignments(milestoneId, query),
+    enabled: !!milestoneId && enabled,
+  });
+
 export const useOwnerListAvailableIotDevices = (
   milestoneId: string,
   query: ListAvailableIotDevicesQueryType,
@@ -363,6 +418,18 @@ export const useOwnerUnassignIotDevice = (milestoneId: string) => {
       qc.invalidateQueries({
         queryKey:
           QUERY_KEYS.owner.productionMilestones.assignments(milestoneId),
+      });
+      qc.invalidateQueries({
+        predicate: (q) => {
+          const k = q.queryKey;
+          return (
+            Array.isArray(k) &&
+            k[0] === "owner" &&
+            k[1] === "production-milestones" &&
+            k[2] === milestoneId &&
+            k[3] === "assignments-search"
+          );
+        },
       });
       qc.invalidateQueries({
         queryKey: [
@@ -793,6 +860,18 @@ export const useManagerBulkAssignIotDevices = (milestoneId: string) => {
           QUERY_KEYS.manager.productionMilestones.assignments(milestoneId),
       });
       qc.invalidateQueries({
+        predicate: (q) => {
+          const k = q.queryKey;
+          return (
+            Array.isArray(k) &&
+            k[0] === "manager" &&
+            k[1] === "production-milestones" &&
+            k[2] === milestoneId &&
+            k[3] === "assignments-search"
+          );
+        },
+      });
+      qc.invalidateQueries({
         queryKey: [
           "manager",
           "production-milestones",
@@ -841,6 +920,18 @@ export const useOwnerBulkAssignIotDevices = (milestoneId: string) => {
       qc.invalidateQueries({
         queryKey:
           QUERY_KEYS.owner.productionMilestones.assignments(milestoneId),
+      });
+      qc.invalidateQueries({
+        predicate: (q) => {
+          const k = q.queryKey;
+          return (
+            Array.isArray(k) &&
+            k[0] === "owner" &&
+            k[1] === "production-milestones" &&
+            k[2] === milestoneId &&
+            k[3] === "assignments-search"
+          );
+        },
       });
       qc.invalidateQueries({
         queryKey: [

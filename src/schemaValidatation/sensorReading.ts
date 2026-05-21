@@ -42,7 +42,13 @@ export const GetLatestReadingsByAssignmentResSchema = z.object({
   data: z.array(LatestSensorReadingResSchema),
 });
 
-// ── Time-series readings for ONE sensor ────────────────────────────────
+// ── Time-series readings for ONE sensor (legacy raw series) ────────────
+
+export const ListSensorReadingsQuerySchema = z.object({
+  from: z.string().datetime().optional(),
+  to: z.string().datetime().optional(),
+  limit: z.number().int().positive().max(50).optional(),
+});
 
 export const SensorReadingPointSchema = z.object({
   timestamp: z.string(),
@@ -99,6 +105,9 @@ export type LatestSensorReadingResType = z.infer<
 >;
 export type GetLatestReadingsByAssignmentResType = z.infer<
   typeof GetLatestReadingsByAssignmentResSchema
+>;
+export type ListSensorReadingsQueryType = z.infer<
+  typeof ListSensorReadingsQuerySchema
 >;
 export type SensorReadingPointType = z.infer<typeof SensorReadingPointSchema>;
 export type ListSensorReadingsResType = z.infer<

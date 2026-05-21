@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { ArrowLeft, CheckCircle2, Package } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import LoadingCard from "@/components/common/LoadingCard";
@@ -247,8 +247,8 @@ export default function AdminIotInstallQueuePage() {
             Hàng đợi xuất kho
           </h1>
           <p className="text-sm text-muted-foreground">
-            Chọn thiết bị theo chuyến đi. Xuất kho hàng loạt hoặc đánh dấu không
-            lắp được.
+            Chỉ hiển thị thiết bị đã được gán vào milestone đang hiệu lực, thuộc
+            vụ mùa owner đã duyệt. Thời gian chờ tính từ lúc duyệt vụ mùa.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -268,14 +268,23 @@ export default function AdminIotInstallQueuePage() {
           >
             {totalFarms} nông trại · {totalZones} khu vực
           </Badge>
-          {oldestAgeDays > 0 && (
-            <Badge
-              variant="outline"
-              className="px-2 py-1"
-            >
-              Chờ lâu nhất {oldestAgeDays} ngày
-            </Badge>
-          )}
+          <Badge
+            variant="outline"
+            className={`px-2 py-1 transition-opacity ${
+              oldestAgeDays > 0 ? "opacity-100" : "invisible"
+            }`}
+            title="Vụ mùa được duyệt sớm nhất nhưng thiết bị chưa được xuất kho"
+          >
+            Chờ lâu nhất {oldestAgeDays} ngày
+          </Badge>
+          <Loader2
+            className={`h-4 w-4 animate-spin text-muted-foreground transition-opacity ${
+              queueQuery.isFetching && !queueQuery.isLoading
+                ? "opacity-100"
+                : "opacity-0"
+            }`}
+            aria-label="Đang làm mới"
+          />
         </div>
       </div>
 
@@ -305,7 +314,7 @@ export default function AdminIotInstallQueuePage() {
           description={
             hasActiveFilter
               ? "Thử đổi điều kiện lọc hoặc xóa bộ lọc."
-              : "Tất cả thiết bị đã được xuất kho."
+              : "Owner chưa có vụ mùa đã duyệt + milestone đang hiệu lực cần lắp thiết bị mới, hoặc milestone hiện tại dùng chung kit với milestone trước (không cần lắp mới)."
           }
           action={
             hasActiveFilter

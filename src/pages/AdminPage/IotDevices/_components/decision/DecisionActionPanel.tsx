@@ -1,15 +1,14 @@
-import { CheckCircle2, RefreshCw, ShieldOff, XCircle } from "lucide-react";
+import {
+  CheckCircle2,
+  Info,
+  RefreshCw,
+  ShieldOff,
+  XCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import type {
-  SwapInfoType,
-} from "@/schemaValidatation/iotDeviceAdminOps";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { SwapInfoType } from "@/schemaValidatation/iotDeviceAdminOps";
 import type { DeviceStatusType } from "@/schemaValidatation/iotDevice";
 import { DEVICE_STATUS_LABEL_ADMIN } from "@/constants/iotDeviceDisplay";
 import { DecisionKitConstraintBox } from "./DecisionKitConstraintBox";
@@ -64,6 +63,10 @@ export function DecisionActionPanel({
   const blockedReason = canShowSwapFlow
     ? ""
     : getBlockedReason(deviceStatus, swap.possible);
+  // Không ở trạng thái lỗi (không swap được) VÀ không có chủ trang trại
+  // (không gỡ phân bổ được) → trang không có thao tác nào để admin xử lý.
+  // Hiển thị trạng thái trung tính thay vì banner cảnh báo vàng.
+  const nothingActionable = !isErrorStatus && !hasOwner;
 
   return (
     <Card>
@@ -72,153 +75,169 @@ export function DecisionActionPanel({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {deviceStatus === "error" ? (
-          <p className="text-xs text-muted-foreground">
-            Vi xử lý (board) là bộ điều khiển chính của bộ kit — chỉ thay khi thiết
-            bị đang báo lỗi.
-          </p>
-        ) : null}
-
-        {/* Banner trạng thái khả năng thay vi xử lý */}
-        {canShowSwapFlow ? (
+        {nothingActionable ? (
           <div
             role="status"
-            className="flex items-start gap-2 rounded-md border border-emerald-200 bg-emerald-50/60 p-3 text-sm dark:border-emerald-900/60 dark:bg-emerald-950/30"
+            className="flex items-start gap-2 rounded-md border bg-muted/40 p-3 text-sm"
           >
-            <CheckCircle2
-              className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400"
+            <Info
+              className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
               aria-hidden
             />
-            <p className="text-emerald-800 dark:text-emerald-200">
-              Có thể thay thế — {swap.candidatesCount} vi xử lý khả dụng
-              {swap.kitConstraint && (
-                <>
-                  {" "}phù hợp với bộ kit{" "}
-                  <strong>{swap.kitConstraint.kitName}</strong>
-                </>
-              )}
-              .
+            <p className="text-muted-foreground">
+              Thiết bị không có chủ trang trại và không ở trạng thái lỗi — hiện
+              không có thao tác xử lý nào trên trang này.
             </p>
           </div>
         ) : (
-          <div
-            role="status"
-            className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50/60 p-3 text-sm dark:border-amber-900/60 dark:bg-amber-950/30"
-          >
-            <XCircle
-              className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400"
-              aria-hidden
-            />
-            <div className="space-y-1 text-amber-800/90 dark:text-amber-200/90">
-              <p className="font-medium text-amber-700 dark:text-amber-400">
-                Chưa thể thay vi xử lý
-              </p>
-              <p>{blockedReason}</p>
-            </div>
-          </div>
-        )}
-
-        {canShowSwapFlow && swap.kitConstraint && (
-          <DecisionKitConstraintBox kit={swap.kitConstraint} />
-        )}
-
-        {canShowSwapFlow && swap.topCandidates.length > 0 ? (
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Chọn vi xử lý thay thế:</p>
-            <div className="grid gap-2 sm:grid-cols-3">
-              {swap.topCandidates.map((c) => (
-                <DecisionCandidateOption
-                  key={c.id}
-                  candidate={c}
-                  selected={selectedCandidateId === c.id}
-                  onSelect={() => c.isEligible && onSelectCandidate(c.id)}
-                />
-              ))}
-            </div>
-          </div>
-        ) : canShowSwapFlow ? (
-          <p className="text-sm text-muted-foreground">
-            Hệ thống chưa tìm thấy vi xử lý thay thế phù hợp. Vui lòng thử lại
-            sau.
-          </p>
-        ) : null}
-
-        <div className="space-y-3 pt-1">
-          {!canShowSwapFlow && !isErrorStatus && (
-            <>
-              <Separator />
-              <p className="text-sm font-medium">Quản lý phân bổ</p>
+          <>
+            {deviceStatus === "error" ? (
               <p className="text-xs text-muted-foreground">
-                Thiết bị không ở trạng thái lỗi — chỉ có thể gỡ phân bổ chủ
-                trang trại.
+                Vi xử lý (board) là bộ điều khiển chính của bộ kit — chỉ thay
+                khi thiết bị đang báo lỗi.
               </p>
-            </>
-          )}
-          {canShowSwapFlow && (
-            <>
-              <Separator />
-              <p className="text-sm font-medium text-muted-foreground">
-                Hoặc gỡ phân bổ
-              </p>
-            </>
-          )}
-          <div className="flex flex-wrap gap-2">
-            {canShowSwapFlow && (
-              <Button
-                disabled={!canConfirmSwap || isPending}
-                onClick={onClickSwap}
+            ) : null}
+
+            {/* Banner trạng thái khả năng thay vi xử lý */}
+            {canShowSwapFlow ? (
+              <div
+                role="status"
+                className="flex items-start gap-2 rounded-md border border-emerald-200 bg-emerald-50/60 p-3 text-sm dark:border-emerald-900/60 dark:bg-emerald-950/30"
               >
-                <RefreshCw
-                  className="mr-1.5 h-4 w-4"
+                <CheckCircle2
+                  className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400"
                   aria-hidden
                 />
-                {isSwapPending ? "Đang xử lý..." : "Thay vi xử lý ngay"}
-              </Button>
+                <p className="text-emerald-800 dark:text-emerald-200">
+                  Có thể thay thế — {swap.candidatesCount} vi xử lý khả dụng
+                  {swap.kitConstraint && (
+                    <>
+                      {" "}
+                      phù hợp với bộ kit{" "}
+                      <strong>{swap.kitConstraint.kitName}</strong>
+                    </>
+                  )}
+                  .
+                </p>
+              </div>
+            ) : (
+              <div
+                role="status"
+                className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50/60 p-3 text-sm dark:border-amber-900/60 dark:bg-amber-950/30"
+              >
+                <XCircle
+                  className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400"
+                  aria-hidden
+                />
+                <div className="space-y-1 text-amber-800/90 dark:text-amber-200/90">
+                  <p className="font-medium text-amber-700 dark:text-amber-400">
+                    Chưa thể thay vi xử lý
+                  </p>
+                  <p>{blockedReason}</p>
+                </div>
+              </div>
             )}
 
-            <Button
-              variant="outline"
-              disabled={!hasOwner || isPending}
-              onClick={onClickRevoke}
-            >
-              <ShieldOff
-                className="mr-1.5 h-4 w-4"
-                aria-hidden
-              />
-              {isRevokePending ? "Đang xử lý..." : "Gỡ phân bổ chủ trang trại"}
-            </Button>
-          </div>
+            {canShowSwapFlow && swap.kitConstraint && (
+              <DecisionKitConstraintBox kit={swap.kitConstraint} />
+            )}
 
-          {/*
+            {canShowSwapFlow && swap.topCandidates.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Chọn vi xử lý thay thế:</p>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  {swap.topCandidates.map((c) => (
+                    <DecisionCandidateOption
+                      key={c.id}
+                      candidate={c}
+                      selected={selectedCandidateId === c.id}
+                      onSelect={() => c.isEligible && onSelectCandidate(c.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : canShowSwapFlow ? (
+              <p className="text-sm text-muted-foreground">
+                Hệ thống chưa tìm thấy vi xử lý thay thế phù hợp. Vui lòng thử
+                lại sau.
+              </p>
+            ) : null}
+
+            <div className="space-y-3 pt-1">
+              {!canShowSwapFlow && !isErrorStatus && (
+                <>
+                  <Separator />
+                  <p className="text-sm font-medium">Quản lý phân bổ</p>
+                  <p className="text-xs text-muted-foreground">
+                    Thiết bị không ở trạng thái lỗi — chỉ có thể gỡ phân bổ chủ
+                    trang trại.
+                  </p>
+                </>
+              )}
+              {canShowSwapFlow && (
+                <>
+                  <Separator />
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Hoặc gỡ phân bổ
+                  </p>
+                </>
+              )}
+              <div className="flex flex-wrap gap-2">
+                {canShowSwapFlow && (
+                  <Button
+                    disabled={!canConfirmSwap || isPending}
+                    onClick={onClickSwap}
+                  >
+                    <RefreshCw className="mr-1.5 h-4 w-4" aria-hidden />
+                    {isSwapPending ? "Đang xử lý..." : "Thay vi xử lý ngay"}
+                  </Button>
+                )}
+
+                <Button
+                  variant="outline"
+                  disabled={!hasOwner || isPending}
+                  onClick={onClickRevoke}
+                >
+                  <ShieldOff className="mr-1.5 h-4 w-4" aria-hidden />
+                  {isRevokePending
+                    ? "Đang xử lý..."
+                    : "Gỡ phân bổ chủ trang trại"}
+                </Button>
+              </div>
+
+              {/*
             Helper text giải thích vì sao nút bị disable — tránh admin click
             không được mà không hiểu lý do.
           */}
-          {(!canConfirmSwap || !hasOwner) && (
-            <ul className="space-y-0.5 text-xs text-muted-foreground">
-              {!isErrorStatus && (
-                <li>
-                  • Thay vi xử lý: chỉ áp dụng khi thiết bị đang lỗi (trạng
-                  thái hiện tại: {DEVICE_STATUS_LABEL_ADMIN[deviceStatus]}).
-                </li>
+              {(!canConfirmSwap || !hasOwner) && (
+                <ul className="space-y-0.5 text-xs text-muted-foreground">
+                  {!isErrorStatus && (
+                    <li>
+                      • Thay vi xử lý: chỉ áp dụng khi thiết bị đang lỗi (trạng
+                      thái hiện tại: {DEVICE_STATUS_LABEL_ADMIN[deviceStatus]}).
+                    </li>
+                  )}
+                  {isErrorStatus && !swap.possible && (
+                    <li>
+                      • Thay vi xử lý: hệ thống chưa có vi xử lý thay thế phù
+                      hợp.
+                    </li>
+                  )}
+                  {canShowSwapFlow && !selectedCandidateId && (
+                    <li>
+                      • Thay vi xử lý: chọn 1 vi xử lý thay thế ở trên trước.
+                    </li>
+                  )}
+                  {!hasOwner && (
+                    <li>
+                      • Gỡ phân bổ: thiết bị chưa có chủ trang trại để gỡ.
+                    </li>
+                  )}
+                </ul>
               )}
-              {isErrorStatus && !swap.possible && (
-                <li>
-                  • Thay vi xử lý: hệ thống chưa có vi xử lý thay thế phù hợp.
-                </li>
-              )}
-              {canShowSwapFlow && !selectedCandidateId && (
-                <li>
-                  • Thay vi xử lý: chọn 1 vi xử lý thay thế ở trên trước.
-                </li>
-              )}
-              {!hasOwner && (
-                <li>
-                  • Gỡ phân bổ: thiết bị chưa có chủ trang trại để gỡ.
-                </li>
-              )}
-            </ul>
-          )}
-        </div>
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );

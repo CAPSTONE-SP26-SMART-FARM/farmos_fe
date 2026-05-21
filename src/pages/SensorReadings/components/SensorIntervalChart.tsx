@@ -3,6 +3,7 @@ import {
   CartesianGrid,
   Line,
   LineChart,
+  ReferenceArea,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -341,13 +342,44 @@ export default function SensorIntervalChart({
               <Tooltip content={renderTooltip} />
               {reading.threshold && (
                 <>
+                  {/* Vùng nguy hiểm phía dưới: minValue → optimalMin */}
+                  {yDomain[0] < reading.threshold.optimalMin && (
+                    <ReferenceArea
+                      y1={yDomain[0]}
+                      y2={reading.threshold.optimalMin}
+                      fill={UNSAFE_COLOR}
+                      fillOpacity={0.08}
+                      stroke="none"
+                      ifOverflow="visible"
+                    />
+                  )}
+                  {/* Vùng an toàn: optimalMin → optimalMax */}
+                  <ReferenceArea
+                    y1={reading.threshold.optimalMin}
+                    y2={reading.threshold.optimalMax}
+                    fill={SAFE_COLOR}
+                    fillOpacity={0.08}
+                    stroke="none"
+                    ifOverflow="visible"
+                  />
+                  {/* Vùng nguy hiểm phía trên: optimalMax → maxValue */}
+                  {yDomain[1] > reading.threshold.optimalMax && (
+                    <ReferenceArea
+                      y1={reading.threshold.optimalMax}
+                      y2={yDomain[1]}
+                      fill={UNSAFE_COLOR}
+                      fillOpacity={0.08}
+                      stroke="none"
+                      ifOverflow="visible"
+                    />
+                  )}
                   <ReferenceLine
                     y={reading.threshold.optimalMin}
                     stroke={THRESHOLD_COLOR}
                     strokeDasharray="4 4"
                     strokeOpacity={0.6}
                     label={{
-                      value: `Min ${reading.threshold.optimalMin}`,
+                      value: `Tối thiểu ${reading.threshold.optimalMin}${unit}`,
                       fontSize: 10,
                       position: "insideTopLeft",
                     }}
@@ -358,7 +390,7 @@ export default function SensorIntervalChart({
                     strokeDasharray="4 4"
                     strokeOpacity={0.6}
                     label={{
-                      value: `Max ${reading.threshold.optimalMax}`,
+                      value: `Tối đa ${reading.threshold.optimalMax}${unit}`,
                       fontSize: 10,
                       position: "insideBottomLeft",
                     }}

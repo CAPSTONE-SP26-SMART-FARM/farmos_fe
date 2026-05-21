@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { AlertTriangle, ChevronLeft, ChevronRight, Cpu, Radio } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, Radio } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,13 +11,21 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useManagerListProductionMilestones, useManagerMilestoneAssignment } from "@/queries/useProductionMilestone";
-import { useManagerLatestSensorReadings } from "@/queries/useSensorReading";
+import {
+  useManagerListProductionMilestones,
+  useManagerMilestoneAssignment,
+} from "@/queries/useProductionMilestone";
+import {
+  useManagerLatestSensorReadings,
+  useMilestoneAssignmentsRealtime,
+  useSensorReadingRealtime,
+} from "@/queries/useSensorReading";
+import SensorCard from "@/pages/SensorReadings/components/SensorCard";
+import { useZoneSubscription } from "@/hooks/useZoneSubscription";
 import { useListAlerts } from "@/queries/useAlert";
 import type { AlertResType } from "@/schemaValidatation/alert";
 import type { ProductionMilestoneResType } from "@/schemaValidatation/productionMilestone";
 import type { CropSeasonType } from "@/types/cropSeason";
-import SensorCard from "@/pages/SensorReadings/components/SensorCard";
 import { MILESTONE_STATUS_META } from "./helpers";
 import IotCoverageWidget from "@/components/common/IotCoverageWidget";
 
@@ -221,8 +229,11 @@ function MilestoneSensorSection({ milestone }: { milestone: ProductionMilestoneR
   const assignmentQuery = useManagerMilestoneAssignment(milestone.id, true);
   const assignment = assignmentQuery.data?.data?.data ?? null;
   const assignmentId = assignment?.assignmentId ?? "";
+  const zoneId = assignment?.zoneId ?? "";
   const readingsQuery = useManagerLatestSensorReadings(assignmentId, !!assignmentId);
   const readings = readingsQuery.data?.data ?? [];
+  useZoneSubscription(zoneId || undefined);
+  useSensorReadingRealtime(assignmentId || undefined, "manager");
   const meta = MILESTONE_STATUS_META[milestone.status] ?? {
     label: milestone.status,
     variant: "secondary" as const,
@@ -248,10 +259,6 @@ function MilestoneSensorSection({ milestone }: { milestone: ProductionMilestoneR
           <Badge variant={meta.variant} className="text-xs shrink-0">{meta.label}</Badge>
         </div>
         <Separator className="flex-1" />
-        <div className="flex items-center gap-1.5 shrink-0">
-          <Cpu className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">{assignment.device.deviceName}</span>
-        </div>
       </div>
       {readingsQuery.isLoading ? (
         <div className="grid grid-cols-2 gap-3">
@@ -279,6 +286,11 @@ function MilestoneSensorSection({ milestone }: { milestone: ProductionMilestoneR
 }
 
 export function SensorOverviewTab({ cropSeason }: { cropSeason: CropSeasonType }) {
+  // Subscribe zone-room ở cấp tab để badge install → active cập nhật ngay
+  // dù user chưa mở dialog chi tiết bo mạch.
+  useZoneSubscription(cropSeason.zoneId);
+  useMilestoneAssignmentsRealtime("manager");
+
   const listQuery = useManagerListProductionMilestones(cropSeason.id, { page: 1, limit: 50 });
   const milestones = (listQuery.data?.data.data ?? [])
     .filter((m) => m.status === "in_progress")

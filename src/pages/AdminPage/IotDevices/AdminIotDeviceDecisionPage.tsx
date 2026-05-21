@@ -5,10 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import LoadingCard from "@/components/common/LoadingCard";
 import ErrorState from "@/components/common/ErrorState";
-import {
-  DEVICE_TYPE_LABEL,
-  STATUS_META,
-} from "@/constants/iotDeviceDisplay";
+import { DEVICE_TYPE_LABEL, STATUS_META } from "@/constants/iotDeviceDisplay";
 import {
   useAdminDecisionContext,
   useAdminSwapBoard,
@@ -124,43 +121,26 @@ export default function AdminIotDeviceDecisionPage() {
           size="sm"
           onClick={() => navigate("/dashboard/admin/iot-devices")}
         >
-          <ArrowLeft
-            className="mr-1 h-4 w-4"
-            aria-hidden
-          />
+          <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
           Quay lại danh sách
         </Button>
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-          >
+          <Button asChild variant="outline" size="sm">
             <Link to={`/dashboard/admin/iot-devices/${deviceId}`}>
-              <ExternalLink
-                className="mr-1 h-4 w-4"
-                aria-hidden
-              />
+              <ExternalLink className="mr-1 h-4 w-4" aria-hidden />
               Chi tiết thiết bị
             </Link>
           </Button>
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-          >
+          <Button asChild variant="outline" size="sm">
             <Link
               to={`/dashboard/admin/iot-devices/${deviceId}/timeline`}
               aria-label="Xem lịch sử thiết bị"
             >
-              <History
-                className="mr-1 h-4 w-4"
-                aria-hidden
-              />
+              <History className="mr-1 h-4 w-4" aria-hidden />
               Xem lịch sử
             </Link>
-        </Button>
-      </div>
+          </Button>
+        </div>
       </div>
 
       {completedAction && (
@@ -205,10 +185,7 @@ export default function AdminIotDeviceDecisionPage() {
           variant="outline"
           className={cn("ml-2 gap-1", statusMeta.badgeClass)}
         >
-          <statusMeta.icon
-            className="h-3.5 w-3.5"
-            aria-hidden
-          />
+          <statusMeta.icon className="h-3.5 w-3.5" aria-hidden />
           {statusMeta.labelAdmin}
         </Badge>
         {ctx.device.status === "error" && ctx.errorContext && (
@@ -218,10 +195,16 @@ export default function AdminIotDeviceDecisionPage() {
         )}
       </div>
 
-      {ctx.deviceLocation && (
+      {/*
+        Vị trí/nông trại là ngữ cảnh phân bổ HIỆN TẠI. Khi thiết bị không còn
+        chủ trang trại (status `available` — đã trả về kho cho thuê tiếp),
+        `deviceLocation` mà BE trả về chỉ là nông trại cũ → ẩn để tránh hiểu
+        nhầm thiết bị vẫn đang ở farm đó.
+      */}
+      {ctx.owner && ctx.deviceLocation && (
         <DecisionLocationHeader
           location={ctx.deviceLocation}
-          ownerName={ctx.owner?.fullName ?? null}
+          ownerName={ctx.owner.fullName}
         />
       )}
 
@@ -273,4 +256,3 @@ export default function AdminIotDeviceDecisionPage() {
     </div>
   );
 }
-

@@ -10,6 +10,7 @@ import { getSocketInstance } from "@/lib/socket";
 import { useSocketStore } from "@/stores/socketStore";
 import { RealtimeEvents } from "@/constants/realtime";
 import type {
+  ListSensorReadingsQueryType,
   SensorIntervalType,
   SensorStatsPeriodType,
 } from "@/schemaValidatation/sensorReading";
@@ -45,6 +46,50 @@ export const useManagerLatestSensorReadings = (
     staleTime: 10_000,
     refetchInterval: 60_000,
     refetchOnWindowFocus: true,
+  });
+};
+
+// ── Time-series (legacy raw series per sensor) ─────────────────────────
+
+export const useOwnerSensorReadingSeries = (
+  assignmentId: string,
+  sensorId: string,
+  query: ListSensorReadingsQueryType = {},
+  enabled = true,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.owner.sensorReadings.series(
+      assignmentId,
+      sensorId,
+      query,
+    ),
+    queryFn: () =>
+      ownerSensorReadingService
+        .getSeries(assignmentId, sensorId, query)
+        .then((r) => r.data),
+    enabled: !!assignmentId && !!sensorId && enabled,
+    staleTime: 30_000,
+  });
+};
+
+export const useManagerSensorReadingSeries = (
+  assignmentId: string,
+  sensorId: string,
+  query: ListSensorReadingsQueryType = {},
+  enabled = true,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.manager.sensorReadings.series(
+      assignmentId,
+      sensorId,
+      query,
+    ),
+    queryFn: () =>
+      managerSensorReadingService
+        .getSeries(assignmentId, sensorId, query)
+        .then((r) => r.data),
+    enabled: !!assignmentId && !!sensorId && enabled,
+    staleTime: 30_000,
   });
 };
 
@@ -138,6 +183,22 @@ export function useSensorReadingRealtime(
     // Chart sẽ refresh theo `refetchInterval` của hook (15s/60s tuỳ interval).
   }, [assignmentId, role, queryClient]);
 
+  // Khi board nhận data lần đầu → BE flip status install → active và emit
+  // `iot.device.activated`. Cần invalidate list assignment để badge cập nhật.
+  const invalidateAssignments = useCallback(() => {
+    queryClient.invalidateQueries({
+      predicate: (q) => {
+        const k = q.queryKey;
+        return (
+          Array.isArray(k) &&
+          k[0] === role &&
+          k[1] === "production-milestones" &&
+          (k[3] === "assignments" || k[3] === "assignments-search")
+        );
+      },
+    });
+  }, [role, queryClient]);
+
   const debouncedInvalidate = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(invalidateReadings, 500);
@@ -170,12 +231,19 @@ export function useSensorReadingRealtime(
     // timestamp mới nhất / trạng thái BE đã chốt (timeout/hardware).
     const handleSensorHealth = () => debouncedInvalidate();
 
+    // Device lifecycle: chỉ refetch list assignments (cập nhật badge status).
+    // Không invalidate reading vì chưa chắc liên quan tới `assignmentId` này.
+    const handleDeviceLifecycle = () => invalidateAssignments();
+
     socket.on("sensor.reading.changed", handleReadingChanged);
     socket.on("alert.created", handleAlertCreated);
     socket.on(RealtimeEvents.SensorTimeoutDetected, handleSensorHealth);
     socket.on(RealtimeEvents.SensorTimeoutRecovered, handleSensorHealth);
     socket.on(RealtimeEvents.SensorHardwareIssueDetected, handleSensorHealth);
     socket.on(RealtimeEvents.SensorAlertRecovered, handleSensorHealth);
+    socket.on(RealtimeEvents.IotDeviceActivated, handleDeviceLifecycle);
+    socket.on(RealtimeEvents.IotDeviceStatusChanged, handleDeviceLifecycle);
+    socket.on(RealtimeEvents.IotDeviceSwapped, handleDeviceLifecycle);
 
     return () => {
       socket.off("sensor.reading.changed", handleReadingChanged);
@@ -187,7 +255,54 @@ export function useSensorReadingRealtime(
         handleSensorHealth,
       );
       socket.off(RealtimeEvents.SensorAlertRecovered, handleSensorHealth);
+      socket.off(RealtimeEvents.IotDeviceActivated, handleDeviceLifecycle);
+      socket.off(RealtimeEvents.IotDeviceStatusChanged, handleDeviceLifecycle);
+      socket.off(RealtimeEvents.IotDeviceSwapped, handleDeviceLifecycle);
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [connected, assignmentId, debouncedInvalidate]);
+  }, [connected, assignmentId, debouncedInvalidate, invalidateAssignments]);
+}
+
+/**
+ * Lắng các event device lifecycle (activated / status changed / swapped) và
+ * invalidate danh sách milestone assignments để badge trạng thái (install →
+ * active …) cập nhật ngay, không phụ thuộc vào việc dialog có mở hay không.
+ *
+ * Dùng ở cấp tab (SensorOverviewTab / OwnerSensorOverviewTab) — luôn mounted
+ * khi user đang xem tab cảm biến của vụ mùa.
+ */
+export function useMilestoneAssignmentsRealtime(
+  role: "owner" | "manager",
+): void {
+  const connected = useSocketStore((s) => s.connected);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const socket = getSocketInstance();
+    if (!socket || !connected) return;
+
+    const invalidate = () => {
+      queryClient.invalidateQueries({
+        predicate: (q) => {
+          const k = q.queryKey;
+          return (
+            Array.isArray(k) &&
+            k[0] === role &&
+            k[1] === "production-milestones" &&
+            (k[3] === "assignments" || k[3] === "assignments-search")
+          );
+        },
+      });
+    };
+
+    socket.on(RealtimeEvents.IotDeviceActivated, invalidate);
+    socket.on(RealtimeEvents.IotDeviceStatusChanged, invalidate);
+    socket.on(RealtimeEvents.IotDeviceSwapped, invalidate);
+
+    return () => {
+      socket.off(RealtimeEvents.IotDeviceActivated, invalidate);
+      socket.off(RealtimeEvents.IotDeviceStatusChanged, invalidate);
+      socket.off(RealtimeEvents.IotDeviceSwapped, invalidate);
+    };
+  }, [connected, role, queryClient]);
 }

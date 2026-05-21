@@ -1,7 +1,10 @@
 import { API_ENDPOINTS } from "@/constants";
 import { api } from "@/lib/axios";
+import queryString from "query-string";
 import type {
   GetLatestReadingsByAssignmentResType,
+  ListSensorReadingsQueryType,
+  ListSensorReadingsResType,
   SensorIntervalType,
   SensorSeriesIntervalResType,
   SensorStatsPeriodType,
@@ -17,12 +20,40 @@ export const ownerSensorReadingService = {
     api.get<GetLatestReadingsByAssignmentResType>(
       OWNER_EP.LATEST(assignmentId),
     ),
+
+  getSeries: (
+    assignmentId: string,
+    sensorId: string,
+    query: ListSensorReadingsQueryType,
+  ) =>
+    api.get<ListSensorReadingsResType>(
+      OWNER_EP.SERIES(assignmentId, sensorId) +
+        "?" +
+        queryString.stringify(
+          { ...query },
+          { skipEmptyString: true, skipNull: true },
+        ),
+    ),
 };
 
 export const managerSensorReadingService = {
   getLatest: (assignmentId: string) =>
     api.get<GetLatestReadingsByAssignmentResType>(
       MANAGER_EP.LATEST(assignmentId),
+    ),
+
+  getSeries: (
+    assignmentId: string,
+    sensorId: string,
+    query: ListSensorReadingsQueryType,
+  ) =>
+    api.get<ListSensorReadingsResType>(
+      MANAGER_EP.SERIES(assignmentId, sensorId) +
+        "?" +
+        queryString.stringify(
+          { ...query },
+          { skipEmptyString: true, skipNull: true },
+        ),
     ),
 };
 

@@ -253,6 +253,8 @@ export const API_ENDPOINTS = {
         `/production-milestone-iot-device/manager/milestone/${milestoneId}/assignment`,
       ASSIGNMENTS: (milestoneId: string) =>
         `/production-milestone-iot-device/manager/milestone/${milestoneId}/assignments`,
+      ASSIGNMENTS_SEARCH: (milestoneId: string) =>
+        `/production-milestone-iot-device/manager/milestone/${milestoneId}/assignments/search`,
       AVAILABLE: (milestoneId: string) =>
         `/production-milestone-iot-device/manager/milestone/${milestoneId}/available`,
       ASSIGN: (milestoneId: string) =>
@@ -283,6 +285,8 @@ export const API_ENDPOINTS = {
     SENSOR_READING: {
       LATEST: (assignmentId: string) =>
         `/sensor-reading/manager/assignment/${assignmentId}/latest`,
+      SERIES: (assignmentId: string, sensorId: string) =>
+        `/sensor-reading/manager/assignment/${assignmentId}/sensor/${sensorId}/series`,
     },
     SENSOR: {
       LIST: (iotDeviceId: string) =>
@@ -370,6 +374,8 @@ export const API_ENDPOINTS = {
         `/production-milestone-iot-device/owner/milestone/${milestoneId}/assignment`,
       ASSIGNMENTS: (milestoneId: string) =>
         `/production-milestone-iot-device/owner/milestone/${milestoneId}/assignments`,
+      ASSIGNMENTS_SEARCH: (milestoneId: string) =>
+        `/production-milestone-iot-device/owner/milestone/${milestoneId}/assignments/search`,
       AVAILABLE: (milestoneId: string) =>
         `/production-milestone-iot-device/owner/milestone/${milestoneId}/available`,
       ASSIGN: (milestoneId: string) =>
@@ -400,6 +406,8 @@ export const API_ENDPOINTS = {
     SENSOR_READING: {
       LATEST: (assignmentId: string) =>
         `/sensor-reading/owner/assignment/${assignmentId}/latest`,
+      SERIES: (assignmentId: string, sensorId: string) =>
+        `/sensor-reading/owner/assignment/${assignmentId}/sensor/${sensorId}/series`,
     },
     EMPLOYEE_TASK: {
       LIST: (milestoneId: string) =>
@@ -990,6 +998,16 @@ export const QUERY_KEYS = {
         milestoneId,
         "assignments",
       ],
+      assignmentsSearch: (
+        milestoneId: string,
+        query?: Record<string, unknown>,
+      ) => [
+        "manager",
+        "production-milestones",
+        milestoneId,
+        "assignments-search",
+        ...(query !== undefined ? [query] : []),
+      ],
       availableDevices: (
         milestoneId: string,
         query?: Record<string, unknown>,
@@ -1049,6 +1067,20 @@ export const QUERY_KEYS = {
         "assignment",
         assignmentId,
         "latest",
+      ],
+      series: (
+        assignmentId: string,
+        sensorId: string,
+        query?: Record<string, unknown>,
+      ) => [
+        "manager",
+        "sensor-readings",
+        "assignment",
+        assignmentId,
+        "sensor",
+        sensorId,
+        "series",
+        ...(query !== undefined ? [query] : []),
       ],
     },
     employeeTasks: {
@@ -1135,6 +1167,20 @@ export const QUERY_KEYS = {
         assignmentId,
         "latest",
       ],
+      series: (
+        assignmentId: string,
+        sensorId: string,
+        query?: Record<string, unknown>,
+      ) => [
+        "owner",
+        "sensor-readings",
+        "assignment",
+        assignmentId,
+        "sensor",
+        sensorId,
+        "series",
+        ...(query !== undefined ? [query] : []),
+      ],
     },
     iotDeviceTemplates: {
       list: (query?: Record<string, unknown>) => [
@@ -1193,6 +1239,16 @@ export const QUERY_KEYS = {
         "production-milestones",
         milestoneId,
         "assignments",
+      ],
+      assignmentsSearch: (
+        milestoneId: string,
+        query?: Record<string, unknown>,
+      ) => [
+        "owner",
+        "production-milestones",
+        milestoneId,
+        "assignments-search",
+        ...(query !== undefined ? [query] : []),
       ],
       availableDevices: (
         milestoneId: string,

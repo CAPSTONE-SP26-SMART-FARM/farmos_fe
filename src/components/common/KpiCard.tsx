@@ -18,6 +18,8 @@ interface KpiCardProps {
   hint?: string;
   tone?: KpiCardTone;
   className?: string;
+  onClick?: () => void;
+  active?: boolean;
 }
 
 function KpiCard({
@@ -27,9 +29,34 @@ function KpiCard({
   hint,
   tone = "default",
   className,
+  onClick,
+  active,
 }: KpiCardProps) {
+  const interactive = typeof onClick === "function";
   return (
-    <Card className={cn("h-full", className)}>
+    <Card
+      className={cn(
+        "h-full",
+        interactive &&
+          "cursor-pointer transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        active && "ring-2 ring-primary/60 ring-inset",
+        className,
+      )}
+      onClick={onClick}
+      role={interactive ? "button" : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      aria-pressed={interactive ? !!active : undefined}
+      onKeyDown={
+        interactive
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick?.();
+              }
+            }
+          : undefined
+      }
+    >
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-2 mb-2">
           <p className="text-[11px] font-medium text-muted-foreground leading-tight">

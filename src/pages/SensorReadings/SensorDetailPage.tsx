@@ -245,6 +245,11 @@ export default function SensorDetailPage() {
             options={PERIOD_OPTIONS}
           />
         </div>
+        {(() => {
+          const periodLabel =
+            PERIOD_OPTIONS.find((o) => o.value === period)?.label.toLowerCase() ??
+            period;
+          return (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <SensorStatBadge
             label="Giá trị hiện tại"
@@ -255,7 +260,7 @@ export default function SensorDetailPage() {
             isLoading={isStatsLoading}
           />
           <SensorStatBadge
-            label={`Thấp nhất (${period})`}
+            label={`Thấp nhất (${periodLabel})`}
             value={stats?.minValue ?? null}
             unit={meta.unit}
             icon={ArrowDown}
@@ -263,7 +268,7 @@ export default function SensorDetailPage() {
             isLoading={isStatsLoading}
           />
           <SensorStatBadge
-            label={`Cao nhất (${period})`}
+            label={`Cao nhất (${periodLabel})`}
             value={stats?.maxValue ?? null}
             unit={meta.unit}
             icon={ArrowUp}
@@ -271,13 +276,15 @@ export default function SensorDetailPage() {
             isLoading={isStatsLoading}
           />
           <SensorStatBadge
-            label={`Số cảnh báo (${period})`}
+            label={`Số cảnh báo (${periodLabel})`}
             value={stats?.alertCount ?? null}
             icon={AlertTriangle}
             tone={stats && stats.alertCount > 0 ? "danger" : "default"}
             isLoading={isStatsLoading}
           />
         </div>
+          );
+        })()}
       </div>
 
       {/* Chart */}

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { AlertTriangle, ChevronLeft, ChevronRight, Cpu, Radio } from "lucide-react";
+import { useState } from "react";
+import { AlertTriangle, ChevronLeft, ChevronRight, Radio } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,14 +12,20 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useOwnerListProductionMilestones,
-  useOwnerMilestoneAssignment,
+  useOwnerSearchMilestoneAssignments,
 } from "@/queries/useProductionMilestone";
-import { useOwnerLatestSensorReadings } from "@/queries/useSensorReading";
+import {
+  useOwnerSensorReadingSeries,
+  useMilestoneAssignmentsRealtime,
+  useSensorReadingRealtime,
+} from "@/queries/useSensorReading";
+import { useZoneSubscription } from "@/hooks/useZoneSubscription";
+import { MilestoneAssignmentsList } from "@/pages/ManagerPage/CropSeasons/components/MilestoneAssignmentsList";
+import { SensorChart } from "@/pages/ManagerPage/CropSeasons/components/SensorChart";
 import { useListAlerts } from "@/queries/useAlert";
 import type { AlertResType } from "@/schemaValidatation/alert";
 import type { ProductionMilestoneResType } from "@/schemaValidatation/productionMilestone";
 import type { CropSeasonType } from "@/types/cropSeason";
-import SensorCard from "@/pages/SensorReadings/components/SensorCard";
 import { MILESTONE_STATUS_META } from "@/pages/ManagerPage/CropSeasons/components/helpers";
 
 const ALERTS_PAGE_SIZE = 5;
@@ -217,30 +223,57 @@ function AlertsPanel({ isLoading }: { isLoading: boolean }) {
   );
 }
 
+function AssignmentChartsBlock({
+  assignmentId,
+  zoneId,
+  sensors,
+}: {
+  assignmentId: string;
+  zoneId: string;
+  sensors: Array<{
+    sensorId: string;
+    sensorType: string;
+    sensorName: string;
+    unit: string | null;
+    threshold: { optimalMin: number | null; optimalMax: number | null } | null;
+  }>;
+}) {
+  useZoneSubscription(zoneId);
+  useSensorReadingRealtime(assignmentId, "owner");
+  if (sensors.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground py-4 text-center">
+        Chưa có cảm biến nào được liên kết
+      </p>
+    );
+  }
+  return (
+    <div className="space-y-3">
+      {sensors.map((s) => (
+        <SensorChart
+          key={s.sensorId}
+          assignmentId={assignmentId}
+          sensorId={s.sensorId}
+          sensorType={s.sensorType}
+          sensorName={s.sensorName}
+          unit={s.unit}
+          threshold={s.threshold}
+          useSeries={useOwnerSensorReadingSeries}
+        />
+      ))}
+    </div>
+  );
+}
+
 function MilestoneSensorSection({
   milestone,
 }: {
   milestone: ProductionMilestoneResType;
 }) {
-  const assignmentQuery = useOwnerMilestoneAssignment(milestone.id, true);
-  const assignment = assignmentQuery.data?.data?.data ?? null;
-  const assignmentId = assignment?.assignmentId ?? "";
-  const readingsQuery = useOwnerLatestSensorReadings(assignmentId, !!assignmentId);
-  const readings = readingsQuery.data?.data ?? [];
-
-  useEffect(() => {
-    if (assignmentId) readingsQuery.refetch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assignmentId]);
-
   const meta = MILESTONE_STATUS_META[milestone.status] ?? {
     label: milestone.status,
     variant: "secondary" as const,
   };
-
-  if (assignmentQuery.isLoading)
-    return <Skeleton className="h-48 w-full rounded-lg" />;
-  if (!assignment) return null;
 
   return (
     <div className="space-y-3">
@@ -255,30 +288,18 @@ function MilestoneSensorSection({
           </Badge>
         </div>
         <Separator className="flex-1" />
-        <div className="flex items-center gap-1.5 shrink-0">
-          <Cpu className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">
-            {assignment.device?.deviceName ?? "Chưa gán thiết bị"}
-          </span>
-        </div>
       </div>
-      {readingsQuery.isLoading ? (
-        <div className="grid grid-cols-2 gap-3">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-36" />
-          ))}
-        </div>
-      ) : readings.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-4 text-center">
-          Chưa có dữ liệu cảm biến
-        </p>
-      ) : (
-        <div className="grid grid-cols-2 gap-3">
-          {readings.map((r) => (
-            <SensorCard key={r.sensorId} reading={r} />
-          ))}
-        </div>
-      )}
+      <MilestoneAssignmentsList
+        milestoneId={milestone.id}
+        useSearch={useOwnerSearchMilestoneAssignments}
+        renderAssignment={(a) => (
+          <AssignmentChartsBlock
+            assignmentId={a.assignmentId}
+            zoneId={a.zoneId}
+            sensors={a.sensors}
+          />
+        )}
+      />
     </div>
   );
 }
@@ -288,6 +309,11 @@ export function OwnerSensorOverviewTab({
 }: {
   cropSeason: CropSeasonType;
 }) {
+  // Subscribe zone-room + lắng device lifecycle ở cấp tab để badge install →
+  // active cập nhật ngay khi board nhận data lần đầu, không phụ thuộc dialog.
+  useZoneSubscription(cropSeason.zoneId);
+  useMilestoneAssignmentsRealtime("owner");
+
   const listQuery = useOwnerListProductionMilestones(cropSeason.id, {
     page: 1,
     limit: 50,
