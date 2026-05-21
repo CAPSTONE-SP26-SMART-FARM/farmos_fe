@@ -20,6 +20,16 @@ import { cn } from "@/lib/utils";
 import { formatRelativeVi } from "@/lib/format";
 import type { RecoveryZoneType } from "@/schemaValidatation/iotDeviceAdminOps";
 
+function relativeDaysVi(value: string | null | undefined): string {
+  if (!value) return "-";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "-";
+  const diff = Math.floor((d.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+  if (diff === 0) return "hôm nay";
+  if (diff > 0) return `sau ${diff} ngày nữa`;
+  return `${Math.abs(diff)} ngày trước`;
+}
+
 interface Props {
   zone: RecoveryZoneType;
   selectedIds: Set<string>;
@@ -58,7 +68,7 @@ export function RecoveryZoneSection({
         <Checkbox
           checked={allSelected ? true : someSelected ? "indeterminate" : false}
           onCheckedChange={onToggleZone}
-          aria-label={`Chọn toàn bộ thiết bị của ${zone.zoneName ?? "khu chưa gán"}`}
+          aria-label={`Chọn toàn bộ thiết bị của ${zone.zoneName ?? "kho trang trại"}`}
         />
         {zone.isUnzoned ? (
           <AlertTriangle
@@ -72,7 +82,7 @@ export function RecoveryZoneSection({
           />
         )}
         <span className="font-medium">
-          {zone.zoneName ?? "Chưa gán khu vực"}
+          {zone.zoneName ?? "Tại kho trang trại (chưa từng lắp vào zone)"}
         </span>
         <Badge variant="secondary">{zone.totalDevices} bộ</Badge>
         <span
@@ -93,10 +103,10 @@ export function RecoveryZoneSection({
         <div className="mt-2 pl-7 text-xs text-muted-foreground">
           Gói <strong>{zone.recoveryContext.subscriptionPlanName}</strong>
           {zone.recoveryContext.subscriptionExpiredAt
-            ? ` · hết hạn ${formatRelativeVi(zone.recoveryContext.subscriptionExpiredAt)}`
+            ? ` · hết hạn ${relativeDaysVi(zone.recoveryContext.subscriptionExpiredAt)}`
             : ""}
           {zone.recoveryContext.graceEndedAt
-            ? ` · hết gia hạn ${formatRelativeVi(zone.recoveryContext.graceEndedAt)}`
+            ? ` · hết gia hạn ${relativeDaysVi(zone.recoveryContext.graceEndedAt)}`
             : ""}
         </div>
       )}
