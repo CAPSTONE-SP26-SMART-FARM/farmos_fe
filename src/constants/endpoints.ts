@@ -658,6 +658,14 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/harvest-records/${id}`,
     DELETE: (id: string) => `/harvest-records/${id}`,
   },
+  COMMON: {
+    SENSOR_READING: {
+      SERIES_INTERVAL: (assignmentId: string, sensorId: string) =>
+        `/sensor-reading/assignment/${assignmentId}/sensor/${sensorId}/series-interval`,
+      STATS: (assignmentId: string, sensorId: string) =>
+        `/sensor-reading/assignment/${assignmentId}/sensor/${sensorId}/stats`,
+    },
+  },
 } as const;
 
 //query keys
@@ -1621,5 +1629,35 @@ export const QUERY_KEYS = {
         ...(query !== undefined ? [query] : []),
       ] as const,
     detail: (id: string) => ["harvest-records", id] as const,
+  },
+  common: {
+    sensorReadings: {
+      seriesInterval: (
+        assignmentId: string,
+        sensorId: string,
+        interval: string,
+      ) =>
+        [
+          "common",
+          "sensor-readings",
+          "assignment",
+          assignmentId,
+          "sensor",
+          sensorId,
+          "series-interval",
+          interval,
+        ] as const,
+      stats: (assignmentId: string, sensorId: string, period: string) =>
+        [
+          "common",
+          "sensor-readings",
+          "assignment",
+          assignmentId,
+          "sensor",
+          sensorId,
+          "stats",
+          period,
+        ] as const,
+    },
   },
 } as const;

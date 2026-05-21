@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import { AlertTriangle, ChevronLeft, ChevronRight, Cpu, Radio } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -216,6 +217,7 @@ function AlertsPanel({ isLoading }: { isLoading: boolean }) {
 }
 
 function MilestoneSensorSection({ milestone }: { milestone: ProductionMilestoneResType }) {
+  const navigate = useNavigate();
   const assignmentQuery = useManagerMilestoneAssignment(milestone.id, true);
   const assignment = assignmentQuery.data?.data?.data ?? null;
   const assignmentId = assignment?.assignmentId ?? "";
@@ -228,6 +230,12 @@ function MilestoneSensorSection({ milestone }: { milestone: ProductionMilestoneR
 
   if (assignmentQuery.isLoading) return <Skeleton className="h-48 w-full rounded-lg" />;
   if (!assignment) return null;
+
+  function goToDetail(sensorId: string) {
+    navigate(
+      `/dashboard/manager/sensor-readings/${assignmentId}/sensors/${sensorId}`,
+    );
+  }
 
   return (
     <div className="space-y-3">
@@ -253,7 +261,17 @@ function MilestoneSensorSection({ milestone }: { milestone: ProductionMilestoneR
         <p className="text-sm text-muted-foreground py-4 text-center">Chưa có dữ liệu cảm biến</p>
       ) : (
         <div className="grid grid-cols-2 gap-3">
-          {readings.map((r) => <SensorCard key={r.sensorId} reading={r} />)}
+          {readings.map((r) => (
+            <button
+              key={r.sensorId}
+              type="button"
+              onClick={() => goToDetail(r.sensorId)}
+              className="text-left rounded-lg transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+              title="Xem chi tiết cảm biến"
+            >
+              <SensorCard reading={r} />
+            </button>
+          ))}
         </div>
       )}
     </div>

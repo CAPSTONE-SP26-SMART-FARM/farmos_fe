@@ -4,10 +4,15 @@ import { QUERY_KEYS } from "@/constants";
 import {
   ownerSensorReadingService,
   managerSensorReadingService,
+  sensorReadingService,
 } from "@/services/sensorReadingService";
 import { getSocketInstance } from "@/lib/socket";
 import { useSocketStore } from "@/stores/socketStore";
 import { RealtimeEvents } from "@/constants/realtime";
+import type {
+  SensorIntervalType,
+  SensorStatsPeriodType,
+} from "@/schemaValidatation/sensorReading";
 
 // ── Owner ──────────────────────────────────────────────────────────────
 
@@ -43,6 +48,67 @@ export const useManagerLatestSensorReadings = (
   });
 };
 
+// ── Common (route chung — owner/manager/farmer) ────────────────────────
+
+/**
+ * Polling cadence theo bucket interval — dot mới xuất hiện đều theo nhịp bucket.
+ * Bucket >= 1D: không poll (data lịch sử, refetch khi focus là đủ).
+ */
+export function refetchIntervalFor(
+  interval: SensorIntervalType,
+): number | false {
+  if (interval === "10s") return 10_000;
+  if (interval === "1m") return 60_000;
+  if (interval === "1h") return 360_000;
+  return false;
+}
+
+export const useSensorSeriesInterval = (
+  assignmentId: string,
+  sensorId: string,
+  interval: SensorIntervalType,
+  enabled = true,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.common.sensorReadings.seriesInterval(
+      assignmentId,
+      sensorId,
+      interval,
+    ),
+    queryFn: () =>
+      sensorReadingService
+        .getSeriesInterval(assignmentId, sensorId, interval)
+        .then((r) => r.data),
+    enabled: !!assignmentId && !!sensorId && enabled,
+    staleTime: 15_000,
+    refetchInterval: refetchIntervalFor(interval),
+    placeholderData: (prev) => prev,
+  });
+};
+
+export const useSensorStats = (
+  assignmentId: string,
+  sensorId: string,
+  period: SensorStatsPeriodType,
+  enabled = true,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.common.sensorReadings.stats(
+      assignmentId,
+      sensorId,
+      period,
+    ),
+    queryFn: () =>
+      sensorReadingService
+        .getStats(assignmentId, sensorId, period)
+        .then((r) => r.data),
+    enabled: !!assignmentId && !!sensorId && enabled,
+    staleTime: 15_000,
+    refetchInterval: period === "today" ? 30_000 : false,
+    placeholderData: (prev) => prev,
+  });
+};
+
 // ── Realtime invalidation ──────────────────────────────────────────────
 
 /**
@@ -62,11 +128,14 @@ export function useSensorReadingRealtime(
 
   const invalidateReadings = useCallback(() => {
     if (!assignmentId) return;
-    const key =
+    const latestKey =
       role === "owner"
         ? QUERY_KEYS.owner.sensorReadings.latest(assignmentId)
         : QUERY_KEYS.manager.sensorReadings.latest(assignmentId);
-    queryClient.invalidateQueries({ queryKey: key });
+    queryClient.invalidateQueries({ queryKey: latestKey });
+    // NOTE: `common.sensor-readings.{seriesInterval,stats}` cố ý KHÔNG invalidate
+    // qua socket — giữ nhịp polling cố định để countdown UI dự đoán được.
+    // Chart sẽ refresh theo `refetchInterval` của hook (15s/60s tuỳ interval).
   }, [assignmentId, role, queryClient]);
 
   const debouncedInvalidate = useCallback(() => {
@@ -113,7 +182,10 @@ export function useSensorReadingRealtime(
       socket.off("alert.created", handleAlertCreated);
       socket.off(RealtimeEvents.SensorTimeoutDetected, handleSensorHealth);
       socket.off(RealtimeEvents.SensorTimeoutRecovered, handleSensorHealth);
-      socket.off(RealtimeEvents.SensorHardwareIssueDetected, handleSensorHealth);
+      socket.off(
+        RealtimeEvents.SensorHardwareIssueDetected,
+        handleSensorHealth,
+      );
       socket.off(RealtimeEvents.SensorAlertRecovered, handleSensorHealth);
       if (timerRef.current) clearTimeout(timerRef.current);
     };
