@@ -360,10 +360,22 @@ function AdminSubscriptionsWorkspace() {
       >
         <DialogContent className="sm:max-w-[95vw] max-h-[95vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Chi tiết đăng ký</DialogTitle>
-            <DialogDescription>
-              Xem thông tin chi tiết của đăng ký này.
-            </DialogDescription>
+            <div className="flex items-start justify-between gap-3 pr-8">
+              <div className="min-w-0 flex-1">
+                <DialogTitle>Chi tiết đăng ký</DialogTitle>
+                <DialogDescription>
+                  Xem thông tin chi tiết của đăng ký này.
+                </DialogDescription>
+              </div>
+              {(() => {
+                const selectedSub = subscriptions.find(
+                  (s) => s.id === selectedSubId,
+                );
+                return selectedSub ? (
+                  <SubscriptionStatusBadge status={selectedSub.status} />
+                ) : null;
+              })()}
+            </div>
           </DialogHeader>
           {selectedSubId && (
             <SubscriptionLifecycleManagementPage

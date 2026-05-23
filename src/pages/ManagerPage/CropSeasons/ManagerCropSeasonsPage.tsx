@@ -23,6 +23,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useManagerListCropSeasons } from "@/queries/useCropSeason";
 import { useManagerListAssignedZones } from "@/queries/useZone";
+import useDebounce from "@/hooks/useDebounce";
 import { ProductionStatusName, type CropSeasonType } from "@/types/cropSeason";
 import { CompleteCropSeasonButton } from "./components/CompleteCropSeasonButton";
 import { CreateCropSeasonScreen } from "./components/CreateCropSeasonScreen";
@@ -92,13 +93,18 @@ export default function ManagerCropSeasonsPage() {
     setSearchParams(params, { replace: true });
   };
 
+  const [zoneSearch, setZoneSearch] = useState("");
+  const debouncedZoneSearch = useDebounce(zoneSearch.trim(), 300);
+
   const assignedZonesQuery = useManagerListAssignedZones({
     page: 1,
     limit: 100,
     currentCropSeasonStatus:
       statusFilter === STATUS_FILTER_ALL ? undefined : statusFilter,
+    search: !zoneId && debouncedZoneSearch ? debouncedZoneSearch : undefined,
   });
   const assignedZones = assignedZonesQuery.data?.data.data ?? [];
+  const assignedZonesTotal = assignedZonesQuery.data?.data.meta.totalItems;
   const hasAssignedZones = assignedZones.length > 0;
   const selectedZone = assignedZones.find((z) => z.id === zoneId);
   const selectedZoneName = selectedZone?.name;
@@ -140,6 +146,9 @@ export default function ManagerCropSeasonsPage() {
       <ZoneLanding
         zones={assignedZones}
         isLoading={assignedZonesQuery.isLoading}
+        searchValue={zoneSearch}
+        onSearchChange={setZoneSearch}
+        totalCount={assignedZonesTotal}
         onSelect={(id) => {
           const next = new URLSearchParams(searchParams);
           next.set("zoneId", id);

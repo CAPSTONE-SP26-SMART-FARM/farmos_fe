@@ -290,16 +290,9 @@ function SubscriptionLifecyclePanel({
   const ownerIdForQuota = isAdmin
     ? (subscriptionDetailForQuota?.ownerId ?? "")
     : "";
-  const currentSubscriptionStatus: SubscriptionStatusType | undefined = isAdmin
-    ? subscriptionDetailForQuota?.status
-    : detailOnly
-      ? subscriptionDetailForQuota?.status
-      : ownerMySubscription.data?.data?.status;
-  const isSubscriptionActive = currentSubscriptionStatus === "ACTIVE";
-
   const adminQuotaQuery = useAdminOwnerQuota(
     ownerIdForQuota,
-    isAdmin && shouldFetchDetail && isSubscriptionActive,
+    isAdmin && shouldFetchDetail,
   );
   const ownerQuotaQuery = useSubscriptionQuota(
     selectedSubscriptionId,
@@ -720,16 +713,6 @@ function SubscriptionLifecyclePanel({
                     )}
 
                     <div className="space-y-4 rounded-lg border p-4">
-                      <div className="flex items-start justify-end gap-3">
-                        <Badge
-                          variant={getSubscriptionStatusBadgeVariant(
-                            detail.status,
-                          )}
-                        >
-                          {SUBSCRIPTION_STATUS_LABEL[detail.status]}
-                        </Badge>
-                      </div>
-
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <p className="text-xs text-muted-foreground">Gói</p>
@@ -824,7 +807,6 @@ function SubscriptionLifecyclePanel({
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {(!isAdmin || isSubscriptionActive) && (
                 <div className="space-y-3">
                   <h4 className="text-sm font-semibold">Hạn ngạch tính năng</h4>
                   <p className="text-xs text-muted-foreground">
@@ -965,13 +947,12 @@ function SubscriptionLifecyclePanel({
                   </Table>
 
                 </div>
-                )}
 
-                {(!isAdmin || isSubscriptionActive) && quotaData?.iotDevices && (
+                {quotaData?.iotDevices && (
                   <IoTQuotaCard iotDevices={quotaData.iotDevices} />
                 )}
 
-                {(!isAdmin || isSubscriptionActive) && quotaData?.ticketCredits && (() => {
+                {quotaData?.ticketCredits && (() => {
                   const ticketEntitlement = entitlementData?.data.find(
                     (e) => e.featureCode === "TICKET_CREDITS",
                   );
