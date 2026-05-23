@@ -31,7 +31,7 @@ import {
   DEVICE_STATUS_VALUES,
   type DeviceStatusType,
 } from "@/schemaValidatation/milestoneIotDevice";
-import { DEVICE_STATUS_META } from "@/pages/ManagerPage/CropSeasons/components/MilestoneAssignmentsList";
+import { DEVICE_STATUS_META, DeviceStatusBadge } from "@/pages/ManagerPage/CropSeasons/components/MilestoneAssignmentsList";
 import {
   useOwnerLatestSensorReadings,
   useMilestoneAssignmentsRealtime,
@@ -390,12 +390,9 @@ function KitReadingsSection({
             )}
           </span>
         </div>
-        <Badge
-          variant={statusActive ? "default" : "outline"}
-          className="text-[10px] px-2 py-0 h-5 shrink-0 bg-background"
-        >
-          {device.status}
-        </Badge>
+        <div className="shrink-0">
+          <DeviceStatusBadge status={device.status} />
+        </div>
         <ChevronDown
           className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
         />

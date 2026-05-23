@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ChevronDown, ChevronLeft, ChevronRight, Cpu, Radio } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronLeft, ChevronRight, Cpu, Radio, Search } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,12 +11,27 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useManagerListProductionMilestones,
   useManagerListMilestoneAssignments,
+  useManagerSearchMilestoneAssignments,
 } from "@/queries/useProductionMilestone";
+import useDebounce from "@/hooks/useDebounce";
+import {
+  DEVICE_STATUS_VALUES,
+  type DeviceStatusType,
+} from "@/schemaValidatation/milestoneIotDevice";
+import { DEVICE_STATUS_META, DeviceStatusBadge } from "./MilestoneAssignmentsList";
 import {
   useManagerLatestSensorReadings,
   useMilestoneAssignmentsRealtime,
@@ -34,6 +49,9 @@ import type {
 import type { CropSeasonType } from "@/types/cropSeason";
 import { MILESTONE_STATUS_META } from "./helpers";
 import IotCoverageWidget from "@/components/common/IotCoverageWidget";
+
+const KIT_PAGE_SIZE = 5;
+const STATUS_FILTER_ALL = "__all__";
 
 const ALERTS_PAGE_SIZE = 5;
 
@@ -377,12 +395,9 @@ function KitReadingsSection({
             )}
           </span>
         </div>
-        <Badge
-          variant={statusActive ? "default" : "outline"}
-          className="text-[10px] px-2 py-0 h-5 shrink-0 bg-background"
-        >
-          {device.status}
-        </Badge>
+        <div className="shrink-0">
+          <DeviceStatusBadge status={device.status} />
+        </div>
         <ChevronDown
           className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
         />
@@ -406,19 +421,58 @@ function KitReadingsSection({
 }
 
 function MilestoneSensorSection({ milestone }: { milestone: ProductionMilestoneResType }) {
-  const assignmentsQuery = useManagerListMilestoneAssignments(milestone.id, true);
-  const assignments = assignmentsQuery.data?.data?.data ?? [];
-  const zoneId = assignments[0]?.zoneId ?? "";
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>(STATUS_FILTER_ALL);
+  const debouncedSearch = useDebounce(search.trim(), 400);
+
+  // Keep full-list query alive so `useDeviceBySensorId` can resolve sensors
+  // to devices from cache regardless of the active search/filter/page.
+  const fullListQuery = useManagerListMilestoneAssignments(milestone.id, true);
+  const fullAssignments = fullListQuery.data?.data?.data ?? [];
+
+  const searchQuery = useManagerSearchMilestoneAssignments(
+    milestone.id,
+    {
+      page,
+      limit: KIT_PAGE_SIZE,
+      q: debouncedSearch || undefined,
+      status:
+        statusFilter === STATUS_FILTER_ALL
+          ? undefined
+          : (statusFilter as DeviceStatusType),
+    },
+    !!milestone.id,
+  );
+  const body = searchQuery.data?.data;
+  const assignments = body?.data ?? [];
+  const pageMeta = body?.meta;
+
+  const zoneId = fullAssignments[0]?.zoneId ?? assignments[0]?.zoneId ?? "";
   useZoneSubscription(zoneId || undefined);
+
   const meta = MILESTONE_STATUS_META[milestone.status] ?? {
     label: milestone.status,
     variant: "secondary" as const,
   };
 
-  if (assignmentsQuery.isLoading) return <Skeleton className="h-48 w-full rounded-lg" />;
-  if (assignments.length === 0) return null;
+  const isFiltering =
+    !!debouncedSearch || statusFilter !== STATUS_FILTER_ALL;
+  const initialLoading = fullListQuery.isLoading && searchQuery.isLoading;
 
-  const hasMultipleKits = assignments.length > 1;
+  if (!initialLoading && fullAssignments.length === 0) return null;
+
+  const handleSearchChange = (v: string) => {
+    setSearch(v);
+    setPage(1);
+  };
+  const handleStatusChange = (v: string) => {
+    setStatusFilter(v);
+    setPage(1);
+  };
+
+  const totalLabel = pageMeta?.totalItems ?? fullAssignments.length;
+  const hasMultipleKits = totalLabel > 1;
 
   return (
     <div className="space-y-3">
@@ -431,21 +485,87 @@ function MilestoneSensorSection({ milestone }: { milestone: ProductionMilestoneR
           <Badge variant={meta.variant} className="text-xs shrink-0">{meta.label}</Badge>
           {hasMultipleKits && (
             <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 shrink-0">
-              {assignments.length} bộ kit
+              {totalLabel} bộ kit
             </Badge>
           )}
         </div>
         <Separator className="flex-1" />
       </div>
-      <div className="space-y-4">
-        {assignments.map((a) => (
-          <KitReadingsSection
-            key={a.assignmentId}
-            assignment={a}
-            showDeviceHeading
+
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="h-3.5 w-3.5 text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Input
+            value={search}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder="Tìm theo nhãn thiết bị (K001, W002...)"
+            className="h-8 pl-7 text-xs"
           />
-        ))}
+        </div>
+        <Select value={statusFilter} onValueChange={handleStatusChange}>
+          <SelectTrigger className="h-8 w-40 text-xs">
+            <SelectValue placeholder="Trạng thái" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={STATUS_FILTER_ALL} className="text-xs">
+              Tất cả trạng thái
+            </SelectItem>
+            {DEVICE_STATUS_VALUES.map((s) => (
+              <SelectItem key={s} value={s} className="text-xs">
+                {DEVICE_STATUS_META[s].label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
+
+      {searchQuery.isLoading ? (
+        <Skeleton className="h-48 w-full rounded-lg" />
+      ) : assignments.length === 0 ? (
+        <div className="flex items-center gap-2 rounded-md border border-dashed bg-muted/20 px-3 py-3 text-xs text-muted-foreground">
+          {isFiltering
+            ? "Không có thiết bị khớp bộ lọc"
+            : "Chưa gán thiết bị IoT cho mốc này"}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {assignments.map((a) => (
+            <KitReadingsSection
+              key={a.assignmentId}
+              assignment={a}
+              showDeviceHeading
+            />
+          ))}
+        </div>
+      )}
+
+      {pageMeta && pageMeta.totalPages > 1 && (
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[11px] text-muted-foreground">
+            Trang {pageMeta.page}/{pageMeta.totalPages} · {pageMeta.totalItems} thiết bị
+          </span>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-7 w-7"
+              disabled={!pageMeta.hasPreviousPage}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-7 w-7"
+              disabled={!pageMeta.hasNextPage}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
