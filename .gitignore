@@ -28,6 +28,7 @@ openspec
 .env
 
 # Agent skills
-.claude
+.claude/settings.local.json
+.claude/.cache/
 .agents
 skills-lock.json
