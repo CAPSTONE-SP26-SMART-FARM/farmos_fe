@@ -1,5 +1,38 @@
 import { PagingRequestSchema, PagingResponseSchema } from "@/types/api";
+import { ProductionStatusName } from "@/types/cropSeason";
 import { z } from "zod";
+
+// ============================================================
+// CurrentCropSeason — tóm tắt mùa vụ đang diễn ra của zone
+// (mirror BE CurrentCropSeasonSummarySchema)
+// ============================================================
+export const CurrentCropSeasonSummarySchema = z.object({
+  id: z.string().uuid(),
+  cropName: z.string(),
+  variety: z.string().nullable(),
+  expectedHarvestDate: z.string(),
+  actualHarvestDate: z.string().nullable(),
+  totalAreaSqm: z.number().nullable(),
+  status: z.enum([
+    ProductionStatusName.Planning,
+    ProductionStatusName.Sent,
+    ProductionStatusName.Approved,
+    ProductionStatusName.Rejected,
+    ProductionStatusName.Active,
+    ProductionStatusName.Completed,
+    ProductionStatusName.Cancelled,
+  ]),
+});
+
+// Tập status mà BE chấp nhận lọc — khớp ActiveCropSeasonStatusValues bên BE.
+// Terminal status (rejected/completed/cancelled) bị loại vì currentCropSeason
+// luôn = null khi mùa vụ đã kết thúc.
+export const ActiveCropSeasonStatusValues = [
+  ProductionStatusName.Planning,
+  ProductionStatusName.Sent,
+  ProductionStatusName.Approved,
+  ProductionStatusName.Active,
+] as const;
 
 // ============================================================
 // Zone — maps to table zones
@@ -47,14 +80,17 @@ export const UpdateZoneBodySchema = z
 /** 5.2 — List Zones (Owner, paginated) */
 export const ListZonesQuerySchema = PagingRequestSchema.extend({
   zoneType: z.enum(["cultivation"]).optional(),
+  currentCropSeasonStatus: z.enum(ActiveCropSeasonStatusValues).optional(),
 }).strict();
 
 // ============================================================
 // Response Schemas
 // ============================================================
 
-/** Zone response */
-export const ZoneResSchema = ZoneSchema;
+/** Zone response — kèm crop season đang diễn ra (null nếu chưa có hoặc đã kết thúc). */
+export const ZoneResSchema = ZoneSchema.extend({
+  currentCropSeason: CurrentCropSeasonSummarySchema.nullable(),
+});
 
 /** Paginated zone response */
 export const ListZonesResSchema = PagingResponseSchema(ZoneResSchema);
@@ -62,7 +98,9 @@ export const ListZonesResSchema = PagingResponseSchema(ZoneResSchema);
 // ============================================================
 // Type Exports
 // ============================================================
-export type ZoneType = z.infer<typeof ZoneSchema>;
+export type ZoneType = z.infer<typeof ZoneResSchema>;
+export type CurrentCropSeasonSummaryType = z.infer<typeof CurrentCropSeasonSummarySchema>;
+export type ActiveCropSeasonStatusType = (typeof ActiveCropSeasonStatusValues)[number];
 export type CreateZoneBodyType = z.infer<typeof CreateZoneBodySchema>;
 export type UpdateZoneBodyType = z.infer<typeof UpdateZoneBodySchema>;
 export type ListZonesQueryType = z.infer<typeof ListZonesQuerySchema>;

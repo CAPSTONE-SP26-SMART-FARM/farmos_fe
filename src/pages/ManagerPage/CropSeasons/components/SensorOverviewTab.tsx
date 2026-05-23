@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ChevronLeft, ChevronRight, Cpu, Radio } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronLeft, ChevronRight, Cpu, Radio } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -275,15 +276,8 @@ function AlertsPanel({ isLoading }: { isLoading: boolean }) {
   );
 }
 
-function KitReadingsSection({
-  assignment,
-  showDeviceHeading,
-}: {
-  assignment: MilestoneAssignmentDetailResType;
-  showDeviceHeading: boolean;
-}) {
+function KitReadingsBody({ assignmentId }: { assignmentId: string }) {
   const navigate = useNavigate();
-  const assignmentId = assignment.assignmentId;
   const readingsQuery = useManagerLatestSensorReadings(assignmentId, !!assignmentId);
   const readings = readingsQuery.data?.data ?? [];
   useSensorReadingRealtime(assignmentId, "manager");
@@ -294,7 +288,44 @@ function KitReadingsSection({
     );
   }
 
+  return (
+    <div className="p-3">
+      {readingsQuery.isLoading ? (
+        <div className="grid grid-cols-2 gap-3">
+          {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-36" />)}
+        </div>
+      ) : readings.length === 0 ? (
+        <p className="text-sm text-muted-foreground py-4 text-center">Chưa có dữ liệu cảm biến</p>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          {readings.map((r) => (
+            <button
+              key={r.sensorId}
+              type="button"
+              onClick={() => goToDetail(r.sensorId)}
+              className="text-left rounded-lg transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+              title="Xem chi tiết cảm biến"
+            >
+              <SensorCard reading={r} />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function KitReadingsSection({
+  assignment,
+  showDeviceHeading,
+}: {
+  assignment: MilestoneAssignmentDetailResType;
+  showDeviceHeading: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const assignmentId = assignment.assignmentId;
   const device = assignment.device;
+  const sensorCount = assignment.sensors?.length ?? 0;
   const statusActive = device?.status === "active";
   const statusDot = statusActive
     ? "bg-emerald-500"
@@ -302,62 +333,74 @@ function KitReadingsSection({
       ? "bg-red-500"
       : "bg-amber-500";
 
+  // Khi không có header → không có trigger; mount body trực tiếp để giữ
+  // tương thích ngược (hiện tại mọi caller đều truyền showDeviceHeading=true).
+  if (!showDeviceHeading || !device) {
+    return (
+      <div className="rounded-xl border-2 border-muted-foreground/20 bg-background shadow-sm overflow-hidden">
+        <KitReadingsBody assignmentId={assignmentId} />
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-xl border-2 border-muted-foreground/20 bg-background shadow-sm overflow-hidden">
-      {showDeviceHeading && device && (
-        <div className="flex items-center gap-2.5 bg-muted/70 border-b-2 border-muted-foreground/15 px-3.5 py-2.5">
-          <div className="relative flex items-center justify-center h-9 w-9 rounded-md bg-background border shadow-sm shrink-0">
-            <Cpu className="h-4 w-4 text-foreground/70" />
-            <span
-              className={`absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-muted/70 ${statusDot}`}
-            />
-          </div>
-          <div className="flex flex-col min-w-0 flex-1 leading-tight">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="text-sm font-semibold text-foreground truncate">
-                {device.deviceName}
-              </span>
-              {device.label && (
-                <span className="font-mono text-xs text-muted-foreground shrink-0">
-                  {device.label}
-                </span>
-              )}
-            </div>
-            <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
-              {device.deviceType}
-            </span>
-          </div>
-          <Badge
-            variant={statusActive ? "default" : "outline"}
-            className="text-[10px] px-2 py-0 h-5 shrink-0 bg-background"
-          >
-            {device.status}
-          </Badge>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="w-full flex items-center gap-2.5 bg-muted/70 hover:bg-muted border-b-2 border-muted-foreground/15 px-3.5 py-2.5 text-left transition-colors cursor-pointer"
+      >
+        <div className="relative flex items-center justify-center h-9 w-9 rounded-md bg-background border shadow-sm shrink-0">
+          <Cpu className="h-4 w-4 text-foreground/70" />
+          <span
+            className={`absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-muted/70 ${statusDot}`}
+          />
         </div>
-      )}
-      <div className="p-3">
-        {readingsQuery.isLoading ? (
-          <div className="grid grid-cols-2 gap-3">
-            {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-36" />)}
+        <div className="flex flex-col min-w-0 flex-1 leading-tight">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="text-sm font-semibold text-foreground truncate">
+              {device.deviceName}
+            </span>
+            {device.label && (
+              <span className="font-mono text-xs text-muted-foreground shrink-0">
+                {device.label}
+              </span>
+            )}
           </div>
-        ) : readings.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-4 text-center">Chưa có dữ liệu cảm biến</p>
-        ) : (
-          <div className="grid grid-cols-2 gap-3">
-            {readings.map((r) => (
-              <button
-                key={r.sensorId}
-                type="button"
-                onClick={() => goToDetail(r.sensorId)}
-                className="text-left rounded-lg transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
-                title="Xem chi tiết cảm biến"
-              >
-                <SensorCard reading={r} />
-              </button>
-            ))}
-          </div>
+          <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+            {device.deviceType}
+            {sensorCount > 0 && (
+              <span className="ml-1.5 normal-case text-muted-foreground/80">
+                · {sensorCount} cảm biến
+              </span>
+            )}
+          </span>
+        </div>
+        <Badge
+          variant={statusActive ? "default" : "outline"}
+          className="text-[10px] px-2 py-0 h-5 shrink-0 bg-background"
+        >
+          {device.status}
+        </Badge>
+        <ChevronDown
+          className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="kit-body"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+            style={{ overflow: "hidden" }}
+          >
+            <KitReadingsBody assignmentId={assignmentId} />
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
     </div>
   );
 }

@@ -63,16 +63,6 @@ export function MilestoneIotConfigSummary({
         <div className="flex items-center gap-2">
           <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
           <p className="text-sm font-semibold">Đã cấu hình</p>
-          {isWizardState && onGoConfig && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onGoConfig}
-              className="ml-auto h-7 text-xs"
-            >
-              Chỉnh sửa
-            </Button>
-          )}
         </div>
         <Separator className="opacity-50" />
         <div className="grid grid-cols-2 gap-2 text-xs">

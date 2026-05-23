@@ -64,6 +64,7 @@ import {
 } from "@/queries/useInvoice";
 import {
   useAdminListSubscriptions,
+  useAdminOwnerQuota,
   useOwnerMySubscription,
   useOwnerRenewSubscription,
   useSubscriptionCancel,
@@ -99,6 +100,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { OwnerSummaryCard } from "./lifecycle/OwnerSummaryCard";
+import { SubscriptionEntitlementList } from "./lifecycle/SubscriptionEntitlementList";
+import { IoTQuotaCard } from "./lifecycle/IoTQuotaCard";
+import { TicketQuotaCard } from "./lifecycle/TicketQuotaCard";
 
 type PageMode = "admin" | "owner";
 
@@ -128,6 +133,11 @@ const SUBSCRIPTION_STATUS_OPTIONS: Array<{
   { value: "CANCELLED", label: "Đã hủy" },
   { value: "EXPIRED", label: "Hết hạn" },
 ];
+
+const QUOTA_DEDICATED_FEATURE_CODES = new Set([
+  "NUMBER_OF_IOT_DEVICES",
+  "TICKET_CREDITS",
+]);
 
 const formatDateTime = (value?: string | null) => {
   if (!value) return "-";
@@ -275,10 +285,27 @@ function SubscriptionLifecyclePanel({
     shouldFetchDetail || shouldFetchOwnerPanels,
   );
 
-  const quotaQuery = useSubscriptionQuota(
-    selectedSubscriptionId,
-    shouldFetchDetail || shouldFetchOwnerPanels,
+  const subscriptionDetailForQuota =
+    selectedSubscriptionDetail.data?.data?.subscription;
+  const ownerIdForQuota = isAdmin
+    ? (subscriptionDetailForQuota?.ownerId ?? "")
+    : "";
+  const currentSubscriptionStatus: SubscriptionStatusType | undefined = isAdmin
+    ? subscriptionDetailForQuota?.status
+    : detailOnly
+      ? subscriptionDetailForQuota?.status
+      : ownerMySubscription.data?.data?.status;
+  const isSubscriptionActive = currentSubscriptionStatus === "ACTIVE";
+
+  const adminQuotaQuery = useAdminOwnerQuota(
+    ownerIdForQuota,
+    isAdmin && shouldFetchDetail && isSubscriptionActive,
   );
+  const ownerQuotaQuery = useSubscriptionQuota(
+    selectedSubscriptionId,
+    !isAdmin && shouldFetchOwnerPanels,
+  );
+  const quotaQuery = isAdmin ? adminQuotaQuery : ownerQuotaQuery;
 
   const renewSubscriptionMutation = useOwnerRenewSubscription();
   const cancelSubscriptionMutation = useSubscriptionCancel();
@@ -688,6 +715,10 @@ function SubscriptionLifecyclePanel({
 
                 {detail && (
                   <>
+                    {isAdmin && detail.owner && (
+                      <OwnerSummaryCard owner={detail.owner} />
+                    )}
+
                     <div className="space-y-4 rounded-lg border p-4">
                       <div className="flex items-start justify-end gap-3">
                         <Badge
@@ -698,26 +729,6 @@ function SubscriptionLifecyclePanel({
                           {SUBSCRIPTION_STATUS_LABEL[detail.status]}
                         </Badge>
                       </div>
-
-                      {isAdmin && detail.owner && (
-                        <div className="rounded-md bg-muted/50 p-3">
-                          <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                            <User className="h-3.5 w-3.5" />
-                            Chủ trang trại
-                          </p>
-                          <p className="text-sm font-medium">
-                            {detail.owner.fullName}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {detail.owner.email}
-                          </p>
-                          {detail.owner.phone && (
-                            <p className="text-xs text-muted-foreground">
-                              {detail.owner.phone}
-                            </p>
-                          )}
-                        </div>
-                      )}
 
                       <div className="grid grid-cols-2 gap-3">
                         <div>
@@ -796,6 +807,10 @@ function SubscriptionLifecyclePanel({
                       </div>
                     )}
 
+                    <SubscriptionEntitlementList
+                      entitlements={entitlementData?.data ?? []}
+                      isLoading={entitlementsQuery.isLoading}
+                    />
                   </>
                 )}
               </CardContent>
@@ -803,70 +818,15 @@ function SubscriptionLifecyclePanel({
 
             <Card className="xl:col-span-3">
               <CardHeader>
-                <CardTitle>Quyền lợi & Lịch sử sử dụng</CardTitle>
+                <CardTitle>Lịch sử sử dụng</CardTitle>
                 <CardDescription>
-                  Cả Quản trị viên và Chủ trang trại đều có quyền xem quyền lợi và lịch sử sử
-                  dụng của đăng ký hợp lệ.
+                  Mức sử dụng hiện tại của đăng ký theo từng nhóm quota.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                {(!isAdmin || isSubscriptionActive) && (
                 <div className="space-y-3">
-                  <h4 className="text-sm font-semibold">Danh sách quyền lợi</h4>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Tên tính năng</TableHead>
-                        <TableHead>Mã tính năng</TableHead>
-                        <TableHead>Kỳ áp dụng</TableHead>
-                        <TableHead>Tạo lúc</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {entitlementsQuery.isLoading && (
-                        <TableRow>
-                          <TableCell
-                            colSpan={4}
-                            className="py-5 text-center text-muted-foreground"
-                          >
-                            Đang tải quyền lợi...
-                          </TableCell>
-                        </TableRow>
-                      )}
-
-                      {!entitlementsQuery.isLoading &&
-                        !entitlementData?.data.length && (
-                          <TableRow>
-                            <TableCell
-                              colSpan={4}
-                              className="py-5 text-center text-muted-foreground"
-                            >
-                              Không có quyền lợi.
-                            </TableCell>
-                          </TableRow>
-                        )}
-
-                      {entitlementData?.data.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-medium">
-                            {item.featureName ?? "-"}
-                          </TableCell>
-                          <TableCell className="font-mono text-xs text-muted-foreground">
-                            {item.featureCode}
-                          </TableCell>
-                          <TableCell>
-                            {item.periodStart ?? "-"} - {item.periodEnd ?? "-"}
-                          </TableCell>
-                          <TableCell>
-                            {formatDateTime(item.createdAt)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-
-                <div className="space-y-3">
-                  <h4 className="text-sm font-semibold">Lịch sử sử dụng</h4>
+                  <h4 className="text-sm font-semibold">Hạn ngạch tính năng</h4>
                   <p className="text-xs text-muted-foreground">
                     Tổng hợp mức sử dụng hiện tại theo từng quyền lợi: hạn mức từ gói,
                     số đã dùng và số còn lại được tính toán theo dữ liệu thực tế.
@@ -895,7 +855,9 @@ function SubscriptionLifecyclePanel({
                       )}
 
                       {!quotaQuery.isLoading &&
-                        !quotaData?.features.length && (
+                        !quotaData?.features.some(
+                          (f) => !QUOTA_DEDICATED_FEATURE_CODES.has(f.featureCode),
+                        ) && (
                           <TableRow>
                             <TableCell
                               colSpan={5}
@@ -906,7 +868,11 @@ function SubscriptionLifecyclePanel({
                           </TableRow>
                         )}
 
-                      {quotaData?.features.flatMap((feature) => {
+                      {quotaData?.features
+                        .filter(
+                          (f) => !QUOTA_DEDICATED_FEATURE_CODES.has(f.featureCode),
+                        )
+                        .flatMap((feature) => {
                         const baseRow = (
                           <TableRow key={feature.featureCode}>
                             <TableCell className="font-medium">
@@ -998,23 +964,35 @@ function SubscriptionLifecyclePanel({
                     </TableBody>
                   </Table>
 
-                  {quotaData?.iotDevices && (
-                    <div className="rounded-md border bg-muted/20 p-3 text-xs text-muted-foreground">
-                      <p className="font-semibold text-foreground">
-                        Thiết bị IoT
-                      </p>
-                      <p>
-                        Hạn mức từ gói: {quotaData.iotDevices.subscriptionMax}
-                        {quotaData.iotDevices.kitBonus > 0 &&
-                          ` + ${quotaData.iotDevices.kitBonus} từ gói bổ trợ`}
-                      </p>
-                      <p>
-                        Đã dùng: {quotaData.iotDevices.used} · Còn lại:{" "}
-                        {quotaData.iotDevices.remaining}
-                      </p>
-                    </div>
-                  )}
                 </div>
+                )}
+
+                {(!isAdmin || isSubscriptionActive) && quotaData?.iotDevices && (
+                  <IoTQuotaCard iotDevices={quotaData.iotDevices} />
+                )}
+
+                {(!isAdmin || isSubscriptionActive) && quotaData?.ticketCredits && (() => {
+                  const ticketEntitlement = entitlementData?.data.find(
+                    (e) => e.featureCode === "TICKET_CREDITS",
+                  );
+                  const parsedLimit = ticketEntitlement
+                    ? parseInt(ticketEntitlement.value, 10)
+                    : 0;
+                  const limit = Number.isFinite(parsedLimit) ? parsedLimit : 0;
+                  const remaining = quotaData.ticketCredits.reduce(
+                    (sum, c) => sum + c.balance,
+                    0,
+                  );
+                  const used = Math.max(0, limit - remaining);
+                  return (
+                    <TicketQuotaCard
+                      limit={limit}
+                      used={used}
+                      remaining={remaining}
+                      ticketCredits={quotaData.ticketCredits}
+                    />
+                  );
+                })()}
 
                 {!isAdmin && (
                   <div className="space-y-3 rounded-lg border p-4">

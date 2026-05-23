@@ -39,6 +39,9 @@ const subscriptionService = {
   getSubscriptionQuota: (id: string) =>
     api.get<MyQuotaResType>(SUBSCRIPTIONS.QUOTA(id)),
 
+  getAdminOwnerQuota: (ownerId: string) =>
+    api.get<MyQuotaResType>(SUBSCRIPTIONS.ADMIN_OWNER_QUOTA(ownerId)),
+
   getSubscriptionsSummary: () =>
     api.get<SubscriptionSummaryResType>(SUBSCRIPTIONS.SUMMARY),
 

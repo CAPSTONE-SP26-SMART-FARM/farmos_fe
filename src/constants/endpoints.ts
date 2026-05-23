@@ -40,6 +40,7 @@ export const API_ENDPOINTS = {
     ENTITLEMENTS: (id: string) => `/subscriptions/${id}/entitlements`,
     USAGE: (id: string) => `/subscriptions/${id}/usage`,
     QUOTA: (id: string) => `/subscriptions/${id}/quota`,
+    ADMIN_OWNER_QUOTA: (ownerId: string) => `/admin/owners/${ownerId}/quota`,
     PAYMENT_STATUS: (id: string) => `/subscriptions/${id}/payment-status`,
   },
   INVOICES: {
@@ -743,6 +744,13 @@ export const QUERY_KEYS = {
       ...(query !== undefined ? [query] : []),
     ],
     quota: (id: string) => ["subscriptions", id, "quota"],
+    adminOwnerQuota: (ownerId: string) => [
+      "subscriptions",
+      "admin",
+      "owner",
+      ownerId,
+      "quota",
+    ],
     paymentStatus: (id: string) => ["subscriptions", id, "payment-status"],
   },
   invoices: {

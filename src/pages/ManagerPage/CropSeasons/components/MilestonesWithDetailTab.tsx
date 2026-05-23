@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Layers, Plus, Settings } from "lucide-react";
+import { Layers, Plus } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useManagerListProductionMilestones } from "@/queries/useProductionMilestone";
@@ -79,16 +79,6 @@ export function MilestonesWithDetailTab({
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             {milestones.length} mốc
           </span>
-          {isWizardState && (
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-6 w-6"
-              onClick={() => navigate(manageMilestonesUrl())}
-            >
-              <Settings className="h-3 w-3" />
-            </Button>
-          )}
         </div>
         <nav className="p-1.5 space-y-0.5">
           {milestones.map((m) => {

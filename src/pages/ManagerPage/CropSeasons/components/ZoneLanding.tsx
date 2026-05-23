@@ -2,9 +2,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, SquareArrowRight } from "lucide-react";
+import { MapPin, SquareArrowRight, Sprout } from "lucide-react";
 import { motion } from "framer-motion";
 import type { ZoneType } from "@/schemaValidatation/zone";
+import { StatusBadge } from "./StatusBadge";
+import { formatDate } from "./helpers";
 
 export function ZoneLanding({
   zones,
@@ -15,6 +17,9 @@ export function ZoneLanding({
   emptyTitle = "Chưa được phân công khu vực",
   emptyDescription = "Liên hệ chủ trang trại để được phân công quản lý khu vực.",
   actionLabel = "Quản lý",
+  showCropSeason = false,
+  showZoneTypeBadge = true,
+  headerSlot,
 }: {
   zones: ZoneType[];
   isLoading: boolean;
@@ -24,13 +29,19 @@ export function ZoneLanding({
   emptyTitle?: string;
   emptyDescription?: string;
   actionLabel?: string;
+  showCropSeason?: boolean;
+  showZoneTypeBadge?: boolean;
+  headerSlot?: React.ReactNode;
 }) {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      <div>
-        <Badge className="mb-2">{badgeText}</Badge>
-        <h1 className="text-2xl font-bold">Quản lý mùa vụ</h1>
-        <p className="text-sm text-muted-foreground">{description}</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <Badge className="mb-2">{badgeText}</Badge>
+          <h1 className="text-2xl font-bold">Quản lý mùa vụ</h1>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+        {headerSlot && <div className="shrink-0">{headerSlot}</div>}
       </div>
 
       {isLoading ? (
@@ -61,10 +72,41 @@ export function ZoneLanding({
                         </p>
                       )}
                     </div>
-                    <Badge variant="secondary" className="text-xs shrink-0">Trồng trọt</Badge>
+                    {showZoneTypeBadge && (
+                      <Badge variant="secondary" className="text-xs shrink-0">Trồng trọt</Badge>
+                    )}
                   </div>
                 </CardHeader>
-                <CardContent className="pt-0">
+                <CardContent className="pt-0 space-y-3">
+                  {showCropSeason && (
+                    <div className="rounded-md border bg-muted/30 px-3 py-2">
+                      {zone.currentCropSeason ? (
+                        <div className="space-y-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex items-center gap-1.5">
+                              <Sprout className="h-3.5 w-3.5 text-primary shrink-0" />
+                              <span className="text-sm font-medium truncate">
+                                {zone.currentCropSeason.cropName}
+                                {zone.currentCropSeason.variety
+                                  ? ` — ${zone.currentCropSeason.variety}`
+                                  : ""}
+                              </span>
+                            </div>
+                            <StatusBadge status={zone.currentCropSeason.status} />
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Dự kiến thu hoạch:{" "}
+                            {formatDate(zone.currentCropSeason.expectedHarvestDate)}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Sprout className="h-3.5 w-3.5" />
+                          Chưa có mùa vụ
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <div className="flex items-center justify-between">
                     {zone.areaSqm != null ? (
                       <span className="text-sm text-muted-foreground">

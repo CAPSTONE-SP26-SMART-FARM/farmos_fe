@@ -31,6 +31,25 @@ import { ZoneSwitcherCombobox } from "@/pages/ManagerPage/CropSeasons/components
 import { ZoneLanding } from "@/pages/ManagerPage/CropSeasons/components/ZoneLanding";
 import { CropSeasonSummaryCard } from "@/pages/ManagerPage/CropSeasons/components/CropSeasonSummaryCard";
 import { ProductionStatusName, type CropSeasonType } from "@/types/cropSeason";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  ActiveCropSeasonStatusValues,
+  type ActiveCropSeasonStatusType,
+} from "@/schemaValidatation/zone";
+import { STATUS_MAP } from "@/pages/ManagerPage/CropSeasons/components/helpers";
+
+const STATUS_FILTER_ALL = "all" as const;
+type StatusFilterValue = typeof STATUS_FILTER_ALL | ActiveCropSeasonStatusType;
+
+function isActiveStatus(value: string): value is ActiveCropSeasonStatusType {
+  return (ActiveCropSeasonStatusValues as readonly string[]).includes(value);
+}
 
 const HISTORY_STATUSES = new Set(["completed", "cancelled"]);
 
@@ -247,9 +266,29 @@ export default function OwnerCropSeasonsPageV2() {
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams, zoneId]);
 
+  const rawStatusFilter = searchParams.get("statusFilter")?.trim() ?? "";
+  const statusFilter: StatusFilterValue = isActiveStatus(rawStatusFilter)
+    ? rawStatusFilter
+    : STATUS_FILTER_ALL;
+
+  const setStatusFilter = (next: StatusFilterValue) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === STATUS_FILTER_ALL) {
+      params.delete("statusFilter");
+    } else {
+      params.set("statusFilter", next);
+    }
+    setSearchParams(params, { replace: true });
+  };
+
   const farmQuery = useOwnerGetMyFarm();
   const farmId = farmQuery.data?.data.id ?? "";
-  const zonesQuery = useOwnerListZones(farmId, { page: 1, limit: 10 });
+  const zonesQuery = useOwnerListZones(farmId, {
+    page: 1,
+    limit: 10,
+    currentCropSeasonStatus:
+      statusFilter === STATUS_FILTER_ALL ? undefined : statusFilter,
+  });
   const zones = useMemo(
     () => zonesQuery.data?.data.data ?? [],
     [zonesQuery.data],
@@ -283,6 +322,7 @@ export default function OwnerCropSeasonsPageV2() {
   );
 
   if (!zoneId && !isZonesLoading) {
+    const isFiltering = statusFilter !== STATUS_FILTER_ALL;
     return (
       <ZoneLanding
         zones={zones}
@@ -294,9 +334,36 @@ export default function OwnerCropSeasonsPageV2() {
         }}
         badgeText="Cổng chủ trang trại"
         description="Chọn khu vực để xem mùa vụ và phê duyệt yêu cầu sản xuất."
-        emptyTitle="Chưa có khu vực"
-        emptyDescription="Hãy tạo khu vực trong mục Quản lý trang trại để bắt đầu."
+        emptyTitle={isFiltering ? "Không có khu vực phù hợp" : "Chưa có khu vực"}
+        emptyDescription={
+          isFiltering
+            ? "Không có khu vực nào có mùa vụ ở trạng thái đã chọn. Thử bỏ lọc để xem tất cả."
+            : "Hãy tạo khu vực trong mục Quản lý trang trại để bắt đầu."
+        }
         actionLabel="Xem mùa vụ"
+        showCropSeason
+        showZoneTypeBadge={false}
+        headerSlot={
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground">Lọc theo mùa vụ</span>
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => setStatusFilter(v as StatusFilterValue)}
+            >
+              <SelectTrigger className="w-50">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={STATUS_FILTER_ALL}>Tất cả</SelectItem>
+                {ActiveCropSeasonStatusValues.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {STATUS_MAP[s]?.label ?? s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        }
       />
     );
   }

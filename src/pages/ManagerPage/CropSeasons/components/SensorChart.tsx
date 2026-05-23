@@ -120,19 +120,28 @@ export function SensorChart({
           onClick={() => query.refetch()}
           disabled={query.isFetching}
         >
-          <RefreshCcw className={`h-3.5 w-3.5 ${query.isFetching ? "animate-spin" : ""}`} />
+          <RefreshCcw
+            className={`h-3.5 w-3.5 ${query.isFetching ? "animate-spin" : ""}`}
+          />
         </Button>
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1.5"
+            >
               <CalendarIcon className="h-3 w-3" />
               {format(date, "dd/MM/yyyy")}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
+          <PopoverContent
+            className="w-auto p-0"
+            align="start"
+          >
             <Calendar
               mode="single"
               selected={date}
@@ -149,7 +158,9 @@ export function SensorChart({
             max={23}
             value={fromHour}
             onChange={(e) =>
-              setFromHour(Math.max(0, Math.min(23, Number(e.target.value) || 0)))
+              setFromHour(
+                Math.max(0, Math.min(23, Number(e.target.value) || 0)),
+              )
             }
             className="h-7 w-14 text-xs"
           />
@@ -182,16 +193,34 @@ export function SensorChart({
         </div>
       ) : (
         <div className="h-40">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+          <ResponsiveContainer
+            width="100%"
+            height="100%"
+          >
+            <AreaChart
+              data={chartData}
+              margin={{ top: 4, right: 8, left: -16, bottom: 0 }}
+            >
               <defs>
-                <linearGradient id={`grad-${sensorId}`} x1="0" y1="0" x2="0" y2="1">
+                <linearGradient
+                  id={`grad-${sensorId}`}
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
                   <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
                   <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-              <XAxis dataKey="timeLabel" tick={{ fontSize: 10 }} />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                opacity={0.3}
+              />
+              <XAxis
+                dataKey="timeLabel"
+                tick={{ fontSize: 10 }}
+              />
               <YAxis tick={{ fontSize: 10 }} domain={["auto", "auto"]} />
               {hasBand && (
                 <ReferenceArea

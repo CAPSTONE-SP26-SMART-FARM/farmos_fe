@@ -48,6 +48,14 @@ export const useSubscriptionQuota = (id: string, enabled: boolean) => {
   });
 };
 
+export const useAdminOwnerQuota = (ownerId: string, enabled: boolean) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.subscriptions.adminOwnerQuota(ownerId),
+    queryFn: () => subscriptionService.getAdminOwnerQuota(ownerId),
+    enabled: enabled && Boolean(ownerId),
+  });
+};
+
 export const useOwnerMySubscription = (enabled = true) => {
   return useQuery({
     queryKey: QUERY_KEYS.subscriptions.my(),
