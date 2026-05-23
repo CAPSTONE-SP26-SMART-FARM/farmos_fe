@@ -317,3 +317,22 @@ export const PrescriptionCreatedPayloadSchema = z
 export type PrescriptionCreatedPayloadType = z.infer<
   typeof PrescriptionCreatedPayloadSchema
 >;
+
+/**
+ * BE emit khi board IoT chuyển status `install`/`error` → `active` qua ingest.
+ *  - `fromStatus = "install"`: gói data đầu tiên sau khi xuất kho/lắp.
+ *  - `fromStatus = "error"`  : self-recovery — board sống lại sau timeout, badge "Lỗi" cần clear.
+ */
+export const IotDeviceActivatedPayloadSchema = z
+  .object({
+    deviceId: z.string(),
+    farmId: z.string().nullable().optional(),
+    zoneId: z.string(),
+    activatedAt: z.string().optional(),
+    fromStatus: z.enum(["install", "error"]),
+    toStatus: z.string().optional(),
+  })
+  .passthrough();
+export type IotDeviceActivatedPayloadType = z.infer<
+  typeof IotDeviceActivatedPayloadSchema
+>;
