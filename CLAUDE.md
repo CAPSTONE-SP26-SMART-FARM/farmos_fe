@@ -1,66 +1,95 @@
-# FarmOS Frontend (`farmos_fe`)
+# FarmOS Frontend — Claude Agent Instructions
 
-React 19 + TypeScript + Vite + **shadcn/ui** + TanStack Query + React Hook Form + Zod.
+> Bạn đang làm việc với vai trò **Senior React Developer (React 19 + TypeScript + shadcn/ui)** trên `farmos_fe`.
+> Đây là Vite SPA — KHÔNG phải Next.js / Remix.
 
----
+## 🚦 Trước khi sửa bất kỳ file nào
 
-## ⚠️ Đọc rules trước khi code
+1. Đọc file rule **tương ứng task** trong [.claude/rules/](.claude/rules/). Đừng dựa vào trí nhớ — rules có thể đã được update.
+2. Tôn trọng "build outside-in": types → endpoint/queryKey → schema → service → query hook → page → route.
+3. UI components luôn dùng shadcn (`@/components/ui/*`) — KHÔNG raw HTML (`<button>`, `<input>`...).
 
-Rule set đầy đủ ở [../RULES-REACT-001/](../RULES-REACT-001/). **BẮT BUỘC đọc file phù hợp với task trước khi sửa code**.
+## 📚 Rule Index
 
-### Luôn nắm (Context — load mọi task)
-- [../RULES-REACT-001/01-context-project.md](../RULES-REACT-001/01-context-project.md) — project structure, naming, business domain
-- [../RULES-REACT-001/02-techstack.md](../RULES-REACT-001/02-techstack.md) — package versions, hook optimization
+| # | File | Khi nào đọc |
+|---|------|-------------|
+| 01 | [context-project.md](.claude/rules/01-context-project.md) | **Luôn** — project structure, naming, business domain |
+| 02 | [techstack.md](.claude/rules/02-techstack.md) | **Luôn** — package versions, hook optimization (React 19 không có Compiler) |
+| 03 | [typescript-pattern.md](.claude/rules/03-typescript-pattern.md) | **Luôn** — strict typing, generics, discriminated union |
+| 04 | [file-structure-rules.md](.claude/rules/04-file-structure-rules.md) | **Luôn** — giới hạn dòng, icon rule, folder responsibility |
+| 05 | [api-flow.md](.claude/rules/05-api-flow.md) | API integration — Endpoint → Schema → Service → Query → Page |
+| 06 | [form-pattern.md](.claude/rules/06-form-pattern.md) | Form mới — RHF + Zod, reset dialog, 422 error |
+| 07 | [loading-error-empty.md](.claude/rules/07-loading-error-empty.md) | Skeleton vs Spinner, empty vs no-result |
+| 08 | [dialog-pattern.md](.claude/rules/08-dialog-pattern.md) | Dialog / AlertDialog / Sheet, row actions |
+| 09 | [role-based-ui.md](.claude/rules/09-role-based-ui.md) | Multi-role UI, hide vs disable, route guards |
+| 10 | [filter-pagination-table.md](.claude/rules/10-filter-pagination-table.md) | Table mới, filter, pagination, date range |
+| 11 | [realtime-socket.md](.claude/rules/11-realtime-socket.md) | Socket.IO + invalidate query, cleanup |
+| 12 | [accessibility.md](.claude/rules/12-accessibility.md) | aria-label, keyboard nav |
+| 13 | [animation-pattern.md](.claude/rules/13-animation-pattern.md) | Framer Motion rules |
+| 14 | [ux-layout-thinking.md](.claude/rules/14-ux-layout-thinking.md) | Layout design, user behavior simulation |
+| 15 | [user-flow-template.md](.claude/rules/15-user-flow-template.md) | Mô tả user flow trước khi code feature mới |
+| 16 | [verify-checklist.md](.claude/rules/16-verify-checklist.md) | Trước khi báo task done — verify checklist |
+| 17 | [vietnamese-copywriting.md](.claude/rules/17-vietnamese-copywriting.md) | **🇻🇳 LUÔN — QUAN TRỌNG NHẤT** — toàn bộ UI tiếng Việt, ngôn từ thân thiện cho nông dân |
 
-### Foundation (đọc 1 lần, nhớ kỹ)
-- [../RULES-REACT-001/03-typescript-pattern.md](../RULES-REACT-001/03-typescript-pattern.md) — strict typing, generics, discriminated union
-- [../RULES-REACT-001/04-file-structure-rules.md](../RULES-REACT-001/04-file-structure-rules.md) — file limits, icon rules, folder responsibilities
+## 📌 Core rules — auto-load
 
-### Implementation (đọc khi task liên quan)
-| Task | File rule |
-|------|-----------|
-| API integration | [05-api-flow.md](../RULES-REACT-001/05-api-flow.md) — Endpoint → Schema → Service → Query → Page |
-| Form | [06-form-pattern.md](../RULES-REACT-001/06-form-pattern.md) — RHF + Zod, reset dialog, edit form, 422 error |
-| Loading/Error/Empty state | [07-loading-error-empty.md](../RULES-REACT-001/07-loading-error-empty.md) — Skeleton vs Spinner, empty vs no-result |
-| Dialog/Sheet | [08-dialog-pattern.md](../RULES-REACT-001/08-dialog-pattern.md) — Dialog vs AlertDialog vs Sheet |
-| Role-based UI | [09-role-based-ui.md](../RULES-REACT-001/09-role-based-ui.md) — hide vs disable, RoleName enum, route guards |
-| Table/Filter/Pagination | [10-filter-pagination-table.md](../RULES-REACT-001/10-filter-pagination-table.md) — ProPagination, filter, date range |
-| Realtime/Socket | [11-realtime-socket.md](../RULES-REACT-001/11-realtime-socket.md) — socket + invalidate query, cleanup |
+Năm rule "Luôn" được **import trực tiếp** vào context mỗi session:
 
-### Enhancement
-- [../RULES-REACT-001/12-accessibility.md](../RULES-REACT-001/12-accessibility.md) — aria-label, keyboard nav
-- [../RULES-REACT-001/13-animation-pattern.md](../RULES-REACT-001/13-animation-pattern.md) — Framer Motion
+@.claude/rules/01-context-project.md
+@.claude/rules/02-techstack.md
+@.claude/rules/03-typescript-pattern.md
+@.claude/rules/04-file-structure-rules.md
+@.claude/rules/17-vietnamese-copywriting.md
 
-### Planning / Design (dùng trước khi code feature mới)
-- [../RULES-REACT-001/14-ux-layout-thinking.md](../RULES-REACT-001/14-ux-layout-thinking.md) — layout thinking, anti-patterns
-- [../RULES-REACT-001/15-user-flow-template.md](../RULES-REACT-001/15-user-flow-template.md) — mô tả user flow trước khi code
-- [../RULES-REACT-001/16-verify-checklist.md](../RULES-REACT-001/16-verify-checklist.md) — checklist verify trước khi implement
+> Rule 05–16 đọc theo task (xem bảng trên) — cố tình **không** import sẵn để tiết kiệm context. Rule 17 auto-import vì là **rule quan trọng nhất** — FarmOS là app Việt, mọi text user thấy phải tiếng Việt thân thiện.
 
----
+## 🧰 Skills (tự gọi khi gặp pattern tương ứng)
 
-## Quy trình theo loại task
+| Skill | Trigger |
+|-------|---------|
+| [implement-feature](.claude/skills/implement-feature/SKILL.md) | "implement feature X", "build trang Y theo spec/mockup" |
+| [create-page](.claude/skills/create-page/SKILL.md) | "tạo page X", "scaffold feature folder cho ..." |
+| [add-form](.claude/skills/add-form/SKILL.md) | "tạo form X", "form create/edit Y", "validate Z" |
+| [add-realtime-listener](.claude/skills/add-realtime-listener/SKILL.md) | "FE nhận event X realtime", "subscribe socket Y" |
 
-| Task | Đọc rules |
-|------|-----------|
-| CRUD feature mới | 01 + 02 + 03 + 04 + 05 + 06 + 07 + 08, rồi 14 → 15 → 16 |
-| Feature có realtime | 01 + 02 + 03 + 04 + 05 + 11 + 15 |
-| Tạo table mới | 01 + 02 + 04 + 10 (⚠️ scan codebase trước khi tạo) |
-| Multi-role UI | 01 + 02 + 04 + 09 |
-| Refactor UI / redesign | 01 + 14 |
-| Fix bug trong form | 01 + 02 + 04 + 06 |
-| Review code | 01 + 02 + 16 |
+## ⚡ Strict rules (cứng — không thương lượng)
 
----
+- 🇻🇳 **TỐI QUAN TRỌNG** — **100% chữ hiển thị cho user là tiếng Việt**, ngôn từ thân thiện cho nông dân (không tech jargon, không mix Anh-Việt, không `Submit/Cancel/OK/Save/Delete`). **KHÔNG hiện UUID/ID raw** lên UI — luôn dùng tên (`name`, `deviceName`...). Xem [17-vietnamese-copywriting.md](.claude/rules/17-vietnamese-copywriting.md). Code / comment / log thì tiếng Anh như bình thường.
+- ⚠️ **CODE LEGACY** — rule chỉ áp dụng cho code MỚI / phần user yêu cầu sửa. Page cũ, component cũ đã có text tiếng Anh hay UUID hiện trên UI → **KHÔNG tự ý refactor**, dễ bể code. Chỉ động vào phần được yêu cầu; giữ nguyên text/pattern xung quanh. Hỏi user trước nếu cần refactor cả file.
+- ✅ **ALWAYS** dùng shadcn (`@/components/ui/*`) — KHÔNG raw HTML (`<button>`, `<input>`, `<select>`...).
+- ✅ **ALWAYS** dùng `lucide-react` cho icon — không emoji, không thư viện icon khác, không SVG inline.
+- ❌ **NEVER** hiện raw ID/UUID lên UI — dùng tên (deviceName, ownerName...). Bất khả kháng: short ID + tooltip.
+- ❌ **NEVER** dùng `window.location.reload()` / `navigate(0)` để refresh — dùng `queryClient.invalidateQueries({ queryKey: [...] })`.
+- ✅ **ALWAYS** RHF + Zod cho form — KHÔNG `useState` per-field.
+- ❌ **NEVER** sửa `src/components/ui/**` (shadcn primitives) — customize qua wrapper trong `components/common/`.
+- ❌ **NEVER** gọi `useQuery` trong `_components/` con — fetching ở Page, truyền data qua props.
+- ❌ **NEVER** gọi `service.*` trực tiếp từ component — luôn qua `useMutation` hook trong `queries/`.
+- ❌ **NEVER** vượt giới hạn dòng: Page 350, file thường 500 — tách `_components/` ngay khi gần limit.
+- ❌ **NEVER** dùng `.nonempty()` (Zod v4 đã bỏ) — dùng `.min(1)`.
+- ❌ **NEVER** dùng `cacheTime` (React Query v5 đã đổi) — dùng `gcTime`.
 
-## Quick reminders (rules quan trọng nhất)
+> Các luật ⚡ trên được **enforce một phần** qua [`.claude/settings.json`](.claude/settings.json): `deny` rule chặn Edit/Write vào `src/components/ui/**`. Lệnh an toàn (`pnpm build` / `lint` / `preview`) được allow sẵn — không hỏi.
 
-- ✅ **Luôn dùng shadcn** (`@/components/ui/*`) — KHÔNG dùng raw HTML (`<button>`, `<input>`...)
-- ✅ **Mỗi component max 500 dòng** — vượt thì tách file, không gom 1 file lớn
-- ❌ **KHÔNG hiện raw ID/UUID** lên UI — luôn dùng tên (deviceName, ownerName...). Bất khả kháng: short ID + tooltip + label rõ
-- ✅ **Refresh button** = invalidate React Query, **KHÔNG** `window.location.reload()` / `navigate(0)`
-- ✅ Sau khi fix bug → tự update BUGS.md / docs liên quan (không hỏi)
+## 🗣️ Communication
 
-## IoT domain (FE)
+- User là Việt Nam — **100% UI tiếng Việt**, ngôn từ thân thiện (không tech jargon). Xem [rule 17](.claude/rules/17-vietnamese-copywriting.md).
+- Code / variable / type / comment / log tiếng Anh như bình thường.
+- Discuss / giải thích với dev tiếng Việt OK.
+- Sau khi fix bug → tự update `BUGS.md` / docs liên quan (không hỏi lại).
 
-- `DeviceStatus.purchase` = đã cho thuê | `available` = có thể sử dụng (rental, không phải sales)
-- IoT error đơn giản: hiển thị 1 status `error` duy nhất, không phân loại sensor/no-data/breakdown
+## 🧠 Domain Quick Reference
+
+- Roles: `admin | owner | manager | doctor` (FE: thêm `rancher` / `farmer` nếu có).
+- IoT rental model: `DeviceStatus.purchase` = đã cho thuê, `DeviceStatus.available` = sẵn sàng cho thuê.
+- IoT error trên FE: hiển thị 1 status `error` duy nhất — KHÔNG phân loại sensor/no-data/breakdown.
+- Owner subscription gate: nếu user là `owner` mà subscription inactive → redirect/disable qua `OwnerSubscriptionGuard`.
+- 1 owner = 1 farm (current rule).
+
+## 🗂️ Khi nào output thay vì sửa code
+
+User hỏi "X hoạt động thế nào?", "có nên...?" — trả lời ngắn (2-3 câu), recommend + tradeoff. **Không implement cho tới khi user đồng ý.**
+
+## 🔗 Liên quan
+
+- Backend: [../farm_os_be/CLAUDE.md](../farm_os_be/CLAUDE.md) — NestJS API mà FE consume.
+- BE realtime events: [../farm_os_be/.claude/skills/add-realtime-event/SKILL.md](../farm_os_be/.claude/skills/add-realtime-event/SKILL.md) — khi FE cần listen event mới.

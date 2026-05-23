@@ -30,11 +30,12 @@ export const AlertResSchema = z.object({
   createdAt: z.string().datetime(),
 });
 
-// ── List query — BE strict, chỉ chấp nhận page/limit ───────────────────
+// ── List query — BE strict: page/limit + optional zoneId filter ────────
 
 export const ListAlertsQuerySchema = z.object({
   page: z.number().int().positive().optional(),
   limit: z.number().int().positive().optional(),
+  zoneId: z.string().uuid().optional(),
 });
 
 // ── Paging meta (mirror BE PagingMetaSchema) ───────────────────────────
