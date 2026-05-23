@@ -14,6 +14,7 @@ import {
   IncidentTicketEndedPayloadSchema,
   InvoiceCheckoutPayloadSchema,
   InvoicePaidPayloadSchema,
+  IotDeviceActivatedPayloadSchema,
   IotKitOrderCancelledPayloadSchema,
   IotKitOrderPaidPayloadSchema,
   IotKitDevicesAutoAssignedPayloadSchema,
@@ -143,6 +144,7 @@ const EVENT_SCHEMAS: Partial<Record<RealtimeEventName, ZodSchema>> = {
   [RealtimeEvents.IotKitDevicesAutoAssigned]: IotKitDevicesAutoAssignedPayloadSchema,
   [RealtimeEvents.SubscriptionDevicesAutoAssigned]:
     SubscriptionDevicesAutoAssignedPayloadSchema,
+  [RealtimeEvents.IotDeviceActivated]: IotDeviceActivatedPayloadSchema,
 };
 
 /** Những event muốn surface lên bell / toast. `TicketMessageCreated` không
@@ -239,6 +241,19 @@ function invalidateByEvent(
     case RealtimeEvents.MilestoneStartReminder:
       queryClient.invalidateQueries({ queryKey: ["production-milestones"] });
       return;
+    case RealtimeEvents.IotDeviceActivated:
+      // Refresh device list/detail (badge "Lỗi" → "Hoạt động") + milestone IoT
+      // assignment view (assignment row hiển thị device.status). Owner + manager
+      // dùng key namespace riêng — invalidate cả 2, role mismatch sẽ no-op.
+      queryClient.invalidateQueries({ queryKey: ["owner", "iot-devices"] });
+      queryClient.invalidateQueries({ queryKey: ["manager", "iot-devices"] });
+      queryClient.invalidateQueries({
+        queryKey: ["owner", "production-milestones"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["manager", "production-milestones"],
+      });
+      return;
     default:
       return;
   }
@@ -277,6 +292,18 @@ function handleEvent(
     const alertId = typeof payload.alertId === "string" ? payload.alertId : null;
     if (alertId) {
       void emitRichAlertToast(alertId, ctx.queryClient, ctx.openAlertDialog);
+    }
+  }
+
+  // Toast riêng cho IotDeviceActivated — không vào bell (info-level, không
+  // phải alert). Branch theo `fromStatus`: install = kết nối lần đầu, error =
+  // tự hồi phục sau timeout.
+  if (event === RealtimeEvents.IotDeviceActivated) {
+    const fromStatus = payload.fromStatus;
+    if (fromStatus === "error") {
+      toast.success("Thiết bị IoT đã hoạt động trở lại");
+    } else if (fromStatus === "install") {
+      toast.success("Thiết bị IoT đã kết nối lần đầu");
     }
   }
 
@@ -331,6 +358,7 @@ export function useRealtimeEvents(): void {
       RealtimeEvents.TicketMessageCreated,
       RealtimeEvents.IotKitDevicesAutoAssigned,
       RealtimeEvents.SubscriptionDevicesAutoAssigned,
+      RealtimeEvents.IotDeviceActivated,
     ];
 
     for (const event of allEvents) {
