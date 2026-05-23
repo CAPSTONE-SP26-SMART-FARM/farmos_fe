@@ -189,6 +189,10 @@ export const API_ENDPOINTS = {
         "/iot-device-provisioning/admin/iot-device/recovery/bulk-complete",
       INSTALL_MARK_BLOCKED:
         "/iot-device-provisioning/admin/iot-device/install/mark-blocked",
+      ATTENTION_QUEUE:
+        "/iot-device-provisioning/admin/iot-device/attention-queue",
+      ATTENTION_CONFIRM_RETURNED:
+        "/iot-device-provisioning/admin/iot-device/attention/confirm-returned",
       OWNER_OVERVIEW: (ownerId: string) =>
         `/iot-device-provisioning/admin/owner/${ownerId}/iot-overview`, // A4
       TIMELINE: (deviceId: string) =>
@@ -893,6 +897,12 @@ export const QUERY_KEYS = {
         "admin",
         "iot-devices",
         "recovery-queue",
+        ...(query !== undefined ? [query] : []),
+      ],
+      attentionQueue: (query?: Record<string, unknown>) => [
+        "admin",
+        "iot-devices",
+        "attention-queue",
         ...(query !== undefined ? [query] : []),
       ],
       ownerOverview: (ownerId: string) => [

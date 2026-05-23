@@ -613,6 +613,89 @@ export const InstallMarkBlockedFormSchema = z.object({
 
 export const InstallMarkBlockedResSchema = BulkActionResSchema;
 
+// ─────────────────────────────────────────────────────────────
+// A9 — Attention queue (E-C5 + E-D3 vá 2026-05-24)
+// ─────────────────────────────────────────────────────────────
+
+export const AttentionKindSchema = z.enum(["error", "swap_pending_return"]);
+
+export const AttentionQueueQuerySchema = z.object({
+  farmId: uuidSchema.optional(),
+  ownerId: uuidSchema.optional(),
+  kind: AttentionKindSchema.optional(),
+  page: z.number().int().min(1).optional(),
+  pageSize: z.number().int().min(1).max(100).optional(),
+});
+
+export const AttentionErrorContextSchema = z.object({
+  lastReason: z.string().nullable(),
+  occurredAt: isoDatetimeSchema.nullable(),
+  hasActiveMilestoneAssignment: z.boolean(),
+});
+
+export const AttentionSwapContextSchema = z.object({
+  swappedAt: isoDatetimeSchema.nullable(),
+  revokeReason: z.string(),
+});
+
+export const AttentionItemSchema = z.object({
+  deviceId: uuidSchema,
+  deviceLabel: z.string().nullable(),
+  deviceName: z.string(),
+  deviceType: IotDeviceTypeSchema,
+  currentStatus: DeviceStatusSchema,
+  kind: AttentionKindSchema,
+  farmId: uuidSchema.nullable(),
+  farmName: z.string().nullable(),
+  farmAddress: z.string().nullable(),
+  ownerId: uuidSchema.nullable(),
+  ownerName: z.string().nullable(),
+  ownerPhone: z.string().nullable(),
+  lastSeenAt: isoDatetimeSchema.nullable(),
+  daysInState: z.number().int().nonnegative(),
+  errorContext: AttentionErrorContextSchema.nullable(),
+  swapContext: AttentionSwapContextSchema.nullable(),
+});
+
+export const AttentionQueueResSchema = z.object({
+  totalDevices: z.number().int().nonnegative(),
+  totalErrorBoards: z.number().int().nonnegative(),
+  totalSwapPendingReturn: z.number().int().nonnegative(),
+  generatedAt: isoDatetimeSchema,
+  items: z.array(AttentionItemSchema),
+  pagination: z.object({
+    page: z.number().int().min(1),
+    pageSize: z.number().int().min(1),
+    totalItems: z.number().int().nonnegative(),
+    totalPages: z.number().int().nonnegative(),
+  }),
+});
+
+export const AttentionConfirmReturnedBodySchema = z.object({
+  deviceIds: z.array(uuidSchema).min(1).max(200),
+  notes: z.string().max(2000).optional(),
+});
+
+export const AttentionConfirmReturnedResSchema = z.object({
+  total: z.number().int().nonnegative(),
+  successCount: z.number().int().nonnegative(),
+  failureCount: z.number().int().nonnegative(),
+  results: z.array(
+    z.object({
+      deviceId: uuidSchema,
+      ok: z.boolean(),
+      error: z.string().nullable(),
+    }),
+  ),
+});
+
+export type AttentionKindType = z.infer<typeof AttentionKindSchema>;
+export type AttentionQueueQueryType = z.infer<typeof AttentionQueueQuerySchema>;
+export type AttentionItemType = z.infer<typeof AttentionItemSchema>;
+export type AttentionQueueResType = z.infer<typeof AttentionQueueResSchema>;
+export type AttentionConfirmReturnedBodyType = z.infer<typeof AttentionConfirmReturnedBodySchema>;
+export type AttentionConfirmReturnedResType = z.infer<typeof AttentionConfirmReturnedResSchema>;
+
 export type RecoveryQueueQueryType = z.infer<typeof RecoveryQueueQuerySchema>;
 export type RecoveryDeviceType = z.infer<typeof RecoveryDeviceSchema>;
 export type RecoveryKitBreakdownType = z.infer<typeof RecoveryKitBreakdownSchema>;

@@ -174,19 +174,9 @@ function AlertDetailDialog({
               </div>
             )}
             <div className="flex justify-between">
-              <span>Loại cảnh báo</span>
-              <span className="font-medium text-foreground">{alert.alertType}</span>
-            </div>
-            <div className="flex justify-between">
               <span>Thời điểm</span>
               <span className="font-medium text-foreground">
                 {new Date(alert.createdAt).toLocaleString("vi-VN")}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Trạng thái</span>
-              <span className={`font-medium ${alert.isResolved ? "text-green-600" : "text-destructive"}`}>
-                {alert.isResolved ? "Đã xử lý" : "Chưa xử lý"}
               </span>
             </div>
           </div>
@@ -196,12 +186,12 @@ function AlertDetailDialog({
   );
 }
 
-function AlertsPanel({ isLoading }: { isLoading: boolean }) {
+function AlertsPanel({ isLoading, zoneId }: { isLoading: boolean; zoneId: string }) {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<AlertResType | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const query = useListAlerts({ page, limit: ALERTS_PAGE_SIZE });
+  const query = useListAlerts({ page, limit: ALERTS_PAGE_SIZE, zoneId }, !!zoneId);
   const raw = query.data?.data ?? [];
   const meta = query.data?.meta;
   const alerts = raw.filter((a) => !a.isResolved);
@@ -619,7 +609,7 @@ export function SensorOverviewTab({ cropSeason }: { cropSeason: CropSeasonType }
             <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
             <h4 className="text-sm font-semibold">Cảnh báo</h4>
           </div>
-          <AlertsPanel isLoading={listQuery.isLoading} />
+          <AlertsPanel isLoading={listQuery.isLoading} zoneId={cropSeason.zoneId} />
         </div>
       </div>
     </div>

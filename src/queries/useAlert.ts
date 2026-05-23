@@ -5,7 +5,8 @@ import type { ListAlertsQueryType } from "@/schemaValidatation/alert";
 
 /**
  * BE `GET /alerts` (alert.controller.ts) — list alert theo quyền của user
- * hiện tại (zone/farm). Query chỉ accept `page` + `limit` (strict).
+ * hiện tại (zone/farm). Query accept `page` + `limit` + optional `zoneId`
+ * (caller phải có access tới zone, BE throws 403 nếu sai).
  * Refetch interval 60s là fallback khi socket disconnect; useRealtimeEvents
  * cũng invalidate queryKey `["alerts"]` khi nhận `alert.created`.
  */

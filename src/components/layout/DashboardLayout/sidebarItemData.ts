@@ -114,12 +114,16 @@ export const sidebarData: SidebarData = {
               url: "/dashboard/admin/iot-devices",
             },
             {
-              title: "Hàng đợi xuất kho",
+              title: "Cần lắp đặt",
               url: "/dashboard/admin/iot-devices/install-queue",
             },
             {
-              title: "Hàng đợi thu hồi",
+              title: "Cần thu lại",
               url: "/dashboard/admin/iot-devices/recovery-queue",
+            },
+            {
+              title: "Cần xử lý",
+              url: "/dashboard/admin/iot-devices/attention-queue",
             },
           ],
         },
