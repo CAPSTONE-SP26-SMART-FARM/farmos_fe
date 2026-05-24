@@ -43,6 +43,7 @@ export const DEVICE_STATUS_VALUES = [
   "available",
   "purchase",
   "install",
+  "inactive",
   "active",
   "error",
   "revoked",

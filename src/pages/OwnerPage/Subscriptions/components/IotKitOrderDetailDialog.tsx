@@ -34,6 +34,7 @@ const DEVICE_STATUS_LABEL: Record<string, string> = {
   available: "Có thể sử dụng",
   purchase: "Đã mua, chưa lắp",
   install: "Đang cài đặt",
+  inactive: "Đợi giai đoạn bắt đầu",
   active: "Đang hoạt động",
   error: "Lỗi",
   revoked: "Đã thu hồi",
@@ -46,6 +47,8 @@ const DEVICE_STATUS_BADGE_CLASS: Record<string, string> = {
     "border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",
   install:
     "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300",
+  inactive:
+    "border-sky-300 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300",
   active:
     "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
   error:

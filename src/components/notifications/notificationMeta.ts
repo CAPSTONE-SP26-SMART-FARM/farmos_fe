@@ -51,6 +51,28 @@ function strField(payload: Record<string, unknown>, key: string): string | undef
   return typeof v === "string" ? v : undefined;
 }
 
+/**
+ * Href chuẩn cho mọi sensor event tới bell (alert created/recovered, timeout,
+ * hardware issue) — match đúng cách FE đọc query của từng role:
+ * - Owner: chỉ <code>?zoneId</code> — OwnerCropSeasonsPageV2 không đọc tab query.
+ *   Pattern hiện hữu: ZonesPane.tsx:398.
+ * - Manager: <code>?zoneId&tab=sensors</code> — ManagerCropSeasonsPage:73 đọc cả 2,
+ *   auto-mở Sensors tab.
+ * - Admin: undefined (admin có flow IoT riêng, không có view này).
+ */
+function buildSensorZoneHref(
+  payload: Record<string, unknown>,
+  role: RoleNameType,
+): string | undefined {
+  if (role === RoleName.Admin) return undefined;
+  const zoneId = strField(payload, "zoneId");
+  if (!zoneId) return undefined;
+  if (role === RoleName.Manager) {
+    return `/dashboard/manager/crop-seasons?zoneId=${zoneId}&tab=sensors`;
+  }
+  return `/dashboard/owner/crop-seasons?zoneId=${zoneId}`;
+}
+
 const META: Partial<Record<RealtimeEventName, EventMeta>> = {
   [RealtimeEvents.AlertCreated]: {
     kind: NotificationKind.SensorAlert,
@@ -59,12 +81,10 @@ const META: Partial<Record<RealtimeEventName, EventMeta>> = {
     // Toast được handle riêng trong useRealtimeEvents (rich data + mở dialog
     // detail global thay vì navigate). Ở đây chỉ build notification cho bell.
     shouldToast: false,
-    buildHref: (p, role) => {
-      const zoneId = strField(p, "zoneId");
-      return zoneId
-        ? `${dashboardBase(role)}/sensor-dashboard?zoneId=${zoneId}`
-        : `${dashboardBase(role)}/sensor-dashboard`;
-    },
+    // Route chuẩn cho sensor: Crop Seasons với tab=sensors + filter zoneId
+    // (xem SensorDetailPage.tsx:183 — pattern hiện hữu). Admin không có route
+    // này → undefined để bell bỏ qua navigate.
+    buildHref: (p, role) => buildSensorZoneHref(p, role),
     buildDedupId: (event, p) => strField(p, "alertId") ?? fallbackId(event, p),
   },
   [RealtimeEvents.SensorAlertRecovered]: {
@@ -72,12 +92,7 @@ const META: Partial<Record<RealtimeEventName, EventMeta>> = {
     severity: "success",
     title: "Cảm biến đã phục hồi",
     shouldToast: false,
-    buildHref: (p, role) => {
-      const zoneId = strField(p, "zoneId");
-      return zoneId
-        ? `${dashboardBase(role)}/sensor-dashboard?zoneId=${zoneId}`
-        : undefined;
-    },
+    buildHref: (p, role) => buildSensorZoneHref(p, role),
     buildDedupId: (event, p) =>
       strField(p, "alertId") ?? fallbackId(event, p),
   },
@@ -86,12 +101,7 @@ const META: Partial<Record<RealtimeEventName, EventMeta>> = {
     severity: "error",
     title: "Phát hiện sự cố phần cứng cảm biến",
     shouldToast: true,
-    buildHref: (p, role) => {
-      const zoneId = strField(p, "zoneId");
-      return zoneId
-        ? `${dashboardBase(role)}/sensor-dashboard?zoneId=${zoneId}`
-        : `${dashboardBase(role)}/sensor-dashboard`;
-    },
+    buildHref: (p, role) => buildSensorZoneHref(p, role),
     buildDedupId: (event, p) =>
       [strField(p, "sensorId"), strField(p, "zoneId")]
         .filter(Boolean)
@@ -102,12 +112,7 @@ const META: Partial<Record<RealtimeEventName, EventMeta>> = {
     severity: "warning",
     title: "Cảm biến mất tín hiệu",
     shouldToast: true,
-    buildHref: (p, role) => {
-      const zoneId = strField(p, "zoneId");
-      return zoneId
-        ? `${dashboardBase(role)}/sensor-dashboard?zoneId=${zoneId}`
-        : `${dashboardBase(role)}/sensor-dashboard`;
-    },
+    buildHref: (p, role) => buildSensorZoneHref(p, role),
     buildDedupId: (event, p) =>
       [strField(p, "sensorId"), strField(p, "zoneId")]
         .filter(Boolean)
@@ -118,12 +123,7 @@ const META: Partial<Record<RealtimeEventName, EventMeta>> = {
     severity: "success",
     title: "Cảm biến đã kết nối lại",
     shouldToast: false,
-    buildHref: (p, role) => {
-      const zoneId = strField(p, "zoneId");
-      return zoneId
-        ? `${dashboardBase(role)}/sensor-dashboard?zoneId=${zoneId}`
-        : undefined;
-    },
+    buildHref: (p, role) => buildSensorZoneHref(p, role),
     buildDedupId: (event, p) =>
       [strField(p, "sensorId"), strField(p, "zoneId")]
         .filter(Boolean)

@@ -6,6 +6,7 @@ import {
   Droplets,
   Package,
   PackageCheck,
+  PlugZap,
   Power,
   Radio,
   ShieldOff,
@@ -33,6 +34,7 @@ export const DEVICE_STATUS_LABEL_ADMIN: Record<DeviceStatusType, string> = {
   available: "Có thể sử dụng",
   purchase: "Đã cho thuê",
   install: "Đang lắp đặt",
+  inactive: "Đã lắp, chờ kết nối",
   active: "Hoạt động",
   error: "Lỗi",
   revoked: "Thu hồi",
@@ -42,6 +44,7 @@ export const DEVICE_STATUS_LABEL_USER: Record<DeviceStatusType, string> = {
   available: "Có thể sử dụng",
   purchase: "Khả dụng",
   install: "Đang lắp đặt",
+  inactive: "Đợi giai đoạn bắt đầu",
   active: "Hoạt động",
   error: "Lỗi",
   revoked: "Thu hồi",
@@ -76,6 +79,13 @@ export const STATUS_META: Record<
     badgeClass:
       "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300",
     icon: Wrench,
+  },
+  inactive: {
+    labelAdmin: DEVICE_STATUS_LABEL_ADMIN.inactive,
+    labelUser: DEVICE_STATUS_LABEL_USER.inactive,
+    badgeClass:
+      "border-sky-300 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300",
+    icon: PlugZap,
   },
   active: {
     labelAdmin: DEVICE_STATUS_LABEL_ADMIN.active,

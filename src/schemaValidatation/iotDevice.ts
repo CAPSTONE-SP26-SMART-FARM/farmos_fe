@@ -7,6 +7,7 @@ export const DeviceStatusSchema = z.enum([
   "available",
   "purchase",
   "install",
+  "inactive",
   "active",
   "error",
   "revoked",
