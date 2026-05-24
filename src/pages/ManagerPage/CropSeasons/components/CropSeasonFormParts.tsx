@@ -42,7 +42,7 @@ export function CropCategoryPicker({
       error={error}
     >
       <Select
-        value={value || undefined}
+        value={value ?? ""}
         onValueChange={onChange}
         disabled={disabled || isLoading}
       >
@@ -60,9 +60,15 @@ export function CropCategoryPicker({
             </span>
           )}
         </SelectTrigger>
-        <SelectContent position="popper" className="z-60 w-(--radix-select-trigger-width)">
+        <SelectContent
+          position="popper"
+          className="z-60 w-(--radix-select-trigger-width)"
+        >
           {list.map((cat) => (
-            <SelectItem key={cat.id} value={cat.id}>
+            <SelectItem
+              key={cat.id}
+              value={cat.id}
+            >
               <div className="flex flex-col">
                 <span className="font-medium">{cat.name}</span>
                 <span className="text-xs text-muted-foreground">
@@ -94,8 +100,8 @@ export function CropCategoryPicker({
       )}
       {selected?.code === "OTHER" && (
         <p className="text-xs text-muted-foreground">
-          Dùng cho giống cây chưa có trong danh mục. Hệ thống không gợi ý
-          mật độ chuẩn cho lựa chọn này.
+          Dùng cho giống cây chưa có trong danh mục. Hệ thống không gợi ý mật độ
+          chuẩn cho lựa chọn này.
         </p>
       )}
     </Field>
@@ -146,7 +152,10 @@ export function DensityBadge({
 
   if (hint.status === "ok") {
     return (
-      <Badge variant="outline" className="border-emerald-500 text-emerald-700 bg-emerald-50">
+      <Badge
+        variant="outline"
+        className="border-emerald-500 text-emerald-700 bg-emerald-50"
+      >
         ✓ Mật độ phù hợp: {formatDensity(hint.density)} cây/m²
       </Badge>
     );
@@ -154,7 +163,10 @@ export function DensityBadge({
 
   if (hint.status === "below") {
     return (
-      <Badge variant="outline" className="border-amber-500 text-amber-700 bg-amber-50">
+      <Badge
+        variant="outline"
+        className="border-amber-500 text-amber-700 bg-amber-50"
+      >
         ⚠ Mật độ {formatDensity(hint.density)} cây/m² – quá thưa (tối thiểu{" "}
         {formatDensity(hint.min)})
       </Badge>
@@ -162,7 +174,10 @@ export function DensityBadge({
   }
 
   return (
-    <Badge variant="outline" className="border-amber-500 text-amber-700 bg-amber-50">
+    <Badge
+      variant="outline"
+      className="border-amber-500 text-amber-700 bg-amber-50"
+    >
       ⚠ Mật độ {formatDensity(hint.density)} cây/m² – quá dày (tối đa{" "}
       {formatDensity(hint.max)})
     </Badge>
@@ -185,9 +200,9 @@ export function CycleHintLine({
 
   return (
     <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
-      ⚠ Chu kỳ vụ {hint.days} ngày nằm ngoài khoảng phù hợp của loại cây này
-      ({hint.allowedMinDays} – {hint.allowedMaxDays} ngày). Hệ thống có thể
-      từ chối khi bạn lưu — cân nhắc điều chỉnh ngày thu hoạch dự kiến.
+      ⚠ Chu kỳ vụ {hint.days} ngày nằm ngoài khoảng phù hợp của loại cây này (
+      {hint.allowedMinDays} – {hint.allowedMaxDays} ngày). Hệ thống có thể từ
+      chối khi bạn lưu — cân nhắc điều chỉnh ngày thu hoạch dự kiến.
     </p>
   );
 }
@@ -238,7 +253,10 @@ export function DensitySnapshotChip({
 }) {
   if (minDensitySnapshot == null || maxDensitySnapshot == null) return null;
   return (
-    <Badge variant="secondary" className="font-normal">
+    <Badge
+      variant="secondary"
+      className="font-normal"
+    >
       Mật độ áp dụng: {formatDensity(minDensitySnapshot)} –{" "}
       {formatDensity(maxDensitySnapshot)} cây/m²
     </Badge>
