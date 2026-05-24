@@ -121,7 +121,9 @@ export default function ManagerCropSeasonsPage() {
   const selectedZoneAreaSqm = selectedZone?.areaSqm ?? null;
 
   useEffect(() => {
-    if (!zoneId || assignedZonesQuery.isLoading) return;
+    if (!zoneId) return;
+    if (assignedZonesQuery.isLoading || assignedZonesQuery.isFetching) return;
+    if (!assignedZonesQuery.data) return;
     if (assignedZones.some((z) => z.id === zoneId)) return;
     const next = new URLSearchParams(searchParams);
     next.delete("zoneId");
@@ -129,6 +131,8 @@ export default function ManagerCropSeasonsPage() {
   }, [
     assignedZones,
     assignedZonesQuery.isLoading,
+    assignedZonesQuery.isFetching,
+    assignedZonesQuery.data,
     searchParams,
     setSearchParams,
     zoneId,

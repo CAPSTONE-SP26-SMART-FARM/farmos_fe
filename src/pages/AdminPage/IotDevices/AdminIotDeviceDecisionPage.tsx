@@ -21,6 +21,7 @@ import {
   DecisionCompletionBanner,
   type DecisionCompletedAction,
 } from "./_components/decision/DecisionCompletionBanner";
+import { DecisionKitRequestCard } from "../IotKitRequests/_components/DecisionKitRequestCard";
 
 export default function AdminIotDeviceDecisionPage() {
   const navigate = useNavigate();
@@ -227,11 +228,12 @@ export default function AdminIotDeviceDecisionPage() {
             onClickRevoke={() => setRevokeOpen(true)}
           />
         </div>
-        <div className="order-1 lg:order-2">
+        <div className="order-1 lg:order-2 space-y-4">
           <DecisionOwnerCard
             owner={ctx.owner}
             milestones={ctx.activeMilestones}
           />
+          <DecisionKitRequestCard iotDeviceId={deviceId} />
         </div>
       </div>
 

@@ -319,9 +319,11 @@ export type PrescriptionCreatedPayloadType = z.infer<
 >;
 
 /**
- * BE emit khi board IoT chuyển status `install`/`error` → `active` qua ingest.
- *  - `fromStatus = "install"`: gói data đầu tiên sau khi xuất kho/lắp.
- *  - `fromStatus = "error"`  : self-recovery — board sống lại sau timeout, badge "Lỗi" cần clear.
+ * BE emit khi board IoT chuyển status `inactive`/`error` → `active` qua ingest.
+ *  - `fromStatus = "inactive"`: gói data đầu tiên sau khi admin báo lắp xong
+ *                               (complete-install qua iot-kit-request).
+ *  - `fromStatus = "error"`   : self-recovery — board sống lại sau timeout,
+ *                               badge "Lỗi" cần clear.
  */
 export const IotDeviceActivatedPayloadSchema = z
   .object({
@@ -332,7 +334,7 @@ export const IotDeviceActivatedPayloadSchema = z
     zoneId: z.string(),
     zoneName: z.string().optional(),
     activatedAt: z.string().optional(),
-    fromStatus: z.enum(["install", "error"]),
+    fromStatus: z.enum(["inactive", "error"]),
     toStatus: z.string().optional(),
   })
   .passthrough();
@@ -362,4 +364,52 @@ export const IotDeviceStatusChangedPayloadSchema = z
   .passthrough();
 export type IotDeviceStatusChangedPayloadType = z.infer<
   typeof IotDeviceStatusChangedPayloadSchema
+>;
+
+/**
+ * BE emit khi tạo mới Iot Kit Request:
+ *  - FAULT_REPORT từ owner/manager báo lỗi
+ *  - INSTALL_SCHEDULE auto-create khi owner approve crop season
+ *
+ * Fan-out tới: owner room + handler room (nếu có) + tất cả admin user.
+ * FE invalidate list + toast nhẹ cho admin (request mới chờ xử lý).
+ */
+export const IotKitRequestCreatedPayloadSchema = z
+  .object({
+    id: z.string(),
+    requestNumber: z.string().optional(),
+    direction: z.string().optional(),
+    type: z.string().optional(),
+    status: z.string().optional(),
+    iotDeviceId: z.string().nullable().optional(),
+    cropSeasonId: z.string().nullable().optional(),
+    farmId: z.string().nullable().optional(),
+    createdAt: z.string().optional(),
+  })
+  .passthrough();
+export type IotKitRequestCreatedPayloadType = z.infer<
+  typeof IotKitRequestCreatedPayloadSchema
+>;
+
+/**
+ * BE emit khi request đổi trạng thái — claim, resolve, reject (FAULT), cancel,
+ * start-install, complete-install (INSTALL_SCHEDULE). FE invalidate list + detail.
+ * Fan-out tới: owner room + handler room (nếu có) + tất cả admin user.
+ */
+export const IotKitRequestUpdatedPayloadSchema = z
+  .object({
+    id: z.string(),
+    requestNumber: z.string().optional(),
+    direction: z.string().optional(),
+    type: z.string().optional(),
+    status: z.string(),
+    iotDeviceId: z.string().nullable().optional(),
+    cropSeasonId: z.string().nullable().optional(),
+    farmId: z.string().nullable().optional(),
+    handlerId: z.string().nullable().optional(),
+    updatedAt: z.string().optional(),
+  })
+  .passthrough();
+export type IotKitRequestUpdatedPayloadType = z.infer<
+  typeof IotKitRequestUpdatedPayloadSchema
 >;

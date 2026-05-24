@@ -11,10 +11,13 @@ import {
   useNotificationStore,
 } from "@/stores/notificationStore";
 import { useSocketStore } from "@/stores/socketStore";
+import { useUnreadCount } from "@/queries/useNotification";
 import NotificationDropdown from "./NotificationDropdown";
 
 export default function NotificationBell() {
-  const unread = useNotificationStore(selectUnreadCount);
+  const storeUnread = useNotificationStore(selectUnreadCount);
+  const { data: serverUnread = 0 } = useUnreadCount();
+  const unread = Math.max(serverUnread, storeUnread);
   const connected = useSocketStore((s) => s.connected);
 
   return (

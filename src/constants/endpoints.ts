@@ -441,6 +441,8 @@ export const API_ENDPOINTS = {
   NOTIFICATIONS: {
     LIST: "/notifications",
     MARK_READ: (id: string) => `/notifications/${id}/read`,
+    UNREAD_COUNT: "/notifications/unread-count",
+    MARK_ALL_READ: "/notifications/mark-all-read",
   },
   FARM_MEMBERS: {
     BASE: "/farm-members",
@@ -681,6 +683,28 @@ export const API_ENDPOINTS = {
         `/sensor-reading/assignment/${assignmentId}/sensor/${sensorId}/stats`,
     },
   },
+  // BE: src/modules/iot-kit-request/iot-kit-request.controller.ts
+  // Endpoints chia sẻ giữa 3 role — BE role guard ở từng method.
+  IOT_KIT_REQUEST: {
+    // ── FAULT_REPORT ──────────────────────────────────────────────────
+    CREATE_FAULT_REPORT: "/iot-kit-request/fault-reports", // owner | manager
+    CLAIM: (id: string) => `/iot-kit-request/${id}/claim`, // admin (chỉ FAULT)
+    RESOLVE: (id: string) => `/iot-kit-request/${id}/resolve`, // admin (chỉ FAULT)
+    REJECT: (id: string) => `/iot-kit-request/${id}/reject`, // admin (chỉ FAULT)
+
+    // ── INSTALL_SCHEDULE — auto-create khi owner approve season ───────
+    // Admin chỉ có 2 hành động bulk theo request scope:
+    START_INSTALL: (id: string) =>
+      `/iot-kit-request/admin/${id}/start-install`, // admin: purchase → install
+    COMPLETE_INSTALL: (id: string) =>
+      `/iot-kit-request/admin/${id}/complete-install`, // admin: install → inactive
+
+    // ── Shared ────────────────────────────────────────────────────────
+    LIST_MY: "/iot-kit-request/my", // owner
+    LIST_ADMIN: "/iot-kit-request/admin/list", // admin
+    DETAIL: (id: string) => `/iot-kit-request/${id}`, // any — embed devices[]
+    CANCEL: (id: string) => `/iot-kit-request/${id}/cancel`, // owner FAULT, admin both
+  },
 } as const;
 
 //query keys
@@ -782,6 +806,20 @@ export const QUERY_KEYS = {
       "my-history",
       ...(query !== undefined ? [query] : []),
     ],
+  },
+  iotKitRequests: {
+    all: ["iot-kit-requests"],
+    listMy: (query?: Record<string, unknown>) => [
+      "iot-kit-requests",
+      "my",
+      ...(query !== undefined ? [query] : []),
+    ],
+    listAdmin: (query?: Record<string, unknown>) => [
+      "iot-kit-requests",
+      "admin",
+      ...(query !== undefined ? [query] : []),
+    ],
+    detail: (id: string) => ["iot-kit-requests", id],
   },
   servicePackages: {
     all: ["service-packages"],
@@ -1388,6 +1426,7 @@ export const QUERY_KEYS = {
       "list",
       ...(query !== undefined ? [query] : []),
     ],
+    unreadCount: ["notifications", "unread-count"],
   },
   dailyLogs: {
     all: ["daily-logs"],

@@ -9,7 +9,12 @@ import {
   type NotificationItem as NotificationItemType,
 } from "@/stores/notificationStore";
 import { NotificationKind, RealtimeEvents } from "@/constants/realtime";
-import { useListNotifications, useMarkNotificationRead } from "@/queries/useNotification";
+import {
+  useListNotifications,
+  useMarkAllRead,
+  useMarkNotificationRead,
+  useUnreadCount,
+} from "@/queries/useNotification";
 import type { NotificationResType, NotificationTypeType } from "@/schemaValidatation/notification";
 import type { NotificationKindType, RealtimeEventName } from "@/constants/realtime";
 import type { NotificationSeverity } from "@/stores/notificationStore";
@@ -56,14 +61,13 @@ function apiNotifToStoreItem(n: NotificationResType): NotificationItemType {
 
 export default function NotificationDropdown() {
   const storeItems = useNotificationStore((s) => s.items);
-  const storeUnread = useNotificationStore(selectUnreadCount);
-  const storeMarkRead = useNotificationStore((s) => s.markRead);
-  const storeMarkAllRead = useNotificationStore((s) => s.markAllRead);
   const storeClear = useNotificationStore((s) => s.clear);
   const navigate = useNavigate();
 
   const { data: apiData } = useListNotifications({ page: 1, limit: 20 });
+  const { data: serverUnread = 0 } = useUnreadCount();
   const { mutate: markReadApi } = useMarkNotificationRead();
+  const { mutate: markAllReadApi } = useMarkAllRead();
 
   const storeIds = useMemo(
     () => new Set(storeItems.map((i) => i.id)),
@@ -84,24 +88,18 @@ export default function NotificationDropdown() {
     [storeItems, apiMapped],
   );
 
-  const unread = useMemo(
-    () => storeUnread + apiMapped.filter((i) => !i.read).length,
-    [storeUnread, apiMapped],
-  );
+  const storeUnread = useNotificationStore(selectUnreadCount);
+  const unread = Math.max(serverUnread, storeUnread);
 
   const handleClick = (item: NotificationItemType) => {
     if (!item.read) {
-      storeMarkRead(item.id);
       markReadApi({ id: item.id, isRead: true });
     }
     if (item.href) navigate(item.href);
   };
 
   const handleMarkAllRead = () => {
-    merged
-      .filter((i) => !i.read)
-      .forEach((i) => markReadApi({ id: i.id, isRead: true }));
-    storeMarkAllRead();
+    markAllReadApi();
   };
 
   return (

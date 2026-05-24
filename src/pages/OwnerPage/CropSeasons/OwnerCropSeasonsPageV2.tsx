@@ -140,16 +140,20 @@ export default function OwnerCropSeasonsPageV2() {
   const hasZones = zones.length > 0;
   const selectedZoneName = zones.find((z) => z.id === zoneId)?.name;
 
+  // Drop stale zoneId from URL if it doesn't match any zone
+  const isZonesFetching = farmQuery.isFetching || zonesQuery.isFetching;
   // Drop stale zoneId nếu không match
   useEffect(() => {
-    if (!zoneId || isZonesLoading) return;
+    if (!zoneId) return;
+    if (isZonesLoading || isZonesFetching) return;
+    if (!zonesQuery.data) return;
     if (zones.some((z) => z.id === zoneId)) return;
     const next = new URLSearchParams(searchParams);
     next.delete("zoneId");
     next.delete("view");
     next.delete("seasonId");
     setSearchParams(next, { replace: true });
-  }, [zones, isZonesLoading, searchParams, setSearchParams, zoneId]);
+  }, [zones, isZonesLoading, isZonesFetching, zonesQuery.data, searchParams, setSearchParams, zoneId]);
 
   const { data: allData, isLoading: seasonsLoading } = useOwnerListCropSeasons(
     zoneId,

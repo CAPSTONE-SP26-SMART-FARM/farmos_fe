@@ -1,28 +1,36 @@
 import { useMemo } from "react";
+import { Loader2 } from "lucide-react";
 import { useSelectedAlertStore } from "@/stores/selectedAlertStore";
 import { useListAlerts } from "@/queries/useAlert";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import AlertDetailDialog from "@/pages/SensorReadings/components/AlertDetailDialog";
 
-/**
- * Dialog detail alert dùng chung cho toàn dashboard. Toast (từ realtime
- * `alert.created`) và các nơi cần xem nhanh alert đều mở dialog này thông
- * qua `useSelectedAlertStore.open(alertId)` — không navigate sang trang
- * khác. Mount 1 lần ở DashboardLayout.
- *
- * Lookup alert bằng cache `["alerts"]`: hook tự subscribe `useListAlerts`
- * (page 1, limit 8) để cache luôn có dữ liệu mới nhất, đồng thời `refetchInterval`
- * 60s + invalidate từ realtime đảm bảo data tươi khi cần open.
- */
 export default function GlobalAlertDetailDialog() {
   const alertId = useSelectedAlertStore((s) => s.alertId);
   const close = useSelectedAlertStore((s) => s.close);
 
-  const { data } = useListAlerts({ page: 1, limit: 8 });
+  const { data, isFetching } = useListAlerts({ page: 1, limit: 8 });
 
   const alert = useMemo(() => {
     if (!alertId) return null;
     return data?.data.find((a) => a.id === alertId) ?? null;
   }, [alertId, data]);
+
+  if (alertId && !alert && isFetching) {
+    return (
+      <Dialog open onOpenChange={(open) => !open && close()}>
+        <DialogContent className="flex flex-col items-center gap-4 py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <Skeleton className="h-4 w-48" />
+          <Skeleton className="h-4 w-32" />
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <AlertDetailDialog
