@@ -495,6 +495,7 @@ export const API_ENDPOINTS = {
     ACTIVE_LIST: "/crop-categories/active",
   },
   TICKET_V2: {
+    LIST: "/tickets",
     CANCEL: (id: string) => `/tickets/${id}/cancel`,
     // ADMIN_CLAWBACK: gỡ khỏi web FE — xem docs/ticket-v2/ticket-v2.md (2026-05-09)
     ADMIN_REPORT_REVENUE: "/admin/reports/ticket-revenue",
@@ -602,6 +603,7 @@ export const API_ENDPOINTS = {
       LIST_BY_ZONE: (zoneId: string) => `/crop-seasons/zone/${zoneId}`,
       DETAIL: (id: string) => `/crop-seasons/${id}`,
       UPDATE: (id: string) => `/crop-seasons/${id}`,
+      DELETE: (id: string) => `/crop-seasons/${id}`,
       COMPLETE: (id: string) => `/crop-seasons/${id}/complete`,
       SEND_REQUEST: (id: string) => `/crop-seasons/${id}/send-request`,
       LIST_REQUESTS: (cropSeasonId: string) =>
@@ -1670,6 +1672,11 @@ export const QUERY_KEYS = {
     full: (id: string) => ["tickets", "ext", "full", id] as const,
     adminFull: (id: string) => ["tickets", "ext", "admin", "full", id] as const,
   },
+  ticketsV2: {
+    root: ["tickets-v2"] as const,
+    list: (query?: Record<string, unknown>) =>
+      ["tickets-v2", "list", ...(query !== undefined ? [query] : [])] as const,
+  },
   seasonTemplates: {
     root: ["season-templates"] as const,
     adminList: (query?: Record<string, unknown>) =>
@@ -1719,7 +1726,14 @@ export const QUERY_KEYS = {
     owner: (period: string) => ["dashboard", "owner", period] as const,
     manager: (period: string) => ["dashboard", "manager", period] as const,
     revenueOverview: (kpiRange: string, chartRange: string) =>
-      ["dashboard", "admin", "revenue", "overview", kpiRange, chartRange] as const,
+      [
+        "dashboard",
+        "admin",
+        "revenue",
+        "overview",
+        kpiRange,
+        chartRange,
+      ] as const,
     revenueTimeseries: (source: string, range: string) =>
       ["dashboard", "admin", "revenue", "timeseries", source, range] as const,
     revenueTransactions: (q: Record<string, unknown>) =>

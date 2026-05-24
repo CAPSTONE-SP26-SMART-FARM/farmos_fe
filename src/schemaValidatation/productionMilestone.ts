@@ -58,6 +58,7 @@ export const ProductionMilestoneResSchema = z.object({
   expectedEndDate: z.string().nullable(),
   actualEndDate: z.string().nullable(),
   status: ProductionMilestoneStatusSchema,
+  isHaveEmployeeTask: z.boolean().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

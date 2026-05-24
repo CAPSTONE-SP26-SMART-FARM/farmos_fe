@@ -23,15 +23,6 @@ function getInitials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-/**
- * Nhật ký công việc — biến thể milestone-scope.
- *
- * BE hiện chưa hỗ trợ filter `milestoneId` cho `/daily-logs` (manager) — schema
- * mới chỉ có zoneId/employeeTaskId/loggedBy/fromDate/toDate. Tạm thời fetch
- * theo zone rồi filter FE-side bằng `log.milestoneId`. Khi BE bổ sung
- * filter này (Phase 2 trong plan), chuyển hẳn sang server-side và xoá filter
- * client-side bên dưới.
- */
 export function MilestoneDailyLogsPanel({
   zoneId,
   milestoneId,
@@ -49,13 +40,12 @@ export function MilestoneDailyLogsPanel({
   const logsQuery = useManagerDailyLogsByZone(zoneId, {
     page,
     limit: DEFAULT_LIMIT,
+    milestoneId,
     fromDate: fromDate || undefined,
     toDate: toDate || undefined,
   });
 
-  const rawLogs = logsQuery.data?.data.data ?? [];
-  // Client-side filter — xem doc-block ở đầu file.
-  const logs = rawLogs.filter((l) => l.milestoneId === milestoneId);
+  const logs = logsQuery.data?.data.data ?? [];
   const meta = logsQuery.data?.data.meta;
   const isFiltered = fromDate !== today || toDate !== today;
 

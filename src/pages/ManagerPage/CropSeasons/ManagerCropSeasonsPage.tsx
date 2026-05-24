@@ -8,15 +8,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  ArrowLeft,
-  BarChart3,
-  Plus,
-  Wheat,
-} from "lucide-react";
+import { ArrowLeft, BarChart3, Plus, Wheat } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { useManagerListCropSeasons } from "@/queries/useCropSeason";
+import {
+  useDeleteCropSeason,
+  useManagerListCropSeasons,
+} from "@/queries/useCropSeason";
 import { useManagerListAssignedZones } from "@/queries/useZone";
 import useDebounce from "@/hooks/useDebounce";
 import HarvestRecordTab from "@/components/common/HarvestRecord/HarvestRecordTab";
@@ -71,6 +69,10 @@ export default function ManagerCropSeasonsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [confirmReplacePlan, setConfirmReplacePlan] = useState(false);
   const [harvestOpen, setHarvestOpen] = useState(false);
+  const {
+    mutateAsync: deleteCropSeasonAsync,
+    isPending: isDeletingCropSeason,
+  } = useDeleteCropSeason();
 
   const zoneId = searchParams.get("zoneId")?.trim() ?? "";
 
@@ -197,7 +199,10 @@ export default function ManagerCropSeasonsPage() {
               <SelectContent>
                 <SelectItem value={STATUS_FILTER_ALL}>Tất cả</SelectItem>
                 {ActiveCropSeasonStatusValues.map((s) => (
-                  <SelectItem key={s} value={s}>
+                  <SelectItem
+                    key={s}
+                    value={s}
+                  >
                     {STATUS_MAP[s]?.label ?? s}
                   </SelectItem>
                 ))}
@@ -215,7 +220,10 @@ export default function ManagerCropSeasonsPage() {
         <Skeleton className="h-8 w-48" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-36 w-full rounded-xl" />
+            <Skeleton
+              key={i}
+              className="h-36 w-full rounded-xl"
+            />
           ))}
         </div>
       </div>
@@ -234,13 +242,12 @@ export default function ManagerCropSeasonsPage() {
   }
 
   // Quy tắc nút "Tạo mùa vụ":
-  //   - Không có vụ hiện tại → tạo trực tiếp
-  //   - Vụ đang ở plan/rejected → cảnh báo sẽ thay thế kế hoạch hiện tại
+  //   - Không có vụ hiện tại hoặc vụ hiện tại bị rejected → tạo trực tiếp
+  //   - Vụ đang planning → xác nhận xóa planning hiện tại rồi mới tạo
   //   - Vụ đã active/sent/approved → ẩn nút, không cho tạo song song
-  const isPlanningState =
-    nowSeason?.status === ProductionStatusName.Planning ||
-    nowSeason?.status === ProductionStatusName.Rejected;
-  const canStartCreateDirect = !nowSeason;
+  const isPlanningState = nowSeason?.status === ProductionStatusName.Planning;
+  const isRejectedState = nowSeason?.status === ProductionStatusName.Rejected;
+  const canStartCreateDirect = !nowSeason || isRejectedState;
   const requiresReplacePlanConfirm = !!nowSeason && isPlanningState;
   const showCreateButton = canStartCreateDirect || requiresReplacePlanConfirm;
 
@@ -299,7 +306,11 @@ export default function ManagerCropSeasonsPage() {
             />
           )}
           {showCreateButton && (
-            <Button size="sm" variant="outline" onClick={handleCreateClick}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleCreateClick}
+            >
               <Plus className="h-4 w-4 mr-1.5" />
               Tạo mùa vụ
             </Button>
@@ -330,7 +341,10 @@ export default function ManagerCropSeasonsPage() {
                 <p className="text-xs text-muted-foreground mt-1 mb-4">
                   Tạo mùa vụ mới để bắt đầu lên kế hoạch
                 </p>
-                <Button size="sm" onClick={handleCreateClick}>
+                <Button
+                  size="sm"
+                  onClick={handleCreateClick}
+                >
                   <Plus className="h-3 w-3 mr-1" />
                   Tạo mùa vụ
                 </Button>
@@ -379,7 +393,10 @@ export default function ManagerCropSeasonsPage() {
                 actions={<SendRequestDialog season={nowSeason} />}
               />
 
-              <MilestoneListPanel cropSeason={nowSeason} zoneId={zoneId} />
+              <MilestoneListPanel
+                cropSeason={nowSeason}
+                zoneId={zoneId}
+              />
             </div>
           ))}
 
@@ -411,9 +428,7 @@ export default function ManagerCropSeasonsPage() {
             <HistoryView
               seasons={historySeasons}
               isLoading={seasonsLoading}
-              onSelect={(s) =>
-                setView("history-seasons", { seasonId: s.id })
-              }
+              onSelect={(s) => setView("history-seasons", { seasonId: s.id })}
             />
           </div>
         )}
@@ -487,7 +502,10 @@ export default function ManagerCropSeasonsPage() {
       {/* ── Harvest dialog (outer) ────────────────────────────────────────
           Form dialog (inner) nằm trong HarvestRecordTab. Radix tự stack
           via portal, ESC + click-outside chỉ đóng dialog top-most. */}
-      <Dialog open={harvestOpen} onOpenChange={setHarvestOpen}>
+      <Dialog
+        open={harvestOpen}
+        onOpenChange={setHarvestOpen}
+      >
         <DialogContent
           showCloseButton
           className="max-w-6xl! w-[95vw] max-h-[92vh] overflow-y-auto sm:max-w-6xl!"
@@ -507,15 +525,24 @@ export default function ManagerCropSeasonsPage() {
 
       <ConfirmDialog
         open={confirmReplacePlan}
-        title="Thay thế kế hoạch hiện tại?"
-        description="Vụ mùa đang ở trạng thái lập kế hoạch sẽ bị huỷ và thay bằng vụ mới. Hành động này không thể hoàn tác."
-        confirmLabel="Tiếp tục tạo mới"
+        title="Xóa vụ mùa planning hiện tại?"
+        description="Nếu tiếp tục, hệ thống sẽ xóa vụ mùa planning hiện tại rồi mở form tạo vụ mùa mới. Hành động này không thể hoàn tác."
+        confirmLabel={isDeletingCropSeason ? "Đang xóa..." : "Xóa và tạo mới"}
         cancelLabel="Huỷ"
         variant="destructive"
-        onCancel={() => setConfirmReplacePlan(false)}
-        onConfirm={() => {
+        onCancel={() => {
+          if (isDeletingCropSeason) return;
           setConfirmReplacePlan(false);
-          setShowCreate(true);
+        }}
+        onConfirm={async () => {
+          if (!nowSeason || isDeletingCropSeason) return;
+          try {
+            await deleteCropSeasonAsync({ id: nowSeason.id, zoneId });
+            setConfirmReplacePlan(false);
+            setShowCreate(true);
+          } catch {
+            // Toast đã được xử lý trong hook mutation.
+          }
         }}
       />
     </div>

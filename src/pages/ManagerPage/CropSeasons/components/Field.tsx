@@ -1,7 +1,11 @@
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { CalendarDays } from "lucide-react";
 import { format, isBefore, startOfDay } from "date-fns";
 import { translateBackendMessage } from "@/lib/error-message";
@@ -23,7 +27,9 @@ export function Field({
       <Label className="text-sm font-medium">{label}</Label>
       {children}
       {error && (
-        <p className="text-xs text-destructive">{translateBackendMessage(error)}</p>
+        <p className="text-xs text-destructive">
+          {translateBackendMessage(error)}
+        </p>
       )}
     </div>
   );
@@ -45,13 +51,17 @@ export function DatePickerField({
   placeholder?: string;
   onChange: (value: string) => void;
   minDate?: Date;
-  helperText?: string;
+  helperText?: React.ReactNode;
   disabled?: boolean;
 }) {
   const normalizedMinDate = minDate ? startOfDay(minDate) : undefined;
+  const selectedDate = parseBackendDate(value);
 
   return (
-    <Field label={label} error={error}>
+    <Field
+      label={label}
+      error={error}
+    >
       <Popover>
         <PopoverTrigger asChild>
           <Button
@@ -63,24 +73,36 @@ export function DatePickerField({
             {value ? (
               formatPickerDate(value)
             ) : (
-              <span className="text-muted-foreground">{placeholder ?? "Chọn ngày"}</span>
+              <span className="text-muted-foreground">
+                {placeholder ?? "Chọn ngày"}
+              </span>
             )}
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent
+          className="w-auto p-0"
+          align="start"
+        >
           <Calendar
             mode="single"
-            selected={parseBackendDate(value)}
-            onSelect={(date) => onChange(date ? format(date, "yyyy-MM-dd") : "")}
+            selected={selectedDate}
+            defaultMonth={selectedDate}
+            onSelect={(date) =>
+              onChange(date ? format(date, "yyyy-MM-dd") : "")
+            }
             disabled={(date) =>
-              normalizedMinDate ? isBefore(startOfDay(date), normalizedMinDate) : false
+              normalizedMinDate
+                ? isBefore(startOfDay(date), normalizedMinDate)
+                : false
             }
             initialFocus
           />
         </PopoverContent>
       </Popover>
-      {helperText && <p className="text-xs text-muted-foreground">{helperText}</p>}
+      {helperText && (
+        <p className="text-xs text-muted-foreground">{helperText}</p>
+      )}
     </Field>
   );
 }

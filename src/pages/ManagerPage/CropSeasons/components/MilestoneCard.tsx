@@ -19,6 +19,7 @@ import {
   Pencil,
   Play,
   Trash2,
+  UserPlus,
 } from "lucide-react";
 import type { DragEvent } from "react";
 import type { ProductionMilestoneResType } from "@/schemaValidatation/productionMilestone";
@@ -46,6 +47,8 @@ export function MilestoneCard({
   isDragging,
   isDragOver,
   draggable,
+  needsEmployeeTaskAssignment = false,
+  onAssignEmployeeTask,
   onDragStart,
   onDragOver,
   onDrop,
@@ -56,6 +59,8 @@ export function MilestoneCard({
   isDragging: boolean;
   isDragOver: boolean;
   draggable: boolean;
+  needsEmployeeTaskAssignment?: boolean;
+  onAssignEmployeeTask?: () => void;
   onDragStart: (e: DragEvent<HTMLDivElement>) => void;
   onDragOver: (e: DragEvent<HTMLDivElement>) => void;
   onDrop: (e: DragEvent<HTMLDivElement>) => void | Promise<void>;
@@ -113,6 +118,25 @@ export function MilestoneCard({
             >
               {meta.label}
             </Badge>
+            {needsEmployeeTaskAssignment && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAssignEmployeeTask?.();
+                }}
+                className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full"
+                aria-label="Mở bước gán nhiệm vụ cho nông dân"
+              >
+                <Badge
+                  variant="outline"
+                  className="text-[10px] cursor-pointer border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 dark:hover:bg-amber-950/60"
+                >
+                  <UserPlus className="h-3 w-3 mr-1" />
+                  Cần gán nhiệm vụ cho nông dân
+                </Badge>
+              </button>
+            )}
           </div>
           <div className="mt-1 text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap">
             <CalendarDays className="h-3 w-3 shrink-0" />

@@ -33,6 +33,9 @@ export const cropSeasonService = {
 
   detail: (id: string) => api.get<CropSeasonType>(CS.MANAGER.DETAIL(id)),
 
+  delete: (id: string) =>
+    api.delete<{ message: string }>(CS.MANAGER.DELETE(id)),
+
   update: (id: string, body: UpdateCropSeasonBodyType) => {
     const { actualHarvestDate, ...rest } = body;
     return api.put<CropSeasonType, UpdateCropSeasonBodyType>(

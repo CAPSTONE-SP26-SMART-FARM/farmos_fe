@@ -6,10 +6,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { QUERY_KEYS } from "@/constants/endpoints";
 import {
   useOwnerRequestDetail,
   useReplyProductionRequest,
 } from "@/queries/useCropSeason";
+import { useOwnerGetMyFarm } from "@/queries/useOwner";
 import { ReplyProductionRequestBodySchema } from "@/types/cropSeason";
 import type { ReplyProductionRequestBodyType } from "@/types/cropSeason";
 import {
@@ -24,6 +26,7 @@ import {
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
 import {
@@ -63,8 +66,11 @@ export default function ProductionRequestDetailPanel({
   >(null);
   const [showRejectForm, setShowRejectForm] = useState(false);
 
+  const queryClient = useQueryClient();
+  const farmQuery = useOwnerGetMyFarm();
   const detailQuery = useOwnerRequestDetail(requestId);
   const replyMutation = useReplyProductionRequest(requestId);
+  const farmId = farmQuery.data?.data.id;
 
   const req = detailQuery.data?.data;
   const season = req?.cropSeason;
@@ -115,6 +121,16 @@ export default function ProductionRequestDetailPanel({
           description: values.description,
         });
       }
+
+      if (confirmAction === "approve" && farmId) {
+        await queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.zones.byFarm(farmId),
+        });
+        await queryClient.refetchQueries({
+          queryKey: QUERY_KEYS.zones.byFarm(farmId),
+        });
+      }
+
       setConfirmAction(null);
       setShowRejectForm(false);
     } catch (error) {
@@ -229,7 +245,10 @@ export default function ProductionRequestDetailPanel({
             </h1>
           </div>
           {reqStatus && (
-            <Badge variant={reqStatus.variant} className="text-sm h-fit">
+            <Badge
+              variant={reqStatus.variant}
+              className="text-sm h-fit"
+            >
               {reqStatus.label}
             </Badge>
           )}
@@ -324,8 +343,14 @@ export default function ProductionRequestDetailPanel({
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                  <InfoRow label="Tên cây trồng" value={season.cropName} />
-                  <InfoRow label="Giống" value={season.variety} />
+                  <InfoRow
+                    label="Tên cây trồng"
+                    value={season.cropName}
+                  />
+                  <InfoRow
+                    label="Giống"
+                    value={season.variety}
+                  />
                   <InfoRow
                     label="Trạng thái mùa vụ"
                     value={
@@ -369,7 +394,10 @@ export default function ProductionRequestDetailPanel({
               </CardHeader>
               <CardContent className="space-y-4">
                 {showRejectForm && (
-                  <form onSubmit={handleRejectSubmit} className="space-y-3">
+                  <form
+                    onSubmit={handleRejectSubmit}
+                    className="space-y-3"
+                  >
                     <div className="flex flex-col gap-1.5">
                       <Label className="text-sm font-medium">
                         Lý do từ chối{" "}

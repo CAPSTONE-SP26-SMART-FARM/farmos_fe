@@ -16,22 +16,21 @@ import {
   ArrowLeft,
   CalendarDays,
   ClipboardList,
-  Pencil,
   Radio,
 } from "lucide-react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
-import { useManagerListProductionMilestones } from "@/queries/useProductionMilestone";
-import { useManagerCropSeasonDetail } from "@/queries/useCropSeason";
+import { useOwnerCropSeasonDetail } from "@/queries/useCropSeason";
+import { useOwnerListProductionMilestones } from "@/queries/useProductionMilestone";
 import { useDynamicBreadcrumb } from "@/stores/breadcrumbStore";
-import {
-  ProductionStatusName,
-  type CropSeasonType,
-} from "@/types/cropSeason";
+import type { CropSeasonType } from "@/types/cropSeason";
 import type { ProductionMilestoneResType } from "@/schemaValidatation/productionMilestone";
-import { formatDate, MILESTONE_STATUS_META } from "./components/helpers";
-import { MilestoneTasksTab } from "./components/MilestoneTasksTab";
-import { IncidentTab } from "./components/IncidentTab";
-import { MilestoneSensorsPane } from "./components/MilestoneSensorsPane";
+import {
+  formatDate,
+  MILESTONE_STATUS_META,
+} from "@/pages/ManagerPage/CropSeasons/components/helpers";
+import { OwnerIncidentTab } from "./components/OwnerIncidentTab";
+import { OwnerMilestoneSensorsPane } from "./components/OwnerMilestoneSensorsPane";
+import { OwnerMilestoneTasksTab } from "./components/OwnerMilestoneTasksTab";
 
 const VALID_TABS = ["sensors", "incidents", "tasks"] as const;
 type TabValue = (typeof VALID_TABS)[number];
@@ -40,7 +39,12 @@ function isTabValue(v: string): v is TabValue {
   return (VALID_TABS as readonly string[]).includes(v);
 }
 
-export default function ManagerMilestoneViewPage() {
+/**
+ * Owner-side milestone detail page — read-only.
+ * 3 tabs: Cảm biến / Sự cố / Công việc. KHÔNG có nút "Cấu hình mốc".
+ * Task tab dùng canEdit=false (owner không CRUD task).
+ */
+export default function OwnerMilestoneViewPage() {
   const { cropSeasonId, milestoneId } = useParams<{
     cropSeasonId: string;
     milestoneId: string;
@@ -62,25 +66,15 @@ export default function ManagerMilestoneViewPage() {
   };
 
   const cropSeasonsUrl = zoneId
-    ? `/dashboard/manager/crop-seasons?zoneId=${encodeURIComponent(zoneId)}`
-    : "/dashboard/manager/crop-seasons";
-  const configureUrl = zoneId
-    ? `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}/configure?zoneId=${encodeURIComponent(zoneId)}`
-    : `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}/configure`;
-
-  // URL về của sensor detail page khi user click cảm biến từ tab này. Tab
-  // "sensors" là default nên KHÔNG cần `&tab=sensors` (xem setActiveTab —
-  // sensors thì xoá `tab` param).
-  const milestoneViewBackUrl = zoneId
-    ? `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}?zoneId=${encodeURIComponent(zoneId)}`
-    : `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}`;
+    ? `/dashboard/owner/crop-seasons?zoneId=${encodeURIComponent(zoneId)}`
+    : "/dashboard/owner/crop-seasons";
 
   // ── Data ─────────────────────────────────────────────────────────────────
-  const cropSeasonQuery = useManagerCropSeasonDetail(csId);
+  const cropSeasonQuery = useOwnerCropSeasonDetail(csId);
   const cropSeason: CropSeasonType | undefined = cropSeasonQuery.data?.data;
   const cropSeasonLabel = cropSeason?.cropName ?? "Mùa vụ";
 
-  const listQuery = useManagerListProductionMilestones(csId, {
+  const listQuery = useOwnerListProductionMilestones(csId, {
     page: 1,
     limit: 100,
   });
@@ -90,15 +84,14 @@ export default function ManagerMilestoneViewPage() {
   );
 
   useDynamicBreadcrumb(
-    `/dashboard/manager/crop-seasons/${csId}`,
+    `/dashboard/owner/crop-seasons/${csId}`,
     cropSeason?.cropName,
   );
   useDynamicBreadcrumb(
-    `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}`,
+    `/dashboard/owner/crop-seasons/${csId}/milestones/${msId}`,
     milestone?.stageName,
   );
 
-  // ── Loading ──────────────────────────────────────────────────────────────
   if (listQuery.isLoading || cropSeasonQuery.isLoading) {
     return (
       <div className="space-y-6">
@@ -109,7 +102,6 @@ export default function ManagerMilestoneViewPage() {
     );
   }
 
-  // ── Not found ────────────────────────────────────────────────────────────
   if (!milestone) {
     return (
       <div className="space-y-6">
@@ -124,7 +116,9 @@ export default function ManagerMilestoneViewPage() {
         </Button>
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">Không tìm thấy mốc sản xuất.</p>
+            <p className="text-muted-foreground">
+              Không tìm thấy mốc sản xuất.
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -136,21 +130,8 @@ export default function ManagerMilestoneViewPage() {
     variant: "secondary" as const,
   };
 
-  // Khi season chưa active (planning/sent/approved), task chưa nên đánh dấu
-  // hoàn thành — match logic của ManagerMilestoneTasksSection.lockComplete.
-  const lockComplete =
-    cropSeason?.status !== ProductionStatusName.Active &&
-    cropSeason?.status !== ProductionStatusName.Completed;
-
-  // Chỉ cho phép cấu hình mốc khi season còn ở planning/rejected — match
-  // logic redirect của route `/configure`. Active / completed thì ẩn hẳn nút.
-  const canConfigureMilestone =
-    cropSeason?.status === ProductionStatusName.Planning ||
-    cropSeason?.status === ProductionStatusName.Rejected;
-
   return (
     <div className="space-y-6">
-      {/* ── Breadcrumb ───────────────────────────────────────────────────── */}
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -171,7 +152,6 @@ export default function ManagerMilestoneViewPage() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      {/* ── Header ──────────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
           <Button
@@ -214,64 +194,63 @@ export default function ManagerMilestoneViewPage() {
             </div>
           </div>
         </div>
-
-        {/* Nút "Cấu hình mốc" chỉ hiện khi season còn ở planning/rejected —
-            sau khi active/completed thì cấu hình đã chốt, ẩn nút tránh user
-            click vào rồi bị redirect lại. */}
-        {canConfigureMilestone && (
-          <Button size="sm" variant="outline" asChild>
-            <Link to={configureUrl}>
-              <Pencil className="h-3.5 w-3.5 mr-1.5" />
-              Cấu hình mốc
-            </Link>
-          </Button>
-        )}
       </div>
 
-      {/* ── Tabs ────────────────────────────────────────────────────────── */}
       <Tabs
         value={activeTab}
         onValueChange={(v) => setActiveTab(v as TabValue)}
       >
         <TabsList className="w-full md:w-auto">
-          <TabsTrigger value="sensors" className="flex items-center gap-1.5">
+          <TabsTrigger
+            value="sensors"
+            className="flex items-center gap-1.5"
+          >
             <Radio className="h-3.5 w-3.5" />
             Cảm biến
           </TabsTrigger>
-          <TabsTrigger value="incidents" className="flex items-center gap-1.5">
+          <TabsTrigger
+            value="incidents"
+            className="flex items-center gap-1.5"
+          >
             <AlertTriangle className="h-3.5 w-3.5" />
             Sự cố
           </TabsTrigger>
-          <TabsTrigger value="tasks" className="flex items-center gap-1.5">
+          <TabsTrigger
+            value="tasks"
+            className="flex items-center gap-1.5"
+          >
             <ClipboardList className="h-3.5 w-3.5" />
             Công việc
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="sensors" className="mt-4">
-          <MilestoneSensorsPane
+        <TabsContent
+          value="sensors"
+          className="mt-4"
+        >
+          <OwnerMilestoneSensorsPane
             milestone={milestone}
             zoneId={zoneId || cropSeason?.zoneId || ""}
             isLoading={listQuery.isLoading}
-            backUrl={milestoneViewBackUrl}
           />
         </TabsContent>
 
-        <TabsContent value="incidents" className="mt-4">
+        <TabsContent
+          value="incidents"
+          className="mt-4"
+        >
           {cropSeason ? (
-            <IncidentTab cropSeason={cropSeason} milestoneId={msId} />
+            <OwnerIncidentTab cropSeason={cropSeason} milestoneId={msId} />
           ) : (
             <Skeleton className="h-32 w-full" />
           )}
         </TabsContent>
 
-        <TabsContent value="tasks" className="mt-4">
-          <MilestoneTasksTab
-            milestoneId={msId}
-            zoneId={zoneId || cropSeason?.zoneId || ""}
-            canEdit={true}
-            lockComplete={lockComplete}
-          />
+        <TabsContent
+          value="tasks"
+          className="mt-4"
+        >
+          <OwnerMilestoneTasksTab milestoneId={msId} />
         </TabsContent>
       </Tabs>
     </div>
