@@ -5,12 +5,19 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
-import { isApiErrorResponse, isApiErrorUnprocessableEntityResponse } from "@/lib/utils";
-import { useCreateCropSeason } from "@/queries/useCropSeason";
+import {
+  isApiErrorResponse,
+  isApiErrorUnprocessableEntityResponse,
+} from "@/lib/utils";
+import {
+  useCreateCropSeason,
+  useManagerListCropSeasons,
+} from "@/queries/useCropSeason";
 import { useActiveCropCategoryList } from "@/queries/useCropCategory";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  ProductionStatusName,
   CreateCropSeasonBodySchema,
   type CreateCropSeasonBodyType,
 } from "@/types/cropSeason";
@@ -31,8 +38,15 @@ import {
   CropCategoryPicker,
   DensityBadge,
   CycleHintLine,
-  AreaMismatchWarning,
 } from "./CropSeasonFormParts";
+
+const AREA_EXCLUDED_STATUSES = new Set<string>([
+  ProductionStatusName.Completed,
+  ProductionStatusName.Cancelled,
+  ProductionStatusName.Rejected,
+]);
+const AREA_REMAINING_ERROR =
+  "Diện tích mùa vụ không được vượt quá tổng diện tích còn lại của khu vực.";
 
 export function CreateCropSeasonScreen({
   zoneId,
@@ -49,6 +63,10 @@ export function CreateCropSeasonScreen({
   const { mutateAsync, isPending } = useCreateCropSeason();
   const { data: catData } = useActiveCropCategoryList();
   const categories = sortActiveCategories(catData?.data?.data);
+  const seasonsQuery = useManagerListCropSeasons(zoneId, {
+    page: 1,
+    limit: 99,
+  });
 
   const defaultArea =
     Number.isFinite(zoneAreaSqm) && (zoneAreaSqm as number) > 0
@@ -81,6 +99,56 @@ export function CreateCropSeasonScreen({
     : undefined;
 
   const selectedCategory = findCategory(categories, cropCategoryIdValue);
+  const cycleRangeDays = selectedCategory?.defaultCycleDays
+    ? {
+        min: Math.ceil(selectedCategory.defaultCycleDays * 0.5),
+        max: Math.floor(selectedCategory.defaultCycleDays * 2),
+      }
+    : null;
+
+  const estimatedUsedAreaSqm =
+    seasonsQuery.data?.data.data.reduce((sum, season) => {
+      if (AREA_EXCLUDED_STATUSES.has(season.status)) return sum;
+      const area = season.totalAreaSqm;
+      if (!Number.isFinite(area) || (area as number) <= 0) return sum;
+      return sum + (area as number);
+    }, 0) ?? null;
+
+  const estimatedRemainingAreaSqm =
+    Number.isFinite(defaultArea) && Number.isFinite(estimatedUsedAreaSqm)
+      ? Math.max(0, (defaultArea as number) - (estimatedUsedAreaSqm as number))
+      : null;
+
+  useEffect(() => {
+    const currentError = form.getFieldState("totalAreaSqm").error;
+    const isOurManualError =
+      currentError?.type === "manual" &&
+      currentError.message === AREA_REMAINING_ERROR;
+
+    if (
+      Number.isFinite(totalAreaSqmValue) &&
+      Number.isFinite(estimatedRemainingAreaSqm) &&
+      (totalAreaSqmValue as number) > (estimatedRemainingAreaSqm as number)
+    ) {
+      form.setError("totalAreaSqm", {
+        type: "manual",
+        message: AREA_REMAINING_ERROR,
+      });
+      return;
+    }
+
+    if (isOurManualError) {
+      form.clearErrors("totalAreaSqm");
+    }
+  }, [estimatedRemainingAreaSqm, form, totalAreaSqmValue]);
+
+  // Tên cây trồng lấy cứng theo loại cây đã chọn để đồng bộ dữ liệu catalog.
+  useEffect(() => {
+    form.setValue("cropName", selectedCategory?.name ?? "", {
+      shouldDirty: false,
+      shouldValidate: true,
+    });
+  }, [form, selectedCategory?.name]);
 
   // Tự gợi ý ngày thu hoạch theo chu kỳ điển hình của loại cây — chỉ khi
   // user chưa tự chỉnh tay.
@@ -88,7 +156,10 @@ export function CreateCropSeasonScreen({
   useEffect(() => {
     if (harvestTouchedRef.current) return;
     if (!parsedPlantDate || !selectedCategory?.defaultCycleDays) return;
-    const suggested = addDays(parsedPlantDate, selectedCategory.defaultCycleDays);
+    const suggested = addDays(
+      parsedPlantDate,
+      selectedCategory.defaultCycleDays,
+    );
     form.setValue("expectedHarvestDate", format(suggested, "yyyy-MM-dd"), {
       shouldDirty: false,
       shouldValidate: false,
@@ -107,6 +178,14 @@ export function CreateCropSeasonScreen({
   };
 
   const onSubmit = async (data: CreateCropSeasonBodyType) => {
+    if (!selectedCategory) {
+      form.setError("cropCategoryId", {
+        type: "manual",
+        message: "Vui lòng chọn loại cây trồng.",
+      });
+      return;
+    }
+
     form.clearErrors(["plantDate", "expectedHarvestDate"]);
     const dateErrors = validateCropSeasonFormDates({
       plantDate: data.plantDate,
@@ -116,16 +195,27 @@ export function CreateCropSeasonScreen({
     });
 
     if (dateErrors.plantDate)
-      form.setError("plantDate", { type: "manual", message: dateErrors.plantDate });
+      form.setError("plantDate", {
+        type: "manual",
+        message: dateErrors.plantDate,
+      });
     if (dateErrors.expectedHarvestDate)
-      form.setError("expectedHarvestDate", { type: "manual", message: dateErrors.expectedHarvestDate });
+      form.setError("expectedHarvestDate", {
+        type: "manual",
+        message: dateErrors.expectedHarvestDate,
+      });
     if (dateErrors.plantDate || dateErrors.expectedHarvestDate) return;
 
     try {
-      await mutateAsync(data);
+      await mutateAsync({
+        ...data,
+        cropName: selectedCategory.name,
+      });
       handleBack();
     } catch (error) {
-      if (isApiErrorUnprocessableEntityResponse<CreateCropSeasonBodyType>(error)) {
+      if (
+        isApiErrorUnprocessableEntityResponse<CreateCropSeasonBodyType>(error)
+      ) {
         const mapped = mapCropSeasonServerError(
           error.response!.data.errors as Array<{
             field?: string;
@@ -169,7 +259,9 @@ export function CreateCropSeasonScreen({
         <p className="text-muted-foreground">
           Tạo kế hoạch mùa vụ mới cho khu vực hiện tại
           {zoneName ? (
-            <>: <span className="font-medium text-foreground">{zoneName}</span></>
+            <>
+              : <span className="font-medium text-foreground">{zoneName}</span>
+            </>
           ) : null}
           {defaultArea != null && (
             <> (diện tích {defaultArea.toLocaleString("vi-VN")} m²)</>
@@ -183,7 +275,10 @@ export function CreateCropSeasonScreen({
           <CardTitle>Thông tin mùa vụ</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-6"
+          >
             {/* ── Phần 1: Cây trồng ─────────────────────────────────────── */}
             <section className="space-y-4">
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
@@ -201,26 +296,6 @@ export function CreateCropSeasonScreen({
                   />
                 )}
               />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <Field
-                  label="Tên cây trồng *"
-                  error={form.formState.errors.cropName?.message}
-                >
-                  <Input
-                    {...form.register("cropName")}
-                    placeholder="Ớt đỏ, cà chua..."
-                    autoComplete="off"
-                  />
-                </Field>
-                <Field label="Giống / Loại">
-                  <Input
-                    {...form.register("variety")}
-                    placeholder="(tuỳ chọn)"
-                    autoComplete="off"
-                  />
-                </Field>
-              </div>
             </section>
 
             {/* ── Phần 2: Thời gian ─────────────────────────────────────── */}
@@ -260,11 +335,32 @@ export function CreateCropSeasonScreen({
                       }}
                       minDate={minExpectedHarvestDate}
                       helperText={
-                        selectedCategory?.defaultCycleDays
-                          ? `Gợi ý: ${selectedCategory.defaultCycleDays} ngày sau ngày trồng`
-                          : minExpectedHarvestDate
-                            ? `Sau ngày ${format(parsedPlantDate!, "dd/MM/yyyy")}`
-                            : "Chọn ngày trồng trước"
+                        selectedCategory?.defaultCycleDays ? (
+                          parsedPlantDate && cycleRangeDays ? (
+                            <>
+                              {`Gợi ý: ${selectedCategory.defaultCycleDays} ngày sau ngày trồng · Khoảng phù hợp: ${cycleRangeDays.min}-${cycleRangeDays.max} ngày `}
+                              <span className="font-bold text-foreground">
+                                (
+                                {format(
+                                  addDays(parsedPlantDate, cycleRangeDays.min),
+                                  "dd/MM/yyyy",
+                                )}{" "}
+                                -{" "}
+                                {format(
+                                  addDays(parsedPlantDate, cycleRangeDays.max),
+                                  "dd/MM/yyyy",
+                                )}
+                                )
+                              </span>
+                            </>
+                          ) : (
+                            `Gợi ý: ${selectedCategory.defaultCycleDays} ngày sau ngày trồng · Khoảng phù hợp: ${cycleRangeDays?.min}-${cycleRangeDays?.max} ngày`
+                          )
+                        ) : minExpectedHarvestDate ? (
+                          `Sau ngày ${format(parsedPlantDate!, "dd/MM/yyyy")}`
+                        ) : (
+                          "Chọn ngày trồng trước"
+                        )
                       }
                     />
                   )}
@@ -299,13 +395,26 @@ export function CreateCropSeasonScreen({
                   />
                   {defaultArea != null && (
                     <p className="text-xs text-muted-foreground">
-                      Mặc định = diện tích khu vực ({defaultArea.toLocaleString("vi-VN")} m²).
-                      Sửa lại nếu chỉ trồng trên một phần.
+                      Diện tích khu vực{" "}
+                      <span className="font-bold">
+                        {defaultArea.toLocaleString("vi-VN")}
+                      </span>{" "}
+                      m², còn lại{" "}
+                      <span className="font-bold">
+                        {Number.isFinite(estimatedRemainingAreaSqm)
+                          ? (
+                              estimatedRemainingAreaSqm as number
+                            ).toLocaleString("vi-VN", {
+                              maximumFractionDigits: 2,
+                            })
+                          : "—"}
+                      </span>{" "}
+                      m².
                     </p>
                   )}
                 </Field>
                 <Field
-                  label="Số lượng cây"
+                  label="Số lượng cây *"
                   error={form.formState.errors.plantCount?.message}
                 >
                   <Input
@@ -317,11 +426,6 @@ export function CreateCropSeasonScreen({
                   />
                 </Field>
               </div>
-
-              <AreaMismatchWarning
-                totalAreaSqm={totalAreaSqmValue}
-                zoneAreaSqm={zoneAreaSqm}
-              />
 
               <div className="flex flex-wrap gap-2">
                 <DensityBadge
@@ -364,7 +468,10 @@ export function CreateCropSeasonScreen({
               >
                 Huỷ
               </Button>
-              <Button type="submit" disabled={isPending}>
+              <Button
+                type="submit"
+                disabled={isPending}
+              >
                 {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Tạo mùa vụ
               </Button>

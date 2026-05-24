@@ -601,6 +601,7 @@ export const API_ENDPOINTS = {
       LIST_BY_ZONE: (zoneId: string) => `/crop-seasons/zone/${zoneId}`,
       DETAIL: (id: string) => `/crop-seasons/${id}`,
       UPDATE: (id: string) => `/crop-seasons/${id}`,
+      DELETE: (id: string) => `/crop-seasons/${id}`,
       COMPLETE: (id: string) => `/crop-seasons/${id}/complete`,
       SEND_REQUEST: (id: string) => `/crop-seasons/${id}/send-request`,
       LIST_REQUESTS: (cropSeasonId: string) =>
@@ -1635,11 +1636,7 @@ export const QUERY_KEYS = {
   ticketsV2: {
     root: ["tickets-v2"] as const,
     list: (query?: Record<string, unknown>) =>
-      [
-        "tickets-v2",
-        "list",
-        ...(query !== undefined ? [query] : []),
-      ] as const,
+      ["tickets-v2", "list", ...(query !== undefined ? [query] : [])] as const,
   },
   seasonTemplates: {
     root: ["season-templates"] as const,
@@ -1690,7 +1687,14 @@ export const QUERY_KEYS = {
     owner: (period: string) => ["dashboard", "owner", period] as const,
     manager: (period: string) => ["dashboard", "manager", period] as const,
     revenueOverview: (kpiRange: string, chartRange: string) =>
-      ["dashboard", "admin", "revenue", "overview", kpiRange, chartRange] as const,
+      [
+        "dashboard",
+        "admin",
+        "revenue",
+        "overview",
+        kpiRange,
+        chartRange,
+      ] as const,
     revenueTimeseries: (source: string, range: string) =>
       ["dashboard", "admin", "revenue", "timeseries", source, range] as const,
     revenueTransactions: (q: Record<string, unknown>) =>
