@@ -1,37 +1,24 @@
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClipboardList, ListTodo, NotebookPen } from "lucide-react";
 import ManagerMilestoneTasksSection from "@/pages/ManagerPage/EmployeeTasks/ManagerMilestoneTasksSection";
 import { TodayZoneTasksPanel } from "./TodayZoneTasksPanel";
 import { MilestoneDailyLogsPanel } from "./MilestoneDailyLogsPanel";
-
-function SectionHeader({
-  icon: Icon,
-  title,
-  description,
-}: {
-  icon: typeof ClipboardList;
-  title: string;
-  description?: string;
-}) {
-  return (
-    <div className="border-b pb-2 mb-3">
-      <h3 className="text-sm font-semibold flex items-center gap-1.5">
-        <Icon className="h-4 w-4 text-primary" />
-        {title}
-      </h3>
-      {description && (
-        <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
-      )}
-    </div>
-  );
-}
+import { MilestoneTaskKpiStrip } from "./MilestoneTaskKpiStrip";
 
 /**
  * Tab "Công việc" trong milestone detail.
  *
- * 3 section dọc:
- *  1. Quản lý công việc — CRUD task của milestone + nút "Hoàn thành"
- *  2. Công việc theo ngày — daily task của milestone HÔM NAY + trạng thái log
- *  3. Nhật ký công việc — log của farmer trong milestone này (BE filter sẽ ship Phase 2)
+ * Layout Phase 1 (UX rework):
+ *   - KPI strip ở top — đếm: total / hôm nay / chưa ghi nhận / chưa gán / quá
+ *     hạn / đã xong. Manager nhìn 1 nhãn là nắm được tình trạng.
+ *   - Sub-tabs thay vì 3 section dọc:
+ *       · Quản lý       — CRUD + assign + complete (toàn bộ tasks)
+ *       · Hôm nay       — operational view, tasks đang active + log status
+ *       · Nhật ký       — full log history theo khoảng ngày
+ *
+ * Lý do chia tab: cả 3 view xoay quanh entity Task nhưng lens khác nhau
+ * (TASK vs TASK-of-today vs LOG). Gộp flat sẽ trùng row & confuse cardinality.
+ * Phase 2 sẽ thống nhất task card và đẩy log history vào Sheet detail.
  */
 export function MilestoneTasksTab({
   milestoneId,
@@ -46,43 +33,81 @@ export function MilestoneTasksTab({
   lockComplete?: boolean;
 }) {
   return (
-    <div className="space-y-8">
-      {/* ── 1. Quản lý công việc ─────────────────────────────────────────── */}
-      <section>
-        <SectionHeader
-          icon={ClipboardList}
-          title="Quản lý công việc"
-          description="Tạo, gán, và đánh dấu hoàn thành các công việc trong mốc này"
-        />
-        <ManagerMilestoneTasksSection
-          milestoneId={milestoneId}
-          canEdit={canEdit}
-          lockComplete={lockComplete}
-        />
-      </section>
+    <div className="space-y-4">
+      {/* ── KPI overview ─────────────────────────────────────────────── */}
+      <MilestoneTaskKpiStrip milestoneId={milestoneId} zoneId={zoneId} />
 
-      {/* ── 2. Công việc theo ngày ──────────────────────────────────────── */}
-      <section>
-        <SectionHeader
-          icon={ListTodo}
-          title="Công việc theo ngày"
-          description="Các công việc cần thực hiện hôm nay và trạng thái ghi nhận của nông dân"
-        />
-        <TodayZoneTasksPanel zoneId={zoneId} milestoneId={milestoneId} />
-      </section>
+      {/* ── Sub-tabs (vertical sidebar bên trái + content bên phải) ──── */}
+      <Tabs
+        defaultValue="today"
+        orientation="vertical"
+        className="flex flex-col md:flex-row gap-4 md:gap-6"
+      >
+        <TabsList
+          className="
+            h-auto bg-transparent p-0 gap-1 shrink-0
+            flex flex-row md:flex-col w-full md:w-44
+            border-b md:border-b-0 md:border-r md:pr-2 md:pb-0 pb-2
+            overflow-x-auto md:overflow-visible
+          "
+        >
+          <TabsTrigger
+            value="today"
+            className="
+              w-full justify-start gap-2 px-3 py-2 text-sm
+              data-[state=active]:bg-primary/10 data-[state=active]:text-primary
+              data-[state=active]:shadow-none
+            "
+          >
+            <ListTodo className="h-4 w-4" />
+            Hôm nay
+          </TabsTrigger>
+          <TabsTrigger
+            value="manage"
+            className="
+              w-full justify-start gap-2 px-3 py-2 text-sm
+              data-[state=active]:bg-primary/10 data-[state=active]:text-primary
+              data-[state=active]:shadow-none
+            "
+          >
+            <ClipboardList className="h-4 w-4" />
+            Quản lý
+          </TabsTrigger>
+          <TabsTrigger
+            value="logs"
+            className="
+              w-full justify-start gap-2 px-3 py-2 text-sm
+              data-[state=active]:bg-primary/10 data-[state=active]:text-primary
+              data-[state=active]:shadow-none
+            "
+          >
+            <NotebookPen className="h-4 w-4" />
+            Nhật ký
+          </TabsTrigger>
+        </TabsList>
 
-      {/* ── 3. Nhật ký công việc ────────────────────────────────────────── */}
-      <section>
-        <SectionHeader
-          icon={NotebookPen}
-          title="Nhật ký công việc"
-          description="Toàn bộ log của nông dân trong mốc này"
-        />
-        <MilestoneDailyLogsPanel
-          zoneId={zoneId}
-          milestoneId={milestoneId}
-        />
-      </section>
+        <div className="flex-1 min-w-0">
+          <TabsContent value="manage" className="mt-0">
+            <ManagerMilestoneTasksSection
+              milestoneId={milestoneId}
+              zoneId={zoneId}
+              canEdit={canEdit}
+              lockComplete={lockComplete}
+            />
+          </TabsContent>
+
+          <TabsContent value="today" className="mt-0">
+            <TodayZoneTasksPanel zoneId={zoneId} milestoneId={milestoneId} />
+          </TabsContent>
+
+          <TabsContent value="logs" className="mt-0">
+            <MilestoneDailyLogsPanel
+              zoneId={zoneId}
+              milestoneId={milestoneId}
+            />
+          </TabsContent>
+        </div>
+      </Tabs>
     </div>
   );
 }

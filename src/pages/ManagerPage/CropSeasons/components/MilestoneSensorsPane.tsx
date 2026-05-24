@@ -19,10 +19,16 @@ export function MilestoneSensorsPane({
   milestone,
   zoneId,
   isLoading,
+  backUrl,
 }: {
   milestone: ProductionMilestoneResType | undefined;
   zoneId: string;
   isLoading: boolean;
+  /**
+   * Khi truyền, click sensor card sẽ điều hướng sang sensor detail kèm
+   * `?from=<backUrl>` để nút "Quay lại" về đúng trang milestone này.
+   */
+  backUrl?: string;
 }) {
   useZoneSubscription(zoneId || undefined);
   useMilestoneAssignmentsRealtime("manager");
@@ -52,7 +58,7 @@ export function MilestoneSensorsPane({
       <div className="flex-1 min-w-0 space-y-6">
         {zoneId && <IotCoverageWidget zoneId={zoneId} />}
         {milestone ? (
-          <MilestoneSensorSection milestone={milestone} />
+          <MilestoneSensorSection milestone={milestone} backUrl={backUrl} />
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-center border rounded-md bg-muted/20">
             <Radio className="h-10 w-10 text-muted-foreground/30 mb-3" />

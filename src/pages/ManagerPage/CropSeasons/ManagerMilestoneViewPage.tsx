@@ -68,6 +68,13 @@ export default function ManagerMilestoneViewPage() {
     ? `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}/configure?zoneId=${encodeURIComponent(zoneId)}`
     : `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}/configure`;
 
+  // URL về của sensor detail page khi user click cảm biến từ tab này. Tab
+  // "sensors" là default nên KHÔNG cần `&tab=sensors` (xem setActiveTab —
+  // sensors thì xoá `tab` param).
+  const milestoneViewBackUrl = zoneId
+    ? `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}?zoneId=${encodeURIComponent(zoneId)}`
+    : `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}`;
+
   // ── Data ─────────────────────────────────────────────────────────────────
   const cropSeasonQuery = useManagerCropSeasonDetail(csId);
   const cropSeason: CropSeasonType | undefined = cropSeasonQuery.data?.data;
@@ -233,6 +240,7 @@ export default function ManagerMilestoneViewPage() {
             milestone={milestone}
             zoneId={zoneId || cropSeason?.zoneId || ""}
             isLoading={listQuery.isLoading}
+            backUrl={milestoneViewBackUrl}
           />
         </TabsContent>
 

@@ -53,6 +53,16 @@ import IotCoverageWidget from "@/components/common/IotCoverageWidget";
 const KIT_PAGE_SIZE = 5;
 const STATUS_FILTER_ALL = "__all__";
 
+// Thứ tự hiển thị card cảm biến cố định để tránh nhảy vị trí mỗi khi
+// `useManagerLatestSensorReadings` refetch (polling 60s + invalidate socket).
+// BE trả `data` không stable-sort nên phải sort ở FE; sensorId là tiebreaker.
+const SENSOR_TYPE_ORDER: Record<string, number> = {
+  soil_moisture: 0,
+  air_temperature: 1,
+  air_humidity: 2,
+  light_intensity: 3,
+};
+
 const ALERTS_PAGE_SIZE = 5;
 
 const ALERT_SEVERITY_COLORS: Record<string, string> = {
@@ -294,16 +304,37 @@ export function AlertsPanel({ isLoading }: { isLoading: boolean }) {
   );
 }
 
-function KitReadingsBody({ assignmentId }: { assignmentId: string }) {
+function KitReadingsBody({
+  assignmentId,
+  backUrl,
+}: {
+  assignmentId: string;
+  /**
+   * Optional — khi truyền, sensor detail page sẽ dùng URL này làm điểm về
+   * (qua query param `from`). Vd: từ milestone view muốn quay lại đúng tab
+   * cảm biến của mốc thay vì zone landing mặc định.
+   */
+  backUrl?: string;
+}) {
   const navigate = useNavigate();
   const readingsQuery = useManagerLatestSensorReadings(assignmentId, !!assignmentId);
-  const readings = readingsQuery.data?.data ?? [];
+  const rawReadings = readingsQuery.data?.data ?? [];
+  const readings = useMemo(() => {
+    return [...rawReadings].sort((a, b) => {
+      const oa = SENSOR_TYPE_ORDER[a.sensorType] ?? 99;
+      const ob = SENSOR_TYPE_ORDER[b.sensorType] ?? 99;
+      if (oa !== ob) return oa - ob;
+      return a.sensorId.localeCompare(b.sensorId);
+    });
+  }, [rawReadings]);
   useSensorReadingRealtime(assignmentId, "manager");
 
   function goToDetail(sensorId: string) {
-    navigate(
-      `/dashboard/manager/sensor-readings/${assignmentId}/sensors/${sensorId}`,
-    );
+    const base = `/dashboard/manager/sensor-readings/${assignmentId}/sensors/${sensorId}`;
+    const url = backUrl
+      ? `${base}?from=${encodeURIComponent(backUrl)}`
+      : base;
+    navigate(url);
   }
 
   return (
@@ -336,9 +367,11 @@ function KitReadingsBody({ assignmentId }: { assignmentId: string }) {
 function KitReadingsSection({
   assignment,
   showDeviceHeading,
+  backUrl,
 }: {
   assignment: MilestoneAssignmentDetailResType;
   showDeviceHeading: boolean;
+  backUrl?: string;
 }) {
   const [open, setOpen] = useState(false);
   const assignmentId = assignment.assignmentId;
@@ -356,7 +389,7 @@ function KitReadingsSection({
   if (!showDeviceHeading || !device) {
     return (
       <div className="rounded-xl border-2 border-muted-foreground/20 bg-background shadow-sm overflow-hidden">
-        <KitReadingsBody assignmentId={assignmentId} />
+        <KitReadingsBody assignmentId={assignmentId} backUrl={backUrl} />
       </div>
     );
   }
@@ -412,7 +445,7 @@ function KitReadingsSection({
             transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
             style={{ overflow: "hidden" }}
           >
-            <KitReadingsBody assignmentId={assignmentId} />
+            <KitReadingsBody assignmentId={assignmentId} backUrl={backUrl} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -420,7 +453,13 @@ function KitReadingsSection({
   );
 }
 
-export function MilestoneSensorSection({ milestone }: { milestone: ProductionMilestoneResType }) {
+export function MilestoneSensorSection({
+  milestone,
+  backUrl,
+}: {
+  milestone: ProductionMilestoneResType;
+  backUrl?: string;
+}) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>(STATUS_FILTER_ALL);
@@ -534,6 +573,7 @@ export function MilestoneSensorSection({ milestone }: { milestone: ProductionMil
               key={a.assignmentId}
               assignment={a}
               showDeviceHeading
+              backUrl={backUrl}
             />
           ))}
         </div>
