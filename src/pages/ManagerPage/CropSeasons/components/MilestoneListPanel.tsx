@@ -91,6 +91,13 @@ export function MilestoneListPanel({
     return isPlanningState && !readOnly ? `${base}/configure${q}` : `${base}${q}`;
   };
 
+  const employeeTaskStepUrl = (milestoneId: string) => {
+    const p = new URLSearchParams();
+    if (zoneId) p.set("zoneId", zoneId);
+    p.set("step", "2");
+    return `/dashboard/manager/crop-seasons/${cropSeason.id}/milestones/${milestoneId}/configure?${p}`;
+  };
+
   // ── Edit submit ────────────────────────────────────────────────────────
   // Validate planning: neighbors không được overlap. Validate này chạy trước
   // khi gửi để hiện lỗi sớm với tên mốc cụ thể (BE chỉ trả lỗi generic).
@@ -345,6 +352,12 @@ export function MilestoneListPanel({
                 draggable={canEditConfig && !isReordering}
                 isDragging={draggingId === m.id}
                 isDragOver={dragOverId === m.id}
+                needsEmployeeTaskAssignment={
+                  isPlanningState && m.isHaveEmployeeTask === false
+                }
+                onAssignEmployeeTask={() =>
+                  navigate(employeeTaskStepUrl(m.id))
+                }
                 onDragStart={(e) => dragHandlers.onDragStart(e, m.id)}
                 onDragOver={(e) => dragHandlers.onDragOver(e, m.id)}
                 onDrop={(e) => dragHandlers.onDrop(e, m.id)}

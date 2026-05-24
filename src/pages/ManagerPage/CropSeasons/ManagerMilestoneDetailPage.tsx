@@ -67,7 +67,13 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router";
+import {
+  Link,
+  Navigate,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router";
 import { cn } from "@/lib/utils";
 import {
   formatMilestoneIotDetailDeviceLabel,
@@ -213,9 +219,7 @@ function listEligibleSensorTypesInZone(
 
 function sortEligibleSensorTypes(types: string[]): string[] {
   const order = IOT_CONFIG_ALLOWED_SENSOR_TYPES as readonly string[];
-  return [...types].sort(
-    (a, b) => order.indexOf(a) - order.indexOf(b),
-  );
+  return [...types].sort((a, b) => order.indexOf(a) - order.indexOf(b));
 }
 
 function bindingsForEligibleSensorType(
@@ -279,6 +283,23 @@ function aggregateStrictDeviceBounds(
   }
   return { strictMin: lo, strictMax: hi };
 }
+
+// Default optimal ranges tuned for typical Vietnam tropical/subtropical
+// conditions and common vegetable/fruit crops. Used as form defaults when
+// no milestone/zone threshold exists and device bounds are not constraining.
+const DEFAULT_OPTIMAL_RANGES: Record<string, { min: number; max: number }> = {
+  // Soil moisture (%): most VN vegetables/fruit trees thrive at 60-80% FC.
+  soil_moisture: { min: 60, max: 80 },
+  // Air temperature (°C): comfort band for tropical crops; avoids cold
+  // stress below 20°C and heat stress above 32°C.
+  air_temperature: { min: 22, max: 30 },
+  // Air humidity (%): VN ambient is humid year-round; 65-85% reduces fungal
+  // risk on the high side and wilting on the low side.
+  air_humidity: { min: 65, max: 85 },
+  // Light intensity (% of full sun): leafy greens & fruit trees prefer
+  // 50-80%, with midday shading during the dry season.
+  light_intensity: { min: 50, max: 80 },
+};
 
 function pickAssignmentIdForSensorType(
   zoneAssignments: MilestoneAssignmentDetailResType[],
@@ -781,8 +802,8 @@ const IotConfigSection = ({
             Loại chỉ báo cần theo dõi *
           </span>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Khi gán thiết bị, hệ thống chỉ nối các cảm biến thuộc đúng các loại đã
-            chọn ở đây.
+            Khi gán thiết bị, hệ thống chỉ nối các cảm biến thuộc đúng các loại
+            đã chọn ở đây.
             {!isPlanning && (
               <span className="block mt-1 font-medium text-amber-700 dark:text-amber-400">
                 Đã vận hành ngoài giai đoạn lập kế hoạch — không chỉnh được danh
@@ -820,14 +841,14 @@ const IotConfigSection = ({
         </div>
         {noSensorSelected && (
           <p className="text-xs text-destructive">
-            Cần chọn ít nhất một loại; không thì không có chỉ báo khớp để nối khi
-            gán thiết bị.
+            Cần chọn ít nhất một loại; không thì không có chỉ báo khớp để nối
+            khi gán thiết bị.
           </p>
         )}
         {hasDevice && (
           <p className="text-xs text-muted-foreground italic">
-            Thay đổi loại chỉ báo chỉ áp dụng cho thiết bị gán sau khi lưu. Thiết
-            bị đã gán giữ nguyên cảm biến hiện có.
+            Thay đổi loại chỉ báo chỉ áp dụng cho thiết bị gán sau khi lưu.
+            Thiết bị đã gán giữ nguyên cảm biến hiện có.
           </p>
         )}
       </div>
@@ -875,9 +896,8 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
   const [pickerPage, setPickerPage] = useState(1);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [bulkResult, setBulkResult] = useState<
-    BulkAssignIotDevicesResType | null
-  >(null);
+  const [bulkResult, setBulkResult] =
+    useState<BulkAssignIotDevicesResType | null>(null);
   const [confirmUnassign, setConfirmUnassign] = useState<string | null>(null);
 
   /** Tên hiển thị kết quả gán — không dùng UUID */
@@ -1058,9 +1078,7 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
                 disabled={boards.length === 0}
                 onCheckedChange={(v) => toggleSelectAll(!!v)}
               />
-              <span>
-                Chọn cả trang này ({selected.size} thiết bị đã chọn)
-              </span>
+              <span>Chọn cả trang này ({selected.size} thiết bị đã chọn)</span>
             </div>
             <div className="space-y-2 max-h-80 overflow-y-auto">
               {purchaseQuery.isLoading ? (
@@ -1236,9 +1254,7 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
         confirmLabel="Huỷ gán"
         variant="destructive"
         onCancel={() => setConfirmUnassign(null)}
-        onConfirm={() =>
-          confirmUnassign && handleUnassign(confirmUnassign)
-        }
+        onConfirm={() => confirmUnassign && handleUnassign(confirmUnassign)}
       />
     </div>
   );
@@ -1264,13 +1280,9 @@ function ZoneBulkThresholdRow({
   zoneAssignments: MilestoneAssignmentDetailResType[];
 }) {
   const zoneLocked = merged.source === "zone";
-  const viLabel =
-    SENSOR_TYPE_LABELS[sensorType] ?? "Chỉ báo không xác định";
+  const viLabel = SENSOR_TYPE_LABELS[sensorType] ?? "Chỉ báo không xác định";
   const SIcon = SENSOR_TYPE_ICON[sensorType];
-  const bindings = bindingsForEligibleSensorType(
-    zoneAssignments,
-    sensorType,
-  );
+  const bindings = bindingsForEligibleSensorType(zoneAssignments, sensorType);
   const unitSuffix = bindings[0]?.unit ? ` ${bindings[0].unit}` : "";
   const { strictMin, strictMax } = aggregateStrictDeviceBounds(bindings);
 
@@ -1278,6 +1290,31 @@ function ZoneBulkThresholdRow({
     merged.threshold != null
       ? `Hiện tại: ${merged.threshold.optimalMin} – ${merged.threshold.optimalMax}${unitSuffix} · ${THRESHOLD_SOURCE_LABEL_VI[merged.source] ?? merged.source}`
       : null;
+
+  // Realtime validation for the two inputs
+  const minN = parseLocaleNumberInput(drafts.minStr ?? "");
+  const maxN = parseLocaleNumberInput(drafts.maxStr ?? "");
+  let minError: string | null = null;
+  let maxError: string | null = null;
+  if ((drafts.minStr ?? "") !== "" && minN === undefined) {
+    minError = "Nhập số hợp lệ";
+  }
+  if ((drafts.maxStr ?? "") !== "" && maxN === undefined) {
+    maxError = "Nhập số hợp lệ";
+  }
+  if (minError === null && maxError === null) {
+    if (minN !== undefined && maxN !== undefined && minN > maxN) {
+      maxError = "Giá trị nhỏ nhất không được lớn hơn giá trị lớn nhất";
+    }
+    if (strictMin !== undefined && strictMax !== undefined) {
+      if (minN !== undefined && minN < strictMin) {
+        minError = `Phải lớn hơn hoặc bằng ${strictMin}`;
+      }
+      if (maxN !== undefined && maxN > strictMax) {
+        maxError = `Phải nhỏ hơn hoặc bằng ${strictMax}`;
+      }
+    }
+  }
 
   return (
     <div className="rounded-md border bg-background px-3 py-3 text-sm space-y-2 shadow-sm">
@@ -1326,6 +1363,9 @@ function ZoneBulkThresholdRow({
             }
             className="h-9"
           />
+          {minError && (
+            <p className="text-xs text-destructive mt-1">{minError}</p>
+          )}
         </div>
         <div>
           <label
@@ -1344,6 +1384,9 @@ function ZoneBulkThresholdRow({
             }
             className="h-9"
           />
+          {maxError && (
+            <p className="text-xs text-destructive mt-1">{maxError}</p>
+          )}
         </div>
       </div>
     </div>
@@ -1412,10 +1455,33 @@ function ZoneBulkThresholdPanel({
     for (const st of sensorTypesSorted) {
       const m = mergedByType[st]!;
       const opt = m.threshold;
-      next[st] = {
-        minStr: opt != null ? String(opt.optimalMin) : "",
-        maxStr: opt != null ? String(opt.optimalMax) : "",
-      };
+      // derive defaults when no optimal is present
+      if (opt != null) {
+        next[st] = {
+          minStr: String(opt.optimalMin),
+          maxStr: String(opt.optimalMax),
+        };
+        continue;
+      }
+
+      const bindingsForType =
+        zoneAssignments?.flatMap((a) =>
+          a.sensors.filter((s) => s.sensorType === st),
+        ) ?? [];
+      const { strictMin, strictMax } =
+        aggregateStrictDeviceBounds(bindingsForType);
+      const def = DEFAULT_OPTIMAL_RANGES[st];
+      if (strictMin !== undefined && strictMax !== undefined) {
+        const baseMin = def ? def.min : strictMin;
+        const baseMax = def ? def.max : strictMax;
+        const dmin = Math.max(strictMin, Math.min(baseMin, strictMax));
+        const dmax = Math.min(strictMax, Math.max(baseMax, strictMin));
+        next[st] = { minStr: String(dmin), maxStr: String(dmax) };
+      } else if (def) {
+        next[st] = { minStr: String(def.min), maxStr: String(def.max) };
+      } else {
+        next[st] = { minStr: "", maxStr: "" };
+      }
     }
     setDrafts(next);
   }, [loading, mergedSignature]);
@@ -1423,6 +1489,31 @@ function ZoneBulkThresholdPanel({
   const editableTypes = sensorTypesSorted.filter(
     (st) => mergedByType[st]!.source !== "zone",
   );
+
+  const allDraftsValid = useMemo(() => {
+    if (editableTypes.length === 0) return false;
+    for (const sensorType of editableTypes) {
+      const d = drafts[sensorType];
+      if (!d) return false;
+      const minN = parseLocaleNumberInput(d.minStr);
+      const maxN = parseLocaleNumberInput(d.maxStr);
+      if (minN === undefined || maxN === undefined) return false;
+      if (minN > maxN) return false;
+      const bindings = bindingsForEligibleSensorType(
+        zoneAssignments,
+        sensorType,
+      );
+      const { strictMin, strictMax } = aggregateStrictDeviceBounds(bindings);
+      if (
+        strictMin !== undefined &&
+        strictMax !== undefined &&
+        (minN < strictMin || maxN > strictMax)
+      ) {
+        return false;
+      }
+    }
+    return true;
+  }, [drafts, editableTypes, zoneAssignments, mergedSignature]);
 
   const bulkSnapRef = useRef({
     drafts: {} as Record<string, { minStr: string; maxStr: string }>,
@@ -1458,10 +1549,7 @@ function ZoneBulkThresholdPanel({
       }
       for (const sensorType of types) {
         const merged = mergedMap[sensorType]!;
-        const pickId = pickAssignmentIdForSensorType(
-          zAssignments,
-          sensorType,
-        );
+        const pickId = pickAssignmentIdForSensorType(zAssignments, sensorType);
         if (!pickId) continue;
 
         const d = snapDrafts[sensorType];
@@ -1530,9 +1618,7 @@ function ZoneBulkThresholdPanel({
           ? error.message
           : (ax.response?.data?.message as string | undefined);
       toast.error(
-        typeof msg === "string" && msg.trim()
-          ? msg
-          : "Không lưu được ngưỡng",
+        typeof msg === "string" && msg.trim() ? msg : "Không lưu được ngưỡng",
       );
     },
   });
@@ -1543,7 +1629,10 @@ function ZoneBulkThresholdPanel({
         <p className="font-medium text-sm">{zoneTitle}</p>
         <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
           {zoneAssignments.map((a) => (
-            <span key={a.assignmentId} className="inline-flex items-center gap-1">
+            <span
+              key={a.assignmentId}
+              className="inline-flex items-center gap-1"
+            >
               <Cpu className="h-3.5 w-3.5 shrink-0" />
               <span className="truncate max-w-48">{a.device.deviceName}</span>
             </span>
@@ -1590,13 +1679,12 @@ function ZoneBulkThresholdPanel({
                 loading ||
                 hasError ||
                 bulkSaveMutation.isPending ||
-                editableTypes.length === 0
+                editableTypes.length === 0 ||
+                !allDraftsValid
               }
               onClick={() => bulkSaveMutation.mutate()}
             >
-              {bulkSaveMutation.isPending
-                ? "Đang lưu…"
-                : "Lưu tất cả ngưỡng"}
+              {bulkSaveMutation.isPending ? "Đang lưu…" : "Lưu tất cả ngưỡng"}
             </Button>
           </div>
         </>
@@ -1638,21 +1726,23 @@ const MilestoneSensorThresholdStepSection = ({
     <div className="space-y-6">
       <p className="text-xs text-muted-foreground leading-relaxed">
         Chỉ báo trong cùng một khu vực trồng dùng{" "}
-        <span className="font-medium text-foreground">một bảng cấu hình chung</span>
+        <span className="font-medium text-foreground">
+          một bảng cấu hình chung
+        </span>
         : nhập ngưỡng nhỏ nhất và lớn nhất mong muốn cho từng loại, sau đó bấm{" "}
         <span className="font-medium text-foreground">Lưu tất cả ngưỡng</span>{" "}
         để ghi đồng loạt cho mốc này (không cần lưu từng thẻ thiết bị). Phần mất
         tín hiệu thiết bị do hệ thống cấu hình, không nhập ở đây.
       </p>
-          {zoneEntries.map(([zid, zoneAssignments], idx) => (
-            <ZoneBulkThresholdPanel
-              key={zid}
-              milestoneId={milestoneId}
-              zoneId={zid}
-              zoneTitle={`Khu vực ${idx + 1}`}
-              zoneAssignments={zoneAssignments}
-            />
-          ))}
+      {zoneEntries.map(([zid, zoneAssignments], idx) => (
+        <ZoneBulkThresholdPanel
+          key={zid}
+          milestoneId={milestoneId}
+          zoneId={zid}
+          zoneTitle={`Khu vực ${idx + 1}`}
+          zoneAssignments={zoneAssignments}
+        />
+      ))}
     </div>
   );
 };
@@ -1725,7 +1815,11 @@ const ManagerMilestoneDetailPage = () => {
   const [searchParams] = useSearchParams();
   const qc = useQueryClient();
 
-  const [currentStep, setCurrentStep] = useState(0);
+  const initialStep = (() => {
+    const raw = Number(searchParams.get("step"));
+    return Number.isInteger(raw) && raw >= 0 && raw <= 2 ? raw : 0;
+  })();
+  const [currentStep, setCurrentStep] = useState(initialStep);
   const [editingMilestone, setEditingMilestone] =
     useState<ProductionMilestoneResType | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -1820,7 +1914,9 @@ const ManagerMilestoneDetailPage = () => {
   // khi có ít nhất 1 ngưỡng do user lưu ở mốc (source === "milestone").
   const stepThresholdQueries = useQueries({
     queries: assignments.map((a) => ({
-      queryKey: QUERY_KEYS.manager.productionMilestones.thresholds(a.assignmentId),
+      queryKey: QUERY_KEYS.manager.productionMilestones.thresholds(
+        a.assignmentId,
+      ),
       queryFn: () => sensorThresholdService.get(a.assignmentId),
       enabled: !!a.assignmentId,
       refetchOnMount: "always" as const,
@@ -1994,7 +2090,12 @@ const ManagerMilestoneDetailPage = () => {
     const viewPath = zoneId
       ? `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}?zoneId=${encodeURIComponent(zoneId)}`
       : `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}`;
-    return <Navigate to={viewPath} replace />;
+    return (
+      <Navigate
+        to={viewPath}
+        replace
+      />
+    );
   }
 
   // Milestone not found
@@ -2136,19 +2237,22 @@ const ManagerMilestoneDetailPage = () => {
               {currentStep === 0 && hasDevice && !isIotConfigured && (
                 <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
                   <AlertTriangle className="h-3 w-3" />
-                  Đã có thiết bị nhưng chưa lưu loại chỉ báo — nhớ bấm lưu cấu hình.
+                  Đã có thiết bị nhưng chưa lưu loại chỉ báo — nhớ bấm lưu cấu
+                  hình.
                 </p>
               )}
               {currentStep === 2 && !hasTasks && (
                 <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
                   <AlertTriangle className="h-3 w-3" />
-                  Ít nhất cần một nhiệm vụ trong mốc trước khi kết thúc bước này.
+                  Ít nhất cần một nhiệm vụ trong mốc trước khi kết thúc bước
+                  này.
                 </p>
               )}
               {currentStep === 2 && hasTasks && !allTasksAssigned && (
                 <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
                   <AlertTriangle className="h-3 w-3" />
-                  Phải chỉ định đủ người làm cho tất cả nhiệm vụ trước khi hoàn thành.
+                  Phải chỉ định đủ người làm cho tất cả nhiệm vụ trước khi hoàn
+                  thành.
                 </p>
               )}
               {currentStep === 2 && canCompleteMilestoneSetup && (
@@ -2246,42 +2350,46 @@ const ManagerMilestoneDetailPage = () => {
       </Card>
 
       {/* Edit Dialog */}
-      {editingMilestone && canEditMilestone && (() => {
-        // Re-derive prev milestone from the latest list so any reorder taking
-        // effect while the dialog is open updates the disabled-date floor.
-        const prevMilestone = milestones
-          .filter(
-            (m) =>
-              m.id !== editingMilestone.id &&
-              m.milestoneOrder < editingMilestone.milestoneOrder,
-          )
-          .slice()
-          .sort((a, b) => a.milestoneOrder - b.milestoneOrder)
-          .pop();
-        const prevEndParsed = parseBackendDate(prevMilestone?.expectedEndDate);
-        const minExpectedStartDate = prevEndParsed
-          ? addDays(startOfDay(prevEndParsed), 1)
-          : undefined;
-        return (
-          <MilestoneEditDialog
-            open={!!editingMilestone}
-            mode={isApprovedCropSeason ? "approved" : "planning"}
-            initialValues={{
-              stageName: editingMilestone.stageName,
-              milestoneOrder: editingMilestone.milestoneOrder,
-              expectedStartDate: editingMilestone.expectedStartDate ?? "",
-              expectedEndDate: editingMilestone.expectedEndDate ?? "",
-              actualStartDate: editingMilestone.actualStartDate ?? "",
-              actualEndDate: editingMilestone.actualEndDate ?? "",
-              status: editingMilestone.status,
-            }}
-            onClose={() => setEditingMilestone(null)}
-            onSubmit={handleUpdate}
-            isSubmitting={updateMutation.isPending}
-            minExpectedStartDate={minExpectedStartDate}
-          />
-        );
-      })()}
+      {editingMilestone &&
+        canEditMilestone &&
+        (() => {
+          // Re-derive prev milestone from the latest list so any reorder taking
+          // effect while the dialog is open updates the disabled-date floor.
+          const prevMilestone = milestones
+            .filter(
+              (m) =>
+                m.id !== editingMilestone.id &&
+                m.milestoneOrder < editingMilestone.milestoneOrder,
+            )
+            .slice()
+            .sort((a, b) => a.milestoneOrder - b.milestoneOrder)
+            .pop();
+          const prevEndParsed = parseBackendDate(
+            prevMilestone?.expectedEndDate,
+          );
+          const minExpectedStartDate = prevEndParsed
+            ? addDays(startOfDay(prevEndParsed), 1)
+            : undefined;
+          return (
+            <MilestoneEditDialog
+              open={!!editingMilestone}
+              mode={isApprovedCropSeason ? "approved" : "planning"}
+              initialValues={{
+                stageName: editingMilestone.stageName,
+                milestoneOrder: editingMilestone.milestoneOrder,
+                expectedStartDate: editingMilestone.expectedStartDate ?? "",
+                expectedEndDate: editingMilestone.expectedEndDate ?? "",
+                actualStartDate: editingMilestone.actualStartDate ?? "",
+                actualEndDate: editingMilestone.actualEndDate ?? "",
+                status: editingMilestone.status,
+              }}
+              onClose={() => setEditingMilestone(null)}
+              onSubmit={handleUpdate}
+              isSubmitting={updateMutation.isPending}
+              minExpectedStartDate={minExpectedStartDate}
+            />
+          );
+        })()}
 
       {/* Delete Confirm */}
       <ConfirmDialog
