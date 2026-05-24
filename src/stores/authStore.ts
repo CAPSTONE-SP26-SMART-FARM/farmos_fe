@@ -3,6 +3,7 @@ import type { UserResType } from "@/types/user";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useFarmStore } from "./farmStore";
+import { useNotificationStore } from "./notificationStore";
 
 interface AuthState {
   user: UserResType | null;
@@ -37,6 +38,7 @@ export const useAuthStore = create<AuthStore>()(
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
         useFarmStore.getState().clearFarm();
+        useNotificationStore.getState().reset();
         set(initialState);
       },
 

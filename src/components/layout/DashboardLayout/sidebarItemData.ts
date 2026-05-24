@@ -22,6 +22,7 @@ import {
   UserCheck,
   Users,
   Wallet,
+  Wrench,
 } from "lucide-react";
 import type { SidebarData } from "./types";
 
@@ -141,6 +142,11 @@ export const sidebarData: SidebarData = {
               url: "/dashboard/admin/iot-kits/assignments",
             },
           ],
+        },
+        {
+          title: "Yêu Cầu Kit",
+          url: "/dashboard/admin/iot-kit-requests",
+          icon: Wrench,
         },
       ],
     },
@@ -301,6 +307,11 @@ export const sidebarData: SidebarData = {
           title: "Mua Dịch Vụ",
           url: "/dashboard/owner/iot-kits",
           icon: PackagePlus,
+        },
+        {
+          title: "Yêu Cầu Kit",
+          url: "/dashboard/owner/iot-kit-requests",
+          icon: Wrench,
         },
       ],
     },

@@ -39,10 +39,10 @@ export const DEVICE_STATUS_META: Record<
   { label: string; dot: string; variant: "default" | "secondary" | "destructive" | "outline" }
 > = {
   available: { label: "Sẵn sàng", dot: "bg-slate-400", variant: "secondary" },
-  purchase: { label: "Đã cho thuê", dot: "bg-blue-500", variant: "secondary" },
+  purchase: { label: "Chưa lắp đặt", dot: "bg-blue-500", variant: "secondary" },
   install: { label: "Đang lắp đặt", dot: "bg-amber-500", variant: "outline" },
   active: { label: "Hoạt động", dot: "bg-emerald-500 animate-pulse", variant: "default" },
-  inactive: { label: "Ngưng hoạt động", dot: "bg-zinc-400", variant: "outline" },
+  inactive: { label: "Chờ giai đoạn bắt đầu", dot: "bg-zinc-400", variant: "outline" },
   error: { label: "Lỗi", dot: "bg-red-500", variant: "destructive" },
   revoked: { label: "Đã thu hồi", dot: "bg-zinc-400", variant: "outline" },
 };

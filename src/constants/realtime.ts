@@ -45,6 +45,10 @@ export const RealtimeEvents = {
   IotDeviceActivated: "iot.device.activated",
   IotDeviceStatusChanged: "iot.device.status.changed",
   IotDeviceSwapped: "iot.device.swapped",
+  // IoT Kit Request — owner/manager báo lỗi kit hoặc admin đề xuất lịch lắp.
+  // BE: `farm_os_be/src/modules/iot-kit-request/iot-kit-request.service.ts`.
+  IotKitRequestCreated: "iot-kit-request.created",
+  IotKitRequestUpdated: "iot-kit-request.updated",
 } as const;
 export type RealtimeEventName =
   (typeof RealtimeEvents)[keyof typeof RealtimeEvents];

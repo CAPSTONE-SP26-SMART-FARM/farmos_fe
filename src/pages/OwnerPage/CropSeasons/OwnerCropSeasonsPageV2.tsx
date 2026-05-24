@@ -298,13 +298,16 @@ export default function OwnerCropSeasonsPageV2() {
   const selectedZoneName = zones.find((z) => z.id === zoneId)?.name;
 
   // Drop stale zoneId from URL if it doesn't match any zone
+  const isZonesFetching = farmQuery.isFetching || zonesQuery.isFetching;
   useEffect(() => {
-    if (!zoneId || isZonesLoading) return;
+    if (!zoneId) return;
+    if (isZonesLoading || isZonesFetching) return;
+    if (!zonesQuery.data) return;
     if (zones.some((z) => z.id === zoneId)) return;
     const next = new URLSearchParams(searchParams);
     next.delete("zoneId");
     setSearchParams(next, { replace: true });
-  }, [zones, isZonesLoading, searchParams, setSearchParams, zoneId]);
+  }, [zones, isZonesLoading, isZonesFetching, zonesQuery.data, searchParams, setSearchParams, zoneId]);
 
   useEffect(() => {
     setHistoryDetail(null);

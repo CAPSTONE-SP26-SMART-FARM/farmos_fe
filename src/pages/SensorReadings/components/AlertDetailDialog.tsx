@@ -174,7 +174,22 @@ export default function AlertDetailDialog({
   open,
   onOpenChange,
 }: AlertDetailDialogProps) {
-  if (!alert) return null;
+  // Khi không có alert nhưng dialog đang được mở (do parent mount): hiển thị
+  // empty state thay vì return null — null sẽ làm dialog biến mất, parent thì
+  // vẫn nghĩ dialog đang mở (open=true) → race UI khi alert refetch xong.
+  if (!alert) {
+    if (!open) return null;
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-lg">
+          <div className="flex flex-col items-center gap-2 py-10 text-center text-muted-foreground">
+            <p className="text-sm">Không tìm thấy cảnh báo</p>
+            <p className="text-xs">Cảnh báo có thể đã được xử lý hoặc gỡ bỏ.</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   const meta = SEVERITY_META[alert.severity];
   const Icon = meta.icon;

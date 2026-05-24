@@ -21,4 +21,10 @@ export const notificationService = {
       API_ENDPOINTS.NOTIFICATIONS.MARK_READ(id),
       body,
     ),
+  getUnreadCount: () =>
+    api.get<{ unreadCount: number }>(API_ENDPOINTS.NOTIFICATIONS.UNREAD_COUNT),
+  markAllRead: () =>
+    api.patch<{ updatedCount: number }>(
+      API_ENDPOINTS.NOTIFICATIONS.MARK_ALL_READ,
+    ),
 };

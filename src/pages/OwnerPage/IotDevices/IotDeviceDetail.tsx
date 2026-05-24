@@ -37,6 +37,7 @@ import {
   STATUS_META,
 } from "@/constants/iotDeviceDisplay";
 import { DeviceLogCard } from "./IotDeviceLogCard";
+import { ReportFaultButton } from "@/components/iot-kit-request/ReportFaultButton";
 
 type IotActor = "owner" | "manager" | "admin";
 
@@ -146,6 +147,16 @@ export default function IotDeviceDetail({
           <SIcon className="h-3 w-3" />
           {statusLabel}
         </span>
+
+        {(actor === "owner" || actor === "manager") && (
+          <div className="ml-auto">
+            <ReportFaultButton
+              iotDeviceId={device.id}
+              deviceLabel={device.deviceName}
+              deviceStatus={device.status}
+            />
+          </div>
+        )}
 
         {actor === "admin" && (
           <div className="ml-auto flex items-center gap-2">

@@ -15,6 +15,8 @@ import AdminIotDevicesPage from "@/pages/AdminPage/IotDevices/AdminIotDevicesPag
 import AdminIotDashboardPage from "@/pages/AdminPage/IotDevices/AdminIotDashboardPage";
 import AdminIotDeviceDecisionPage from "@/pages/AdminPage/IotDevices/AdminIotDeviceDecisionPage";
 import AdminIotInstallQueuePage from "@/pages/AdminPage/IotDevices/AdminIotInstallQueuePage";
+import AdminIotKitRequestsPage from "@/pages/AdminPage/IotKitRequests/AdminIotKitRequestsPage";
+import OwnerIotKitRequestsPage from "@/pages/OwnerPage/IotKitRequests/OwnerIotKitRequestsPage";
 import AdminIotRecoveryQueuePage from "@/pages/AdminPage/IotDevices/AdminIotRecoveryQueuePage";
 import AdminIotAttentionQueuePage from "@/pages/AdminPage/IotDevices/AdminIotAttentionQueuePage";
 import AdminIotDeviceTimelinePage from "@/pages/AdminPage/IotDevices/AdminIotDeviceTimelinePage";
@@ -211,6 +213,11 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/admin/iot-devices/attention-queue",
         component: AdminIotAttentionQueuePage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/iot-kit-requests",
+        component: AdminIotKitRequestsPage,
         allowedRoles: [RoleName.Admin],
       },
       {
@@ -528,6 +535,12 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/owner/tickets",
         component: OwnerTicketsPage,
+        allowedRoles: [RoleName.Owner],
+        requiresActiveSubscription: true,
+      },
+      {
+        path: "/dashboard/owner/iot-kit-requests",
+        component: OwnerIotKitRequestsPage,
         allowedRoles: [RoleName.Owner],
         requiresActiveSubscription: true,
       },
