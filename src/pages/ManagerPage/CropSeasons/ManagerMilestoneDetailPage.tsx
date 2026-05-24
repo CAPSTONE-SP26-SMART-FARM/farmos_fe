@@ -1873,7 +1873,7 @@ const ManagerMilestoneDetailPage = () => {
     cropSeason?.cropName,
   );
   useDynamicBreadcrumb(
-    `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}`,
+    `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}/configure`,
     milestone?.stageName,
   );
 
@@ -2094,12 +2094,13 @@ const ManagerMilestoneDetailPage = () => {
     );
   }
 
-  // Redirect approved/active/sent/completed/cancelled to overview — wizard is planning/rejected only
+  // Khi season không còn ở wizard state (planning/rejected), wizard config
+  // không nên truy cập trực tiếp — bounce sang trang view (3 tab).
   if (cropSeason && !isWizardState) {
-    const overviewPath = zoneId
-      ? `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}/overview?zoneId=${encodeURIComponent(zoneId)}`
-      : `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}/overview`;
-    return <Navigate to={overviewPath} replace />;
+    const viewPath = zoneId
+      ? `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}?zoneId=${encodeURIComponent(zoneId)}`
+      : `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}`;
+    return <Navigate to={viewPath} replace />;
   }
 
   // Milestone not found

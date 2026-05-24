@@ -59,6 +59,7 @@ import ManagerPage from "@/pages/ManagerPage/ManagerPage";
 import ManagerCropSeasonsPage from "@/pages/ManagerPage/CropSeasons/ManagerCropSeasonsPage";
 import ManagerMilestonesPage from "@/pages/ManagerPage/CropSeasons/ManagerMilestonesPage";
 import ManagerMilestoneDetailPage from "@/pages/ManagerPage/CropSeasons/ManagerMilestoneDetailPage";
+import ManagerMilestoneViewPage from "@/pages/ManagerPage/CropSeasons/ManagerMilestoneViewPage";
 import ManagerMilestoneOverviewPage from "@/pages/ManagerPage/CropSeasons/ManagerMilestoneOverviewPage";
 import ManagerProductionMilestonesPage from "@/pages/ManagerPage/CropSeasons/ManagerProductionMilestonesPage";
 import ManagerEmployeeTaskTemplatesPage from "@/pages/ManagerPage/EmployeeTaskTemplates/ManagerEmployeeTaskTemplatesPage";
@@ -572,11 +573,23 @@ const routes: AppRoutes = [
         allowedRoles: [RoleName.Manager],
       },
       {
+        // Trang chính khi click vào 1 milestone từ MilestoneListPanel — view 3
+        // tab (Cảm biến / Sự cố / Công việc). Route wizard cũ giờ ở `/configure`.
         path: "/dashboard/manager/crop-seasons/:cropSeasonId/milestones/:milestoneId",
+        component: ManagerMilestoneViewPage,
+        allowedRoles: [RoleName.Manager],
+      },
+      {
+        // Wizard cấu hình milestone (IoT/threshold/task wizard) — chỉ truy cập
+        // khi season ở planning/rejected, thông qua nút "Cấu hình mốc" trên
+        // ManagerMilestoneViewPage.
+        path: "/dashboard/manager/crop-seasons/:cropSeasonId/milestones/:milestoneId/configure",
         component: ManagerMilestoneDetailPage,
         allowedRoles: [RoleName.Manager],
       },
       {
+        // Legacy overview — giữ tạm cho bookmark cũ; nội dung đã được gộp vào
+        // route view ở trên (Phase 3 sẽ redirect hẳn rồi xoá).
         path: "/dashboard/manager/crop-seasons/:cropSeasonId/milestones/:milestoneId/overview",
         component: ManagerMilestoneOverviewPage,
         allowedRoles: [RoleName.Manager],

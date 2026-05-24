@@ -1476,7 +1476,10 @@ const ManagerMilestonesPage = () => {
   };
 
   const milestoneDetailUrl = (mId: string) => {
-    const base = `/dashboard/manager/crop-seasons/${id}/milestones/${mId}`;
+    // Sau refactor: route `/milestones/:msId` mở MilestoneViewPage (3 tab). Wizard
+    // cấu hình (route hiện tại) dời sang `/configure` — đó là target khi nhấn
+    // "Cấu hình" từ trang quản lý mốc.
+    const base = `/dashboard/manager/crop-seasons/${id}/milestones/${mId}/configure`;
     return zoneId ? `${base}?zoneId=${encodeURIComponent(zoneId)}` : base;
   };
 

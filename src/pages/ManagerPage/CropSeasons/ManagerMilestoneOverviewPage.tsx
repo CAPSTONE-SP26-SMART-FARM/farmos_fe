@@ -323,8 +323,8 @@ export default function ManagerMilestoneOverviewPage() {
     : `/dashboard/manager/crop-seasons/${csId}/milestones`;
 
   const stepPageUrl = zoneId
-    ? `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}?zoneId=${encodeURIComponent(zoneId)}`
-    : `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}`;
+    ? `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}/configure?zoneId=${encodeURIComponent(zoneId)}`
+    : `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}/configure`;
 
   // Queries
   const cropSeasonQuery = useManagerCropSeasonDetail(csId);
