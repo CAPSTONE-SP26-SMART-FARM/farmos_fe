@@ -1,6 +1,12 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Search, SquareArrowRight, Sprout, X } from "lucide-react";
@@ -9,6 +15,7 @@ import { useMemo, useState } from "react";
 import type { ZoneType } from "@/schemaValidatation/zone";
 import { StatusBadge } from "./StatusBadge";
 import { formatDate } from "./helpers";
+import { cn } from "@/lib/utils";
 
 export function ZoneLanding({
   zones,
@@ -144,7 +151,7 @@ export function ZoneLanding({
                   transition={{ duration: 0.15 }}
                 >
                   <Card
-                    className="cursor-pointer hover:border-primary/60 hover:shadow-md transition-all"
+                    className="cursor-pointer hover:border-primary/60 hover:shadow-md lg:min-h-[254px] transition-all"
                     onClick={() => onSelect(zone.id)}
                   >
                     <CardHeader className="pb-3">
@@ -169,9 +176,15 @@ export function ZoneLanding({
                         )}
                       </div>
                     </CardHeader>
-                    <CardContent className="pt-0 space-y-3">
+                    <CardContent className="pt-0 space-y-3 grow">
                       {showCropSeason && (
-                        <div className="rounded-md border bg-muted/30 px-3 py-2">
+                        <div
+                          className={cn(
+                            "rounded-md border border-dashed bg-muted/30 px-3 py-2 lg:min-h-17.5",
+                            !zone.currentCropSeason &&
+                              "flex items-center justify-center",
+                          )}
+                        >
                           {zone.currentCropSeason ? (
                             <div className="space-y-1">
                               <div className="flex items-start justify-between gap-2">
@@ -196,14 +209,16 @@ export function ZoneLanding({
                               </p>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <div className="flex items-center h-full gap-1.5 text-xs text-muted-foreground">
                               <Sprout className="h-3.5 w-3.5" />
                               Chưa có mùa vụ
                             </div>
                           )}
                         </div>
                       )}
-                      <div className="flex items-center justify-between">
+                    </CardContent>
+                    <CardFooter className="w-full">
+                      <div className="flex items-end justify-between w-full">
                         {zone.areaSqm != null ? (
                           <span className="text-sm text-muted-foreground">
                             {zone.areaSqm.toLocaleString()} m²
@@ -223,7 +238,7 @@ export function ZoneLanding({
                           <SquareArrowRight className="h-3.5 w-3.5" />
                         </Button>
                       </div>
-                    </CardContent>
+                    </CardFooter>
                   </Card>
                 </motion.div>
               ))}
