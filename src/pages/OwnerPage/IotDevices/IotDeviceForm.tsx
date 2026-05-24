@@ -291,6 +291,7 @@ const STATUS_LABEL: Record<string, string> = {
   available: "Có thể sử dụng",
   purchase: "Đã cho thuê",
   install: "Đang lắp đặt",
+  inactive: "Đợi giai đoạn bắt đầu",
   active: "Hoạt động",
   error: "Lỗi",
   revoked: "Thu hồi",

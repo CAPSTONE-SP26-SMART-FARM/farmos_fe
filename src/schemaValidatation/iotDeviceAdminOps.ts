@@ -26,6 +26,7 @@ export const IotOverviewInventorySchema = z.object({
   available: z.number().int().nonnegative(),
   purchase: z.number().int().nonnegative(),
   install: z.number().int().nonnegative(),
+  inactive: z.number().int().nonnegative().optional().default(0),
   active: z.number().int().nonnegative(),
   error: z.number().int().nonnegative(),
   revoked: z.number().int().nonnegative(),

@@ -21,6 +21,7 @@ import {
   Loader2,
   Package,
   PackageCheck,
+  PlugZap,
   Plus,
   Power,
   ShieldOff,
@@ -66,6 +67,7 @@ const VALID_STATUSES: DeviceStatusType[] = [
   "available",
   "purchase",
   "install",
+  "inactive",
   "active",
   "error",
   "revoked",
@@ -196,6 +198,13 @@ export default function AdminIotDevicesPage() {
         tone: "warning" as const,
       },
       {
+        key: "inactive" as const,
+        label: "Đã lắp, chờ kết nối",
+        value: inv?.inactive ?? 0,
+        icon: PlugZap,
+        tone: "default" as const,
+      },
+      {
         key: "active" as const,
         label: "Hoạt động",
         value: inv?.active ?? 0,
@@ -299,7 +308,7 @@ export default function AdminIotDevicesPage() {
       </section>
 
       {/* KPI strip — click to filter by status */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
         {kpiItems.map((item) => (
           <KpiCard
             key={item.key}
