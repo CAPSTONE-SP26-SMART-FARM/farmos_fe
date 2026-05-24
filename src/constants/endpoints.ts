@@ -493,6 +493,7 @@ export const API_ENDPOINTS = {
     ACTIVE_LIST: "/crop-categories/active",
   },
   TICKET_V2: {
+    LIST: "/tickets",
     CANCEL: (id: string) => `/tickets/${id}/cancel`,
     // ADMIN_CLAWBACK: gỡ khỏi web FE — xem docs/ticket-v2/ticket-v2.md (2026-05-09)
     ADMIN_REPORT_REVENUE: "/admin/reports/ticket-revenue",
@@ -1630,6 +1631,15 @@ export const QUERY_KEYS = {
     root: ["tickets", "ext"] as const,
     full: (id: string) => ["tickets", "ext", "full", id] as const,
     adminFull: (id: string) => ["tickets", "ext", "admin", "full", id] as const,
+  },
+  ticketsV2: {
+    root: ["tickets-v2"] as const,
+    list: (query?: Record<string, unknown>) =>
+      [
+        "tickets-v2",
+        "list",
+        ...(query !== undefined ? [query] : []),
+      ] as const,
   },
   seasonTemplates: {
     root: ["season-templates"] as const,

@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useNavigate } from "react-router";
 import { useManagerTicketList } from "@/queries/useTicket";
+import { useTicketV2List } from "@/queries/useTicketV2";
 import type { TicketIncidentResType } from "@/schemaValidatation/ticket";
 import type { CropSeasonType } from "@/types/cropSeason";
 
@@ -41,10 +42,30 @@ const TICKET_STATUS_VARIANT: Record<string, "default" | "secondary" | "destructi
   cancelled: "outline",
 };
 
-export function IncidentTab({ cropSeason }: { cropSeason: CropSeasonType }) {
+export function IncidentTab({
+  cropSeason,
+  milestoneId,
+}: {
+  cropSeason: CropSeasonType;
+  /** Khi có milestoneId, list chỉ sự cố thuộc mốc đó qua `GET /tickets` v2. */
+  milestoneId?: string;
+}) {
   const navigate = useNavigate();
   const zoneId = cropSeason.zoneId;
-  const ticketQuery = useManagerTicketList(zoneId, { page: 1, limit: 20 });
+
+  // Có milestoneId → dùng endpoint v2 hierarchical (`GET /tickets`) với filter
+  // milestoneId. Không có → fallback list theo zone (legacy endpoint).
+  const v2Query = useTicketV2List(
+    milestoneId
+      ? { page: 1, limit: 20, milestoneId }
+      : { page: 1, limit: 20, zoneId },
+  );
+  const legacyQuery = useManagerTicketList(
+    milestoneId ? "" : zoneId,
+    { page: 1, limit: 20 },
+  );
+
+  const ticketQuery = milestoneId ? v2Query : legacyQuery;
   const tickets = (ticketQuery.data?.data.data ?? []) as TicketIncidentResType[];
 
   const toDetail = (ticketId: string) =>

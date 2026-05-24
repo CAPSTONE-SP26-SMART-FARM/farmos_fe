@@ -1,7 +1,19 @@
 import { QUERY_KEYS } from "@/constants";
-import type { CancelTicketV2BodyType } from "@/schemaValidatation/ticketV2";
+import type {
+  CancelTicketV2BodyType,
+  ListTicketsV2QueryType,
+} from "@/schemaValidatation/ticketV2";
 import ticketV2Service from "@/services/ticketV2Service";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+// GET /tickets — hierarchical scope, BE tự filter theo role caller.
+// FE chỉ cần truyền filter mong muốn (milestoneId / zoneId / farmId / ...).
+export const useTicketV2List = (query: ListTicketsV2QueryType) =>
+  useQuery({
+    queryKey: QUERY_KEYS.ticketsV2.list(query as Record<string, unknown>),
+    queryFn: () => ticketV2Service.list(query),
+    placeholderData: keepPreviousData,
+  });
 
 // POST /tickets/:id/cancel — Owner/Manager huỷ ticket khi status=OPEN.
 // Sau khi cancel: list pages (legacy `useOwnerTicketList`/`useManagerTicketList`)

@@ -35,6 +35,7 @@ export const CropSeasonSchema = z.object({
   stageChangedAt: z.string(),
   totalAreaSqm: z.number().nullable(),
   plantCount: z.number().nullable(),
+  currentDensity: z.number().nullable().optional(),
   minDensitySnapshot: z.number().nullable().optional(),
   maxDensitySnapshot: z.number().nullable().optional(),
   status: z.enum([

@@ -184,7 +184,7 @@ function AlertDetailDialog({
   );
 }
 
-function AlertsPanel({ isLoading, zoneId }: { isLoading: boolean; zoneId: string }) {
+export function AlertsPanel({ isLoading, zoneId }: { isLoading: boolean; zoneId: string }) {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<AlertResType | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -409,7 +409,7 @@ function KitReadingsSection({
 const KIT_PAGE_SIZE = 5;
 const STATUS_FILTER_ALL = "__all__";
 
-function MilestoneSensorSection({ milestone }: { milestone: ProductionMilestoneResType }) {
+export function MilestoneSensorSection({ milestone }: { milestone: ProductionMilestoneResType }) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>(STATUS_FILTER_ALL);
