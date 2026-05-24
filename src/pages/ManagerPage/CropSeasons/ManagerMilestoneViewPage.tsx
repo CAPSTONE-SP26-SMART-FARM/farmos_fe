@@ -142,6 +142,12 @@ export default function ManagerMilestoneViewPage() {
     cropSeason?.status !== ProductionStatusName.Active &&
     cropSeason?.status !== ProductionStatusName.Completed;
 
+  // Chỉ cho phép cấu hình mốc khi season còn ở planning/rejected — match
+  // logic redirect của route `/configure`. Active / completed thì ẩn hẳn nút.
+  const canConfigureMilestone =
+    cropSeason?.status === ProductionStatusName.Planning ||
+    cropSeason?.status === ProductionStatusName.Rejected;
+
   return (
     <div className="space-y-6">
       {/* ── Breadcrumb ───────────────────────────────────────────────────── */}
@@ -209,15 +215,17 @@ export default function ManagerMilestoneViewPage() {
           </div>
         </div>
 
-        {/* Nút "Cấu hình mốc" giữ y chang cũ — luôn hiển thị; route wizard
-            (`/configure`) tự redirect về view này nếu season không còn ở
-            planning/rejected. */}
-        <Button size="sm" variant="outline" asChild>
-          <Link to={configureUrl}>
-            <Pencil className="h-3.5 w-3.5 mr-1.5" />
-            Cấu hình mốc
-          </Link>
-        </Button>
+        {/* Nút "Cấu hình mốc" chỉ hiện khi season còn ở planning/rejected —
+            sau khi active/completed thì cấu hình đã chốt, ẩn nút tránh user
+            click vào rồi bị redirect lại. */}
+        {canConfigureMilestone && (
+          <Button size="sm" variant="outline" asChild>
+            <Link to={configureUrl}>
+              <Pencil className="h-3.5 w-3.5 mr-1.5" />
+              Cấu hình mốc
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* ── Tabs ────────────────────────────────────────────────────────── */}

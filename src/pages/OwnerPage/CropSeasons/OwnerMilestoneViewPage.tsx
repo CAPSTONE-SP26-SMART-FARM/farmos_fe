@@ -28,9 +28,9 @@ import {
   formatDate,
   MILESTONE_STATUS_META,
 } from "@/pages/ManagerPage/CropSeasons/components/helpers";
-import OwnerMilestoneTasksSection from "@/pages/OwnerPage/EmployeeTasks/OwnerMilestoneTasksSection";
 import { OwnerIncidentTab } from "./components/OwnerIncidentTab";
 import { OwnerMilestoneSensorsPane } from "./components/OwnerMilestoneSensorsPane";
+import { OwnerMilestoneTasksTab } from "./components/OwnerMilestoneTasksTab";
 
 const VALID_TABS = ["sensors", "incidents", "tasks"] as const;
 type TabValue = (typeof VALID_TABS)[number];
@@ -250,10 +250,7 @@ export default function OwnerMilestoneViewPage() {
           value="tasks"
           className="mt-4"
         >
-          <OwnerMilestoneTasksSection
-            milestoneId={msId}
-            canEdit={false}
-          />
+          <OwnerMilestoneTasksTab milestoneId={msId} />
         </TabsContent>
       </Tabs>
     </div>
