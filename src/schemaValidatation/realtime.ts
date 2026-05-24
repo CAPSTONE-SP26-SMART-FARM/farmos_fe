@@ -317,3 +317,49 @@ export const PrescriptionCreatedPayloadSchema = z
 export type PrescriptionCreatedPayloadType = z.infer<
   typeof PrescriptionCreatedPayloadSchema
 >;
+
+/**
+ * BE emit khi board IoT chuyển status `install`/`error` → `active` qua ingest.
+ *  - `fromStatus = "install"`: gói data đầu tiên sau khi xuất kho/lắp.
+ *  - `fromStatus = "error"`  : self-recovery — board sống lại sau timeout, badge "Lỗi" cần clear.
+ */
+export const IotDeviceActivatedPayloadSchema = z
+  .object({
+    deviceId: z.string(),
+    deviceName: z.string().optional(),
+    deviceLabel: z.string().nullable().optional(),
+    farmId: z.string().nullable().optional(),
+    zoneId: z.string(),
+    zoneName: z.string().optional(),
+    activatedAt: z.string().optional(),
+    fromStatus: z.enum(["install", "error"]),
+    toStatus: z.string().optional(),
+  })
+  .passthrough();
+export type IotDeviceActivatedPayloadType = z.infer<
+  typeof IotDeviceActivatedPayloadSchema
+>;
+
+/**
+ * BE emit khi device status đổi qua flow không phải ingest — chủ yếu là cron
+ * `sensor-health-monitor` flip `active → error` khi sensor timeout. FE owner +
+ * manager đang xem device list / milestone IoT tab cần refresh badge mà không
+ * cần F5. `fromStatus` / `toStatus` là DeviceStatus dạng string.
+ */
+export const IotDeviceStatusChangedPayloadSchema = z
+  .object({
+    deviceId: z.string(),
+    deviceName: z.string().optional(),
+    deviceLabel: z.string().nullable().optional(),
+    farmId: z.string().nullable().optional(),
+    zoneId: z.string().optional(),
+    zoneName: z.string().optional(),
+    fromStatus: z.string(),
+    toStatus: z.string(),
+    reason: z.string().optional(),
+    changedAt: z.string().optional(),
+  })
+  .passthrough();
+export type IotDeviceStatusChangedPayloadType = z.infer<
+  typeof IotDeviceStatusChangedPayloadSchema
+>;

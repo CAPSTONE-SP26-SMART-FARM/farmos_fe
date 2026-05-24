@@ -16,6 +16,8 @@ import type {
   InstallQueueQueryType,
   RecoveryBulkCompleteBodyType,
   RecoveryQueueQueryType,
+  AttentionConfirmReturnedBodyType,
+  AttentionQueueQueryType,
 } from "@/schemaValidatation/iotDeviceAdminOps";
 
 // ─────────────────────────────────────────────────────────────
@@ -184,6 +186,55 @@ export const useAdminRecoveryBulkComplete = () => {
       }
     },
     onError: (error) => onMutationError(error, "Hoàn tất thu hồi thất bại"),
+  });
+};
+
+// ─────────────────────────────────────────────────────────────
+// A9 — Attention queue (E-C5 + E-D3): board cần xử lý
+// ─────────────────────────────────────────────────────────────
+export const useAdminAttentionQueue = (
+  query?: AttentionQueueQueryType,
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: QUERY_KEYS.admin.iotDevices.attentionQueue(query),
+    queryFn: () => iotDeviceAdminOpsService.getAttentionQueue(query),
+    enabled,
+    placeholderData: keepPreviousData,
+  });
+
+// ─────────────────────────────────────────────────────────────
+// A9 — Confirm board swap-revoked đã thu hồi vật lý về kho
+// ─────────────────────────────────────────────────────────────
+export const useAdminAttentionConfirmReturned = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: AttentionConfirmReturnedBodyType) =>
+      iotDeviceAdminOpsService.attentionConfirmReturned(body),
+    onSuccess: async (res) => {
+      await Promise.all([
+        qc.invalidateQueries({
+          queryKey: QUERY_KEYS.admin.iotDevices.attentionQueue(),
+        }),
+        qc.invalidateQueries({
+          queryKey: QUERY_KEYS.admin.iotDevices.list(),
+        }),
+        qc.invalidateQueries({
+          queryKey: QUERY_KEYS.admin.iotDevices.iotOverview(),
+        }),
+      ]);
+      const body = res?.data;
+      if (body && body.failureCount === 0) {
+        toast.success(
+          `Đã xác nhận thu hồi ${body.successCount}/${body.total} thiết bị`,
+        );
+      } else if (body) {
+        toast.warning(
+          `Hoàn tất: ${body.successCount} thành công, ${body.failureCount} thất bại`,
+        );
+      }
+    },
+    onError: (error) => onMutationError(error, "Xác nhận thu hồi thất bại"),
   });
 };
 

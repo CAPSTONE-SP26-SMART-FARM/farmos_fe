@@ -40,13 +40,19 @@ export function MilestoneSensorsPane({
           <Skeleton className="h-8 w-48" />
           <div className="grid grid-cols-2 gap-3">
             {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-36" />
+              <Skeleton
+                key={i}
+                className="h-36"
+              />
             ))}
           </div>
         </div>
         <div className="w-72 space-y-2">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-12 w-full" />
+            <Skeleton
+              key={i}
+              className="h-12 w-full"
+            />
           ))}
         </div>
       </div>
@@ -58,7 +64,10 @@ export function MilestoneSensorsPane({
       <div className="flex-1 min-w-0 space-y-6">
         {zoneId && <IotCoverageWidget zoneId={zoneId} />}
         {milestone ? (
-          <MilestoneSensorSection milestone={milestone} backUrl={backUrl} />
+          <MilestoneSensorSection
+            milestone={milestone}
+            backUrl={backUrl}
+          />
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-center border rounded-md bg-muted/20">
             <Radio className="h-10 w-10 text-muted-foreground/30 mb-3" />
@@ -74,7 +83,7 @@ export function MilestoneSensorsPane({
             <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
             <h4 className="text-sm font-semibold">Cảnh báo</h4>
           </div>
-          <AlertsPanel isLoading={isLoading} />
+          <AlertsPanel isLoading={isLoading} zoneId={zoneId} />
         </div>
       </div>
     </div>

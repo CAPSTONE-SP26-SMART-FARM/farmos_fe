@@ -14,6 +14,8 @@ import {
   IncidentTicketEndedPayloadSchema,
   InvoiceCheckoutPayloadSchema,
   InvoicePaidPayloadSchema,
+  IotDeviceActivatedPayloadSchema,
+  IotDeviceStatusChangedPayloadSchema,
   IotKitOrderCancelledPayloadSchema,
   IotKitOrderPaidPayloadSchema,
   IotKitDevicesAutoAssignedPayloadSchema,
@@ -143,6 +145,8 @@ const EVENT_SCHEMAS: Partial<Record<RealtimeEventName, ZodSchema>> = {
   [RealtimeEvents.IotKitDevicesAutoAssigned]: IotKitDevicesAutoAssignedPayloadSchema,
   [RealtimeEvents.SubscriptionDevicesAutoAssigned]:
     SubscriptionDevicesAutoAssignedPayloadSchema,
+  [RealtimeEvents.IotDeviceActivated]: IotDeviceActivatedPayloadSchema,
+  [RealtimeEvents.IotDeviceStatusChanged]: IotDeviceStatusChangedPayloadSchema,
 };
 
 /** Những event muốn surface lên bell / toast. `TicketMessageCreated` không
@@ -239,6 +243,21 @@ function invalidateByEvent(
     case RealtimeEvents.MilestoneStartReminder:
       queryClient.invalidateQueries({ queryKey: ["production-milestones"] });
       return;
+    case RealtimeEvents.IotDeviceActivated:
+    case RealtimeEvents.IotDeviceStatusChanged:
+      // Refresh device list/detail + milestone IoT assignment (row hiển thị device.status).
+      // Owner + manager dùng key namespace riêng — invalidate cả 2, role mismatch no-op.
+      // IotDeviceActivated: ingest flip install/error → active.
+      // IotDeviceStatusChanged: cron flip active → error (sensor timeout) + các flow status khác.
+      queryClient.invalidateQueries({ queryKey: ["owner", "iot-devices"] });
+      queryClient.invalidateQueries({ queryKey: ["manager", "iot-devices"] });
+      queryClient.invalidateQueries({
+        queryKey: ["owner", "production-milestones"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["manager", "production-milestones"],
+      });
+      return;
     default:
       return;
   }
@@ -277,6 +296,47 @@ function handleEvent(
     const alertId = typeof payload.alertId === "string" ? payload.alertId : null;
     if (alertId) {
       void emitRichAlertToast(alertId, ctx.queryClient, ctx.openAlertDialog);
+    }
+  }
+
+  // Toast riêng cho IotDeviceActivated / IotDeviceStatusChanged — không vào bell
+  // (info-level, không phải alert). Format dynamic theo label + zoneName từ
+  // payload BE; fallback "Thiết bị IoT" nếu thiếu data (BE đảm bảo có nhưng
+  // schema để optional cho backward-compat).
+  if (
+    event === RealtimeEvents.IotDeviceActivated ||
+    event === RealtimeEvents.IotDeviceStatusChanged
+  ) {
+    const label =
+      typeof payload.deviceLabel === "string" && payload.deviceLabel.trim()
+        ? payload.deviceLabel.trim()
+        : typeof payload.deviceName === "string" && payload.deviceName.trim()
+          ? payload.deviceName.trim()
+          : null;
+    const zoneName =
+      typeof payload.zoneName === "string" && payload.zoneName.trim()
+        ? payload.zoneName.trim()
+        : null;
+
+    const subject = label ? `Bộ kit ${label}` : "Bộ kit IoT";
+    const location = zoneName ? ` tại khu vực ${zoneName}` : "";
+    const fromStatus = payload.fromStatus;
+    const toStatus = payload.toStatus;
+
+    if (event === RealtimeEvents.IotDeviceActivated) {
+      if (fromStatus === "error") {
+        toast.success(`${subject}${location} đã hoạt động trở lại`);
+      } else if (fromStatus === "install") {
+        toast.success(`${subject}${location} đã kết nối lần đầu`);
+      }
+    } else if (
+      event === RealtimeEvents.IotDeviceStatusChanged &&
+      fromStatus === "active" &&
+      toStatus === "error"
+    ) {
+      // Notification chi tiết "cần thay kit" đã đi qua NotificationCreated → bell;
+      // toast này chỉ để user biết badge vừa đổi mà không cần F5.
+      toast.error(`${subject}${location} đã gặp sự cố, vui lòng kiểm tra`);
     }
   }
 
@@ -331,6 +391,8 @@ export function useRealtimeEvents(): void {
       RealtimeEvents.TicketMessageCreated,
       RealtimeEvents.IotKitDevicesAutoAssigned,
       RealtimeEvents.SubscriptionDevicesAutoAssigned,
+      RealtimeEvents.IotDeviceActivated,
+      RealtimeEvents.IotDeviceStatusChanged,
     ];
 
     for (const event of allEvents) {

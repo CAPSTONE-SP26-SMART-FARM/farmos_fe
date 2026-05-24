@@ -18,6 +18,10 @@ import type {
   RecoveryBulkCompleteResType,
   RecoveryQueueQueryType,
   RecoveryQueueResType,
+  AttentionConfirmReturnedBodyType,
+  AttentionConfirmReturnedResType,
+  AttentionQueueQueryType,
+  AttentionQueueResType,
 } from "@/schemaValidatation/iotDeviceAdminOps";
 
 const EP = API_ENDPOINTS.ADMIN.IOT_DEVICE;
@@ -79,6 +83,19 @@ export const iotDeviceAdminOpsService = {
   installMarkBlocked: (body: InstallMarkBlockedBodyType) =>
     api.post<InstallMarkBlockedResType, InstallMarkBlockedBodyType>(
       EP.INSTALL_MARK_BLOCKED,
+      body,
+    ),
+
+  // A9 — Attention queue (E-C5 + E-D3)
+  getAttentionQueue: (query?: AttentionQueueQueryType) =>
+    api.get<AttentionQueueResType>(
+      `${EP.ATTENTION_QUEUE}?${queryString.stringify(query ?? {}, QS_OPTIONS)}`,
+    ),
+
+  // A9 — Confirm board swap-revoked đã thu hồi vật lý
+  attentionConfirmReturned: (body: AttentionConfirmReturnedBodyType) =>
+    api.post<AttentionConfirmReturnedResType, AttentionConfirmReturnedBodyType>(
+      EP.ATTENTION_CONFIRM_RETURNED,
       body,
     ),
 };

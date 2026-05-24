@@ -8,7 +8,6 @@ import {
   Clock,
   Info,
   MapPin,
-  Radio,
   Siren,
   Tractor,
   XCircle,
@@ -212,22 +211,6 @@ export default function AlertDetailDialog({
                 >
                   {meta.label}
                 </Badge>
-                {alert.isResolved ? (
-                  <Badge
-                    variant="outline"
-                    className="h-5 border-0 bg-emerald-50 px-1.5 text-[10px] text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                  >
-                    <CheckCircle2 className="h-2.5 w-2.5" />
-                    Đã xử lý
-                  </Badge>
-                ) : (
-                  <Badge
-                    variant="outline"
-                    className="h-5 border-0 bg-red-50 px-1.5 text-[10px] text-red-600 dark:bg-red-950/40 dark:text-red-400"
-                  >
-                    Đang mở
-                  </Badge>
-                )}
               </div>
               <DialogTitle className="mt-1.5 text-base leading-snug">
                 {alert.title}
@@ -264,29 +247,11 @@ export default function AlertDetailDialog({
                 </div>
               }
             />
-            <InfoRow
-              icon={Radio}
-              label="Loại cảnh báo"
-              value={
-                <span className="font-mono text-xs">{alert.alertType}</span>
-              }
-            />
             {resolvedAt && (
               <InfoRow
                 icon={CheckCircle2}
                 label="Đã xử lý"
                 value={format(resolvedAt, "dd/MM/yyyy HH:mm:ss")}
-              />
-            )}
-            {alert.sensorId && (
-              <InfoRow
-                icon={Radio}
-                label="Sensor ID"
-                value={
-                  <span className="font-mono text-xs break-all">
-                    {alert.sensorId}
-                  </span>
-                }
               />
             )}
           </div>

@@ -1,7 +1,15 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ChevronDown, ChevronLeft, ChevronRight, Cpu, Radio, Search } from "lucide-react";
+import {
+  AlertTriangle,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Cpu,
+  Radio,
+  Search,
+} from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,7 +39,10 @@ import {
   DEVICE_STATUS_VALUES,
   type DeviceStatusType,
 } from "@/schemaValidatation/milestoneIotDevice";
-import { DEVICE_STATUS_META, DeviceStatusBadge } from "./MilestoneAssignmentsList";
+import {
+  DEVICE_STATUS_META,
+  DeviceStatusBadge,
+} from "./MilestoneAssignmentsList";
 import {
   useManagerLatestSensorReadings,
   useMilestoneAssignmentsRealtime,
@@ -68,9 +79,11 @@ const ALERTS_PAGE_SIZE = 5;
 
 const ALERT_SEVERITY_COLORS: Record<string, string> = {
   low: "border-yellow-300 bg-yellow-50 dark:bg-yellow-950/20 text-yellow-800 dark:text-yellow-300",
-  medium: "border-orange-300 bg-orange-50 dark:bg-orange-950/20 text-orange-800 dark:text-orange-300",
+  medium:
+    "border-orange-300 bg-orange-50 dark:bg-orange-950/20 text-orange-800 dark:text-orange-300",
   high: "border-red-300 bg-red-50 dark:bg-red-950/20 text-red-800 dark:text-red-300",
-  critical: "border-red-500 bg-red-100 dark:bg-red-950/30 text-red-900 dark:text-red-200",
+  critical:
+    "border-red-500 bg-red-100 dark:bg-red-950/30 text-red-900 dark:text-red-200",
 };
 
 const ALERT_SEVERITY_LABEL: Record<string, string> = {
@@ -106,7 +119,8 @@ function useDeviceBySensorId(
       queryKey: ["manager", "production-milestones"],
     });
     for (const [key, res] of entries) {
-      if (!Array.isArray(key) || key[key.length - 1] !== "assignments") continue;
+      if (!Array.isArray(key) || key[key.length - 1] !== "assignments")
+        continue;
       const assignments = res?.data?.data ?? [];
       for (const a of assignments) {
         if (a.sensors.some((s) => s.sensorId === sensorId)) {
@@ -130,11 +144,16 @@ function AlertDetailDialog({
   const device = useDeviceBySensorId(alert?.sensorId ?? null);
   if (!alert) return null;
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+    >
       <DialogContent className="max-w-md">
         <DialogHeader>
           <div className="flex items-center gap-2 mb-1">
-            <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${ALERT_SEVERITY_DOT[alert.severity] ?? "bg-muted"}`} />
+            <span
+              className={`h-2.5 w-2.5 rounded-full shrink-0 ${ALERT_SEVERITY_DOT[alert.severity] ?? "bg-muted"}`}
+            />
             <Badge
               variant="outline"
               className={`text-xs ${ALERT_SEVERITY_COLORS[alert.severity] ?? ""}`}
@@ -142,33 +161,47 @@ function AlertDetailDialog({
               {ALERT_SEVERITY_LABEL[alert.severity]}
             </Badge>
           </div>
-          <DialogTitle className="text-base leading-snug">{alert.title}</DialogTitle>
+          <DialogTitle className="text-base leading-snug">
+            {alert.title}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 text-sm">
-          <p className="text-muted-foreground leading-relaxed">{alert.message}</p>
+          <p className="text-muted-foreground leading-relaxed">
+            {alert.message}
+          </p>
 
           <Separator />
 
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-lg border bg-muted/30 px-3 py-2.5">
               <p className="text-xs text-muted-foreground mb-1">Giá trị đo</p>
-              <p className="font-mono font-semibold text-base">{alert.actualValue ?? "—"}</p>
+              <p className="font-mono font-semibold text-base">
+                {alert.actualValue ?? "—"}
+              </p>
             </div>
             <div className="rounded-lg border bg-muted/30 px-3 py-2.5">
-              <p className="text-xs text-muted-foreground mb-1">Ngưỡng an toàn</p>
-              <p className="font-mono font-semibold text-base">{alert.thresholdValue ?? "—"}</p>
+              <p className="text-xs text-muted-foreground mb-1">
+                Ngưỡng an toàn
+              </p>
+              <p className="font-mono font-semibold text-base">
+                {alert.thresholdValue ?? "—"}
+              </p>
             </div>
           </div>
 
           <div className="space-y-2 text-xs text-muted-foreground">
             <div className="flex justify-between">
               <span>Khu vực</span>
-              <span className="font-medium text-foreground">{alert.zoneName}</span>
+              <span className="font-medium text-foreground">
+                {alert.zoneName}
+              </span>
             </div>
             <div className="flex justify-between">
               <span>Trang trại</span>
-              <span className="font-medium text-foreground">{alert.farmName}</span>
+              <span className="font-medium text-foreground">
+                {alert.farmName}
+              </span>
             </div>
             {device && (
               <div className="flex justify-between">
@@ -179,25 +212,17 @@ function AlertDetailDialog({
                 <span className="font-medium text-foreground">
                   {device.name}
                   {device.label && (
-                    <span className="ml-1 font-mono text-muted-foreground">({device.label})</span>
+                    <span className="ml-1 font-mono text-muted-foreground">
+                      ({device.label})
+                    </span>
                   )}
                 </span>
               </div>
             )}
             <div className="flex justify-between">
-              <span>Loại cảnh báo</span>
-              <span className="font-medium text-foreground">{alert.alertType}</span>
-            </div>
-            <div className="flex justify-between">
               <span>Thời điểm</span>
               <span className="font-medium text-foreground">
                 {new Date(alert.createdAt).toLocaleString("vi-VN")}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Trạng thái</span>
-              <span className={`font-medium ${alert.isResolved ? "text-green-600" : "text-destructive"}`}>
-                {alert.isResolved ? "Đã xử lý" : "Chưa xử lý"}
               </span>
             </div>
           </div>
@@ -207,12 +232,15 @@ function AlertDetailDialog({
   );
 }
 
-export function AlertsPanel({ isLoading }: { isLoading: boolean }) {
+export function AlertsPanel({ isLoading, zoneId }: { isLoading: boolean; zoneId: string }) {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<AlertResType | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const query = useListAlerts({ page, limit: ALERTS_PAGE_SIZE });
+  const query = useListAlerts(
+    { page, limit: ALERTS_PAGE_SIZE, zoneId },
+    !!zoneId,
+  );
   const raw = query.data?.data ?? [];
   const meta = query.data?.meta;
   const alerts = raw.filter((a) => !a.isResolved);
@@ -227,7 +255,12 @@ export function AlertsPanel({ isLoading }: { isLoading: boolean }) {
   if (isLoading || query.isLoading) {
     return (
       <div className="space-y-2">
-        {[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
+        {[1, 2, 3].map((i) => (
+          <Skeleton
+            key={i}
+            className="h-14 w-full rounded-lg"
+          />
+        ))}
       </div>
     );
   }
@@ -251,7 +284,9 @@ export function AlertsPanel({ isLoading }: { isLoading: boolean }) {
             onClick={() => handleClick(a)}
             className={`w-full text-left flex items-start gap-2.5 rounded-lg border px-3 py-2.5 text-xs transition-colors hover:brightness-95 cursor-pointer ${ALERT_SEVERITY_COLORS[a.severity] ?? ""}`}
           >
-            <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${ALERT_SEVERITY_DOT[a.severity] ?? "bg-muted"}`} />
+            <span
+              className={`mt-1 h-2 w-2 shrink-0 rounded-full ${ALERT_SEVERITY_DOT[a.severity] ?? "bg-muted"}`}
+            />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 mb-0.5">
                 <Badge
@@ -260,13 +295,17 @@ export function AlertsPanel({ isLoading }: { isLoading: boolean }) {
                 >
                   {ALERT_SEVERITY_LABEL[a.severity]}
                 </Badge>
-                <p className="font-semibold truncate leading-tight">{a.title}</p>
+                <p className="font-semibold truncate leading-tight">
+                  {a.title}
+                </p>
               </div>
               <p className="opacity-70 truncate">{a.message}</p>
             </div>
             <div className="shrink-0 text-right space-y-0.5">
               <p className="font-mono font-semibold">{a.actualValue ?? "—"}</p>
-              <p className="font-mono opacity-60 text-[10px]">/ {a.thresholdValue ?? "—"}</p>
+              <p className="font-mono opacity-60 text-[10px]">
+                / {a.thresholdValue ?? "—"}
+              </p>
             </div>
           </button>
         ))}
@@ -300,7 +339,11 @@ export function AlertsPanel({ isLoading }: { isLoading: boolean }) {
         </div>
       )}
 
-      <AlertDetailDialog alert={selected} open={dialogOpen} onOpenChange={setDialogOpen} />
+      <AlertDetailDialog
+        alert={selected}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+      />
     </>
   );
 }
@@ -318,7 +361,10 @@ function KitReadingsBody({
   backUrl?: string;
 }) {
   const navigate = useNavigate();
-  const readingsQuery = useManagerLatestSensorReadings(assignmentId, !!assignmentId);
+  const readingsQuery = useManagerLatestSensorReadings(
+    assignmentId,
+    !!assignmentId,
+  );
   const rawReadings = readingsQuery.data?.data ?? [];
   const readings = useMemo(() => {
     return [...rawReadings].sort((a, b) => {
@@ -332,9 +378,7 @@ function KitReadingsBody({
 
   function goToDetail(sensorId: string) {
     const base = `/dashboard/manager/sensor-readings/${assignmentId}/sensors/${sensorId}`;
-    const url = backUrl
-      ? `${base}?from=${encodeURIComponent(backUrl)}`
-      : base;
+    const url = backUrl ? `${base}?from=${encodeURIComponent(backUrl)}` : base;
     navigate(url);
   }
 
@@ -342,10 +386,17 @@ function KitReadingsBody({
     <div className="p-3">
       {readingsQuery.isLoading ? (
         <div className="grid grid-cols-2 gap-3">
-          {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-36" />)}
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton
+              key={i}
+              className="h-36"
+            />
+          ))}
         </div>
       ) : readings.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-4 text-center">Chưa có dữ liệu cảm biến</p>
+        <p className="text-sm text-muted-foreground py-4 text-center">
+          Chưa có dữ liệu cảm biến
+        </p>
       ) : (
         <div className="grid grid-cols-2 gap-3">
           {readings.map((r) => (
@@ -390,7 +441,10 @@ function KitReadingsSection({
   if (!showDeviceHeading || !device) {
     return (
       <div className="rounded-xl border-2 border-muted-foreground/20 bg-background shadow-sm overflow-hidden">
-        <KitReadingsBody assignmentId={assignmentId} backUrl={backUrl} />
+        <KitReadingsBody
+          assignmentId={assignmentId}
+          backUrl={backUrl}
+        />
       </div>
     );
   }
@@ -446,7 +500,10 @@ function KitReadingsSection({
             transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
             style={{ overflow: "hidden" }}
           >
-            <KitReadingsBody assignmentId={assignmentId} backUrl={backUrl} />
+            <KitReadingsBody
+              assignmentId={assignmentId}
+              backUrl={backUrl}
+            />
           </motion.div>
         )}
       </AnimatePresence>
@@ -496,8 +553,7 @@ export function MilestoneSensorSection({
     variant: "secondary" as const,
   };
 
-  const isFiltering =
-    !!debouncedSearch || statusFilter !== STATUS_FILTER_ALL;
+  const isFiltering = !!debouncedSearch || statusFilter !== STATUS_FILTER_ALL;
   const initialLoading = fullListQuery.isLoading && searchQuery.isLoading;
 
   if (!initialLoading && fullAssignments.length === 0) return null;
@@ -529,7 +585,10 @@ export function MilestoneSensorSection({
             {meta.label}
           </Badge>
           {hasMultipleKits && (
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 shrink-0">
+            <Badge
+              variant="outline"
+              className="text-[10px] px-1.5 py-0 h-4 shrink-0"
+            >
               {totalLabel} bộ kit
             </Badge>
           )}
@@ -547,16 +606,26 @@ export function MilestoneSensorSection({
             className="h-8 pl-7 text-xs"
           />
         </div>
-        <Select value={statusFilter} onValueChange={handleStatusChange}>
+        <Select
+          value={statusFilter}
+          onValueChange={handleStatusChange}
+        >
           <SelectTrigger className="h-8 w-40 text-xs">
             <SelectValue placeholder="Trạng thái" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={STATUS_FILTER_ALL} className="text-xs">
+            <SelectItem
+              value={STATUS_FILTER_ALL}
+              className="text-xs"
+            >
               Tất cả trạng thái
             </SelectItem>
             {DEVICE_STATUS_VALUES.map((s) => (
-              <SelectItem key={s} value={s} className="text-xs">
+              <SelectItem
+                key={s}
+                value={s}
+                className="text-xs"
+              >
                 {DEVICE_STATUS_META[s].label}
               </SelectItem>
             ))}
@@ -588,7 +657,8 @@ export function MilestoneSensorSection({
       {pageMeta && pageMeta.totalPages > 1 && (
         <div className="flex items-center justify-between gap-2">
           <span className="text-[11px] text-muted-foreground">
-            Trang {pageMeta.page}/{pageMeta.totalPages} · {pageMeta.totalItems} thiết bị
+            Trang {pageMeta.page}/{pageMeta.totalPages} · {pageMeta.totalItems}{" "}
+            thiết bị
           </span>
           <div className="flex items-center gap-1">
             <Button
@@ -616,13 +686,20 @@ export function MilestoneSensorSection({
   );
 }
 
-export function SensorOverviewTab({ cropSeason }: { cropSeason: CropSeasonType }) {
+export function SensorOverviewTab({
+  cropSeason,
+}: {
+  cropSeason: CropSeasonType;
+}) {
   // Subscribe zone-room ở cấp tab để badge install → active cập nhật ngay
   // dù user chưa mở dialog chi tiết bo mạch.
   useZoneSubscription(cropSeason.zoneId);
   useMilestoneAssignmentsRealtime("manager");
 
-  const listQuery = useManagerListProductionMilestones(cropSeason.id, { page: 1, limit: 50 });
+  const listQuery = useManagerListProductionMilestones(cropSeason.id, {
+    page: 1,
+    limit: 50,
+  });
   const milestones = (listQuery.data?.data.data ?? [])
     .filter((m) => m.status === "in_progress")
     .slice()
@@ -634,11 +711,21 @@ export function SensorOverviewTab({ cropSeason }: { cropSeason: CropSeasonType }
         <div className="flex-1 space-y-4">
           <Skeleton className="h-8 w-48" />
           <div className="grid grid-cols-2 gap-3">
-            {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-36" />)}
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton
+                key={i}
+                className="h-36"
+              />
+            ))}
           </div>
         </div>
         <div className="w-72 space-y-2">
-          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
+          {[1, 2, 3].map((i) => (
+            <Skeleton
+              key={i}
+              className="h-12 w-full"
+            />
+          ))}
         </div>
       </div>
     );
@@ -653,10 +740,17 @@ export function SensorOverviewTab({ cropSeason }: { cropSeason: CropSeasonType }
         {milestones.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center border rounded-md bg-muted/20">
             <Radio className="h-10 w-10 text-muted-foreground/30 mb-3" />
-            <p className="text-sm text-muted-foreground">Chưa có mốc công việc nào đang chạy</p>
+            <p className="text-sm text-muted-foreground">
+              Chưa có mốc công việc nào đang chạy
+            </p>
           </div>
         ) : (
-          milestones.map((m) => <MilestoneSensorSection key={m.id} milestone={m} />)
+          milestones.map((m) => (
+            <MilestoneSensorSection
+              key={m.id}
+              milestone={m}
+            />
+          ))
         )}
       </div>
       <div className="w-72 xl:w-80 shrink-0">
@@ -665,7 +759,10 @@ export function SensorOverviewTab({ cropSeason }: { cropSeason: CropSeasonType }
             <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
             <h4 className="text-sm font-semibold">Cảnh báo</h4>
           </div>
-          <AlertsPanel isLoading={listQuery.isLoading} />
+          <AlertsPanel
+            isLoading={listQuery.isLoading}
+            zoneId={cropSeason.zoneId}
+          />
         </div>
       </div>
     </div>

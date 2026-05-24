@@ -16,6 +16,7 @@ import AdminIotDashboardPage from "@/pages/AdminPage/IotDevices/AdminIotDashboar
 import AdminIotDeviceDecisionPage from "@/pages/AdminPage/IotDevices/AdminIotDeviceDecisionPage";
 import AdminIotInstallQueuePage from "@/pages/AdminPage/IotDevices/AdminIotInstallQueuePage";
 import AdminIotRecoveryQueuePage from "@/pages/AdminPage/IotDevices/AdminIotRecoveryQueuePage";
+import AdminIotAttentionQueuePage from "@/pages/AdminPage/IotDevices/AdminIotAttentionQueuePage";
 import AdminIotDeviceTimelinePage from "@/pages/AdminPage/IotDevices/AdminIotDeviceTimelinePage";
 import AdminOwnerIotOverviewPage from "@/pages/AdminPage/Users/AdminOwnerIotOverviewPage";
 import AdminCreateIotDevicesPage from "@/pages/AdminPage/IotDevices/AdminCreateIotDevicesPage";
@@ -205,6 +206,11 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/admin/iot-devices/recovery-queue",
         component: AdminIotRecoveryQueuePage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/iot-devices/attention-queue",
+        component: AdminIotAttentionQueuePage,
         allowedRoles: [RoleName.Admin],
       },
       {
