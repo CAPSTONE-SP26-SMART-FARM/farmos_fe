@@ -97,6 +97,9 @@ export const useCompleteCropSeason = (id: string) => {
       await qc.refetchQueries({
         queryKey: ["crop-seasons", "zone", data.data.zoneId],
       });
+      // Hoàn thành season → zone landing card (currentCropSeason) cần refresh
+      // để hiển thị trạng thái mới / cho phép tạo vụ mới.
+      await qc.invalidateQueries({ queryKey: ["manager", "zones"] });
       toast.success("Đã hoàn thành mùa vụ!");
     },
     onError: (error) => onMutationError(error, "Hoàn thành mùa vụ thất bại"),

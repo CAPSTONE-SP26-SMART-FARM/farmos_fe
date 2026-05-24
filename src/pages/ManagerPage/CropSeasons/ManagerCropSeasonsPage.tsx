@@ -3,11 +3,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   ArrowLeft,
   BarChart3,
@@ -339,7 +339,10 @@ export default function ManagerCropSeasonsPage() {
                 footer={
                   <>
                     {nowSeason.status === ProductionStatusName.Active ? (
-                      <CompleteCropSeasonButton season={nowSeason} />
+                      <CompleteCropSeasonButton
+                        season={nowSeason}
+                        onOpenHarvest={() => setHarvestOpen(true)}
+                      />
                     ) : (
                       <UpdateCropSeasonDialog season={nowSeason} />
                     )}
@@ -477,22 +480,26 @@ export default function ManagerCropSeasonsPage() {
         )}
       </div>
 
-      {/* ── Harvest sheet ──────────────────────────────────────────────── */}
-      <Sheet open={harvestOpen} onOpenChange={setHarvestOpen}>
-        <SheetContent
-          side="right"
-          className="w-full sm:max-w-4xl overflow-y-auto"
+      {/* ── Harvest dialog (outer) ────────────────────────────────────────
+          Form dialog (inner) nằm trong HarvestRecordTab. Radix tự stack
+          via portal, ESC + click-outside chỉ đóng dialog top-most. */}
+      <Dialog open={harvestOpen} onOpenChange={setHarvestOpen}>
+        <DialogContent
+          showCloseButton
+          className="max-w-6xl! w-[95vw] max-h-[92vh] overflow-y-auto sm:max-w-6xl!"
         >
-          <SheetHeader>
-            <SheetTitle>Thu hoạch · {nowSeason?.cropName ?? "Vụ mùa"}</SheetTitle>
-          </SheetHeader>
+          <DialogHeader>
+            <DialogTitle>
+              Thu hoạch · {nowSeason?.cropName ?? "Vụ mùa"}
+            </DialogTitle>
+          </DialogHeader>
           {nowSeason && (
-            <div className="mt-4">
+            <div className="mt-2">
               <HarvestRecordTab cropSeason={nowSeason} />
             </div>
           )}
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={confirmReplacePlan}

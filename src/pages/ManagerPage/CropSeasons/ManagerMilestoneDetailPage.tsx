@@ -342,23 +342,14 @@ function formatPickerDate(value: string | null | undefined) {
 // Step definitions
 // ============================================================
 
-// Wizard mốc bỏ bước "Cấu hình theo dõi" (2026-05-09): cấu hình tracking là
-// thuộc tính của TOÀN VỤ MÙA (BE PUT theo `cropSeasonId`), không phải từng
-// mốc — đặt ở đây gây hiểu lầm. Tracking config giờ hiển thị ở tab cùng tên
-// trong Manager crop-seasons page (season level).
-//
-// Step 0 "Cấu hình IoT" thêm 2026-05-09: BẮT BUỘC save iotConfig (sampling +
-// sensorTypes) trước khi qua các bước sau. BE GET trả `isConfigured` để FE
-// biết milestone đã configured hay chưa (tránh nhầm lẫn DEFAULT fallback với
-// user-saved). Khi chưa configured → step 1-3 đều locked.
+// Wizard 3 bước (refactor 2026-05-24): gộp "Cấu hình IoT" + "Thiết bị IoT"
+// vào cùng 1 step. readingIntervalSeconds bị ẩn UI và hardcode = 10s phía FE.
+// User có thể bỏ qua toàn bộ IoT (không gán device, không lưu config) → nhảy
+// thẳng sang Step 3 (Nhiệm vụ).
 const STEP_DEFS: StepDefinition[] = [
   {
     label: "Cấu hình IoT",
-    description: "Chu kỳ lưu số đo và loại chỉ báo cần có",
-  },
-  {
-    label: "Thiết bị IoT",
-    description: "Gán thêm hoặc huỷ gán thiết bị",
+    description: "Gán thiết bị và chọn loại chỉ báo cần theo dõi",
   },
   {
     label: "Cảm biến",
@@ -369,6 +360,8 @@ const STEP_DEFS: StepDefinition[] = [
     description: "Tạo nhiệm vụ và phân công",
   },
 ];
+
+const FIXED_IOT_READING_INTERVAL_SECONDS = 10;
 
 // ============================================================
 // Edit Form
@@ -721,22 +714,18 @@ const MilestoneEditDialog = ({
 // Step 0 — IoT Config (tần suất đo + loại dữ liệu)
 // ============================================================
 
-const IOT_SAMPLING_PRESETS_SECONDS = [
-  { sec: 60, label: "1 phút" },
-  { sec: 300, label: "5 phút" },
-  { sec: 600, label: "10 phút" },
-  { sec: 1800, label: "30 phút" },
-] as const;
-
 const IotConfigSection = ({
   cropSeasonId,
   milestoneId,
   isPlanning,
+  hasDevice,
 }: {
   cropSeasonId: string;
   milestoneId: string;
   /** Sau giai đoạn lập kế hoạch thì khóa không cho đổi danh sách loại đo. */
   isPlanning: boolean;
+  /** Đã có ít nhất 1 device gán vào mốc — hiển thị hint giải thích rebind. */
+  hasDevice: boolean;
 }) => {
   const configQuery = useManagerIotConfig(cropSeasonId, milestoneId);
   const config = configQuery.data?.data;
@@ -744,152 +733,48 @@ const IotConfigSection = ({
 
   const updateMutation = useManagerUpdateIotConfig(cropSeasonId, milestoneId);
 
-  const [form, setForm] = useState<IotConfigPutBodyType>({
-    readingIntervalSeconds: 300,
-    sensorTypes: [...IOT_CONFIG_ALLOWED_SENSOR_TYPES],
-  });
+  // readingIntervalSeconds bị ẩn UI và hardcode = 10s khi PUT.
+  // Field còn lại user chỉnh là sensorTypes.
+  const [sensorTypes, setSensorTypes] = useState<IotConfigSensorType[]>([
+    ...IOT_CONFIG_ALLOWED_SENSOR_TYPES,
+  ]);
 
   useEffect(() => {
-    if (config) {
-      setForm({
-        readingIntervalSeconds: config.readingIntervalSeconds,
-        sensorTypes: [...config.sensorTypes],
-      });
-    }
+    if (config) setSensorTypes([...config.sensorTypes]);
   }, [config]);
 
-  const r = form.readingIntervalSeconds;
-  const intervalRangeInvalid =
-    !Number.isFinite(r) || Number.isNaN(r) || r < 10 || r > 3600;
-  const intervalFeasibilityInvalid =
-    Number.isFinite(r) && !Number.isNaN(r) && Math.ceil(r * 1.5) > 3600;
-  const intervalInvalid = intervalRangeInvalid || intervalFeasibilityInvalid;
-  const noSensorSelected = form.sensorTypes.length === 0;
+  const noSensorSelected = sensorTypes.length === 0;
 
   const handleSubmit = () => {
-    if (intervalRangeInvalid) {
-      toast.error("Chu kỳ lưu phải từ 10 đến 3600 giây.");
-      return;
-    }
-    if (intervalFeasibilityInvalid) {
-      toast.error(
-        "Chu kỳ này vượt quá mức hệ thống cho phép. Hãy chọn một khoảng ngắn hơn rồi thử lại.",
-      );
-      return;
-    }
     if (noSensorSelected) {
       toast.error("Chọn ít nhất một loại chỉ báo cần theo dõi.");
       return;
     }
-    updateMutation.mutate(form);
+    const body: IotConfigPutBodyType = {
+      readingIntervalSeconds: FIXED_IOT_READING_INTERVAL_SECONDS,
+      sensorTypes,
+    };
+    updateMutation.mutate(body);
   };
 
   const toggleSensor = (t: IotConfigSensorType, checked: boolean) => {
-    setForm((prev) => ({
-      ...prev,
-      sensorTypes: checked
-        ? prev.sensorTypes.includes(t)
-          ? prev.sensorTypes
-          : [...prev.sensorTypes, t]
-        : prev.sensorTypes.filter((x) => x !== t),
-    }));
+    setSensorTypes((prev) =>
+      checked
+        ? prev.includes(t)
+          ? prev
+          : [...prev, t]
+        : prev.filter((x) => x !== t),
+    );
   };
 
   if (configQuery.isLoading) {
     return <Skeleton className="h-56 w-full" />;
   }
 
-  const saveBlocked =
-    updateMutation.isPending || intervalInvalid || noSensorSelected;
+  const saveBlocked = updateMutation.isPending || noSensorSelected;
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden">
-        <div className="border-b bg-muted/30 px-4 py-3">
-          <p className="text-sm font-semibold tracking-tight">
-            Chu kỳ lưu số đo
-          </p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Thiết bị cứ đến hạn thì đẩy số đo lên; hệ thống ghép vào nhật ký của
-            mốc để báo cáo.
-          </p>
-        </div>
-        <div className="p-4 space-y-4">
-          <div className="space-y-3">
-            <div>
-              <span className="text-sm font-medium">
-                Chu kỳ giữa hai lần lưu liên tiếp
-              </span>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Chu kỳ càng ngắn, biểu đồ và dữ liệu càng chi tiết, chi phí lưu
-                trữ càng cao. Thường dùng{" "}
-                <span className="font-medium text-foreground">
-                  khoảng 5 hay 10 phút
-                </span>
-                .
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {IOT_SAMPLING_PRESETS_SECONDS.map(({ sec, label }) => (
-                <Button
-                  key={sec}
-                  type="button"
-                  size="sm"
-                  variant={
-                    form.readingIntervalSeconds === sec ? "default" : "outline"
-                  }
-                  className="rounded-full"
-                  onClick={() =>
-                    setForm((p) => ({ ...p, readingIntervalSeconds: sec }))
-                  }
-                >
-                  {label}
-                  <span className="opacity-75 font-normal px-1 tabular-nums">
-                    · {sec} giây
-                  </span>
-                </Button>
-              ))}
-            </div>
-            <div>
-              <label
-                htmlFor="iot-reading-interval-custom"
-                className="text-xs font-medium text-muted-foreground block mb-1.5"
-              >
-                Tự nhập (đơn vị giây, tối thiểu 10 — tối đa 3600)
-              </label>
-              <Input
-                id="iot-reading-interval-custom"
-                inputMode="numeric"
-                type="number"
-                className={cn(
-                  "max-w-[200px]",
-                  intervalInvalid && "border-destructive",
-                )}
-                min={10}
-                max={3600}
-                value={Number.isFinite(form.readingIntervalSeconds) ? form.readingIntervalSeconds : ""}
-                onChange={(e) =>
-                  setForm((p) => ({
-                    ...p,
-                    readingIntervalSeconds: Number(e.target.value),
-                  }))
-                }
-              />
-              <p className={cn(
-                "text-xs mt-1.5 leading-relaxed",
-                intervalInvalid ? "text-destructive font-medium" : "text-muted-foreground",
-              )}>
-                {intervalRangeInvalid
-                  ? "Nhập một số từ 10 đến 3600 giây."
-                  : intervalFeasibilityInvalid
-                    ? "Chu kỳ đang cao quá khung hiện tại của hệ thống. Vui lòng nhập giá trị nhỏ hơn."
-                    : "Hệ thống dựa trên chu kỳ này để dự báo nguy cơ mất liên kết — bạn không cần chỉnh thêm ở mục khác."}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div className="space-y-3">
         <div>
           <span className="text-sm font-medium">
@@ -908,7 +793,7 @@ const IotConfigSection = ({
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-xl">
           {IOT_CONFIG_ALLOWED_SENSOR_TYPES.map((t) => {
-            const checked = form.sensorTypes.includes(t);
+            const checked = sensorTypes.includes(t);
             const SIcon = SENSOR_TYPE_ICON[t];
             return (
               <label
@@ -939,18 +824,24 @@ const IotConfigSection = ({
             gán thiết bị.
           </p>
         )}
+        {hasDevice && (
+          <p className="text-xs text-muted-foreground italic">
+            Thay đổi loại chỉ báo chỉ áp dụng cho thiết bị gán sau khi lưu. Thiết
+            bị đã gán giữ nguyên cảm biến hiện có.
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 border-t">
         {isConfigured ? (
           <p className="text-xs text-emerald-600 flex items-center gap-1.5">
             <Check className="h-3.5 w-3.5 shrink-0" />
-            Đã lưu. Có thể sang bước gán thiết bị hoặc xem cảm biến.
+            Đã lưu loại chỉ báo theo dõi cho mốc.
           </p>
         ) : (
           <p className="text-xs text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-            Nhớ bấm lưu để kích hoạt các bước tiếp theo.
+            Lưu loại chỉ báo để hệ thống biết cần nối những cảm biến nào.
           </p>
         )}
         <Button
@@ -1844,7 +1735,9 @@ const ManagerMilestoneDetailPage = () => {
   const zoneId = searchParams.get("zoneId")?.trim() ?? "";
 
   useEffect(() => {
-    if (currentStep !== 3) return;
+    // Step 2 = Nhiệm vụ & Nông dân (last step). Khi vào step này thì invalidate
+    // employee tasks query để refresh danh sách.
+    if (currentStep !== 2) return;
     if (!msId) return;
     invalidateManagerEmployeeTasksQueriesForMilestone(qc, msId);
   }, [currentStep, msId, qc]);
@@ -1852,9 +1745,9 @@ const ManagerMilestoneDetailPage = () => {
   const cropSeasonsUrl = zoneId
     ? `/dashboard/manager/crop-seasons?zoneId=${encodeURIComponent(zoneId)}`
     : "/dashboard/manager/crop-seasons";
-  const backTarget = zoneId
-    ? `/dashboard/manager/crop-seasons/${csId}/milestones?zoneId=${encodeURIComponent(zoneId)}`
-    : `/dashboard/manager/crop-seasons/${csId}/milestones`;
+  // Quay lại từ wizard cấu hình → về thẳng trang danh sách mùa vụ của zone
+  // (entry point của flow planning), không quay về trang "/milestones" trung gian.
+  const backTarget = cropSeasonsUrl;
 
   // Queries
   const cropSeasonQuery = useManagerCropSeasonDetail(csId);
@@ -1967,12 +1860,12 @@ const ManagerMilestoneDetailPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [csId, msId]);
 
-  // Derive step statuses (wizard 4 bước) — tích completed theo DỮ LIỆU thực tế
-  // từ 4 API tương ứng, không phụ thuộc currentStep:
-  //  0 = Cấu hình IoT          → isIotConfigured
-  //  1 = Gán thiết bị IoT      → hasDevice
-  //  2 = Cảm biến + ngưỡng     → hasMilestoneThreshold (cần hasDevice)
-  //  3 = Nhiệm vụ + nông dân   → hasTasks && allTasksAssigned
+  // Derive step statuses (wizard 3 bước) — tích completed theo DỮ LIỆU thực tế
+  // từ các API tương ứng, không phụ thuộc currentStep:
+  //  0 = Cấu hình IoT (gồm device + sensorTypes) → isIotConfigured && hasDevice
+  //  1 = Cảm biến + ngưỡng                       → hasMilestoneThreshold (cần hasDevice)
+  //  2 = Nhiệm vụ + nông dân                     → hasTasks && allTasksAssigned
+  // Step 2 (Nhiệm vụ) KHÔNG lock — user có quyền bỏ qua hoàn toàn IoT.
   const stepStatuses: StepStatus[] = (() => {
     const compute = (
       index: number,
@@ -1986,10 +1879,9 @@ const ManagerMilestoneDetailPage = () => {
     };
 
     return [
-      compute(0, isIotConfigured),
-      compute(1, hasDevice, !isIotConfigured),
-      compute(2, hasMilestoneThreshold, !isIotConfigured || !hasDevice),
-      compute(3, canCompleteMilestoneSetup, !isIotConfigured),
+      compute(0, isIotConfigured && hasDevice),
+      compute(1, hasMilestoneThreshold, !hasDevice),
+      compute(2, canCompleteMilestoneSetup),
     ];
   })();
 
@@ -1998,9 +1890,11 @@ const ManagerMilestoneDetailPage = () => {
     setCurrentStep(index);
   };
 
-  const handleSkipIotStep = () => {
+  // Bỏ qua hoàn toàn IoT: nhảy thẳng Step 2 (Nhiệm vụ). Không gọi API gì cả.
+  // Chỉ cho phép khi chưa gán device — đã gán thì user nên unassign trước.
+  const handleSkipIotEntirely = () => {
     if (hasDevice) return;
-    handleStepClick(3);
+    setCurrentStep(2);
   };
 
   const handleFinish = () => {
@@ -2233,33 +2127,31 @@ const ManagerMilestoneDetailPage = () => {
               </CardTitle>
               <CardDescription>
                 {currentStep === 0 &&
-                  "Bước bắt buộc: thiết lập chu kỳ lưu số đo và chọn chỉ báo cần theo dõi. Lưu xong các bước sau mới được mở."}
+                  "Gán thiết bị IoT cho mốc và chọn loại chỉ báo cần theo dõi. Có thể bỏ qua hoàn toàn nếu mốc này không dùng IoT."}
                 {currentStep === 1 &&
-                  "Tuỳ chọn: gán một hoặc nhiều thiết bị. Hệ thống tự ghép chỉ báo đúng theo cấu hình đã lưu ở trên."}
+                  "Các chỉ báo đã nối theo board. Nhập khoảng nhỏ nhất – lớn nhất mong muốn rồi lưu; muốn thêm bớt loại chỉ báo phải quay lại bước Cấu hình IoT."}
                 {currentStep === 2 &&
-                  "Các chỉ báo đã nối theo board. Nhập khoảng nhỏ nhất – lớn nhất mong muốn rồi lưu; muốn thêm bớt loại chỉ báo phải quay lại cấu hình IoT."}
-                {currentStep === 3 &&
                   "Soạn nhiệm vụ và giao việc cho nông dân trong mốc."}
               </CardDescription>
-              {currentStep === 0 && !isIotConfigured && (
+              {currentStep === 0 && hasDevice && !isIotConfigured && (
                 <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
                   <AlertTriangle className="h-3 w-3" />
-                  Chưa lưu phần cấu hình IoT — bước gán thiết bị sẽ bị khóa.
+                  Đã có thiết bị nhưng chưa lưu loại chỉ báo — nhớ bấm lưu cấu hình.
                 </p>
               )}
-              {currentStep === 3 && !hasTasks && (
+              {currentStep === 2 && !hasTasks && (
                 <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
                   <AlertTriangle className="h-3 w-3" />
                   Ít nhất cần một nhiệm vụ trong mốc trước khi kết thúc bước này.
                 </p>
               )}
-              {currentStep === 3 && hasTasks && !allTasksAssigned && (
+              {currentStep === 2 && hasTasks && !allTasksAssigned && (
                 <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
                   <AlertTriangle className="h-3 w-3" />
                   Phải chỉ định đủ người làm cho tất cả nhiệm vụ trước khi hoàn thành.
                 </p>
               )}
-              {currentStep === 3 && canCompleteMilestoneSetup && (
+              {currentStep === 2 && canCompleteMilestoneSetup && (
                 <p className="text-xs text-emerald-600 mt-1 flex items-center gap-1">
                   <Check className="h-3 w-3" />
                   Đã hoàn thành các bước cấu hình cần có cho mốc.
@@ -2267,13 +2159,14 @@ const ManagerMilestoneDetailPage = () => {
               )}
             </div>
             <div className="flex gap-2">
-              {currentStep === 1 && !hasDevice && canEditMilestone && (
+              {currentStep === 0 && !hasDevice && canEditMilestone && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={handleSkipIotStep}
+                  onClick={handleSkipIotEntirely}
                 >
-                  Bỏ qua bước gán thiết bị
+                  Bỏ qua bước IoT
+                  <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               )}
               {currentStep > 0 && (
@@ -2282,11 +2175,9 @@ const ManagerMilestoneDetailPage = () => {
                   size="sm"
                   onClick={() =>
                     handleStepClick(
-                      currentStep === 3 && !hasDevice
-                        ? 1
-                        : currentStep === 2 && !hasDevice
-                          ? 1
-                          : currentStep - 1,
+                      // Khi user đang ở Step 2 (Nhiệm vụ) mà chưa gán device,
+                      // Step 1 (Cảm biến) đang locked → lùi thẳng về Step 0.
+                      currentStep === 2 && !hasDevice ? 0 : currentStep - 1,
                     )
                   }
                 >
@@ -2294,7 +2185,7 @@ const ManagerMilestoneDetailPage = () => {
                   Bước trước
                 </Button>
               )}
-              {currentStep < 3 && (
+              {currentStep < 2 && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -2305,7 +2196,7 @@ const ManagerMilestoneDetailPage = () => {
                   <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               )}
-              {currentStep === 3 && (
+              {currentStep === 2 && (
                 <Button
                   size="sm"
                   disabled={
@@ -2322,27 +2213,28 @@ const ManagerMilestoneDetailPage = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {/* Step 0: IoT Config (BẮT BUỘC) */}
+          {/* Step 0: IoT — gán device (trên) + chọn loại chỉ báo (dưới) */}
           {currentStep === 0 && (
-            <IotConfigSection
-              cropSeasonId={csId}
-              milestoneId={msId}
-              isPlanning={isPlanningCropSeason}
-            />
+            <div className="space-y-6">
+              <IotBulkAssignSection milestoneId={msId} />
+              <div className="border-t pt-6">
+                <IotConfigSection
+                  cropSeasonId={csId}
+                  milestoneId={msId}
+                  isPlanning={isPlanningCropSeason}
+                  hasDevice={hasDevice}
+                />
+              </div>
+            </div>
           )}
 
-          {/* Step 1: IoT Device — bulk assign */}
+          {/* Step 1: Cảm biến — ngưỡng theo khu vực, lưu đồng loạt */}
           {currentStep === 1 && (
-            <IotBulkAssignSection milestoneId={msId} />
-          )}
-
-          {/* Step 2: Cảm biến — ngưỡng theo khu vực, lưu đồng loạt */}
-          {currentStep === 2 && (
             <MilestoneSensorThresholdStepSection milestoneId={msId} />
           )}
 
-          {/* Step 3: Tasks & Farmer Assignment (final step) */}
-          {currentStep === 3 && (
+          {/* Step 2: Tasks & Farmer Assignment (final step) */}
+          {currentStep === 2 && (
             <TasksAndAssignmentStep
               milestoneId={msId}
               canEdit={canEditMilestone}

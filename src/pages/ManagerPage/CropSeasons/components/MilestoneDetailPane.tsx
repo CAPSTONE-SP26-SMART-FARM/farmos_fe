@@ -16,6 +16,7 @@ import { MilestoneIotConfigSummary } from "./MilestoneIotConfigSummary";
 import type { ProductionMilestoneResType } from "@/schemaValidatation/productionMilestone";
 import type { CropSeasonType } from "@/types/cropSeason";
 import ManagerMilestoneTasksSection from "@/pages/ManagerPage/EmployeeTasks/ManagerMilestoneTasksSection";
+import { cn } from "@/lib/utils";
 import { MILESTONE_STATUS_META, formatDate } from "./helpers";
 
 // ─────────────────────────────────────────────────────────────
@@ -75,7 +76,10 @@ function MilestoneInfoTab({
         </div>
         <div className="rounded-md border bg-muted/30 px-3 py-2.5 space-y-0.5">
           <p className="text-xs text-muted-foreground">Trạng thái</p>
-          <Badge variant={meta.variant} className="text-xs">
+          <Badge
+            variant={meta.variant}
+            className={cn("text-xs", meta.className)}
+          >
             {meta.label}
           </Badge>
         </div>
@@ -231,7 +235,10 @@ export function MilestoneDetailPane({
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs font-mono text-muted-foreground">#{milestone.milestoneOrder}</span>
           <h3 className="font-semibold text-base">{milestone.stageName}</h3>
-          <Badge variant={meta.variant} className="text-xs">
+          <Badge
+            variant={meta.variant}
+            className={cn("text-xs", meta.className)}
+          >
             {meta.label}
           </Badge>
         </div>

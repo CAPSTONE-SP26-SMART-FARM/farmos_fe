@@ -3,12 +3,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { DataTable } from "@/components/common/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import DatePickerField from "@/components/common/DatePickerField";
@@ -64,7 +64,9 @@ export default function HarvestRecordTab({ cropSeason, readOnly = false }: Props
   const [fromInput, setFromInput] = useState("");
   const [toInput, setToInput] = useState("");
 
-  const [sheetOpen, setSheetOpen] = useState(false);
+  // Form dialog (inner). State độc lập với harvest dialog (outer) — không
+  // touch outer state từ đây, đóng form chỉ reset form state.
+  const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<HarvestRecordResType | null>(
     null,
   );
@@ -100,12 +102,17 @@ export default function HarvestRecordTab({ cropSeason, readOnly = false }: Props
 
   const handleOpenCreate = () => {
     setEditTarget(null);
-    setSheetOpen(true);
+    setFormOpen(true);
   };
 
   const handleOpenEdit = (record: HarvestRecordResType) => {
     setEditTarget(record);
-    setSheetOpen(true);
+    setFormOpen(true);
+  };
+
+  const handleCloseForm = () => {
+    setFormOpen(false);
+    setEditTarget(null);
   };
 
   const handleConfirmDelete = async () => {
@@ -322,45 +329,40 @@ export default function HarvestRecordTab({ cropSeason, readOnly = false }: Props
         </div>
       )}
 
-      {/* Form Sheet — create / edit */}
-      <Sheet
-        open={sheetOpen}
+      {/* Form Dialog (inner) — create / edit. Radix tự stack lên trên dialog
+          chứa tab này; ESC + click overlay chỉ đóng dialog top-most. */}
+      <Dialog
+        open={formOpen}
         onOpenChange={(open) => {
-          setSheetOpen(open);
-          if (!open) setEditTarget(null);
+          if (!open) handleCloseForm();
+          else setFormOpen(true);
         }}
       >
-        <SheetContent
-          className="sm:max-w-lg p-0 flex flex-col"
+        <DialogContent
+          className="max-w-lg! sm:max-w-lg! p-0 flex flex-col max-h-[85vh]"
           showCloseButton
         >
-          <SheetHeader className="px-6 pt-6 pb-2">
-            <SheetTitle>
+          <DialogHeader className="px-6 pt-6 pb-2">
+            <DialogTitle>
               {editTarget ? "Chỉnh sửa bản ghi" : "Tạo bản ghi thu hoạch"}
-            </SheetTitle>
-            <SheetDescription>
+            </DialogTitle>
+            <DialogDescription>
               Ghi nhận sản lượng và chất lượng cho mùa vụ {cropSeason.cropName}.
-            </SheetDescription>
-          </SheetHeader>
-          {sheetOpen && (
+            </DialogDescription>
+          </DialogHeader>
+          {formOpen && (
             <HarvestRecordFormSheet
               key={editTarget?.id ?? "create"}
               mode={editTarget ? "edit" : "create"}
               zoneId={zoneId}
               cropSeasonId={cropSeasonId}
               initialData={editTarget}
-              onSuccess={() => {
-                setSheetOpen(false);
-                setEditTarget(null);
-              }}
-              onCancel={() => {
-                setSheetOpen(false);
-                setEditTarget(null);
-              }}
+              onSuccess={handleCloseForm}
+              onCancel={handleCloseForm}
             />
           )}
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete confirm */}
       <ConfirmDialog

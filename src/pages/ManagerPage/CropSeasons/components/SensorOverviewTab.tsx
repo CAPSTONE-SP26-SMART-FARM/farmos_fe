@@ -47,6 +47,7 @@ import type {
   MilestoneAssignmentDetailResType,
 } from "@/schemaValidatation/milestoneIotDevice";
 import type { CropSeasonType } from "@/types/cropSeason";
+import { cn } from "@/lib/utils";
 import { MILESTONE_STATUS_META } from "./helpers";
 import IotCoverageWidget from "@/components/common/IotCoverageWidget";
 
@@ -521,7 +522,12 @@ export function MilestoneSensorSection({
             #{milestone.milestoneOrder}
           </span>
           <p className="font-semibold truncate">{milestone.stageName}</p>
-          <Badge variant={meta.variant} className="text-xs shrink-0">{meta.label}</Badge>
+          <Badge
+            variant={meta.variant}
+            className={cn("text-xs shrink-0", meta.className)}
+          >
+            {meta.label}
+          </Badge>
           {hasMultipleKits && (
             <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 shrink-0">
               {totalLabel} bộ kit

@@ -96,7 +96,14 @@ export function OwnerMilestonesWithDetailTab({
                 </div>
                 <Badge
                   variant={isActive ? "outline" : meta.variant}
-                  className={`text-[10px] ${isActive ? "border-primary-foreground/40 text-primary-foreground/80" : ""}`}
+                  className={cn(
+                    "text-[10px]",
+                    // Khi card đang được chọn dùng style highlight riêng,
+                    // bỏ qua màu trạng thái để khỏi xung đột text color.
+                    isActive
+                      ? "border-primary-foreground/40 text-primary-foreground/80"
+                      : meta.className,
+                  )}
                 >
                   {meta.label}
                 </Badge>

@@ -183,7 +183,12 @@ export default function ManagerMilestoneViewPage() {
               <h1 className="text-xl font-bold leading-tight">
                 #{milestone.milestoneOrder} {milestone.stageName}
               </h1>
-              <Badge variant={statusMeta.variant}>{statusMeta.label}</Badge>
+              <Badge
+                variant={statusMeta.variant}
+                className={statusMeta.className}
+              >
+                {statusMeta.label}
+              </Badge>
             </div>
             <div className="mt-1 text-xs text-muted-foreground flex items-center gap-1.5">
               <CalendarDays className="h-3 w-3" />

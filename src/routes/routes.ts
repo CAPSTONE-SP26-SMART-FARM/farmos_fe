@@ -57,7 +57,6 @@ import DoctorGuideHelpPage from "@/pages/Help/DoctorGuideHelpPage";
 import LoginPage from "@/pages/LoginPage/LoginPage";
 import ManagerPage from "@/pages/ManagerPage/ManagerPage";
 import ManagerCropSeasonsPage from "@/pages/ManagerPage/CropSeasons/ManagerCropSeasonsPage";
-import ManagerMilestonesPage from "@/pages/ManagerPage/CropSeasons/ManagerMilestonesPage";
 import ManagerMilestoneDetailPage from "@/pages/ManagerPage/CropSeasons/ManagerMilestoneDetailPage";
 import ManagerMilestoneViewPage from "@/pages/ManagerPage/CropSeasons/ManagerMilestoneViewPage";
 import ManagerMilestoneOverviewPage from "@/pages/ManagerPage/CropSeasons/ManagerMilestoneOverviewPage";
@@ -565,11 +564,6 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/manager/milestones",
         component: ManagerProductionMilestonesPage,
-        allowedRoles: [RoleName.Manager],
-      },
-      {
-        path: "/dashboard/manager/crop-seasons/:cropSeasonId/milestones",
-        component: ManagerMilestonesPage,
         allowedRoles: [RoleName.Manager],
       },
       {

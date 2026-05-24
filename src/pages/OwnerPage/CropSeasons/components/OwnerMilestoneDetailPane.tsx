@@ -10,6 +10,7 @@ import {
   formatDate,
 } from "@/pages/ManagerPage/CropSeasons/components/helpers";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 /**
  * Owner-side variant of MilestoneDetailPane.
@@ -88,7 +89,10 @@ export function OwnerMilestoneDetailPane({
             #{milestone.milestoneOrder}
           </span>
           <h3 className="font-semibold text-base">{milestone.stageName}</h3>
-          <Badge variant={meta.variant} className="text-xs">
+          <Badge
+            variant={meta.variant}
+            className={cn("text-xs", meta.className)}
+          >
             {meta.label}
           </Badge>
         </div>

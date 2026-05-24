@@ -1,9 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import DatePickerField from "@/components/common/DatePickerField";
+import {
+  COMMON_HARVEST_UNITS,
+  isPresetHarvestUnit,
+} from "@/constants/harvestUnits";
 import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
 import { getApiErrorMessageVi } from "@/lib/error-message";
@@ -31,6 +42,7 @@ import { toast } from "sonner";
 //
 // Form state lưu `harvestDate` dạng `yyyy-MM-dd` (docs §5.1); service convert
 // sang ISO trước khi gửi BE.
+
 
 interface Props {
   mode: "create" | "edit";
@@ -186,21 +198,50 @@ export default function HarvestRecordFormSheet({
             )}
           </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="hr-unit">
-              Đơn vị <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="hr-unit"
-              placeholder="kg, tấn, bao..."
-              maxLength={20}
-              {...register("unit")}
-              aria-invalid={Boolean(errors.unit)}
-            />
-            {errors.unit && (
-              <p className="text-destructive text-xs">{errors.unit.message}</p>
-            )}
-          </div>
+          <Controller
+            name="unit"
+            control={control}
+            render={({ field, fieldState }) => {
+              // Giữ giá trị cũ (legacy / custom) hiển thị trong dropdown nếu
+              // không trùng preset — tránh edit form silently mất unit.
+              const current = field.value?.trim() ?? "";
+              const hasCustom = current.length > 0 && !isPresetHarvestUnit(current);
+
+              return (
+                <div className="space-y-1">
+                  <Label htmlFor="hr-unit">
+                    Đơn vị <span className="text-destructive">*</span>
+                  </Label>
+                  <Select
+                    value={field.value || undefined}
+                    onValueChange={field.onChange}
+                  >
+                    <SelectTrigger
+                      id="hr-unit"
+                      aria-invalid={Boolean(fieldState.error)}
+                    >
+                      <SelectValue placeholder="Chọn đơn vị" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COMMON_HARVEST_UNITS.map((u) => (
+                        <SelectItem key={u.value} value={u.value}>
+                          {u.label}
+                        </SelectItem>
+                      ))}
+                      {hasCustom && (
+                        <SelectItem value={current}>{current}</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {fieldState.error && (
+                    <p className="text-destructive text-xs">
+                      {fieldState.error.message}
+                    </p>
+                  )}
+                </div>
+              );
+            }}
+          />
         </div>
 
         {/* Phẩm cấp */}
