@@ -178,6 +178,14 @@ export default function SensorDetailPage() {
   }, [assignmentsQuery.data, assignmentId]);
 
   const goBack = () => {
+    // Caller có thể truyền `?from=<encoded URL>` để override điểm về (vd: từ
+    // milestone detail page muốn quay lại đúng tab cảm biến của milestone đó,
+    // không phải zone landing).
+    const fromParam = searchParams.get("from");
+    if (fromParam && fromParam.startsWith("/dashboard/")) {
+      navigate(fromParam);
+      return;
+    }
     const zid = latestQuery.data?.zoneId;
     if (zid) {
       navigate(`${dashboardPrefix}/crop-seasons?zoneId=${zid}&tab=sensors`);

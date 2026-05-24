@@ -125,7 +125,14 @@ function TaskCard({ task }: { task: ManagerTaskWithLogStatusType }) {
 // Main panel
 // ─────────────────────────────────────────────────────────────
 
-export function TodayZoneTasksPanel({ zoneId }: { zoneId: string }) {
+export function TodayZoneTasksPanel({
+  zoneId,
+  milestoneId,
+}: {
+  zoneId: string;
+  /** Khi truyền, list chỉ lấy task của milestone này (dùng trong milestone detail). */
+  milestoneId?: string;
+}) {
   const [query, setQuery] = useState<ListManagerTodayTasksQueryType>({
     page: 1,
     limit: 10,
@@ -134,6 +141,7 @@ export function TodayZoneTasksPanel({ zoneId }: { zoneId: string }) {
 
   const effectiveQuery: ListManagerTodayTasksQueryType = {
     ...query,
+    milestoneId,
     hasLoggedToday:
       logFilter === "logged" ? true : logFilter === "unlogged" ? false : undefined,
   };

@@ -39,6 +39,8 @@ import {
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TaskLogHistoryPanel } from "@/pages/ManagerPage/CropSeasons/components/TaskLogHistoryPanel";
 import {
   Plus,
   Trash2,
@@ -54,6 +56,8 @@ import {
   ChevronLeft,
   ChevronRight,
   CheckCircle2,
+  NotebookPen,
+  Info,
 } from "lucide-react";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { useMemo, useState, type FormEvent } from "react";
@@ -571,6 +575,7 @@ function BatchCreateInlinePanel({
 function TaskDetailSheet({
   task,
   milestoneId,
+  zoneId,
   onClose,
   canEdit,
   farmers,
@@ -579,6 +584,11 @@ function TaskDetailSheet({
 }: {
   task: EmployeeTaskResType | null;
   milestoneId: string;
+  /**
+   * Cần để load log history theo `employeeTaskId` từ endpoint zone-scope.
+   * Khi không truyền → ẩn tab "Nhật ký" (caller cũ không bị break).
+   */
+  zoneId?: string;
   onClose: () => void;
   canEdit: boolean;
   farmers: Array<{ id: string; label: string }>;
@@ -675,8 +685,22 @@ function TaskDetailSheet({
 
           <div className="px-4 space-y-4">
             {!isEditing ? (
-              /* ── Read-only view ── */
-              <div className="space-y-3">
+              /* ── Read-only view with inner tabs ── */
+              <Tabs defaultValue="detail" className="w-full">
+                {zoneId && (
+                  <TabsList className="grid w-full grid-cols-2 h-8">
+                    <TabsTrigger value="detail" className="text-xs gap-1.5">
+                      <Info className="h-3.5 w-3.5" />
+                      Chi tiết
+                    </TabsTrigger>
+                    <TabsTrigger value="logs" className="text-xs gap-1.5">
+                      <NotebookPen className="h-3.5 w-3.5" />
+                      Nhật ký
+                    </TabsTrigger>
+                  </TabsList>
+                )}
+
+                <TabsContent value="detail" className="mt-3 space-y-3">
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <p className="text-xs text-muted-foreground">Ưu tiên</p>
@@ -788,7 +812,17 @@ function TaskDetailSheet({
                     )}
                   </div>
                 )}
-              </div>
+                </TabsContent>
+
+                {zoneId && (
+                  <TabsContent value="logs" className="mt-3">
+                    <TaskLogHistoryPanel
+                      zoneId={zoneId}
+                      employeeTaskId={task.id}
+                    />
+                  </TabsContent>
+                )}
+              </Tabs>
             ) : (
               /* ── Edit form ── */
               <form
@@ -1408,10 +1442,17 @@ export function ManagerMilestoneTaskAssignmentScreen({
 
 export default function ManagerMilestoneTasksSection({
   milestoneId,
+  zoneId,
   canEdit = true,
   lockComplete = false,
 }: {
   milestoneId: string;
+  /**
+   * Cần để TaskDetailSheet load log history theo `employeeTaskId` qua endpoint
+   * zone-scope `/daily-logs/manager/zone/:zoneId`. Optional — caller cũ không
+   * truyền sẽ chỉ ẩn tab "Nhật ký" trong sheet, không break.
+   */
+  zoneId?: string;
   canEdit?: boolean;
   /**
    * Khi cropSeason ở planning (chưa được phê duyệt), task chưa nên tiến triển.
@@ -1920,6 +1961,7 @@ export default function ManagerMilestoneTasksSection({
       <TaskDetailSheet
         task={selectedTask}
         milestoneId={milestoneId}
+        zoneId={zoneId}
         onClose={() => setSelectedTask(null)}
         canEdit={canEdit}
         farmers={farmers}

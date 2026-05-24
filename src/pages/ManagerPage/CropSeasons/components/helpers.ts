@@ -235,11 +235,30 @@ export const canEdit = (status: string) => getCropSeasonEditMode(status) !== "no
 export const canSend = (status: string) =>
   status === ProductionStatusName.Planning || status === ProductionStatusName.Rejected;
 
+// Color rule (consistent với CropSeason status flow):
+//   pending     → grey  (chưa khởi động — secondary variant mặc định)
+//   in_progress → vàng  (đang chạy — amber tone, nhắc user theo dõi)
+//   completed   → xanh  (hoàn thành — emerald tone, khớp với nút quick action)
+// Badge của shadcn lấy `variant` cho shape & default, `className` override màu.
 export const MILESTONE_STATUS_META: Record<
   string,
-  { label: string; variant: "default" | "secondary" | "outline" }
+  {
+    label: string;
+    variant: "default" | "secondary" | "outline";
+    className?: string;
+  }
 > = {
   pending: { label: "Chưa diễn ra", variant: "secondary" },
-  in_progress: { label: "Đang thực hiện", variant: "default" },
-  completed: { label: "Hoàn thành", variant: "outline" },
+  in_progress: {
+    label: "Đang thực hiện",
+    variant: "outline",
+    className:
+      "border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-300",
+  },
+  completed: {
+    label: "Hoàn thành",
+    variant: "outline",
+    className:
+      "border-emerald-300 bg-emerald-100 text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-300",
+  },
 };

@@ -285,16 +285,16 @@ export default function ManagerProductionMilestonesPage() {
                   actions={[
                     {
                       key: "milestones",
-                      label: "Quản lý mốc",
+                      label: "Xem mốc",
                       icon: Milestone,
-                      onSelect: (s) => {
+                      onSelect: () => {
                         const next = new URLSearchParams();
                         if (zoneId) {
                           next.set("zoneId", zoneId);
                         }
                         const search = next.toString();
                         navigate({
-                          pathname: `/dashboard/manager/crop-seasons/${s.id}/milestones`,
+                          pathname: `/dashboard/manager/crop-seasons`,
                           search: search ? `?${search}` : "",
                         });
                       },

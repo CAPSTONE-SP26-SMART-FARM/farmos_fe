@@ -318,13 +318,13 @@ export default function ManagerMilestoneOverviewPage() {
   const cropSeasonsUrl = zoneId
     ? `/dashboard/manager/crop-seasons?zoneId=${encodeURIComponent(zoneId)}`
     : "/dashboard/manager/crop-seasons";
-  const milestonesUrl = zoneId
-    ? `/dashboard/manager/crop-seasons/${csId}/milestones?zoneId=${encodeURIComponent(zoneId)}`
-    : `/dashboard/manager/crop-seasons/${csId}/milestones`;
+  // Trang "Quản lý mốc" cũ đã bị xoá; mọi điều hướng "quay lại danh sách"
+  // giờ về trang chính của zone.
+  const milestonesUrl = cropSeasonsUrl;
 
   const stepPageUrl = zoneId
-    ? `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}?zoneId=${encodeURIComponent(zoneId)}`
-    : `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}`;
+    ? `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}/configure?zoneId=${encodeURIComponent(zoneId)}`
+    : `/dashboard/manager/crop-seasons/${csId}/milestones/${msId}/configure`;
 
   // Queries
   const cropSeasonQuery = useManagerCropSeasonDetail(csId);

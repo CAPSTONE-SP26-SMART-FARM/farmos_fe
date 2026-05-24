@@ -1,37 +1,62 @@
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Layers } from "lucide-react";
-import { useNavigate } from "react-router";
 import { type CropSeasonType, ProductionStatusName } from "@/types/cropSeason";
 import { useActiveCropCategoryList } from "@/queries/useCropCategory";
 import { StatusBadge } from "./StatusBadge";
-import { formatDate, findCategory } from "./helpers";
-import { UpdateCropSeasonDialog } from "./UpdateCropSeasonDialog";
+import { formatDate, findCategory, formatDensity } from "./helpers";
 import { SendRequestDialog } from "./SendRequestDialog";
-import { DensitySnapshotChip } from "./CropSeasonFormParts";
+
+function computeCurrentDensity(
+  plantCount: number | null,
+  totalAreaSqm: number | null,
+): number | null {
+  if (
+    plantCount == null ||
+    totalAreaSqm == null ||
+    !Number.isFinite(plantCount) ||
+    !Number.isFinite(totalAreaSqm) ||
+    totalAreaSqm <= 0 ||
+    plantCount <= 0
+  ) {
+    return null;
+  }
+  return plantCount / totalAreaSqm;
+}
+
+function InfoCell({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="font-medium mt-0.5 truncate">{value ?? "—"}</p>
+    </div>
+  );
+}
 
 export function CropSeasonSummaryCard({
   season,
-  zoneId,
   actions,
   footer,
+  hideSendRequest = false,
 }: {
   season: CropSeasonType;
   zoneId?: string;
+  /** Top-right slot — nếu undefined sẽ render SendRequestDialog mặc định (Manager) */
   actions?: React.ReactNode;
+  /** Footer-right slot — chứa các secondary action (Kế hoạch vs Thực tế, Thu hoạch, …) */
   footer?: React.ReactNode;
+  /** Ẩn hẳn SendRequest mặc định khi không truyền actions (vd: view read-only) */
+  hideSendRequest?: boolean;
 }) {
-  const navigate = useNavigate();
   const { data: catData } = useActiveCropCategoryList(!!season.cropCategoryId);
   const category = findCategory(catData?.data?.data, season.cropCategoryId);
-  const showDefaultManagerActions = actions === undefined;
-  const showDefaultManagerFooter =
-    footer === undefined &&
-    (season.status === ProductionStatusName.Planning ||
-      season.status === ProductionStatusName.Rejected);
 
-  const hasSnapshot =
-    season.minDensitySnapshot != null || season.maxDensitySnapshot != null;
+  const currentDensity = computeCurrentDensity(
+    season.plantCount,
+    season.totalAreaSqm,
+  );
+
+  const canSend =
+    season.status === ProductionStatusName.Planning ||
+    season.status === ProductionStatusName.Rejected;
 
   return (
     <Card className="border-l-4 border-l-primary">
@@ -39,96 +64,87 @@ export function CropSeasonSummaryCard({
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <CardTitle className="text-xl leading-tight">{season.cropName}</CardTitle>
+              <CardTitle className="text-xl leading-tight">
+                {season.cropName}
+              </CardTitle>
               <StatusBadge status={season.status} />
             </div>
-            <div className="mt-0.5 space-y-0.5">
+            <div className="mt-1 text-sm text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-0.5">
               {category && (
-                <p className="text-sm text-muted-foreground">
-                  Loại cây: <span className="font-medium text-foreground">{category.name}</span>
-                </p>
+                <span>
+                  Loại cây:{" "}
+                  <span className="font-medium text-foreground">
+                    {category.name}
+                  </span>
+                </span>
               )}
-              {season.variety && (
-                <p className="text-sm text-muted-foreground">Giống: {season.variety}</p>
-              )}
-              {hasSnapshot && (
-                <div className="pt-1">
-                  <DensitySnapshotChip
-                    minDensitySnapshot={season.minDensitySnapshot}
-                    maxDensitySnapshot={season.maxDensitySnapshot}
-                  />
-                </div>
-              )}
+              {season.variety && <span>Giống: {season.variety}</span>}
             </div>
           </div>
+
           <div className="flex gap-2 shrink-0 flex-wrap">
-            {showDefaultManagerActions ? (
-              <>
-                <UpdateCropSeasonDialog season={season} />
-                <SendRequestDialog season={season} />
-              </>
-            ) : (
-              actions
-            )}
+            {actions !== undefined
+              ? actions
+              : !hideSendRequest && canSend && (
+                  <SendRequestDialog season={season} />
+                )}
           </div>
         </div>
       </CardHeader>
+
       <CardContent>
-        <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm md:grid-cols-4">
-          <div>
-            <p className="text-xs text-muted-foreground">Ngày trồng</p>
-            <p className="font-medium mt-0.5">{formatDate(season.plantDate)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Thu hoạch dự kiến</p>
-            <p className="font-medium mt-0.5">{formatDate(season.expectedHarvestDate)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Thu hoạch thực tế</p>
-            <p className="font-medium mt-0.5">{formatDate(season.actualHarvestDate)}</p>
-          </div>
-          {season.totalAreaSqm != null && (
-            <div>
-              <p className="text-xs text-muted-foreground">Diện tích</p>
-              <p className="font-medium mt-0.5">
-                {season.totalAreaSqm.toLocaleString("vi-VN")} m²
-              </p>
-            </div>
-          )}
-          {season.plantCount != null && (
-            <div>
-              <p className="text-xs text-muted-foreground">Số cây</p>
-              <p className="font-medium mt-0.5">
-                {season.plantCount.toLocaleString("vi-VN")}
-              </p>
-            </div>
-          )}
+        <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm md:grid-cols-3 lg:grid-cols-6">
+          <InfoCell label="Ngày trồng" value={formatDate(season.plantDate)} />
+          <InfoCell
+            label="Thu hoạch dự kiến"
+            value={formatDate(season.expectedHarvestDate)}
+          />
+          <InfoCell
+            label="Thu hoạch thực tế"
+            value={formatDate(season.actualHarvestDate)}
+          />
+          <InfoCell
+            label="Diện tích"
+            value={
+              season.totalAreaSqm != null
+                ? `${season.totalAreaSqm.toLocaleString("vi-VN")} m²`
+                : null
+            }
+          />
+          <InfoCell
+            label="Số cây"
+            value={
+              season.plantCount != null
+                ? season.plantCount.toLocaleString("vi-VN")
+                : null
+            }
+          />
+          <InfoCell
+            label="Mật độ hiện tại"
+            value={
+              currentDensity != null ? (
+                <>
+                  {formatDensity(currentDensity)}{" "}
+                  <span className="text-xs text-muted-foreground font-normal">
+                    cây/m²
+                  </span>
+                </>
+              ) : null
+            }
+          />
         </div>
+
         {season.notes && (
           <div className="mt-3 rounded-md bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
             {season.notes}
           </div>
         )}
-        {footer !== undefined ? (
-          <div className="mt-4">{footer}</div>
-        ) : showDefaultManagerFooter ? (
-          <div className="mt-4">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                const params = new URLSearchParams();
-                if (zoneId) params.set("zoneId", zoneId);
-                navigate(
-                  `/dashboard/manager/crop-seasons/${season.id}/milestones${params.toString() ? `?${params}` : ""}`,
-                );
-              }}
-            >
-              <Layers className="h-3 w-3 mr-1.5" />
-              Quản lý mốc công việc
-            </Button>
+
+        {footer !== undefined && footer !== null && (
+          <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+            {footer}
           </div>
-        ) : null}
+        )}
       </CardContent>
     </Card>
   );
