@@ -68,6 +68,7 @@ import ManagerDailyLogsPage from "@/pages/ManagerPage/DailyLogs/ManagerDailyLogs
 import ManagerSensorReadingPage from "@/pages/ManagerPage/SensorReadings/ManagerSensorReadingPage";
 import SensorDetailPage from "@/pages/SensorReadings/SensorDetailPage";
 import OwnerCropSeasonsPage from "@/pages/OwnerPage/CropSeasons/OwnerCropSeasonsPage";
+import OwnerMilestoneViewPage from "@/pages/OwnerPage/CropSeasons/OwnerMilestoneViewPage";
 import PlanVsActualPage from "@/pages/OwnerPage/CropSeasons/PlanVsActualPage";
 import OwnerEmployeeTaskTemplatesPage from "@/pages/OwnerPage/EmployeeTaskTemplates/OwnerEmployeeTaskTemplatesPage";
 import OwnerIotKitsPage from "@/pages/OwnerPage/IotKits/OwnerIotKitsPage";
@@ -473,6 +474,12 @@ const routes: AppRoutes = [
         path: "/dashboard/owner/crop-seasons/:id/plan-vs-actual",
         component: PlanVsActualPage,
         allowedRoles: [RoleName.Owner, RoleName.Manager],
+        requiresActiveSubscription: true,
+      },
+      {
+        path: "/dashboard/owner/crop-seasons/:cropSeasonId/milestones/:milestoneId",
+        component: OwnerMilestoneViewPage,
+        allowedRoles: [RoleName.Owner],
         requiresActiveSubscription: true,
       },
       {

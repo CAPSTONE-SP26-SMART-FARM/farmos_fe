@@ -5,23 +5,6 @@ import { StatusBadge } from "./StatusBadge";
 import { formatDate, findCategory, formatDensity } from "./helpers";
 import { SendRequestDialog } from "./SendRequestDialog";
 
-function computeCurrentDensity(
-  plantCount: number | null,
-  totalAreaSqm: number | null,
-): number | null {
-  if (
-    plantCount == null ||
-    totalAreaSqm == null ||
-    !Number.isFinite(plantCount) ||
-    !Number.isFinite(totalAreaSqm) ||
-    totalAreaSqm <= 0 ||
-    plantCount <= 0
-  ) {
-    return null;
-  }
-  return plantCount / totalAreaSqm;
-}
-
 function InfoCell({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="min-w-0">
@@ -49,10 +32,13 @@ export function CropSeasonSummaryCard({
   const { data: catData } = useActiveCropCategoryList(!!season.cropCategoryId);
   const category = findCategory(catData?.data?.data, season.cropCategoryId);
 
-  const currentDensity = computeCurrentDensity(
-    season.plantCount,
-    season.totalAreaSqm,
-  );
+  const currentDensity = season.currentDensity ?? null;
+  const minD = season.minDensitySnapshot ?? null;
+  const maxD = season.maxDensitySnapshot ?? null;
+  const densityOutOfRange =
+    currentDensity != null &&
+    ((minD != null && currentDensity < minD) ||
+      (maxD != null && currentDensity > maxD));
 
   const canSend =
     season.status === ProductionStatusName.Planning ||
@@ -123,12 +109,25 @@ export function CropSeasonSummaryCard({
             label="Mật độ hiện tại"
             value={
               currentDensity != null ? (
-                <>
+                <span
+                  className={
+                    densityOutOfRange
+                      ? "text-destructive font-semibold"
+                      : undefined
+                  }
+                  title={
+                    densityOutOfRange && (minD != null || maxD != null)
+                      ? `Ngoài ngưỡng khuyến nghị (${
+                          minD != null ? formatDensity(minD) : "?"
+                        } – ${maxD != null ? formatDensity(maxD) : "?"} cây/m²)`
+                      : undefined
+                  }
+                >
                   {formatDensity(currentDensity)}{" "}
                   <span className="text-xs text-muted-foreground font-normal">
                     cây/m²
                   </span>
-                </>
+                </span>
               ) : null
             }
           />

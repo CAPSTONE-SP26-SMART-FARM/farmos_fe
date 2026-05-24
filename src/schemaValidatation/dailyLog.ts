@@ -74,6 +74,7 @@ export const DailyLogResSchema = z.object({
 
 export const ListDailyLogsQuerySchema = PagingRequestSchema.extend({
   zoneId: z.string().uuid().optional(),
+  milestoneId: z.string().uuid().optional(),
   employeeTaskId: z.string().uuid().optional(),
   loggedBy: z.string().uuid().optional(),
   fromDate: z

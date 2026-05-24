@@ -8,6 +8,7 @@ import { vi } from "date-fns/locale";
 import { useNavigate } from "react-router";
 import { useOwnerGetMyFarm } from "@/queries/useOwner";
 import { useOwnerTicketList } from "@/queries/useTicket";
+import { useTicketV2List } from "@/queries/useTicketV2";
 import type { TicketIncidentResType } from "@/schemaValidatation/ticket";
 import type { CropSeasonType } from "@/types/cropSeason";
 
@@ -51,20 +52,41 @@ const TICKET_STATUS_VARIANT: Record<
 
 export function OwnerIncidentTab({
   cropSeason,
+  milestoneId,
 }: {
   cropSeason: CropSeasonType;
+  /** Khi có, list chỉ sự cố thuộc mốc đó qua `GET /tickets` v2. */
+  milestoneId?: string;
 }) {
   const navigate = useNavigate();
   const farmQuery = useOwnerGetMyFarm();
   const farmId = farmQuery.data?.data?.id ?? "";
-  const ticketQuery = useOwnerTicketList(farmId, { page: 1, limit: 50 });
-  const allTickets = (ticketQuery.data?.data.data ?? []) as TicketIncidentResType[];
-  const tickets = allTickets.filter((t) => t.zoneId === cropSeason.zoneId);
+
+  // Có milestoneId → dùng v2 endpoint với filter milestoneId (BE auto scope
+  // theo role owner). Không → fallback legacy list-by-farm rồi filter zone.
+  const v2Query = useTicketV2List({
+    page: 1,
+    limit: 20,
+    milestoneId,
+  });
+  const legacyQuery = useOwnerTicketList(milestoneId ? "" : farmId, {
+    page: 1,
+    limit: 50,
+  });
+
+  const v2Tickets = (v2Query.data?.data.data ?? []) as TicketIncidentResType[];
+  const legacyAll = (legacyQuery.data?.data.data ??
+    []) as TicketIncidentResType[];
+  const tickets = milestoneId
+    ? v2Tickets
+    : legacyAll.filter((t) => t.zoneId === cropSeason.zoneId);
 
   const toDetail = (ticketId: string) =>
     navigate(`/dashboard/owner/tickets?ticketId=${ticketId}`);
 
-  const isLoading = farmQuery.isLoading || ticketQuery.isLoading;
+  const isLoading = milestoneId
+    ? v2Query.isLoading
+    : farmQuery.isLoading || legacyQuery.isLoading;
 
   const columns: ColumnDef<TicketIncidentResType>[] = [
     {
