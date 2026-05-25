@@ -250,7 +250,10 @@ export default function OwnerMilestoneViewPage() {
           value="tasks"
           className="mt-4"
         >
-          <OwnerMilestoneTasksTab milestoneId={msId} />
+          <OwnerMilestoneTasksTab
+            milestoneId={msId}
+            zoneId={zoneId || cropSeason?.zoneId || ""}
+          />
         </TabsContent>
       </Tabs>
     </div>
