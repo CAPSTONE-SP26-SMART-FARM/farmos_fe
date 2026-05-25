@@ -38,6 +38,7 @@ import {
   CropCategoryPicker,
   DensityBadge,
   CycleHintLine,
+  RecommendedPlantCountHint,
 } from "./CropSeasonFormParts";
 
 const AREA_EXCLUDED_STATUSES = new Set<string>([
@@ -424,6 +425,17 @@ export function CreateCropSeasonScreen({
                     {...form.register("plantCount", { valueAsNumber: true })}
                     autoComplete="off"
                   />
+                  <RecommendedPlantCountHint
+                    totalAreaSqm={totalAreaSqmValue}
+                    plantCount={plantCountValue}
+                    category={selectedCategory}
+                    onApply={(count) =>
+                      form.setValue("plantCount", count, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
+                  />
                 </Field>
               </div>
 
@@ -432,12 +444,6 @@ export function CreateCropSeasonScreen({
                   totalAreaSqm={totalAreaSqmValue}
                   plantCount={plantCountValue}
                   category={selectedCategory}
-                  onSuggestCount={(count) =>
-                    form.setValue("plantCount", count, {
-                      shouldDirty: true,
-                      shouldValidate: true,
-                    })
-                  }
                 />
               </div>
             </section>

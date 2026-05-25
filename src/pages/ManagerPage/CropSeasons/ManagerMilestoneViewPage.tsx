@@ -9,18 +9,28 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertTriangle,
   ArrowLeft,
   CalendarDays,
+  CheckCircle2,
   ClipboardList,
+  Loader2,
   Pencil,
+  PlayCircle,
   Radio,
 } from "lucide-react";
+import { useState } from "react";
+import { format } from "date-fns";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
-import { useManagerListProductionMilestones } from "@/queries/useProductionMilestone";
+import {
+  useManagerListProductionMilestones,
+  useManagerUpdateProductionMilestone,
+} from "@/queries/useProductionMilestone";
 import { useManagerCropSeasonDetail } from "@/queries/useCropSeason";
 import { useDynamicBreadcrumb } from "@/stores/breadcrumbStore";
 import {
@@ -98,6 +108,16 @@ export default function ManagerMilestoneViewPage() {
     milestone?.stageName,
   );
 
+  // ── Mutation (Bắt đầu / Hoàn thành mốc) ──────────────────────────────────
+  // Phải khai báo TRƯỚC early returns để tuân Rules of Hooks. State + handler
+  // chỉ thực sự dùng khi `milestone` tồn tại — vẫn an toàn vì hook không tự
+  // gọi gì cho tới khi user click button.
+  const qc = useQueryClient();
+  const { mutate: updateMilestone, isPending: isUpdating } =
+    useManagerUpdateProductionMilestone(csId);
+  const [confirmStart, setConfirmStart] = useState(false);
+  const [confirmComplete, setConfirmComplete] = useState(false);
+
   // ── Loading ──────────────────────────────────────────────────────────────
   if (listQuery.isLoading || cropSeasonQuery.isLoading) {
     return (
@@ -147,6 +167,80 @@ export default function ManagerMilestoneViewPage() {
   const canConfigureMilestone =
     cropSeason?.status === ProductionStatusName.Planning ||
     cropSeason?.status === ProductionStatusName.Rejected;
+
+  // Cho phép sửa nội dung task chỉ khi cropSeason còn editable (planning/reject).
+  // Sau khi vào active/completed, task đã chốt — chỉ thao tác trạng thái.
+  const canEditTaskContent = canConfigureMilestone;
+
+  // BR (đồng bộ với MilestoneDetailPane): cho "Bắt đầu" khi
+  //  - milestone đang pending,
+  //  - mọi milestone trước (theo order) đã completed,
+  //  - không có milestone khác đang in_progress,
+  //  - cropSeason ở active, HOẶC approved + đây là milestone đầu tiên
+  //    (BE sẽ auto-activate cropSeason khi first milestone in_progress).
+  const sortedAsc = [...milestones].sort(
+    (a, b) => a.milestoneOrder - b.milestoneOrder,
+  );
+  const isFirstMilestone = sortedAsc[0]?.id === milestone.id;
+  const earlierAllCompleted = sortedAsc
+    .filter((m) => m.milestoneOrder < milestone.milestoneOrder)
+    .every((m) => m.status === "completed");
+  const noOtherInProgress = sortedAsc.every(
+    (m) => m.id === milestone.id || m.status !== "in_progress",
+  );
+  const seasonAllowsStart =
+    cropSeason?.status === ProductionStatusName.Active ||
+    (cropSeason?.status === ProductionStatusName.Approved && isFirstMilestone);
+  const canStart =
+    seasonAllowsStart &&
+    milestone.status === "pending" &&
+    earlierAllCompleted &&
+    noOtherInProgress;
+  const canComplete =
+    cropSeason?.status === ProductionStatusName.Active &&
+    milestone.status === "in_progress";
+
+  const nextMilestone = sortedAsc.find(
+    (m) => m.milestoneOrder > milestone.milestoneOrder,
+  );
+
+  const handleStart = () => {
+    // BE: cấm gửi actualStartDate khi cropSeason chưa active. Khi approved →
+    // chỉ gửi status; BE sẽ auto-activate season.
+    const today = format(new Date(), "yyyy-MM-dd");
+    const willActivateSeason =
+      cropSeason?.status === ProductionStatusName.Approved && isFirstMilestone;
+    const body =
+      cropSeason?.status === ProductionStatusName.Active
+        ? { status: "in_progress" as const, actualStartDate: today }
+        : { status: "in_progress" as const };
+    updateMilestone(
+      { milestoneId: msId, body },
+      {
+        onSuccess: () => {
+          if (willActivateSeason) {
+            qc.invalidateQueries({
+              queryKey: ["manager", "production-milestones", "assignment"],
+            });
+            qc.invalidateQueries({ queryKey: ["manager", "sensor-readings"] });
+            qc.invalidateQueries({ queryKey: ["alerts"] });
+          }
+        },
+        onSettled: () => setConfirmStart(false),
+      },
+    );
+  };
+
+  const handleComplete = () => {
+    const today = format(new Date(), "yyyy-MM-dd");
+    updateMilestone(
+      {
+        milestoneId: msId,
+        body: { status: "completed", actualEndDate: today },
+      },
+      { onSettled: () => setConfirmComplete(false) },
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -215,18 +309,82 @@ export default function ManagerMilestoneViewPage() {
           </div>
         </div>
 
-        {/* Nút "Cấu hình mốc" chỉ hiện khi season còn ở planning/rejected —
-            sau khi active/completed thì cấu hình đã chốt, ẩn nút tránh user
-            click vào rồi bị redirect lại. */}
-        {canConfigureMilestone && (
-          <Button size="sm" variant="outline" asChild>
-            <Link to={configureUrl}>
-              <Pencil className="h-3.5 w-3.5 mr-1.5" />
-              Cấu hình mốc
-            </Link>
-          </Button>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          {canStart && (
+            <Button
+              size="sm"
+              onClick={() => setConfirmStart(true)}
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <PlayCircle className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              Bắt đầu mốc
+            </Button>
+          )}
+          {canComplete && (
+            <Button
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={() => setConfirmComplete(true)}
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              Hoàn thành mốc
+            </Button>
+          )}
+          {/* Nút "Cấu hình mốc" chỉ hiện khi season còn ở planning/rejected —
+              sau khi active/completed thì cấu hình đã chốt, ẩn nút tránh user
+              click vào rồi bị redirect lại. */}
+          {canConfigureMilestone && (
+            <Button size="sm" variant="outline" asChild>
+              <Link to={configureUrl}>
+                <Pencil className="h-3.5 w-3.5 mr-1.5" />
+                Cấu hình mốc
+              </Link>
+            </Button>
+          )}
+        </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmStart}
+        title="Bắt đầu mốc công việc?"
+        description={`Đánh dấu mốc "${milestone.stageName}" là đang thực hiện. Ngày bắt đầu thực tế sẽ được ghi nhận là hôm nay.${
+          cropSeason?.status === ProductionStatusName.Approved &&
+          isFirstMilestone
+            ? ' Mùa vụ sẽ tự chuyển sang trạng thái "Đang hoạt động".'
+            : ""
+        }`}
+        confirmLabel={isUpdating ? "Đang xử lý..." : "Bắt đầu"}
+        cancelLabel="Hủy"
+        onCancel={() => {
+          if (!isUpdating) setConfirmStart(false);
+        }}
+        onConfirm={handleStart}
+      />
+
+      <ConfirmDialog
+        open={confirmComplete}
+        title="Hoàn thành mốc công việc?"
+        description={`Đánh dấu mốc "${milestone.stageName}" là hoàn thành.${
+          nextMilestone
+            ? ` Sau đó hệ thống sẽ chuyển sang mốc tiếp theo "${nextMilestone.stageName}".`
+            : " Đây là mốc cuối cùng."
+        }`}
+        confirmLabel={isUpdating ? "Đang xử lý..." : "Hoàn thành"}
+        cancelLabel="Hủy"
+        onCancel={() => {
+          if (!isUpdating) setConfirmComplete(false);
+        }}
+        onConfirm={handleComplete}
+      />
 
       {/* ── Tabs ────────────────────────────────────────────────────────── */}
       <Tabs
@@ -271,6 +429,7 @@ export default function ManagerMilestoneViewPage() {
             zoneId={zoneId || cropSeason?.zoneId || ""}
             canEdit={true}
             lockComplete={lockComplete}
+            canEditContent={canEditTaskContent}
           />
         </TabsContent>
       </Tabs>

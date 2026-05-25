@@ -285,12 +285,6 @@ export function UpdateCropSeasonDialog({ season }: { season: CropSeasonType }) {
                 totalAreaSqm={totalAreaSqmValue}
                 plantCount={plantCountValue}
                 category={selectedCategory}
-                onSuggestCount={(count) =>
-                  form.setValue("plantCount", count, {
-                    shouldDirty: true,
-                    shouldValidate: true,
-                  })
-                }
               />
             </div>
           )}

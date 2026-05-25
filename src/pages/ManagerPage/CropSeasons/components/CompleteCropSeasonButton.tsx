@@ -15,8 +15,8 @@ import {
   type CropSeasonType,
   ProductionStatusName,
 } from "@/types/cropSeason";
-import { format } from "date-fns";
-import { CheckCircle2, Loader2, Plus, Wheat } from "lucide-react";
+import { addMonths, format, isAfter } from "date-fns";
+import { AlertTriangle, CheckCircle2, Loader2, Plus, Wheat } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export function CompleteCropSeasonButton({
@@ -30,6 +30,7 @@ export function CompleteCropSeasonButton({
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [warningOpen, setWarningOpen] = useState(false);
+  const [lateWarningOpen, setLateWarningOpen] = useState(false);
   const { mutateAsync, isPending } = useCompleteCropSeason(season.id);
 
   const milestonesQuery = useManagerListProductionMilestones(season.id, {
@@ -55,13 +56,34 @@ export function CompleteCropSeasonButton({
   if (season.status !== ProductionStatusName.Active) return null;
   if (!allMilestonesCompleted) return null;
 
+  // Cảnh báo khi user kết thúc mùa vụ trễ hơn 2 tháng so với ngày thu hoạch
+  // dự kiến — dễ là quên đóng mùa vụ chứ không phải thu hoạch thực sự muộn
+  // đến vậy, nên chặn 1 nhịp để confirm trước khi ghi nhận actualHarvestDate.
+  const isLateBeyondTwoMonths = useMemo(() => {
+    if (!season.expectedHarvestDate) return false;
+    const expected = new Date(season.expectedHarvestDate);
+    if (Number.isNaN(expected.getTime())) return false;
+    return isAfter(new Date(), addMonths(expected, 2));
+  }, [season.expectedHarvestDate]);
+
   const handleClick = () => {
     // Đợi harvest query xong rồi mới quyết định flow; nếu đang loading,
     // disable nút (xem disabled bên dưới).
     if (harvestCount === 0) {
       setWarningOpen(true);
+    } else if (isLateBeyondTwoMonths) {
+      setLateWarningOpen(true);
     } else {
       setConfirmOpen(true);
+    }
+  };
+
+  const handleConfirmLate = async () => {
+    try {
+      await mutateAsync();
+      setLateWarningOpen(false);
+    } catch {
+      // toast handled in the mutation hook
     }
   };
 
@@ -104,6 +126,47 @@ export function CompleteCropSeasonButton({
         onConfirm={handleConfirm}
         onCancel={() => setConfirmOpen(false)}
       />
+
+      {/* Cảnh báo trễ hơn 2 tháng so với ngày thu hoạch dự kiến — confirm
+          xong sẽ kết thúc mùa vụ luôn, không qua confirm thường nữa. */}
+      <Dialog
+        open={lateWarningOpen}
+        onOpenChange={(open) => !isPending && setLateWarningOpen(open)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-600" />
+              Kết thúc mùa vụ trễ hơn dự kiến?
+            </DialogTitle>
+            <DialogDescription>
+              {season.expectedHarvestDate
+                ? `Hôm nay đã cách ngày thu hoạch dự kiến (${format(new Date(season.expectedHarvestDate), "dd/MM/yyyy")}) hơn 2 tháng. `
+                : "Hôm nay đã cách ngày thu hoạch dự kiến hơn 2 tháng. "}
+              Ngày thu hoạch thực tế sẽ được ghi nhận là{" "}
+              {format(new Date(), "dd/MM/yyyy")} và không thể hoàn tác. Bạn có
+              chắc muốn kết thúc mùa vụ này?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setLateWarningOpen(false)}
+              disabled={isPending}
+            >
+              Quay lại
+            </Button>
+            <Button onClick={handleConfirmLate} disabled={isPending}>
+              {isPending ? (
+                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4 mr-1.5" />
+              )}
+              Vẫn kết thúc mùa vụ
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Warning: chưa có harvest record nào — không cho hoàn thành mùa vụ
           mà chưa ghi nhận sản lượng. Footer dẫn user mở harvest dialog. */}

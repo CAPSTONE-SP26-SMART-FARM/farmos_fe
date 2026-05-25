@@ -244,22 +244,25 @@ export default function HarvestRecordFormSheet({
           />
         </div>
 
-        {/* Phẩm cấp */}
-        <div className="space-y-1">
-          <Label htmlFor="hr-grade">Phẩm cấp / chất lượng</Label>
-          <Input
-            id="hr-grade"
-            placeholder="VD: Loại 1, Hạng A, Xuất khẩu..."
-            maxLength={50}
-            {...register("qualityGrade")}
-            aria-invalid={Boolean(errors.qualityGrade)}
-          />
-          {errors.qualityGrade && (
-            <p className="text-destructive text-xs">
-              {errors.qualityGrade.message}
-            </p>
-          )}
-        </div>
+        {/* Phẩm cấp — chỉ hiện ở chế độ chỉnh sửa để không mất dữ liệu cũ;
+            khi tạo mới đã bỏ field này theo yêu cầu nghiệp vụ. */}
+        {mode === "edit" && (
+          <div className="space-y-1">
+            <Label htmlFor="hr-grade">Phẩm cấp / chất lượng</Label>
+            <Input
+              id="hr-grade"
+              placeholder="VD: Loại 1, Hạng A, Xuất khẩu..."
+              maxLength={50}
+              {...register("qualityGrade")}
+              aria-invalid={Boolean(errors.qualityGrade)}
+            />
+            {errors.qualityGrade && (
+              <p className="text-destructive text-xs">
+                {errors.qualityGrade.message}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Ghi chú */}
         <div className="space-y-1">
