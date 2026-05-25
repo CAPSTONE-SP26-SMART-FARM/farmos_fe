@@ -739,7 +739,7 @@ function TaskDetailSheet({
                     <p
                       className={`font-medium ${PRIORITY_META[task.priority].className}`}
                     >
-                      <PriorityIcon className="h-3.5 w-3.5 inline mr-1" />
+                      {PriorityIcon && <PriorityIcon className="h-3.5 w-3.5 inline mr-1" />}
                       {PRIORITY_META[task.priority].label}
                     </p>
                   </div>
