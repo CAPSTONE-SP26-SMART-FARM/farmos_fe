@@ -1,29 +1,33 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
 import { ClipboardList, ListTodo, NotebookPen } from "lucide-react";
 import OwnerMilestoneTasksSection from "@/pages/OwnerPage/EmployeeTasks/OwnerMilestoneTasksSection";
 import { OwnerMilestoneTaskKpiStrip } from "./OwnerMilestoneTaskKpiStrip";
+import { OwnerTodayMilestoneTasksPanel } from "./OwnerTodayMilestoneTasksPanel";
+import { OwnerMilestoneDailyLogsPanel } from "./OwnerMilestoneDailyLogsPanel";
 
 /**
- * Owner-side mirror of `MilestoneTasksTab` (manager). Read-only layout:
- *   - KPI strip ở top (derive client-side từ owner task list)
- *   - 3 sub-tabs: Hôm nay / Quản lý / Nhật ký
+ * Owner-side mirror của `MilestoneTasksTab` (manager). Read-only layout:
+ *   - KPI strip ở top.
+ *   - 3 sub-tabs: Hôm nay / Quản lý / Nhật ký.
  *
- * "Hôm nay" và "Nhật ký" hiện chỉ là placeholder vì BE chưa expose endpoint
- * tương đương `manager/zone-today` & `manager/daily-logs-by-zone` cho owner.
- * Khi BE bổ sung, swap component vào mà không cần đổi layout.
+ * Mỗi sub-tab dùng owner endpoint riêng (xem doc trong từng panel):
+ *   - Hôm nay  → `GET /daily-log/tasks` (shared owner/manager/farmer)
+ *   - Quản lý  → `GET /employee-task/owner/production-milestone/:id`
+ *   - Nhật ký  → `GET /daily-log/owner/farm/:farmId` (filter zoneId + milestoneId)
  */
 export function OwnerMilestoneTasksTab({
   milestoneId,
+  zoneId,
 }: {
   milestoneId: string;
+  zoneId: string;
 }) {
   return (
     <div className="space-y-4">
       <OwnerMilestoneTaskKpiStrip milestoneId={milestoneId} />
 
       <Tabs
-        defaultValue="manage"
+        defaultValue="today"
         orientation="vertical"
         className="flex flex-col md:flex-row gap-4 md:gap-6"
       >
@@ -79,33 +83,14 @@ export function OwnerMilestoneTasksTab({
           </TabsContent>
 
           <TabsContent value="today" className="mt-0">
-            <Card>
-              <CardContent className="py-16 text-center">
-                <ListTodo className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
-                <p className="text-sm font-medium">
-                  Theo dõi công việc trong ngày
-                </p>
-                <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
-                  Tính năng đang được hoàn thiện cho chủ trang trại. Trong thời
-                  gian này, mời xem mục "Quản lý" để theo dõi toàn bộ nhiệm vụ
-                  của mốc.
-                </p>
-              </CardContent>
-            </Card>
+            <OwnerTodayMilestoneTasksPanel milestoneId={milestoneId} />
           </TabsContent>
 
           <TabsContent value="logs" className="mt-0">
-            <Card>
-              <CardContent className="py-16 text-center">
-                <NotebookPen className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
-                <p className="text-sm font-medium">Nhật ký hoạt động</p>
-                <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
-                  Tính năng đang được hoàn thiện cho chủ trang trại. Trong thời
-                  gian này, mời xem nhật ký ở mục "Nhật ký nông trại" cấp trang
-                  trại.
-                </p>
-              </CardContent>
-            </Card>
+            <OwnerMilestoneDailyLogsPanel
+              zoneId={zoneId}
+              milestoneId={milestoneId}
+            />
           </TabsContent>
         </div>
       </Tabs>

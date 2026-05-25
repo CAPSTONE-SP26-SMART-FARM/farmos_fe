@@ -74,7 +74,7 @@ export function OwnerMilestoneTaskKpiStrip({
 }) {
   const tasksQuery = useOwnerListEmployeeTasks(milestoneId, {
     page: 1,
-    limit: 200,
+    limit: 99,
   });
 
   const tasks = tasksQuery.data?.data?.data ?? [];
