@@ -21,15 +21,22 @@ import type {
 } from "@/schemaValidatation/doctorWithdrawal";
 import { QUERY_KEYS } from "@/constants";
 import adminService from "@/services/adminService";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export const useAdminListDoctorRequest = (
   query: ListDoctorRequestsQueryType,
+  options?: { keepPreviousData?: boolean },
 ) => {
   return useQuery({
     queryKey: ["admin-doctor-requests", query],
     queryFn: () => adminService.listDoctorRequest(query),
+    placeholderData: options?.keepPreviousData ? keepPreviousData : undefined,
   });
 };
 

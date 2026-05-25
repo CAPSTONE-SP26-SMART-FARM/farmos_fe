@@ -1,11 +1,10 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { Eye, Search, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Eye, Scale, Search, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 
-import { DataTable } from "@/components/common/DataTable";
+import { DataTable, type DataTableAction } from "@/components/common/DataTable";
 import { DataTablePagination } from "@/components/common/DataTable/DataTablePagination";
-import type { DataTableAction } from "@/components/common/DataTable/types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,6 +26,8 @@ import { useAdminListDoctorRequest } from "@/queries/useAdmin";
 import type { ListDoctorRequestsQueryType } from "@/schemaValidatation/doctorProfile";
 import type { UserResType } from "@/types/user";
 import { REGISTRATION_STATUS_META } from "./statusMeta";
+import { getAllowedTransitions } from "./components/DoctorApplicationActions";
+import DoctorApplicationDecisionDialog from "../DoctorApplications/DoctorApplicationDecisionDialog";
 
 type Row = {
   id: string;
@@ -48,16 +49,17 @@ interface Props {
   onViewDetail: (id: string) => void;
 }
 
-const STATUS_OPTIONS: Array<{
-  value: RegistrationStatusNameType | "all";
-  label: string;
-}> = [
+type StatusValue = RegistrationStatusNameType | "all";
+
+const STATUS_OPTIONS: Array<{ value: StatusValue; label: string }> = [
   { value: "all", label: "Tất cả trạng thái" },
   { value: RegistrationStatusName.Pending, label: "Chờ duyệt" },
   { value: RegistrationStatusName.Approved, label: "Đã duyệt" },
   { value: RegistrationStatusName.Rejected, label: "Đã từ chối" },
   { value: RegistrationStatusName.Suspended, label: "Tạm ngưng" },
 ];
+
+const VALID_STATUSES: StatusValue[] = STATUS_OPTIONS.map((o) => o.value);
 
 const initialsOf = (name?: string | null, email?: string) => {
   const source = (name && name.trim()) || email || "?";
@@ -154,48 +156,89 @@ const columns: ColumnDef<Row>[] = [
 const DoctorApplicationsTable = ({ onViewDetail }: Props) => {
   const { page } = usePageParam();
   const [searchParam, setSearchParam] = useSearchParams();
+  const [decisionId, setDecisionId] = useState<string | undefined>(undefined);
 
-  const [search, setSearch] = useState("");
+  const urlSearch = searchParam.get("search") ?? "";
+  const urlStatusRaw = (searchParam.get("status") ?? "all") as StatusValue;
+  const urlStatus: StatusValue = VALID_STATUSES.includes(urlStatusRaw)
+    ? urlStatusRaw
+    : "all";
+
+  const [search, setSearch] = useState(urlSearch);
   const debouncedSearch = useDebounce(search, 500);
-  const [statusFilter, setStatusFilter] = useState<
-    RegistrationStatusNameType | "all"
-  >("all");
+
+  const updateParam = useCallback(
+    (patch: Partial<{ search: string; status: StatusValue; page: number }>) => {
+      const next = new URLSearchParams(searchParam);
+      if (patch.search !== undefined) {
+        if (patch.search) next.set("search", patch.search);
+        else next.delete("search");
+      }
+      if (patch.status !== undefined) {
+        if (patch.status && patch.status !== "all")
+          next.set("status", patch.status);
+        else next.delete("status");
+      }
+      if (patch.page !== undefined) {
+        if (patch.page > 1) next.set("page", String(patch.page));
+        else next.delete("page");
+      }
+      setSearchParam(next, { replace: true });
+    },
+    [searchParam, setSearchParam],
+  );
+
+  useEffect(() => {
+    if (debouncedSearch === urlSearch) return;
+    updateParam({ search: debouncedSearch.trim(), page: 1 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]);
 
   const query: ListDoctorRequestsQueryType = {
     page,
     limit: 10,
     search: debouncedSearch?.trim() || undefined,
-    status: statusFilter !== "all" ? statusFilter : undefined,
+    status: urlStatus !== "all" ? urlStatus : undefined,
   };
 
-  const listResult = useAdminListDoctorRequest(query);
+  const listResult = useAdminListDoctorRequest(query, {
+    keepPreviousData: true,
+  });
 
   const data = (listResult.data?.data.data ?? []) as Row[];
   const totalPages = listResult.data?.data.meta.totalPages ?? 0;
   const totalRecords = listResult.data?.data.meta.totalItems ?? 0;
 
-  useEffect(() => {
-    if (page > 1 && (debouncedSearch || statusFilter !== "all")) {
-      const params = new URLSearchParams(searchParam);
-      params.set("page", "1");
-      setSearchParam(params, { replace: true });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, statusFilter]);
-
-  const actions: DataTableAction<Row>[] = useMemo(
+  const actions = useMemo<DataTableAction<Row>[]>(
     () => [
       {
-        key: "view-approve",
-        label: "Xem & Duyệt",
+        key: "view",
+        label: "Xem chi tiết",
         icon: Eye,
         onSelect: (row) => onViewDetail(row.id),
+      },
+      {
+        key: "decide",
+        label: "Quyết định",
+        icon: Scale,
+        hidden: (row) =>
+          getAllowedTransitions(row.registrationStatus).length === 0,
+        onSelect: (row) => setDecisionId(row.id),
       },
     ],
     [onViewDetail],
   );
 
-  const hasActiveFilter = !!debouncedSearch || statusFilter !== "all";
+  const hasActiveFilter = !!debouncedSearch || urlStatus !== "all";
+  const isEmpty = !listResult.isLoading && data.length === 0;
+  const emptyText = hasActiveFilter
+    ? "Không tìm thấy đơn nào phù hợp với bộ lọc."
+    : "Chưa có đơn xin làm bác sĩ nào.";
+
+  const handleClearFilters = () => {
+    setSearch("");
+    updateParam({ search: "", status: "all", page: 1 });
+  };
 
   return (
     <div className="w-full">
@@ -207,13 +250,14 @@ const DoctorApplicationsTable = ({ onViewDetail }: Props) => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
+            aria-label="Tìm kiếm đơn"
           />
         </div>
 
         <Select
-          value={statusFilter}
+          value={urlStatus}
           onValueChange={(v) =>
-            setStatusFilter(v as RegistrationStatusNameType | "all")
+            updateParam({ status: v as StatusValue, page: 1 })
           }
         >
           <SelectTrigger className="w-44">
@@ -235,32 +279,54 @@ const DoctorApplicationsTable = ({ onViewDetail }: Props) => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              setSearch("");
-              setStatusFilter("all");
-            }}
+            onClick={handleClearFilters}
             className="md:ml-auto"
           >
             <X className="mr-1.5 h-4 w-4" />
-            Xóa lọc
+            Xóa bộ lọc
           </Button>
         )}
       </div>
 
-      <DataTable
-        columns={columns}
-        data={data}
-        isLoading={listResult.isLoading}
-        actions={actions}
-        onRowClick={(row) => onViewDetail(row.id)}
-        emptyText="Không tìm thấy đơn nào phù hợp."
-      />
+      <div
+        className={
+          listResult.isFetching && !listResult.isLoading
+            ? "opacity-60 transition-opacity"
+            : "transition-opacity"
+        }
+      >
+        <DataTable
+          columns={columns}
+          data={data}
+          isLoading={listResult.isLoading}
+          actions={actions}
+          emptyText={emptyText}
+        />
+      </div>
+
+      {isEmpty && hasActiveFilter && (
+        <div className="flex justify-center pt-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleClearFilters}
+          >
+            <X className="mr-1.5 h-4 w-4" />
+            Xóa bộ lọc
+          </Button>
+        </div>
+      )}
 
       <DataTablePagination
         currentPage={page}
         totalPages={totalPages}
         totalItems={totalRecords}
         rowCount={data.length}
+      />
+
+      <DoctorApplicationDecisionDialog
+        id={decisionId}
+        onClose={() => setDecisionId(undefined)}
       />
     </div>
   );
