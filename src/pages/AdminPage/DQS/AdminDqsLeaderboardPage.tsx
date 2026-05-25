@@ -123,17 +123,12 @@ export default function AdminDqsLeaderboardPage() {
         id: "doctor",
         header: "Bác sĩ",
         cell: ({ row }) => (
-          <div>
-            <div className="font-medium">
-              {row.original.doctorName ?? (
-                <span className="text-muted-foreground italic">
-                  (chưa có tên)
-                </span>
-              )}
-            </div>
-            <div className="font-mono text-xs text-muted-foreground">
-              {row.original.doctorId.slice(0, 8)}…
-            </div>
+          <div className="font-medium">
+            {row.original.doctorName ?? (
+              <span className="text-muted-foreground italic">
+                (chưa có tên)
+              </span>
+            )}
           </div>
         ),
       },
@@ -359,9 +354,6 @@ export default function AdminDqsLeaderboardPage() {
                       ),
                   },
                 ]}
-                onRowClick={(row) =>
-                  navigate(`/dashboard/admin/doctors/${row.doctorId}/dqs`)
-                }
                 emptyText="Không có bác sĩ phù hợp."
               />
               <p className="text-xs text-muted-foreground pt-3">

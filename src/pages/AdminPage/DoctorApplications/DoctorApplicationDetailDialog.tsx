@@ -1,4 +1,3 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertTriangle,
   Award,
@@ -11,9 +10,7 @@ import {
   ShieldCheck,
   User as UserIcon,
 } from "lucide-react";
-import { useEffect, useMemo } from "react";
-import { Controller, useForm } from "react-hook-form";
-import { toast } from "sonner";
+import { useMemo } from "react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -26,33 +23,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
-import { RegistrationStatusName } from "@/constants/profile";
-import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
-import { handleApiErrorUnprocessentity } from "@/lib/axios";
+import { useAdminDoctorRequestDetail } from "@/queries/useAdmin";
 import {
-  isApiErrorResponse,
-  isApiErrorUnprocessableEntityResponse,
-} from "@/lib/utils";
-import {
-  useAdminChangeStatusDoctorRequest,
-  useAdminDoctorRequestDetail,
-} from "@/queries/useAdmin";
-import {
-  UpdateDoctorRequestStatusBodySchema,
-  type UpdateDoctorRequestStatusBodyType,
-} from "@/schemaValidatation/doctorProfile";
-import { DOCTOR_TYPE_LABEL, REGISTRATION_STATUS_META } from "./statusMeta";
+  DOCTOR_TYPE_LABEL,
+  REGISTRATION_STATUS_META,
+  USER_STATUS_LABEL,
+} from "./statusMeta";
 import {
   initialsOf,
   formatDateTime,
@@ -60,7 +37,6 @@ import {
   InfoRow,
   SectionTitle,
 } from "./doctorApplicationHelpers";
-import { QuickApproveSuspendButtons } from "./components/DoctorApplicationActions";
 
 interface Props {
   id?: string;
@@ -70,98 +46,8 @@ interface Props {
 const DoctorApplicationDetailDialog = ({ id, onClose }: Props) => {
   const open = Boolean(id);
   const detailQuery = useAdminDoctorRequestDetail(id ?? "", open);
-  const mutation = useAdminChangeStatusDoctorRequest();
 
   const request = open ? detailQuery.data?.data : undefined;
-  const isFinalized =
-    request?.registrationStatus &&
-    request.registrationStatus !== RegistrationStatusName.Pending &&
-    request.registrationStatus !== RegistrationStatusName.Approved;
-
-  const form = useForm<UpdateDoctorRequestStatusBodyType>({
-    resolver: zodResolver(UpdateDoctorRequestStatusBodySchema),
-    defaultValues: {
-      status: RegistrationStatusName.Approved,
-      reason: "",
-    },
-  });
-  useClearServerFieldErrors(form);
-
-  const status = form.watch("status");
-  const requiresReason =
-    status === RegistrationStatusName.Rejected ||
-    status === RegistrationStatusName.Suspended;
-
-  useEffect(() => {
-    if (!open) {
-      form.reset({
-        status: RegistrationStatusName.Approved,
-        reason: "",
-      });
-      return;
-    }
-    if (request) {
-      const next =
-        request.registrationStatus === RegistrationStatusName.Approved
-          ? RegistrationStatusName.Suspended
-          : RegistrationStatusName.Approved;
-      form.reset({
-        status: next,
-        reason: "",
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [request?.id, open]);
-
-  const submit = (overrideStatus?: UpdateDoctorRequestStatusBodyType["status"]) =>
-    form.handleSubmit(async (values) => {
-      if (!id) return;
-      const finalStatus = overrideStatus ?? values.status;
-      const finalReason = values.reason?.trim() || undefined;
-
-      if (
-        (finalStatus === RegistrationStatusName.Rejected ||
-          finalStatus === RegistrationStatusName.Suspended) &&
-        !finalReason
-      ) {
-        form.setError("reason", {
-          type: "manual",
-          message: "Vui lòng nhập lý do",
-        });
-        return;
-      }
-
-      try {
-        await mutation.mutateAsync({
-          id,
-          status: finalStatus,
-          reason: finalReason,
-        });
-        const meta = REGISTRATION_STATUS_META[finalStatus];
-        toast.success(`Đã cập nhật trạng thái: ${meta.label}`);
-        onClose();
-      } catch (error) {
-        if (
-          isApiErrorUnprocessableEntityResponse<UpdateDoctorRequestStatusBodyType>(
-            error,
-          )
-        ) {
-          handleApiErrorUnprocessentity<UpdateDoctorRequestStatusBodyType>(
-            error.response!.data.errors,
-            form.setError,
-            { getValues: form.getValues },
-          );
-          return;
-        }
-        if (isApiErrorResponse(error)) {
-          toast.error(
-            error.response?.data.message ?? "Cập nhật trạng thái thất bại",
-          );
-          return;
-        }
-        toast.error("Cập nhật trạng thái thất bại");
-      }
-    });
 
   const currentMeta = useMemo(
     () =>
@@ -180,7 +66,9 @@ const DoctorApplicationDetailDialog = ({ id, onClose }: Props) => {
     >
       <DialogContent className="sm:max-w-4xl max-h-[92vh] overflow-y-auto p-0">
         <DialogHeader className="border-b p-6 pb-4">
-          <DialogTitle className="text-xl">Chi tiết đơn đăng ký bác sĩ</DialogTitle>
+          <DialogTitle className="text-xl">
+            Chi tiết đơn đăng ký bác sĩ
+          </DialogTitle>
           <DialogDescription>
             Xem hồ sơ chuyên môn và xử lý đơn xin làm bác sĩ trên nền tảng.
           </DialogDescription>
@@ -248,7 +136,11 @@ const DoctorApplicationDetailDialog = ({ id, onClose }: Props) => {
                 <div className="rounded-lg border p-5">
                   <SectionTitle>Nội dung đơn</SectionTitle>
                   <div className="space-y-4">
-                    <InfoRow icon={FileText} label="Tiêu đề" value={request.title} />
+                    <InfoRow
+                      icon={FileText}
+                      label="Tiêu đề"
+                      value={request.title}
+                    />
                     <div>
                       <div className="text-xs uppercase tracking-wide text-muted-foreground">
                         Mô tả
@@ -306,9 +198,12 @@ const DoctorApplicationDetailDialog = ({ id, onClose }: Props) => {
                     <InfoRow
                       icon={CalendarClock}
                       label="Hạn giấy phép"
-                      value={formatDate(request.doctorProfile.licenseExpiryDate)}
+                      value={formatDate(
+                        request.doctorProfile.licenseExpiryDate,
+                      )}
                     />
-                    {typeof request.doctorProfile.yearsOfExperience === "number" && (
+                    {typeof request.doctorProfile.yearsOfExperience ===
+                      "number" && (
                       <InfoRow
                         icon={UserIcon}
                         label="Số năm kinh nghiệm"
@@ -332,7 +227,11 @@ const DoctorApplicationDetailDialog = ({ id, onClose }: Props) => {
               <div className="rounded-lg border p-5">
                 <SectionTitle>Thông tin người gửi</SectionTitle>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <InfoRow icon={Mail} label="Email" value={request.user.email} />
+                  <InfoRow
+                    icon={Mail}
+                    label="Email"
+                    value={request.user.email}
+                  />
                   <InfoRow
                     icon={Phone}
                     label="Số điện thoại"
@@ -346,90 +245,12 @@ const DoctorApplicationDetailDialog = ({ id, onClose }: Props) => {
                   <InfoRow
                     icon={ShieldCheck}
                     label="Trạng thái tài khoản"
-                    value={request.user.status}
+                    value={
+                      USER_STATUS_LABEL[request.user.status] ??
+                      request.user.status
+                    }
                   />
                 </div>
-              </div>
-
-              <Separator />
-
-              <div className="rounded-lg border p-5">
-                <SectionTitle>Quyết định xử lý</SectionTitle>
-                {isFinalized ? (
-                  <div className="rounded-md border bg-muted/30 p-4 text-sm text-muted-foreground">
-                    Đơn này đã được xử lý ở trạng thái{" "}
-                    <strong className="text-foreground">
-                      {currentMeta?.label}
-                    </strong>
-                    . Bạn có thể chuyển sang trạng thái khác bên dưới nếu cần
-                    điều chỉnh.
-                  </div>
-                ) : null}
-
-                <form className="mt-3 grid gap-4 md:grid-cols-[200px_1fr]">
-                  <Controller
-                    name="status"
-                    control={form.control}
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>Trạng thái mới</FieldLabel>
-                        <Select
-                          value={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value={RegistrationStatusName.Approved}>
-                              Đã duyệt
-                            </SelectItem>
-                            <SelectItem value={RegistrationStatusName.Rejected}>
-                              Từ chối
-                            </SelectItem>
-                            <SelectItem value={RegistrationStatusName.Suspended}>
-                              Tạm ngưng
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        {fieldState.invalid && (
-                          <FieldError errors={[fieldState.error]} />
-                        )}
-                      </Field>
-                    )}
-                  />
-
-                  <Controller
-                    name="reason"
-                    control={form.control}
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>
-                          Lý do
-                          {requiresReason ? (
-                            <span className="ml-1 text-destructive">*</span>
-                          ) : (
-                            <span className="ml-1 text-muted-foreground">
-                              (không bắt buộc)
-                            </span>
-                          )}
-                        </FieldLabel>
-                        <Textarea
-                          {...field}
-                          placeholder={
-                            requiresReason
-                              ? "Bắt buộc phải nhập lý do khi từ chối hoặc tạm ngưng"
-                              : "Ghi chú tùy chọn cho người dùng"
-                          }
-                          rows={3}
-                        />
-                        {fieldState.invalid && (
-                          <FieldError errors={[fieldState.error]} />
-                        )}
-                      </Field>
-                    )}
-                  />
-                </form>
               </div>
             </div>
           )}
@@ -440,21 +261,9 @@ const DoctorApplicationDetailDialog = ({ id, onClose }: Props) => {
             type="button"
             variant="outline"
             onClick={onClose}
-            disabled={mutation.isPending}
           >
             Đóng
           </Button>
-
-          {request && (
-            <QuickApproveSuspendButtons
-              isPending={mutation.isPending}
-              currentStatus={request.registrationStatus}
-              onAction={(s) => {
-                form.setValue("status", s);
-                submit(s)();
-              }}
-            />
-          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -11,7 +11,6 @@ import RefreshToken from "./components/auth/RefreshToken.tsx";
 import { ThemeProvider } from "./components/common/theme-provider.tsx";
 import { queryClient } from "./lib/queryClient.ts";
 
-
 createRoot(document.getElementById("root")!).render(
   <ThemeProvider
     defaultTheme="light"

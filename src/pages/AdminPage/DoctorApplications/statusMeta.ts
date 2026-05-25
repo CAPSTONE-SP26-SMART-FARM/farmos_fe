@@ -63,3 +63,9 @@ export const DOCTOR_TYPE_LABEL: Record<string, string> = {
   partner: "Bác sĩ đối tác",
   coordinator: "Điều phối viên",
 };
+
+export const USER_STATUS_LABEL: Record<string, string> = {
+  ACTIVE: "Đang hoạt động",
+  INACTIVE: "Ngưng hoạt động",
+  BLOCKED: "Đã khóa",
+};
