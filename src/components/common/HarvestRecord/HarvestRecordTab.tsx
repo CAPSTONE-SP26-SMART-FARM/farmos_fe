@@ -57,12 +57,22 @@ export default function HarvestRecordTab({ cropSeason, readOnly = false }: Props
   const cropSeasonId = cropSeason.id;
   const canCreate = !readOnly && ALLOWED_CREATE_STATUSES.has(cropSeason.status);
 
+  // Default filter = khoảng thời gian của crop season (plantDate → actualHarvest
+  // hoặc expectedHarvest nếu chưa có actual). Slice 10 ký tự đầu để chắc chắn
+  // format YYYY-MM-DD bất kể BE trả ISO hay date-only.
+  const defaultFromDate = (cropSeason.plantDate ?? "").slice(0, 10);
+  const defaultToDate = (
+    cropSeason.actualHarvestDate ?? cropSeason.expectedHarvestDate ?? ""
+  ).slice(0, 10);
+
   const [query, setQuery] = useState<ListHarvestRecordsQueryType>({
     page: 1,
     limit: 10,
+    fromDate: defaultFromDate || undefined,
+    toDate: defaultToDate || undefined,
   });
-  const [fromInput, setFromInput] = useState("");
-  const [toInput, setToInput] = useState("");
+  const [fromInput, setFromInput] = useState(defaultFromDate);
+  const [toInput, setToInput] = useState(defaultToDate);
 
   // Form dialog (inner). State độc lập với harvest dialog (outer) — không
   // touch outer state từ đây, đóng form chỉ reset form state.
@@ -95,9 +105,14 @@ export default function HarvestRecordTab({ cropSeason, readOnly = false }: Props
   };
 
   const handleResetFilter = () => {
-    setFromInput("");
-    setToInput("");
-    setQuery({ page: 1, limit: 10 });
+    setFromInput(defaultFromDate);
+    setToInput(defaultToDate);
+    setQuery({
+      page: 1,
+      limit: 10,
+      fromDate: defaultFromDate || undefined,
+      toDate: defaultToDate || undefined,
+    });
   };
 
   const handleOpenCreate = () => {
@@ -185,7 +200,11 @@ export default function HarvestRecordTab({ cropSeason, readOnly = false }: Props
           variant="ghost"
           size="sm"
           onClick={handleResetFilter}
-          disabled={!fromInput && !toInput && query.page === 1}
+          disabled={
+            fromInput === defaultFromDate &&
+            toInput === defaultToDate &&
+            query.page === 1
+          }
         >
           Đặt lại
         </Button>

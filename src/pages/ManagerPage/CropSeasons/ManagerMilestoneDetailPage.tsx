@@ -84,6 +84,7 @@ import {
   useManagerUpdateProductionMilestone,
   useManagerDeleteProductionMilestone,
   useManagerListMilestoneAssignments,
+  useManagerSearchMilestoneAssignments,
   useManagerUnassignIotDevice,
   useManagerListPurchaseBoards,
   useManagerBulkAssignIotDevices,
@@ -128,6 +129,7 @@ import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 import { toast } from "sonner";
 import { QUERY_KEYS } from "@/constants";
+import useDebounce from "@/hooks/useDebounce";
 import { SENSOR_TYPE_ICON } from "@/constants/iotDeviceDisplay";
 import { sensorThresholdService } from "@/services/sensorThresholdService";
 import type { ApiResponseType } from "@/types/api";
@@ -891,6 +893,8 @@ const IotConfigSection = ({
 // nên FE chỉ cần multi-select board → submit. Step 2 (cảm biến) chuyển thành
 // read-only — muốn đổi loại cảm biến → quay lại Step 0 (Cấu hình IoT).
 
+const ASSIGNED_PAGE_SIZE = 5;
+
 const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
   const [showPicker, setShowPicker] = useState(false);
   const [pickerPage, setPickerPage] = useState(1);
@@ -900,11 +904,29 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
     useState<BulkAssignIotDevicesResType | null>(null);
   const [confirmUnassign, setConfirmUnassign] = useState<string | null>(null);
 
+  // Trạng thái danh sách thiết bị ĐÃ gán (search + pagination 5/trang)
+  const [assignedSearch, setAssignedSearch] = useState("");
+  const [assignedPage, setAssignedPage] = useState(1);
+  const debouncedAssignedSearch = useDebounce(assignedSearch.trim(), 400);
+
   /** Tên hiển thị kết quả gán — không dùng UUID */
   const deviceLabelByIdRef = useRef(new Map<string, string>());
 
-  const assignmentsQuery = useManagerListMilestoneAssignments(milestoneId);
+  // Reset page về 1 khi đổi từ khoá tìm kiếm
+  useEffect(() => {
+    setAssignedPage(1);
+  }, [debouncedAssignedSearch]);
+
+  const assignmentsQuery = useManagerSearchMilestoneAssignments(milestoneId, {
+    page: assignedPage,
+    limit: ASSIGNED_PAGE_SIZE,
+    q: debouncedAssignedSearch || undefined,
+  });
   const assignments = assignmentsQuery.data?.data.data ?? [];
+  const assignedMeta = assignmentsQuery.data?.data.meta;
+  const totalAssigned = assignedMeta?.totalItems ?? 0;
+  const totalAssignedPages = assignedMeta?.totalPages ?? 0;
+  const isFilteringAssigned = !!debouncedAssignedSearch;
 
   const purchaseQuery = useManagerListPurchaseBoards(
     milestoneId,
@@ -982,16 +1004,15 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
     });
   };
 
-  if (assignmentsQuery.isLoading) {
-    return <Skeleton className="h-32 w-full" />;
-  }
+  const isInitialAssignedLoading =
+    assignmentsQuery.isLoading && !assignmentsQuery.data;
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <p className="text-sm font-semibold flex items-center gap-2">
           <Cpu className="h-4 w-4" />
-          Thiết bị đã gán ({assignments.length})
+          Thiết bị đã gán ({totalAssigned})
         </p>
         <Button
           size="sm"
@@ -1003,53 +1024,139 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
         </Button>
       </div>
 
-      {assignments.length === 0 ? (
-        <div className="rounded-md border border-dashed p-6 text-center">
-          <Cpu className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
-          <p className="text-sm text-muted-foreground">
-            Chưa có thiết bị nào được gán cho mốc này.
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Có thể gán một hoặc nhiều thiết bị trong một lượt; chỉ báo sẽ được
-            nối tự động theo cấu hình ở bước trước.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {assignments.map((a) => (
-            <div
-              key={a.assignmentId}
-              className="rounded-md border p-3 bg-muted/30 text-sm"
+      {/* Thanh tìm kiếm thiết bị đã gán — luôn hiển thị khi đã có ít nhất 1
+          thiết bị hoặc đang lọc (giúp manager xoá nhanh thiết bị cần gỡ) */}
+      {(totalAssigned > 0 || isFilteringAssigned) && (
+        <div className="relative">
+          <Input
+            placeholder="Tìm thiết bị đã gán theo tên..."
+            value={assignedSearch}
+            onChange={(e) => setAssignedSearch(e.target.value)}
+            className="pr-8"
+          />
+          {assignedSearch && (
+            <button
+              type="button"
+              aria-label="Xoá tìm kiếm"
+              onClick={() => setAssignedSearch("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">
-                    {formatMilestoneIotDetailDeviceLabel(a.device)}
-                  </p>
-                  <p className="text-muted-foreground text-xs">
-                    {a.sensors.length} cảm biến đã liên kết · Gán lúc{" "}
-                    {formatDate(a.assignedAt)}
-                  </p>
-                  {a.device.isDeleted && (
-                    <p className="text-xs text-destructive mt-1">
-                      Thiết bị đã tháo khỏi kho — thông tin chỉ còn trong lịch
-                      sử gán.
-                    </p>
-                  )}
-                </div>
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {isInitialAssignedLoading ? (
+        <Skeleton className="h-32 w-full" />
+      ) : assignments.length === 0 ? (
+        isFilteringAssigned ? (
+          <div className="rounded-md border border-dashed p-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              Không tìm thấy thiết bị phù hợp với từ khoá "
+              {debouncedAssignedSearch}".
+            </p>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="mt-2"
+              onClick={() => setAssignedSearch("")}
+            >
+              Xoá tìm kiếm
+            </Button>
+          </div>
+        ) : (
+          <div className="rounded-md border border-dashed p-6 text-center">
+            <Cpu className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
+            <p className="text-sm text-muted-foreground">
+              Chưa có thiết bị nào được gán cho mốc này.
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Có thể gán một hoặc nhiều thiết bị trong một lượt; chỉ báo sẽ
+              được nối tự động theo cấu hình ở bước trước.
+            </p>
+          </div>
+        )
+      ) : (
+        <>
+          <div
+            className={cn(
+              "flex flex-wrap gap-2",
+              assignmentsQuery.isFetching && "opacity-60 transition-opacity",
+            )}
+          >
+            {assignments.map((a) => (
+              <div
+                key={a.assignmentId}
+                className="group inline-flex items-center gap-2 max-w-full rounded-full border bg-muted/40 pl-3 pr-1 py-1 text-sm hover:border-primary/40 transition-colors"
+                title={`${a.sensors.length} cảm biến đã liên kết · Gán lúc ${formatDate(a.assignedAt)}`}
+              >
+                <Cpu className="h-3.5 w-3.5 text-primary shrink-0" />
+                <span className="font-medium truncate min-w-0">
+                  {formatMilestoneIotDetailDeviceLabel(a.device)}
+                </span>
+                <Badge
+                  variant="secondary"
+                  className="text-[10px] h-4 px-1.5 shrink-0"
+                >
+                  {a.sensors.length} cảm biến
+                </Badge>
+                {a.device.isDeleted && (
+                  <Badge
+                    variant="destructive"
+                    className="text-[10px] h-4 px-1.5 shrink-0"
+                  >
+                    Đã tháo
+                  </Badge>
+                )}
                 <Button
-                  size="sm"
+                  size="icon"
                   variant="ghost"
-                  className="text-destructive hover:text-destructive h-7 px-2"
+                  className="h-6 w-6 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
+                  aria-label={`Huỷ gán thiết bị ${formatMilestoneIotDetailDeviceLabel(a.device)}`}
                   onClick={() => setConfirmUnassign(a.iotDeviceId)}
                 >
-                  <X className="h-3 w-3 mr-1" />
-                  Huỷ gán
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          {totalAssignedPages > 1 && (
+            <div className="flex items-center justify-between pt-1 text-xs">
+              <span className="text-muted-foreground">
+                Trang {assignedPage} / {totalAssignedPages} ·{" "}
+                {totalAssigned} thiết bị
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7"
+                  disabled={assignedPage <= 1}
+                  onClick={() => setAssignedPage((p) => Math.max(1, p - 1))}
+                >
+                  <ChevronLeft className="h-3 w-3 mr-1" />
+                  Trước
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7"
+                  disabled={assignedPage >= totalAssignedPages}
+                  onClick={() =>
+                    setAssignedPage((p) =>
+                      Math.min(totalAssignedPages, p + 1),
+                    )
+                  }
+                >
+                  Sau
+                  <ChevronRight className="h-3 w-3 ml-1" />
                 </Button>
               </div>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
 
       {/* Bulk picker */}
@@ -1080,6 +1187,55 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
               />
               <span>Chọn cả trang này ({selected.size} thiết bị đã chọn)</span>
             </div>
+
+            {/* Selected state — hiển thị các thiết bị đang chọn dạng tag/chip
+                để manager review & bỏ chọn nhanh trước khi gán */}
+            {selected.size > 0 && (
+              <div className="rounded-md border bg-muted/30 p-2 space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Đã chọn ({selected.size})
+                  </span>
+                  <button
+                    type="button"
+                    className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                    onClick={() => {
+                      setSelected(new Set());
+                      deviceLabelByIdRef.current.clear();
+                    }}
+                  >
+                    Bỏ chọn tất cả
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                  {Array.from(selected).map((id) => {
+                    const label =
+                      deviceLabelByIdRef.current.get(id) ??
+                      boards.find((b) => b.id === id)?.deviceName ??
+                      "Thiết bị đã chọn";
+                    return (
+                      <span
+                        key={id}
+                        className="inline-flex items-center gap-1 max-w-full rounded-full border bg-background pl-2.5 pr-1 py-0.5 text-xs"
+                        title={label}
+                      >
+                        <span className="truncate min-w-0 max-w-45">
+                          {label}
+                        </span>
+                        <button
+                          type="button"
+                          aria-label={`Bỏ chọn ${label}`}
+                          className="inline-flex items-center justify-center h-4 w-4 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => toggleSelect(id, false)}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <div className="space-y-2 max-h-80 overflow-y-auto">
               {purchaseQuery.isLoading ? (
                 [0, 1, 2].map((i) => (

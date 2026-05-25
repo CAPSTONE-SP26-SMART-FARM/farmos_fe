@@ -84,22 +84,6 @@ export const TicketSystemConfigFormSchema = z
       .int()
       .min(0)
       .max(1800, "Tối đa 1800 giây."),
-  })
-  .superRefine((data, ctx) => {
-    if (data.priority_window_gold_sec < data.priority_window_platinum_sec) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["priority_window_gold_sec"],
-        message: "Phải lớn hơn hoặc bằng cửa sổ Bạch kim.",
-      });
-    }
-    if (data.priority_window_fanout_sec < data.priority_window_gold_sec) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["priority_window_fanout_sec"],
-        message: "Phải lớn hơn hoặc bằng cửa sổ Vàng.",
-      });
-    }
   });
 
 // Mapping FE form key (snake) ↔ BE config key (dot-notation).

@@ -108,47 +108,74 @@ export function CropCategoryPicker({
   );
 }
 
+// ── Recommended plant count — inline hint dưới input "Số lượng cây" ───────
+// Tách khỏi DensityBadge: gợi ý nằm sát input để user dễ áp dụng; badge mật
+// độ ở dưới chỉ phản ánh trạng thái (phù hợp / quá thưa / quá dày) sau khi
+// đã có giá trị.
+export function RecommendedPlantCountHint({
+  totalAreaSqm,
+  plantCount,
+  category,
+  onApply,
+}: {
+  totalAreaSqm: number | undefined;
+  plantCount: number | undefined;
+  category: CropCategoryType | undefined;
+  onApply: (count: number) => void;
+}) {
+  // Chỉ gợi ý khi: có category có recommendedDensity, có diện tích, và user
+  // CHƯA nhập số cây (tránh cướp focus khi đang gõ).
+  if (
+    !category ||
+    category.recommendedDensity == null ||
+    !Number.isFinite(totalAreaSqm) ||
+    (totalAreaSqm as number) <= 0 ||
+    (Number.isFinite(plantCount) && (plantCount as number) > 0)
+  ) {
+    return null;
+  }
+
+  const suggested = Math.max(
+    1,
+    Math.round((totalAreaSqm as number) * category.recommendedDensity),
+  );
+
+  return (
+    <p className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+      <Sparkles className="h-3 w-3 text-amber-500" />
+      <span>
+        Khuyến nghị{" "}
+        <span className="font-semibold text-foreground">
+          {suggested.toLocaleString("vi-VN")} cây
+        </span>
+      </span>
+      <span className="opacity-50">·</span>
+      <Button
+        type="button"
+        variant="link"
+        size="sm"
+        className="h-auto p-0 text-xs font-medium"
+        onClick={() => onApply(suggested)}
+      >
+        Áp dụng ngay
+      </Button>
+    </p>
+  );
+}
+
 // ── Density badge real-time ───────────────────────────────────────────────
 export function DensityBadge({
   totalAreaSqm,
   plantCount,
   category,
-  onSuggestCount,
 }: {
   totalAreaSqm: number | undefined;
   plantCount: number | undefined;
   category: CropCategoryType | undefined;
-  onSuggestCount?: (count: number) => void;
 }) {
   const hint = computeDensityHint(totalAreaSqm, plantCount, category);
 
-  if (hint.status === "missing") {
-    if (
-      category &&
-      category.recommendedDensity != null &&
-      Number.isFinite(totalAreaSqm) &&
-      (totalAreaSqm as number) > 0 &&
-      onSuggestCount
-    ) {
-      const suggested = Math.max(
-        1,
-        Math.round((totalAreaSqm as number) * category.recommendedDensity),
-      );
-      return (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="h-7 gap-1 text-xs"
-          onClick={() => onSuggestCount(suggested)}
-        >
-          <Sparkles className="h-3 w-3" />
-          Gợi ý: {suggested.toLocaleString("vi-VN")} cây
-        </Button>
-      );
-    }
-    return null;
-  }
+  if (hint.status === "missing") return null;
 
   if (hint.status === "ok") {
     return (

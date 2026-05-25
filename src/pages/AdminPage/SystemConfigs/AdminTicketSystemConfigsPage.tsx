@@ -127,7 +127,7 @@ const GROUP_PRIORITY_WINDOW: FieldDef[] = [
     label: "Cửa sổ Vàng (tier 2)",
     unit: "giây",
     helperText:
-      "Sau khoảng này, nếu chưa bác sĩ nào nhận, hệ thống mở rộng cho hạng Vàng. Phải lớn hơn hoặc bằng cửa sổ Bạch kim.",
+      "Sau khoảng này, nếu chưa bác sĩ nào nhận, hệ thống mở rộng cho hạng Vàng.",
     liveHelper: formatSecondsHuman,
   },
   {
@@ -135,7 +135,7 @@ const GROUP_PRIORITY_WINDOW: FieldDef[] = [
     label: "Cửa sổ Bạc + Đồng (tier 3)",
     unit: "giây",
     helperText:
-      "Sau khoảng này, hệ thống gửi cho tất cả bác sĩ trực tuyến (kể cả Bạc và Đồng). Phải lớn hơn hoặc bằng cửa sổ Vàng.",
+      "Sau khoảng này, hệ thống gửi cho tất cả bác sĩ trực tuyến (kể cả Bạc và Đồng).",
     liveHelper: formatSecondsHuman,
   },
 ];

@@ -25,12 +25,15 @@ export function MilestoneTasksTab({
   zoneId,
   canEdit = true,
   lockComplete = false,
+  canEditContent = true,
 }: {
   milestoneId: string;
   zoneId: string;
   canEdit?: boolean;
   /** Khi season ở planning, task chưa nên đánh dấu hoàn thành. */
   lockComplete?: boolean;
+  /** Chỉ true khi cropSeason planning / rejected — cho phép sửa nội dung task. */
+  canEditContent?: boolean;
 }) {
   return (
     <div className="space-y-4">
@@ -93,6 +96,7 @@ export function MilestoneTasksTab({
               zoneId={zoneId}
               canEdit={canEdit}
               lockComplete={lockComplete}
+              canEditContent={canEditContent}
             />
           </TabsContent>
 

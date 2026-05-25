@@ -21,6 +21,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
@@ -29,17 +30,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TaskLogHistoryPanel } from "@/pages/ManagerPage/CropSeasons/components/TaskLogHistoryPanel";
 import {
   Plus,
@@ -57,7 +50,6 @@ import {
   ChevronRight,
   CheckCircle2,
   NotebookPen,
-  Info,
 } from "lucide-react";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { useMemo, useState, type FormEvent } from "react";
@@ -70,6 +62,7 @@ import {
   useManagerUnassignFarmerFromTask,
   useManagerCompleteEmployeeTask,
   useManagerEligibleFarmers,
+  useManagerEmployeeTaskDetail,
 } from "@/queries/useEmployeeTask";
 import { useManagerListEmployeeTaskTemplates } from "@/queries/useEmployeeTaskTemplate";
 import type {
@@ -184,6 +177,11 @@ function formatDate(d: string | null | undefined) {
   } catch {
     return d;
   }
+}
+
+// Task đã chốt — không cho sửa, xóa, gán/hủy gán nông dân nữa, chỉ xem.
+function isTaskLocked(task: EmployeeTaskResType) {
+  return task.status === "completed" || task.status === "verified";
 }
 
 function isOverdue(task: EmployeeTaskResType) {
@@ -573,7 +571,7 @@ function BatchCreateInlinePanel({
 // ============================================================
 
 function TaskDetailSheet({
-  task,
+  taskId,
   milestoneId,
   zoneId,
   onClose,
@@ -581,8 +579,9 @@ function TaskDetailSheet({
   farmers,
   getAssigneeLabel,
   lockComplete = false,
+  canEditContent = true,
 }: {
-  task: EmployeeTaskResType | null;
+  taskId: string | null;
   milestoneId: string;
   /**
    * Cần để load log history theo `employeeTaskId` từ endpoint zone-scope.
@@ -600,11 +599,28 @@ function TaskDetailSheet({
    * Vì tasks chưa được phép tiến triển khi vụ mùa chưa được phê duyệt.
    */
   lockComplete?: boolean;
+  /**
+   * Cho phép sửa nội dung task (title/description/priority).
+   * Chỉ nên `true` khi cropSeason ở planning / rejected — các trạng thái khác
+   * (active, completed, ...) task đã chốt nội dung, chỉ thao tác trạng thái.
+   */
+  canEditContent?: boolean;
 }) {
   const updateMutation = useManagerUpdateEmployeeTask(milestoneId);
   const assignMutation = useManagerAssignFarmerToTask(milestoneId);
   const unassignMutation = useManagerUnassignFarmerFromTask(milestoneId);
   const completeMutation = useManagerCompleteEmployeeTask(milestoneId);
+
+  // Mở dialog ngay khi click → fetch detail riêng, hiện skeleton trong khi load.
+  // Detail query có cache key riêng, nên các mutation (assign/unassign/...)
+  // invalidate detail key sẽ tự refetch & dialog reflect data mới.
+  const detailQuery = useManagerEmployeeTaskDetail(
+    taskId ?? "",
+    milestoneId,
+    !!taskId,
+  );
+  const task = detailQuery.data?.data ?? null;
+  const isLoadingDetail = !!taskId && (detailQuery.isLoading || !task);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -629,11 +645,10 @@ function TaskDetailSheet({
     setIsEditing(true);
   };
 
-  if (!task) return null;
-
-  const PriorityIcon = PRIORITY_META[task.priority].icon;
+  const PriorityIcon = task ? PRIORITY_META[task.priority].icon : null;
 
   const handleSave = () => {
+    if (!task) return;
     updateMutation.mutate(
       {
         taskId: task.id,
@@ -641,7 +656,6 @@ function TaskDetailSheet({
           title: editForm.title.trim() || undefined,
           description: editForm.description.trim() || null,
           priority: editForm.priority,
-          status: editForm.status,
         },
       },
       { onSuccess: () => setIsEditing(false) },
@@ -655,52 +669,70 @@ function TaskDetailSheet({
 
   return (
     <>
-      <Sheet
-        open={!!task}
-        onOpenChange={(v) => !v && onClose()}
+      <Dialog
+        open={!!taskId}
+        onOpenChange={(v) => {
+          if (!v) {
+            setIsEditing(false);
+            onClose();
+          }
+        }}
       >
-        <SheetContent
-          side="right"
-          className="sm:max-w-md overflow-y-auto"
+        <DialogContent
+          className="sm:max-w-2xl max-h-[85vh] overflow-y-auto"
+          onPointerDownOutside={(e) => {
+            if (confirmUnassign || showAssign) e.preventDefault();
+          }}
+          onInteractOutside={(e) => {
+            if (confirmUnassign || showAssign) e.preventDefault();
+          }}
         >
-          <SheetHeader>
-            <SheetTitle className="text-base">{task.title}</SheetTitle>
-            <SheetDescription>
-              <Badge
-                variant={getTaskDisplayStatus(task).variant}
-                className="text-xs"
-              >
-                {getTaskDisplayStatus(task).label}
-              </Badge>
-              {isOverdue(task) && (
-                <Badge
-                  variant="destructive"
-                  className="text-xs ml-1"
-                >
-                  Quá hạn
-                </Badge>
-              )}
-            </SheetDescription>
-          </SheetHeader>
-
-          <div className="px-4 space-y-4">
-            {!isEditing ? (
-              /* ── Read-only view with inner tabs ── */
-              <Tabs defaultValue="detail" className="w-full">
-                {zoneId && (
-                  <TabsList className="grid w-full grid-cols-2 h-8">
-                    <TabsTrigger value="detail" className="text-xs gap-1.5">
-                      <Info className="h-3.5 w-3.5" />
-                      Chi tiết
-                    </TabsTrigger>
-                    <TabsTrigger value="logs" className="text-xs gap-1.5">
-                      <NotebookPen className="h-3.5 w-3.5" />
-                      Nhật ký
-                    </TabsTrigger>
-                  </TabsList>
+          <DialogHeader>
+            <DialogTitle className="text-base">
+              {task ? task.title : "Đang tải nhiệm vụ..."}
+            </DialogTitle>
+            <DialogDescription asChild>
+              <div className="flex flex-wrap gap-1">
+                {task ? (
+                  <>
+                    <Badge
+                      variant={getTaskDisplayStatus(task).variant}
+                      className="text-xs"
+                    >
+                      {getTaskDisplayStatus(task).label}
+                    </Badge>
+                    {isOverdue(task) && (
+                      <Badge
+                        variant="destructive"
+                        className="text-xs"
+                      >
+                        Quá hạn
+                      </Badge>
+                    )}
+                  </>
+                ) : (
+                  <Skeleton className="h-5 w-20" />
                 )}
+              </div>
+            </DialogDescription>
+          </DialogHeader>
 
-                <TabsContent value="detail" className="mt-3 space-y-3">
+          {isLoadingDetail || !task ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-24 w-full" />
+            </div>
+          ) : (
+            <div className="space-y-4">
+            {!isEditing ? (
+              /* ── Read-only view: detail + logs gộp chung ── */
+              <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <p className="text-xs text-muted-foreground">Ưu tiên</p>
@@ -764,65 +796,22 @@ function TaskDetailSheet({
                   <p>Cập nhật: {formatDate(task.updatedAt)}</p>
                 </div>
 
-                {canEdit && (
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={startEditing}
-                    >
-                      <Pencil className="h-3.5 w-3.5 mr-1" />
-                      Chỉnh sửa
-                    </Button>
-                    {!lockComplete &&
-                      (task.status === "pending" ||
-                        task.status === "in_progress") && (
-                        <Button
-                          size="sm"
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                          disabled={completeMutation.isPending}
-                          onClick={() =>
-                            completeMutation.mutate(task.id, {
-                              onSuccess: () => onClose(),
-                            })
-                          }
-                        >
-                          <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                          Hoàn thành
-                        </Button>
-                      )}
-                    {!task.assignedTo ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setShowAssign(true)}
-                      >
-                        <UserPlus className="h-3.5 w-3.5 mr-1" />
-                        Gán nông dân
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setConfirmUnassign(true)}
-                      >
-                        <UserMinus className="h-3.5 w-3.5 mr-1" />
-                        Hủy gán
-                      </Button>
-                    )}
-                  </div>
-                )}
-                </TabsContent>
-
                 {zoneId && (
-                  <TabsContent value="logs" className="mt-3">
-                    <TaskLogHistoryPanel
-                      zoneId={zoneId}
-                      employeeTaskId={task.id}
-                    />
-                  </TabsContent>
+                  <>
+                    <Separator />
+                    <div>
+                      <p className="text-xs font-semibold flex items-center gap-1.5 mb-2">
+                        <NotebookPen className="h-3.5 w-3.5" />
+                        Nhật ký
+                      </p>
+                      <TaskLogHistoryPanel
+                        zoneId={zoneId}
+                        employeeTaskId={task.id}
+                      />
+                    </div>
+                  </>
                 )}
-              </Tabs>
+              </div>
             ) : (
               /* ── Edit form ── */
               <form
@@ -852,84 +841,108 @@ function TaskDetailSheet({
                     }
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-xs font-medium">Ưu tiên</label>
-                    <Select
-                      value={editForm.priority}
-                      onValueChange={(v) =>
-                        setEditForm((f) => ({
-                          ...f,
-                          priority: v as TaskPriorityType,
-                        }))
-                      }
-                    >
-                      <SelectTrigger className="mt-1 h-8 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">Thấp</SelectItem>
-                        <SelectItem value="normal">Bình thường</SelectItem>
-                        <SelectItem value="high">Cao</SelectItem>
-                        <SelectItem value="urgent">Khẩn cấp</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium">Trạng thái</label>
-                    <Select
-                      value={editForm.status}
-                      onValueChange={(v) =>
-                        setEditForm((f) => ({
-                          ...f,
-                          status: v as TaskStatusType,
-                        }))
-                      }
-                      disabled={lockComplete}
-                    >
-                      <SelectTrigger className="mt-1 h-8 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Chờ xử lý</SelectItem>
-                        <SelectItem value="in_progress">
-                          Đang thực hiện
-                        </SelectItem>
-                        <SelectItem value="completed">Hoàn thành</SelectItem>
-                        <SelectItem value="verified">Đã xác minh</SelectItem>
-                        <SelectItem value="cancelled">Đã hủy</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {lockComplete && (
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                        Vụ mùa đang lập kế hoạch — không thay đổi trạng thái
-                        nhiệm vụ.
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex gap-2 pt-2">
-                  <Button
-                    type="submit"
-                    size="sm"
-                    disabled={updateMutation.isPending}
+                <div>
+                  <label className="text-xs font-medium">Ưu tiên</label>
+                  <Select
+                    value={editForm.priority}
+                    onValueChange={(v) =>
+                      setEditForm((f) => ({
+                        ...f,
+                        priority: v as TaskPriorityType,
+                      }))
+                    }
                   >
-                    {updateMutation.isPending ? "Đang lưu..." : "Lưu"}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setIsEditing(false)}
-                  >
-                    Hủy
-                  </Button>
+                    <SelectTrigger className="mt-1 h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Thấp</SelectItem>
+                      <SelectItem value="normal">Bình thường</SelectItem>
+                      <SelectItem value="high">Cao</SelectItem>
+                      <SelectItem value="urgent">Khẩn cấp</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </form>
             )}
           </div>
-        </SheetContent>
-      </Sheet>
+          )}
+
+          {task && (
+          <DialogFooter>
+            {isEditing ? (
+              <>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setIsEditing(false)}
+                >
+                  Hủy
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleSave}
+                  disabled={updateMutation.isPending}
+                >
+                  {updateMutation.isPending ? "Đang lưu..." : "Lưu"}
+                </Button>
+              </>
+            ) : canEdit && !isTaskLocked(task) ? (
+              <>
+                {!task.assignedTo ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowAssign(true)}
+                  >
+                    <UserPlus className="h-3.5 w-3.5 mr-1" />
+                    Gán nông dân
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setConfirmUnassign(true)}
+                  >
+                    <UserMinus className="h-3.5 w-3.5 mr-1" />
+                    Hủy gán
+                  </Button>
+                )}
+                {canEditContent && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={startEditing}
+                  >
+                    <Pencil className="h-3.5 w-3.5 mr-1" />
+                    Chỉnh sửa
+                  </Button>
+                )}
+                {!lockComplete &&
+                  (task.status === "pending" ||
+                    task.status === "in_progress") && (
+                    <Button
+                      size="sm"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                      disabled={completeMutation.isPending}
+                      onClick={() =>
+                        completeMutation.mutate(task.id, {
+                          onSuccess: () => onClose(),
+                        })
+                      }
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                      Hoàn thành
+                    </Button>
+                  )}
+              </>
+            ) : null}
+          </DialogFooter>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Assign farmer dialog */}
       <Dialog
@@ -1319,7 +1332,7 @@ export function ManagerMilestoneTaskAssignmentScreen({
                   )}
                 </div>
 
-                {canEdit && (
+                {canEdit && !isTaskLocked(task) && (
                   <AnimatePresence
                     mode="wait"
                     initial={false}
@@ -1445,6 +1458,7 @@ export default function ManagerMilestoneTasksSection({
   zoneId,
   canEdit = true,
   lockComplete = false,
+  canEditContent = true,
 }: {
   milestoneId: string;
   /**
@@ -1461,6 +1475,11 @@ export default function ManagerMilestoneTasksSection({
    * khi user bấm "Chỉnh sửa".
    */
   lockComplete?: boolean;
+  /**
+   * Cho phép sửa nội dung task (title/description/priority) trong dialog detail.
+   * Chỉ nên `true` khi cropSeason ở planning / rejected.
+   */
+  canEditContent?: boolean;
 }) {
   const [query, setQuery] = useState<ListEmployeeTasksQueryType>({
     page: 1,
@@ -1523,9 +1542,7 @@ export default function ManagerMilestoneTasksSection({
   };
 
   const [showCreate, setShowCreate] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<EmployeeTaskResType | null>(
-    null,
-  );
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [farmerSelections, setFarmerSelections] = useState<
     Record<string, string>
@@ -1537,7 +1554,7 @@ export default function ManagerMilestoneTasksSection({
     deleteMutation.mutate(taskId, {
       onSuccess: () => {
         setConfirmDelete(null);
-        if (selectedTask?.id === taskId) setSelectedTask(null);
+        if (selectedTaskId === taskId) setSelectedTaskId(null);
       },
     });
   };
@@ -1754,7 +1771,7 @@ export default function ManagerMilestoneTasksSection({
                 key={task.id}
                 variants={CHILD_ITEM_MOTION}
                 className="rounded-md border px-3 py-2 text-sm hover:bg-muted/50 transition-colors cursor-pointer space-y-2"
-                onClick={() => setSelectedTask(task)}
+                onClick={() => setSelectedTaskId(task.id)}
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -1812,13 +1829,13 @@ export default function ManagerMilestoneTasksSection({
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedTask(task);
+                              setSelectedTaskId(task.id);
                             }}
                           >
                             <Eye className="h-4 w-4 mr-2" />
                             Xem chi tiết
                           </DropdownMenuItem>
-                          {!lockComplete &&
+                          {!isTaskLocked(task) && !lockComplete &&
                             (task.status === "pending" ||
                               task.status === "in_progress") && (
                               <DropdownMenuItem
@@ -1833,23 +1850,25 @@ export default function ManagerMilestoneTasksSection({
                                 Hoàn thành
                               </DropdownMenuItem>
                             )}
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setConfirmDelete(task.id);
-                            }}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Xóa
-                          </DropdownMenuItem>
+                          {!isTaskLocked(task) && (
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setConfirmDelete(task.id);
+                              }}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Xóa
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     )}
                   </div>
                 </div>
 
-                {canEdit && (
+                {canEdit && !isTaskLocked(task) && (
                   <AnimatePresence
                     mode="wait"
                     initial={false}
@@ -1959,10 +1978,11 @@ export default function ManagerMilestoneTasksSection({
       )}
 
       <TaskDetailSheet
-        task={selectedTask}
+        taskId={selectedTaskId}
+        canEditContent={canEditContent}
         milestoneId={milestoneId}
         zoneId={zoneId}
-        onClose={() => setSelectedTask(null)}
+        onClose={() => setSelectedTaskId(null)}
         canEdit={canEdit}
         farmers={farmers}
         getAssigneeLabel={getAssigneeLabel}

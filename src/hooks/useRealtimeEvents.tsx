@@ -113,6 +113,7 @@ async function emitRichAlertToast(
   toast[variant](alert.title, {
     description: buildAlertToastDescription(alert),
     duration: alert.severity === "critical" ? 10_000 : 6_000,
+    position: "top-right",
     action: {
       label: "Xem chi tiết",
       onClick: () => openDialog(alert.id),
@@ -181,6 +182,7 @@ function toastBySeverity(
   const payload = {
     description: opts?.description,
     action: opts?.action,
+    position: "top-right" as const,
   };
   switch (severity) {
     case "error":
@@ -351,11 +353,12 @@ function handleEvent(
     const fromStatus = payload.fromStatus;
     const toStatus = payload.toStatus;
 
+    const pos = { position: "top-right" as const };
     if (event === RealtimeEvents.IotDeviceActivated) {
       if (fromStatus === "error") {
-        toast.success(`${subject}${location} đã hoạt động trở lại`);
+        toast.success(`${subject}${location} đã hoạt động trở lại`, pos);
       } else if (fromStatus === "inactive") {
-        toast.success(`${subject}${location} đã kết nối lần đầu`);
+        toast.success(`${subject}${location} đã kết nối lần đầu`, pos);
       }
     } else if (event === RealtimeEvents.IotDeviceStatusChanged) {
       // Toast nhẹ cho flow start-install / complete-install / cron error:
@@ -367,11 +370,11 @@ function handleEvent(
       //                    thay kit đã đi qua NotificationCreated → bell).
       // Các transition khác không toast (admin update bằng tay đã có noti DB).
       if (fromStatus === "purchase" && toStatus === "install") {
-        toast.info(`${subject}${location} đang được lắp đặt`);
+        toast.info(`${subject}${location} đang được lắp đặt`, pos);
       } else if (fromStatus === "install" && toStatus === "inactive") {
-        toast.success(`${subject}${location} đã lắp xong, đang chờ kết nối`);
+        toast.success(`${subject}${location} đã lắp xong, đang chờ kết nối`, pos);
       } else if (fromStatus === "active" && toStatus === "error") {
-        toast.error(`${subject}${location} đã gặp sự cố, vui lòng kiểm tra`);
+        toast.error(`${subject}${location} đã gặp sự cố, vui lòng kiểm tra`, pos);
       }
     }
   }
@@ -387,12 +390,13 @@ function handleEvent(
     const reqNumber =
       typeof payload.requestNumber === "string" ? payload.requestNumber : null;
     const prefix = reqNumber ? `Yêu cầu ${reqNumber}` : "Có yêu cầu IoT mới";
+    const pos = { position: "top-right" as const };
     if (type === "INSTALL_SCHEDULE") {
-      toast.info(`${prefix} — chủ trang trại cần lắp đặt kit`);
+      toast.info(`${prefix} — chủ trang trại cần lắp đặt kit`, pos);
     } else if (type === "FAULT_REPORT") {
-      toast.warning(`${prefix} — báo lỗi thiết bị`);
+      toast.warning(`${prefix} — báo lỗi thiết bị`, pos);
     } else {
-      toast.info(prefix);
+      toast.info(prefix, pos);
     }
   }
 
