@@ -29,6 +29,8 @@ export function KitRequestDetailMeta({ request }: { request: RequestLike }) {
   const devices =
     "devices" in request ? request.devices : null;
   const isInstallSchedule = request.type === "INSTALL_SCHEDULE";
+  const isRecoverySchedule = request.type === "RECOVERY_SCHEDULE";
+  const showDevices = (isInstallSchedule || isRecoverySchedule) && devices;
 
   return (
     <div className="space-y-4 text-sm">
@@ -66,10 +68,13 @@ export function KitRequestDetailMeta({ request }: { request: RequestLike }) {
 
       <Separator />
 
-      {/* Devices preview — chỉ INSTALL_SCHEDULE và có data */}
-      {isInstallSchedule && devices && (
+      {/* Devices preview — INSTALL_SCHEDULE và RECOVERY_SCHEDULE */}
+      {showDevices && (
         <>
-          <DevicesSection devices={devices} />
+          <DevicesSection
+            devices={devices}
+            kind={isRecoverySchedule ? "recovery" : "install"}
+          />
           <Separator />
         </>
       )}
@@ -187,14 +192,24 @@ function SlaBadge({
 
 function DevicesSection({
   devices,
+  kind,
 }: {
   devices: NonNullable<KitRequestDetailResType["devices"]>;
+  kind: "install" | "recovery";
 }) {
+  const heading =
+    kind === "recovery"
+      ? "Thiết bị cần thu hồi"
+      : "Thiết bị thuộc yêu cầu";
+  const emptyMessage =
+    kind === "recovery"
+      ? "Không còn thiết bị nào cần thu hồi — có thể đã thu xong hoặc owner không còn thiết bị nào."
+      : "Không còn thiết bị nào thuộc yêu cầu này (có thể đã hoàn tất hoặc bị gỡ phân bổ).";
+
   if (devices.length === 0) {
     return (
       <div className="rounded-md border bg-muted/30 p-3 text-sm text-muted-foreground">
-        Không còn thiết bị nào thuộc yêu cầu này (có thể đã hoàn tất hoặc bị
-        gỡ phân bổ).
+        {emptyMessage}
       </div>
     );
   }
@@ -209,7 +224,7 @@ function DevicesSection({
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
         <p className="text-xs uppercase tracking-wide text-muted-foreground">
-          Thiết bị thuộc yêu cầu ({devices.length})
+          {heading} ({devices.length})
         </p>
         {Object.entries(statusCount).map(([status, count]) => (
           <Badge
