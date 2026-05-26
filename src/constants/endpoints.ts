@@ -268,6 +268,8 @@ export const API_ENDPOINTS = {
         `/production-milestone-iot-device/manager/milestone/${milestoneId}/unassign`,
       PURCHASE_BOARDS: (milestoneId: string) =>
         `/production-milestone-iot-device/manager/milestone/${milestoneId}/purchase-boards`,
+      PREVIOUS_ASSIGNMENTS: (milestoneId: string) =>
+        `/production-milestone-iot-device/manager/milestone/${milestoneId}/previous-assignments`,
       ASSIGN_BULK: (milestoneId: string) =>
         `/production-milestone-iot-device/manager/milestone/${milestoneId}/assign-bulk`,
     },
@@ -389,6 +391,8 @@ export const API_ENDPOINTS = {
         `/production-milestone-iot-device/owner/milestone/${milestoneId}/unassign`,
       PURCHASE_BOARDS: (milestoneId: string) =>
         `/production-milestone-iot-device/owner/milestone/${milestoneId}/purchase-boards`,
+      PREVIOUS_ASSIGNMENTS: (milestoneId: string) =>
+        `/production-milestone-iot-device/owner/milestone/${milestoneId}/previous-assignments`,
       ASSIGN_BULK: (milestoneId: string) =>
         `/production-milestone-iot-device/owner/milestone/${milestoneId}/assign-bulk`,
     },
@@ -699,6 +703,19 @@ export const API_ENDPOINTS = {
     COMPLETE_INSTALL: (id: string) =>
       `/iot-kit-request/admin/${id}/complete-install`, // admin: install → inactive
 
+    // ── SWAP workflow — admin xử lý FAULT_REPORT bằng cách thay board mới ─
+    REPLACEMENT_DEVICES: "/iot-kit-request/admin/replacement-devices", // admin: list board available
+    SCHEDULE_SWAP: (id: string) =>
+      `/iot-kit-request/admin/${id}/schedule-swap`, // admin: chọn replacement + scheduledAt
+    COMPLETE_SWAP: (id: string) =>
+      `/iot-kit-request/admin/${id}/complete-swap`, // admin: thay xong tại hiện trường
+
+    // ── RECOVERY workflow — admin thu hồi kit sau khi sub expired ────────
+    SCHEDULE_RECOVERY: (id: string) =>
+      `/iot-kit-request/admin/${id}/schedule-recovery`, // admin: lên lịch thu
+    COMPLETE_RECOVERY: (id: string) =>
+      `/iot-kit-request/admin/${id}/complete-recovery`, // admin: thu xong, per-board outcome
+
     // ── Shared ────────────────────────────────────────────────────────
     LIST_MY: "/iot-kit-request/my", // owner
     LIST_ADMIN: "/iot-kit-request/admin/list", // admin
@@ -809,6 +826,11 @@ export const QUERY_KEYS = {
   },
   iotKitRequests: {
     all: ["iot-kit-requests"],
+    replacementDevices: (query?: Record<string, unknown>) => [
+      "iot-kit-requests",
+      "replacement-devices",
+      query,
+    ],
     listMy: (query?: Record<string, unknown>) => [
       "iot-kit-requests",
       "my",
@@ -1086,6 +1108,12 @@ export const QUERY_KEYS = {
         "purchase-boards",
         ...(query !== undefined ? [query] : []),
       ],
+      previousAssignments: (milestoneId: string) => [
+        "manager",
+        "production-milestones",
+        milestoneId,
+        "previous-assignments",
+      ],
       iotConfig: (cropSeasonId: string, milestoneId: string) => [
         "manager",
         "production-milestones",
@@ -1327,6 +1355,12 @@ export const QUERY_KEYS = {
         milestoneId,
         "purchase-boards",
         ...(query !== undefined ? [query] : []),
+      ],
+      previousAssignments: (milestoneId: string) => [
+        "owner",
+        "production-milestones",
+        milestoneId,
+        "previous-assignments",
       ],
       iotConfig: (cropSeasonId: string, milestoneId: string) => [
         "owner",

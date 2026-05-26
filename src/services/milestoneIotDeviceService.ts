@@ -86,6 +86,11 @@ export const milestoneIotDeviceService = {
         ),
     ),
 
+  listPreviousAssignments: (milestoneId: string) =>
+    api.get<{ data: string[] }>(
+      MANAGER.MILESTONE_IOT_DEVICE.PREVIOUS_ASSIGNMENTS(milestoneId),
+    ),
+
   bulkAssign: (milestoneId: string, body: BulkAssignIotDevicesBodyType) =>
     api.post<BulkAssignIotDevicesResType, BulkAssignIotDevicesBodyType>(
       MANAGER.MILESTONE_IOT_DEVICE.ASSIGN_BULK(milestoneId),
@@ -153,6 +158,11 @@ export const ownerMilestoneIotDeviceService = {
           { ...query },
           { skipEmptyString: true, skipNull: true },
         ),
+    ),
+
+  listPreviousAssignments: (milestoneId: string) =>
+    api.get<{ data: string[] }>(
+      OWNER.MILESTONE_IOT_DEVICE.PREVIOUS_ASSIGNMENTS(milestoneId),
     ),
 
   bulkAssign: (milestoneId: string, body: BulkAssignIotDevicesBodyType) =>

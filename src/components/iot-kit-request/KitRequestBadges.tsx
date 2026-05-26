@@ -10,7 +10,7 @@ import type {
   KitRequestStatusType,
   KitRequestTypeType,
 } from "@/schemaValidatation/iotKitRequest";
-import { AlertTriangle, CalendarClock } from "lucide-react";
+import { AlertTriangle, CalendarClock, PackageOpen } from "lucide-react";
 
 /**
  * Badge tái sử dụng cho mọi page Iot Kit Request. Tách thành component
@@ -42,7 +42,12 @@ export function KitRequestTypeBadge({
   type: KitRequestTypeType;
   className?: string;
 }) {
-  const Icon = type === "FAULT_REPORT" ? AlertTriangle : CalendarClock;
+  const Icon =
+    type === "FAULT_REPORT"
+      ? AlertTriangle
+      : type === "RECOVERY_SCHEDULE"
+        ? PackageOpen
+        : CalendarClock;
   return (
     <Badge
       variant="outline"

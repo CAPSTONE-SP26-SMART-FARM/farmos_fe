@@ -11,6 +11,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { KitRequestDetailMeta } from "@/components/iot-kit-request/KitRequestDetailMeta";
 import { useKitRequestDetail } from "@/queries/useIotKitRequest";
 import { useAuthStore } from "@/stores/authStore";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+import { CalendarClock } from "lucide-react";
 import { useState } from "react";
 import {
   ClaimRequestDialog,
@@ -19,6 +22,10 @@ import {
   ResolveFaultDialog,
   StartInstallDialog,
 } from "./AdminKitRequestDialogs";
+import { ScheduleSwapDialog } from "./ScheduleSwapDialog";
+import { CompleteSwapDialog } from "./CompleteSwapDialog";
+import { ScheduleRecoveryDialog } from "./ScheduleRecoveryDialog";
+import { CompleteRecoveryDialog } from "./CompleteRecoveryDialog";
 
 /**
  * Dialog trung tâm cho chi tiết kit request (admin).
@@ -59,6 +66,10 @@ export function AdminKitRequestDetailDialog({ requestId, onClose }: Props) {
   const [claimOpen, setClaimOpen] = useState(false);
   const [resolveOpen, setResolveOpen] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
+  const [scheduleSwapOpen, setScheduleSwapOpen] = useState(false);
+  const [completeSwapOpen, setCompleteSwapOpen] = useState(false);
+  const [scheduleRecoveryOpen, setScheduleRecoveryOpen] = useState(false);
+  const [completeRecoveryOpen, setCompleteRecoveryOpen] = useState(false);
 
   const devices = request?.devices ?? [];
   const purchaseDevices = devices.filter((d) => d.status === "purchase");
@@ -83,12 +94,41 @@ export function AdminKitRequestDetailDialog({ requestId, onClose }: Props) {
   const isFaultPending = isFault && request?.status === "pending";
   const isFaultInProgress =
     isFault && request?.status === "in_progress" && isMyHandler;
+  const hasSwapScheduled = !!request?.metadata?.replacementDeviceId;
+  // FAULT in_progress + chưa schedule → cho phép schedule hoặc resolve thẳng.
+  // Đã schedule → bắt buộc hoàn tất (không cho resolve thường, không cho hủy lịch).
+  const showScheduleSwap = isFaultInProgress && !hasSwapScheduled;
+  const showCompleteSwap = isFaultInProgress && hasSwapScheduled;
+  const showResolveFault = isFaultInProgress && !hasSwapScheduled;
+  // FAULT_REPORT.devices = [] (BE comment) — dialog tự fetch device detail
+  // qua useAdminIotDeviceDetail bằng iotDeviceId.
+  const faultyDeviceId =
+    request && isFault ? (request.iotDeviceId ?? null) : null;
+
+  // RECOVERY_SCHEDULE: auto-create cho owner có sub expired, direction
+  // ADMIN_TO_OWNER. devices[] hydrate từ metadata.boardIds bởi BE detail().
+  const isRecovery = request?.type === "RECOVERY_SCHEDULE";
+  const hasRecoveryScheduled = !!request?.scheduledAt;
+  const showScheduleRecovery =
+    isRecovery &&
+    (request?.status === "pending" || request?.status === "in_progress") &&
+    (isMyHandler || isNoHandler) &&
+    !hasRecoveryScheduled;
+  const showCompleteRecovery =
+    isRecovery &&
+    request?.status === "in_progress" &&
+    isMyHandler &&
+    hasRecoveryScheduled;
 
   const hasAction =
     showStartInstall ||
     showCompleteInstall ||
     isFaultPending ||
-    isFaultInProgress;
+    showResolveFault ||
+    showScheduleSwap ||
+    showCompleteSwap ||
+    showScheduleRecovery ||
+    showCompleteRecovery;
 
   return (
     <>
@@ -98,9 +138,9 @@ export function AdminKitRequestDetailDialog({ requestId, onClose }: Props) {
       >
         <DialogContent className="flex max-h-[min(85vh,820px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
           <DialogHeader className="shrink-0 space-y-1 border-b px-6 py-4 pr-12 text-left">
-            <DialogTitle>Chi tiết yêu cầu kit</DialogTitle>
+            <DialogTitle>Chi tiết yêu cầu hỗ trợ</DialogTitle>
             <DialogDescription>
-              Xử lý yêu cầu báo lỗi hoặc lắp đặt kit với owner.
+              Xem thông tin và xử lý yêu cầu hỗ trợ thiết bị cho chủ trang trại.
             </DialogDescription>
           </DialogHeader>
 
@@ -118,7 +158,21 @@ export function AdminKitRequestDetailDialog({ requestId, onClose }: Props) {
                 </div>
               )
             ) : (
-              <KitRequestDetailMeta request={request} />
+              <>
+                {hasSwapScheduled && request.scheduledAt && (
+                  <ScheduledCallout
+                    kind="swap"
+                    scheduledAt={request.scheduledAt}
+                  />
+                )}
+                {isRecovery && hasRecoveryScheduled && request.scheduledAt && (
+                  <ScheduledCallout
+                    kind="recovery"
+                    scheduledAt={request.scheduledAt}
+                  />
+                )}
+                <KitRequestDetailMeta request={request} />
+              </>
             )}
           </div>
 
@@ -158,12 +212,46 @@ export function AdminKitRequestDetailDialog({ requestId, onClose }: Props) {
                   </Button>
                 </>
               )}
-              {isFaultInProgress && (
+              {showResolveFault && (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setScheduleSwapOpen(true)}
+                  >
+                    Lên lịch thay thiết bị
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setResolveOpen(true)}
+                  >
+                    Đánh dấu đã xử lý
+                  </Button>
+                </>
+              )}
+              {showCompleteSwap && (
                 <Button
                   type="button"
-                  onClick={() => setResolveOpen(true)}
+                  onClick={() => setCompleteSwapOpen(true)}
                 >
-                  Đánh dấu đã xử lý
+                  Hoàn tất thay thiết bị
+                </Button>
+              )}
+
+              {showScheduleRecovery && (
+                <Button
+                  type="button"
+                  onClick={() => setScheduleRecoveryOpen(true)}
+                >
+                  Lên lịch thu hồi
+                </Button>
+              )}
+              {showCompleteRecovery && (
+                <Button
+                  type="button"
+                  onClick={() => setCompleteRecoveryOpen(true)}
+                >
+                  Hoàn tất thu hồi
                 </Button>
               )}
             </DialogFooter>
@@ -211,8 +299,86 @@ export function AdminKitRequestDetailDialog({ requestId, onClose }: Props) {
               onClose();
             }}
           />
+          <ScheduleSwapDialog
+            open={scheduleSwapOpen}
+            requestId={request.id}
+            faultyDeviceId={faultyDeviceId}
+            farmId={request.farmId}
+            onClose={() => setScheduleSwapOpen(false)}
+          />
+          <CompleteSwapDialog
+            open={completeSwapOpen}
+            request={request}
+            faultyDeviceId={faultyDeviceId}
+            farmId={request.farmId}
+            onClose={() => {
+              setCompleteSwapOpen(false);
+              onClose();
+            }}
+          />
+        </>
+      )}
+
+      {request && isRecovery && (
+        <>
+          <ScheduleRecoveryDialog
+            open={scheduleRecoveryOpen}
+            request={request}
+            onClose={() => setScheduleRecoveryOpen(false)}
+          />
+          <CompleteRecoveryDialog
+            open={completeRecoveryOpen}
+            request={request}
+            onClose={() => {
+              setCompleteRecoveryOpen(false);
+              onClose();
+            }}
+          />
         </>
       )}
     </>
+  );
+}
+
+function ScheduledCallout({
+  kind,
+  scheduledAt,
+}: {
+  kind: "swap" | "recovery";
+  scheduledAt: string;
+}) {
+  const label = format(new Date(scheduledAt), "HH:mm 'ngày' dd/MM/yyyy", {
+    locale: vi,
+  });
+  const config =
+    kind === "swap"
+      ? {
+          title: "Đã lên lịch thay thiết bị",
+          actionLabel: "Hoàn tất thay thiết bị",
+          verb: "thay",
+        }
+      : {
+          title: "Đã lên lịch thu hồi thiết bị",
+          actionLabel: "Hoàn tất thu hồi",
+          verb: "thu",
+        };
+  return (
+    <div className="mb-4 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm dark:border-amber-900/50 dark:bg-amber-950/30">
+      <CalendarClock
+        aria-hidden="true"
+        className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400"
+      />
+      <div>
+        <p className="font-medium text-amber-900 dark:text-amber-200">
+          {config.title}
+        </p>
+        <p className="text-amber-800/80 dark:text-amber-200/80">
+          Hẹn vào {label}. Khi kỹ thuật viên đã {config.verb} xong tại hiện
+          trường, bấm
+          <span className="mx-1 font-semibold">{config.actionLabel}</span>
+          để chốt.
+        </p>
+      </div>
+    </div>
   );
 }

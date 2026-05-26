@@ -8,7 +8,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  KIT_REQUEST_DIRECTION_LABEL,
   KIT_REQUEST_STATUS_LABEL,
   KIT_REQUEST_TYPE_LABEL,
 } from "@/constants/iotKitRequestLabel";
@@ -67,15 +66,6 @@ export function AdminKitRequestFilterBar({
           className="w-56"
         />
       </div>
-
-      <SelectField
-        label="Hướng"
-        value={direction}
-        options={Object.entries(KIT_REQUEST_DIRECTION_LABEL).map(
-          ([k, v]) => ({ value: k, label: v }),
-        )}
-        onChange={(v) => onChange("direction", v)}
-      />
 
       <SelectField
         label="Loại"

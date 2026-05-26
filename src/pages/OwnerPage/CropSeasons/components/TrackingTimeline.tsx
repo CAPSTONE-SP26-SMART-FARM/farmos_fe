@@ -11,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import TableSkeleton from "@/components/common/TableSkeleton";
 import DatePickerField from "@/components/common/DatePickerField";
 import { useTrackingLog } from "@/queries/useTracking";
@@ -19,7 +18,6 @@ import {
   getEntityTypeLabel,
   getFieldLabel,
   formatTrackingValue,
-  getTrackingActorLines,
 } from "@/lib/tracking-display";
 import type {
   TrackingEntityType,
@@ -42,6 +40,75 @@ const ENTITY_TYPE_OPTIONS: TrackingEntityType[] = [
 ];
 
 const PAGE_LIMIT = 20;
+
+function isEmptyValue(v: unknown): boolean {
+  return v === null || v === undefined || v === "";
+}
+
+/**
+ * Render the old → new transition. Cases the BE produces:
+ *  - changeType=create OR oldValue is empty → "Ghi nhận <new>" (avoids the
+ *    confusing "— → <new>" pattern).
+ *  - changeType=delete OR newValue is empty → "Đã xóa giá trị" (with prior
+ *    value as muted hint).
+ *  - changeType=snapshot → "Mốc ban đầu: <new>" (plan baseline at approve).
+ *  - both old & new present → standard "<old> → <new>" arrow.
+ */
+function renderChange(item: {
+  oldValueJson: unknown;
+  newValueJson: unknown;
+  dataType: string;
+  entityType: TrackingEntityType;
+  fieldName: string;
+  changeType?: string;
+}) {
+  const ctx = { entityType: item.entityType, fieldName: item.fieldName };
+  const oldStr = formatTrackingValue(item.oldValueJson, item.dataType, ctx);
+  const newStr = formatTrackingValue(item.newValueJson, item.dataType, ctx);
+  const oldEmpty = isEmptyValue(item.oldValueJson);
+  const newEmpty = isEmptyValue(item.newValueJson);
+
+  if (item.changeType === "snapshot") {
+    return (
+      <span>
+        <span className="text-muted-foreground">Mốc ban đầu: </span>
+        <span className="font-medium">{newStr}</span>
+      </span>
+    );
+  }
+
+  if (item.changeType === "create" || (oldEmpty && !newEmpty)) {
+    return (
+      <span>
+        <span className="text-muted-foreground">Ghi nhận: </span>
+        <span className="font-medium">{newStr}</span>
+      </span>
+    );
+  }
+
+  if (item.changeType === "delete" || (newEmpty && !oldEmpty)) {
+    return (
+      <span>
+        <span className="text-muted-foreground">Đã xóa giá trị </span>
+        <span className="text-muted-foreground/70">(trước đó: {oldStr})</span>
+      </span>
+    );
+  }
+
+  if (oldEmpty && newEmpty) {
+    return <span className="text-muted-foreground">Không thay đổi</span>;
+  }
+
+  return (
+    <span className="flex flex-wrap items-center gap-2">
+      <span className="text-muted-foreground line-through decoration-muted-foreground/40">
+        {oldStr}
+      </span>
+      <span>→</span>
+      <span className="font-medium">{newStr}</span>
+    </span>
+  );
+}
 
 export default function TrackingTimeline({
   cropSeasonId,
@@ -79,6 +146,53 @@ export default function TrackingTimeline({
     (item) => item.fieldName !== "sensorBinding",
   );
   const meta = activeData?.meta;
+
+  // Resolve "parent group" key + label for a log row using BE-provided
+  // `entityParentId/Label` + `entityLabel` (B8 augmented since 2026-05-26).
+  // No FE-side fetch needed; labels persist for soft-deleted entities too.
+  //  - Has entityParentId → group under that parent milestone.
+  //  - production_milestone → its own group (entityId IS the milestone).
+  //  - Others → group by entityType.
+  type LogItem = (typeof items)[number];
+  function parentOf(item: LogItem): { key: string; label: string } {
+    if (item.entityParentId && item.entityParentLabel) {
+      return { key: `m:${item.entityParentId}`, label: item.entityParentLabel };
+    }
+    if (item.entityType === "production_milestone") {
+      return {
+        key: `m:${item.entityId}`,
+        label: item.entityLabel ?? getEntityTypeLabel(item.entityType),
+      };
+    }
+    return {
+      key: `t:${item.entityType}`,
+      label: getEntityTypeLabel(item.entityType),
+    };
+  }
+
+  // Group log items by parent — typically one card per milestone (with
+  // milestone-level + task-level rows inside), plus one card per top-level
+  // entityType for non-milestone-scoped changes. Group order = first-seen
+  // (= newest activity first since items are time-DESC); inside-group order
+  // preserves the API's time-DESC sort.
+  const groupMap = new Map<
+    string,
+    { key: string; label: string; items: LogItem[] }
+  >();
+  for (const item of items) {
+    const parent = parentOf(item);
+    const existing = groupMap.get(parent.key);
+    if (existing) {
+      existing.items.push(item);
+    } else {
+      groupMap.set(parent.key, {
+        key: parent.key,
+        label: parent.label,
+        items: [item],
+      });
+    }
+  }
+  const groups = Array.from(groupMap.values());
 
   const handleFilterChange = () => {
     setPage(1);
@@ -169,75 +283,116 @@ export default function TrackingTimeline({
         </p>
       ) : (
         <div className="space-y-3">
-          {items.map((item, idx) => {
-            const actor = getTrackingActorLines(item);
+          {groups.map((group) => {
+            const isMilestoneCard = group.key.startsWith("m:");
+            // Tách thay đổi của bản thân milestone (header) khỏi thay đổi của
+            // các task con (body). Card không phải milestone (mùa vụ, IoT…)
+            // dùng toàn bộ làm body, header trống phần summary.
+            const milestoneChanges = isMilestoneCard
+              ? group.items.filter(
+                  (i) => i.entityType === "production_milestone",
+                )
+              : [];
+            const bodyChanges = isMilestoneCard
+              ? group.items.filter(
+                  (i) => i.entityType !== "production_milestone",
+                )
+              : group.items;
+            const distinctBodyEntities = new Set(
+              bodyChanges.map((i) => i.entityId),
+            ).size;
+
             return (
-              <div key={item.id}>
-                <div className="flex items-start gap-3">
-                  {/* Time column */}
-                  <span className="text-xs text-muted-foreground w-28 shrink-0 pt-0.5">
-                    {format(parseISO(item.changedAt), "dd/MM HH:mm")}
-                  </span>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0 text-sm">
-                    <span className="font-medium">
-                      {getEntityTypeLabel(item.entityType)}
-                    </span>{" "}
-                    —{" "}
-                    <span className="text-muted-foreground">
-                      {getFieldLabel(item.fieldName)}
+              <div
+                key={group.key}
+                className="rounded-md border bg-background"
+              >
+                {/* Header — milestone info + summary thay đổi của chính milestone */}
+                <div className="border-b bg-muted/30 px-3 py-2 space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-semibold truncate">
+                      {group.label}
                     </span>
-                    <div className="mt-1 flex flex-wrap items-center gap-2">
-                      <span className="text-muted-foreground text-xs">
-                        {formatTrackingValue(item.oldValueJson, item.dataType, {
-                          entityType: item.entityType,
-                          fieldName: item.fieldName,
-                        })}
-                      </span>
-                      <span className="text-xs">→</span>
-                      <span className="font-medium text-xs">
-                        {formatTrackingValue(item.newValueJson, item.dataType, {
-                          entityType: item.entityType,
-                          fieldName: item.fieldName,
-                        })}
-                      </span>
-                    </div>
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {group.items.length} thay đổi
+                      {bodyChanges.length > 0 && distinctBodyEntities > 1
+                        ? ` · ${distinctBodyEntities} công việc`
+                        : ""}
+                    </span>
                   </div>
-
-                  {/* Actor */}
-                  <div className="w-36 shrink-0 text-right text-xs pt-0.5">
-                    {actor.primary ? (
-                      <div>
-                        <span className="font-medium block leading-snug wrap-anywhere">
-                          {actor.primary}
-                        </span>
-                        {actor.secondary && (
-                          <span className="text-muted-foreground block mt-0.5 wrap-anywhere">
-                            {actor.secondary}
+                  {milestoneChanges.length > 0 ? (
+                    <ul className="flex flex-col gap-1">
+                      {milestoneChanges.map((item) => (
+                        <li
+                          key={item.id}
+                          className="flex flex-wrap items-baseline gap-x-2 text-xs"
+                        >
+                          <span className="tabular-nums text-muted-foreground">
+                            {format(parseISO(item.changedAt), "dd/MM HH:mm")}
                           </span>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </div>
-
-                  {/* Source badge */}
-                  <Badge
-                    variant="outline"
-                    className="text-xs shrink-0"
-                  >
-                    {item.source === "manual"
-                      ? "Thủ công"
-                      : item.source === "system"
-                        ? "Hệ thống"
-                        : item.source === "iot"
-                          ? "Cảm biến"
-                          : (item.source ?? "Hệ thống")}
-                  </Badge>
+                          <span className="text-muted-foreground">
+                            {getFieldLabel(item.fieldName)}:
+                          </span>
+                          <span>{renderChange(item)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
                 </div>
-                {idx < items.length - 1 && <Separator className="mt-3" />}
+
+                {/* Body — list công việc thay đổi trong milestone (hoặc list
+                    item full cho non-milestone group) */}
+                {bodyChanges.length === 0 && isMilestoneCard ? (
+                  <div className="px-3 py-3 text-xs text-muted-foreground italic">
+                    Chưa có thay đổi công việc trong giai đoạn này.
+                  </div>
+                ) : (
+                  <div className="divide-y">
+                    {bodyChanges.map((item, idx) => {
+                      const prev = bodyChanges[idx - 1];
+                      const isNewEntity =
+                        !prev || prev.entityId !== item.entityId;
+                      const taskTitle =
+                        item.entityType === "employee_task"
+                          ? (item.entityLabel ?? undefined)
+                          : undefined;
+                      return (
+                        <div
+                          key={item.id}
+                          className="flex items-start gap-3 px-3 py-2"
+                        >
+                          <span className="text-xs text-muted-foreground w-24 shrink-0 pt-0.5 tabular-nums">
+                            {format(parseISO(item.changedAt), "dd/MM HH:mm")}
+                          </span>
+
+                          <div className="flex-1 min-w-0 text-sm">
+                            {taskTitle && isNewEntity ? (
+                              <div className="text-xs font-medium text-sky-700 mb-0.5">
+                                {taskTitle}
+                              </div>
+                            ) : null}
+                            <span className="text-muted-foreground">
+                              {getFieldLabel(item.fieldName)}
+                            </span>
+                            {!taskTitle &&
+                            item.entityType === "employee_task" ? (
+                              <Badge
+                                variant="outline"
+                                className="ml-2 text-[10px] font-mono"
+                              >
+                                #{item.entityId.slice(0, 6)}
+                              </Badge>
+                            ) : null}
+                            <div className="mt-1 text-xs">
+                              {renderChange(item)}
+                            </div>
+                          </div>
+
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })}

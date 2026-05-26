@@ -50,6 +50,7 @@ import type { CropSeasonType } from "@/types/cropSeason";
 import { cn } from "@/lib/utils";
 import { MILESTONE_STATUS_META } from "@/pages/ManagerPage/CropSeasons/components/helpers";
 import IotCoverageWidget from "@/components/common/IotCoverageWidget";
+import { ReportFaultButton } from "@/components/iot-kit-request/ReportFaultButton";
 
 const ALERTS_PAGE_SIZE = 5;
 
@@ -349,45 +350,56 @@ function KitReadingsSection({
 
   return (
     <div className="rounded-xl border-2 border-muted-foreground/20 bg-background shadow-sm overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        className="w-full flex items-center gap-2.5 bg-muted/70 hover:bg-muted border-b-2 border-muted-foreground/15 px-3.5 py-2.5 text-left transition-colors cursor-pointer"
-      >
-        <div className="relative flex items-center justify-center h-9 w-9 rounded-md bg-background border shadow-sm shrink-0">
-          <Cpu className="h-4 w-4 text-foreground/70" />
-          <span
-            className={`absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-muted/70 ${statusDot}`}
+      <div className="flex items-center bg-muted/70 hover:bg-muted border-b-2 border-muted-foreground/15 transition-colors">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={Boolean(open)}
+          className="flex-1 flex items-center gap-2.5 px-3.5 py-2.5 text-left cursor-pointer min-w-0"
+        >
+          <div className="relative flex items-center justify-center h-9 w-9 rounded-md bg-background border shadow-sm shrink-0">
+            <Cpu className="h-4 w-4 text-foreground/70" />
+            <span
+              className={`absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-muted/70 ${statusDot}`}
+            />
+          </div>
+          <div className="flex flex-col min-w-0 flex-1 leading-tight">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-sm font-semibold text-foreground truncate">
+                {device.deviceName}
+              </span>
+              {device.label && (
+                <span className="font-mono text-xs text-muted-foreground shrink-0">
+                  {device.label}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
+              {device.deviceType}
+              {sensorCount > 0 && (
+                <span className="ml-1.5 normal-case text-muted-foreground/80">
+                  · {sensorCount} cảm biến
+                </span>
+              )}
+            </span>
+          </div>
+          <div className="shrink-0">
+            <DeviceStatusBadge status={device.status} />
+          </div>
+          <ChevronDown
+            className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          />
+        </button>
+        <div className="shrink-0 pr-2">
+          <ReportFaultButton
+            iotDeviceId={device.deviceId}
+            deviceLabel={device.label || device.deviceName}
+            deviceStatus={device.status as DeviceStatusType}
+            variant="outline"
+            size="sm"
           />
         </div>
-        <div className="flex flex-col min-w-0 flex-1 leading-tight">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <span className="text-sm font-semibold text-foreground truncate">
-              {device.deviceName}
-            </span>
-            {device.label && (
-              <span className="font-mono text-xs text-muted-foreground shrink-0">
-                {device.label}
-              </span>
-            )}
-          </div>
-          <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
-            {device.deviceType}
-            {sensorCount > 0 && (
-              <span className="ml-1.5 normal-case text-muted-foreground/80">
-                · {sensorCount} cảm biến
-              </span>
-            )}
-          </span>
-        </div>
-        <div className="shrink-0">
-          <DeviceStatusBadge status={device.status} />
-        </div>
-        <ChevronDown
-          className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-        />
-      </button>
+      </div>
       <AnimatePresence initial={false}>
         {open && (
           <motion.div

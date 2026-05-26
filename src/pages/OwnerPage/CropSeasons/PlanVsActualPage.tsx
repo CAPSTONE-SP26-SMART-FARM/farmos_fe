@@ -34,7 +34,6 @@ import LoadingCard from "@/components/common/LoadingCard";
 import EmptyState from "@/components/common/EmptyState";
 import { useTrackingDiff, useTrackingLog } from "@/queries/useTracking";
 import DiffTable from "./components/DiffTable";
-import UnplannedTable from "./components/UnplannedTable";
 import TrackingTimeline from "./components/TrackingTimeline";
 import {
   computeTrackingStats,
@@ -131,7 +130,6 @@ function PlanVsActualPage() {
   const cropName = diff.cropSeason.cropName ?? "Mùa vụ";
   const tone = healthTone(stats!.onTimePct, stats!.total > 0);
   const noTracked = diff.tracked.length === 0;
-  const noUnplanned = diff.unplanned.length === 0;
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -220,7 +218,7 @@ function PlanVsActualPage() {
         </div>
 
         {/* ── Combined empty state ────────────────────────────── */}
-        {noTracked && noUnplanned ? (
+        {noTracked ? (
           <Card
             className={`transition-opacity duration-500 delay-150 ease-out ${
               show ? "opacity-100" : "opacity-0"
@@ -261,7 +259,7 @@ function PlanVsActualPage() {
                   className="gap-1.5"
                 >
                   <History className="h-3.5 w-3.5" />
-                  Timeline & người thực hiện
+                  Timeline
                 </TabsTrigger>
               </TabsList>
 
@@ -281,7 +279,7 @@ function PlanVsActualPage() {
                         <strong className="font-medium text-foreground">
                           Lịch sử
                         </strong>{" "}
-                        để xem chi tiết từng bước kèm người thực hiện.
+                        để xem chi tiết từng bước.
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -291,10 +289,6 @@ function PlanVsActualPage() {
                       />
                     </CardContent>
                   </Card>
-                )}
-
-                {!noUnplanned && (
-                  <UnplannedTable unplanned={diff.unplanned} />
                 )}
               </TabsContent>
 
@@ -308,11 +302,8 @@ function PlanVsActualPage() {
                       Lịch sử thay đổi
                     </CardTitle>
                     <CardDescription>
-                      Theo dõi từng chỉnh sửa theo thời gian, kèm{" "}
-                      <strong className="font-medium text-foreground">
-                        người thực hiện
-                      </strong>{" "}
-                      và nguồn gốc (thủ công / hệ thống / cảm biến…).
+                      Theo dõi từng chỉnh sửa theo thời gian, kèm nguồn gốc
+                      (thủ công / hệ thống / cảm biến…).
                     </CardDescription>
                   </CardHeader>
                   <CardContent>

@@ -28,6 +28,7 @@ export type KitRequestStatusType = z.infer<typeof KitRequestStatusSchema>;
 export const KitRequestTypeSchema = z.enum([
   "FAULT_REPORT",
   "INSTALL_SCHEDULE",
+  "RECOVERY_SCHEDULE",
 ]);
 export type KitRequestTypeType = z.infer<typeof KitRequestTypeSchema>;
 
@@ -84,6 +85,29 @@ export const KitRequestResSchema = z.object({
   resolvedBy: z.string().nullable(),
   cancelledAt: z.string().nullable(),
   cancelReason: z.string().nullable(),
+  // Type-specific metadata. Set bởi BE — FE chỉ đọc.
+  // Shape mirror src/shared/types/kit-request-metadata.type.ts của BE.
+  metadata: z
+    .object({
+      triggerSource: z.enum(["system", "owner", "manager"]).optional(),
+      replacementDeviceId: z.string().optional(),
+      oldBoardOutcome: z.enum(["revoked", "available"]).optional(),
+      boardIds: z.array(z.string()).optional(),
+      recoveryResults: z
+        .array(
+          z.object({
+            deviceId: z.string(),
+            outcome: z.enum([
+              "recovered_good",
+              "recovered_damaged",
+              "not_recovered",
+            ]),
+            note: z.string().optional(),
+          }),
+        )
+        .optional(),
+    })
+    .nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -175,3 +199,108 @@ export const completeInstallSchema = z.object({
   resolutionNote: z.string().optional(),
 });
 export type CompleteInstallBodyType = z.infer<typeof completeInstallSchema>;
+
+// ============================================================
+// SWAP workflow — admin lên lịch + hoàn tất thay board mới (FAULT_REPORT)
+// ============================================================
+
+// GET /admin/replacement-devices — list board available cho admin pick
+export const ListReplacementDevicesQuerySchema = PagingRequestSchema.extend({
+  farmId: z.string().optional(),
+});
+export type ListReplacementDevicesQueryType = z.infer<
+  typeof ListReplacementDevicesQuerySchema
+>;
+
+export const ReplacementDeviceItemSchema = z.object({
+  id: z.string(),
+  deviceName: z.string(),
+  label: z.string().nullable(),
+  status: DeviceStatusSchema,
+});
+export type ReplacementDeviceItemType = z.infer<
+  typeof ReplacementDeviceItemSchema
+>;
+
+export const ListReplacementDevicesResSchema = PagingResponseSchema(
+  ReplacementDeviceItemSchema,
+);
+export type ListReplacementDevicesResType = z.infer<
+  typeof ListReplacementDevicesResSchema
+>;
+
+// POST /admin/:id/schedule-swap — chọn replacement + lên lịch
+export const scheduleSwapSchema = z.object({
+  scheduledAt: z
+    .string()
+    .min(1, "Vui lòng chọn thời gian hẹn")
+    .refine(
+      (v) => {
+        const d = new Date(v);
+        return !isNaN(d.getTime()) && d.getTime() > Date.now();
+      },
+      "Thời gian hẹn phải sau hiện tại",
+    ),
+  replacementDeviceId: z
+    .string()
+    .min(1, "Vui lòng chọn bộ kit thay thế"),
+});
+export type ScheduleSwapBodyType = z.infer<typeof scheduleSwapSchema>;
+
+// POST /admin/:id/complete-swap — xác nhận đã thay xong
+export const completeSwapSchema = z.object({
+  oldBoardOutcome: z.enum(["revoked", "available"], {
+    message: "Vui lòng chọn tình trạng bộ kit cũ",
+  }),
+  resolutionNote: z
+    .string()
+    .max(1000, "Ghi chú tối đa 1000 ký tự")
+    .optional(),
+});
+export type CompleteSwapBodyType = z.infer<typeof completeSwapSchema>;
+
+// ============================================================
+// RECOVERY workflow — admin thu hồi kit sau khi sub hết hạn
+// ============================================================
+
+export const recoveryBoardOutcomeSchema = z.enum([
+  "recovered_good",
+  "recovered_damaged",
+  "not_recovered",
+]);
+export type RecoveryBoardOutcomeType = z.infer<
+  typeof recoveryBoardOutcomeSchema
+>;
+
+// POST /admin/:id/schedule-recovery
+export const scheduleRecoverySchema = z.object({
+  scheduledAt: z
+    .string()
+    .min(1, "Vui lòng chọn thời gian hẹn")
+    .refine(
+      (v) => {
+        const d = new Date(v);
+        return !isNaN(d.getTime()) && d.getTime() > Date.now();
+      },
+      "Thời gian hẹn phải sau hiện tại",
+    ),
+});
+export type ScheduleRecoveryBodyType = z.infer<typeof scheduleRecoverySchema>;
+
+// POST /admin/:id/complete-recovery
+export const completeRecoverySchema = z.object({
+  outcomes: z
+    .array(
+      z.object({
+        deviceId: z.string().min(1),
+        outcome: recoveryBoardOutcomeSchema,
+        note: z.string().max(500).optional(),
+      }),
+    )
+    .min(1, "Cần ít nhất 1 thiết bị"),
+  resolutionNote: z
+    .string()
+    .max(1000, "Ghi chú tối đa 1000 ký tự")
+    .optional(),
+});
+export type CompleteRecoveryBodyType = z.infer<typeof completeRecoverySchema>;
