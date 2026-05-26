@@ -8,11 +8,15 @@ export interface NavItem {
   icon: LucideIcon;
   isActive?: boolean;
   items?: NavSubItem[];
+  // Extra path prefixes that should keep this item highlighted (e.g. detail
+  // pages reached from this item but living under a different URL).
+  activeMatch?: string[];
 }
 
 export interface NavSubItem {
   title: string;
   url: string;
+  activeMatch?: string[];
 }
 
 export interface NavGroup {

@@ -1,5 +1,4 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,7 +6,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
 import { useState } from "react";
 import AdminTicketCategoryFormPanel from "./AdminTicketCategoryFormPanel";
 import AdminTicketCategoryListSection from "./AdminTicketCategoryListSection";
@@ -25,25 +23,20 @@ export default function AdminTicketCategoriesPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       <section className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
-        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div className="space-y-2">
-            <Badge className="mb-2">Cổng quản trị</Badge>
-            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-              Danh Mục Ticket
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
-              Quản lý danh mục dịch vụ ticket — đơn giá, hoa hồng và quyền truy
-              cập (gói đăng ký / mua lẻ).
-            </p>
-          </div>
-          <Button onClick={() => setState({ mode: "create" })}>
-            <Plus className="mr-2 h-4 w-4" />
-            Tạo danh mục
-          </Button>
+        <div className="space-y-2">
+          <Badge className="mb-2">Cổng quản trị</Badge>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+            Danh Mục Ticket
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
+            Quản lý danh mục dịch vụ ticket — đơn giá, hoa hồng và quyền truy
+            cập (gói đăng ký / mua lẻ).
+          </p>
         </div>
       </section>
 
       <AdminTicketCategoryListSection
+        onCreate={() => setState({ mode: "create" })}
         onViewDetail={(category) => setState({ mode: "detail", category })}
         onEdit={(category) => setState({ mode: "detail", category })}
       />

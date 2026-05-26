@@ -33,7 +33,9 @@ export function CropCategoryPicker({
   required?: boolean;
 }) {
   const { data, isLoading } = useActiveCropCategoryList();
-  const list = sortActiveCategories(data?.data?.data);
+  const list = sortActiveCategories(data?.data?.data).filter(
+    (cat) => cat.code !== "OTHER",
+  );
   const selected = findCategory(list, value);
 
   return (

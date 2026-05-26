@@ -5,16 +5,16 @@ import { PagingResponseSchema } from "@/types/api";
 // `farm_os_be/src/modules/medicine/medicine.model.ts`. KHÔNG được lệch field
 // vì BE Zod `.strict()` → field thừa = 422 UNRECOGNIZED.
 
-// MedicineForm enum mirror prisma `MedicineForm`
-// (`farm_os_be/prisma/schema.prisma:464`).
+// MedicineForm enum mirror prisma `MedicineForm`. Các dạng phù hợp với thuốc
+// BVTV / nông nghiệp (WP, EC, SC, GR, ...) thay cho dạng thuốc động vật / người.
 export const MedicineFormSchema = z.enum([
-  "TABLET",
-  "CAPSULE",
-  "INJECTION",
   "POWDER",
+  "WETTABLE_POWDER",
   "LIQUID",
-  "TOPICAL",
-  "FEED_ADDITIVE",
+  "EMULSIFIABLE_CONCENTRATE",
+  "SUSPENSION_CONCENTRATE",
+  "GRANULE",
+  "FUMIGANT",
   "OTHER",
 ]);
 
@@ -22,13 +22,13 @@ export type MedicineFormType = z.infer<typeof MedicineFormSchema>;
 
 // Label tiếng Việt cho form (dùng ở Select + table).
 export const MEDICINE_FORM_LABEL: Record<MedicineFormType, string> = {
-  TABLET: "Viên nén",
-  CAPSULE: "Viên nang",
-  INJECTION: "Tiêm",
   POWDER: "Bột",
-  LIQUID: "Dung dịch",
-  TOPICAL: "Bôi ngoài da",
-  FEED_ADDITIVE: "Thức ăn bổ sung",
+  WETTABLE_POWDER: "Bột thấm nước (WP)",
+  LIQUID: "Dung dịch (SL)",
+  EMULSIFIABLE_CONCENTRATE: "Nhũ dầu (EC)",
+  SUSPENSION_CONCENTRATE: "Huyền phù (SC)",
+  GRANULE: "Dạng hạt (GR)",
+  FUMIGANT: "Khí xông hơi",
   OTHER: "Khác",
 };
 

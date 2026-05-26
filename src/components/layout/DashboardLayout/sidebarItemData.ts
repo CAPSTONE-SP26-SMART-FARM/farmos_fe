@@ -205,6 +205,7 @@ export const sidebarData: SidebarData = {
           title: "Bảng Xếp Hạng Bác Sĩ",
           url: "/dashboard/admin/dqs/leaderboard",
           icon: Trophy,
+          activeMatch: ["/dashboard/admin/doctors/"],
         },
         {
           title: "Danh Mục Thuốc",
@@ -220,6 +221,11 @@ export const sidebarData: SidebarData = {
           title: "Yêu Cầu Rút Tiền Bác Sĩ",
           url: "/dashboard/admin/doctor-withdrawals",
           icon: Wallet,
+        },
+        {
+          title: "Cấu Hình Rút Tiền",
+          url: "/dashboard/admin/system-configs/withdrawals",
+          icon: Settings2,
         },
       ],
     },

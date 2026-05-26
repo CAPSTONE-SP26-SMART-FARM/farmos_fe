@@ -69,6 +69,7 @@ export const TicketSystemConfigFormSchema = z
       .min(1, "Tối thiểu 1 phút.")
       .max(60, "Tối đa 60 phút."),
     // BR-67: tier broadcast windows tính bằng GIÂY (lũy tiến).
+    // BE seed 4 key riêng biệt platinum/gold/silver/bronze — không gộp.
     priority_window_platinum_sec: z
       .number()
       .int()
@@ -79,11 +80,16 @@ export const TicketSystemConfigFormSchema = z
       .int()
       .min(0)
       .max(600, "Tối đa 600 giây."),
-    priority_window_fanout_sec: z
+    priority_window_silver_sec: z
       .number()
       .int()
       .min(0)
-      .max(1800, "Tối đa 1800 giây."),
+      .max(600, "Tối đa 600 giây."),
+    priority_window_bronze_sec: z
+      .number()
+      .int()
+      .min(0)
+      .max(600, "Tối đa 600 giây."),
   });
 
 // Mapping FE form key (snake) ↔ BE config key (dot-notation).
@@ -95,10 +101,54 @@ export const TICKET_SYSTEM_CONFIG_KEY_MAP = {
   ai_fallback_minutes: "ticket.ai_fallback_minutes",
   priority_window_platinum_sec: "ticket.priority_window.platinum_sec",
   priority_window_gold_sec: "ticket.priority_window.gold_sec",
-  priority_window_fanout_sec: "ticket.priority_window.fanout_sec",
+  priority_window_silver_sec: "ticket.priority_window.silver_sec",
+  priority_window_bronze_sec: "ticket.priority_window.bronze_sec",
 } as const;
 
 export type TicketSystemConfigFormKey = keyof typeof TICKET_SYSTEM_CONFIG_KEY_MAP;
+
+// ── Form schema cho Withdrawal config (Module 4) ──
+// Khớp 1-1 với 3 seed key `withdrawal.*` trong BE
+// `TICKET_SYSTEM_CONFIG_SEEDS`. Đơn vị: VND cho amount, giờ cho cooldown.
+export const WithdrawalSystemConfigFormSchema = z
+  .object({
+    // Bác sĩ được phép rút tối thiểu mỗi lần. Min 10.000đ, max 100.000.000đ.
+    min_amount: z
+      .number()
+      .int()
+      .min(10_000, "Tối thiểu 10.000đ.")
+      .max(100_000_000, "Tối đa 100.000.000đ."),
+    // Bác sĩ được phép rút tối đa mỗi lần. Min 10.000đ, max 1 tỷ đ.
+    max_amount: z
+      .number()
+      .int()
+      .min(10_000, "Tối thiểu 10.000đ.")
+      .max(1_000_000_000, "Tối đa 1.000.000.000đ."),
+    // Cooldown sau khi duyệt mới cho bác sĩ báo "chưa nhận". Min 1, max 720 giờ (30 ngày).
+    not_received_cooldown_hours: z
+      .number()
+      .int()
+      .min(1, "Tối thiểu 1 giờ.")
+      .max(720, "Tối đa 720 giờ (30 ngày)."),
+  })
+  .refine((d) => d.max_amount >= d.min_amount, {
+    message: "Số tiền tối đa phải lớn hơn hoặc bằng số tiền tối thiểu.",
+    path: ["max_amount"],
+  });
+
+// Mapping FE form key (snake) ↔ BE config key (dot-notation).
+// Khớp 1-1 với BE response của `GET /admin/system-configs?prefix=withdrawal.`.
+export const WITHDRAWAL_SYSTEM_CONFIG_KEY_MAP = {
+  min_amount: "withdrawal.min_amount",
+  max_amount: "withdrawal.max_amount",
+  not_received_cooldown_hours: "withdrawal.not_received_cooldown_hours",
+} as const;
+
+export type WithdrawalSystemConfigFormKey =
+  keyof typeof WITHDRAWAL_SYSTEM_CONFIG_KEY_MAP;
+export type WithdrawalSystemConfigFormType = z.infer<
+  typeof WithdrawalSystemConfigFormSchema
+>;
 
 export type SystemConfigValueTypeType = z.infer<
   typeof SystemConfigValueTypeSchema

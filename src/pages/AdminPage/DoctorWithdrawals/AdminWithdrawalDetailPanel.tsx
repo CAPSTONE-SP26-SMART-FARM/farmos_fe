@@ -2,8 +2,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   BadgeCheck,
   Banknote,
-  ChevronDown,
-  ChevronUp,
   ClipboardList,
   Clock,
   RefreshCcw,
@@ -49,7 +47,6 @@ import {
   useAdminMarkPaidWithdrawal,
   useAdminRejectWithdrawal,
   useAdminResolveNotReceived,
-  useAdminWithdrawalAudit,
   useAdminWithdrawalDetail,
 } from "@/queries/useAdmin";
 import {
@@ -61,7 +58,6 @@ import type {
   MarkPaidBodyType,
   RejectWithdrawalBodyType,
   ResolveNotReceivedBodyType,
-  WithdrawalAuditEntryType,
   WithdrawalRequestResType,
 } from "@/schemaValidatation/doctorWithdrawal";
 import {
@@ -69,13 +65,6 @@ import {
   STATUS_LABELS,
   STATUS_VARIANT,
 } from "./withdrawal.constants";
-
-const ACTOR_ROLE_LABEL: Record<WithdrawalAuditEntryType["actorRole"], string> =
-  {
-    DOCTOR: "Bác sĩ",
-    ADMIN: "Admin",
-    SYSTEM: "Hệ thống",
-  };
 
 function RejectDialog({
   open,
@@ -676,86 +665,6 @@ function ActionPanel({ withdrawal }: { withdrawal: WithdrawalRequestResType }) {
   );
 }
 
-function AuditLog({
-  withdrawalId,
-  enabled,
-}: {
-  withdrawalId: string;
-  enabled: boolean;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const auditResult = useAdminWithdrawalAudit(
-    withdrawalId,
-    enabled && expanded,
-  );
-
-  return (
-    <Card>
-      <CardHeader
-        className="cursor-pointer select-none"
-        onClick={() => setExpanded((v) => !v)}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ClipboardList className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-base">Lịch sử thay đổi</CardTitle>
-          </div>
-          {expanded ? (
-            <ChevronUp className="h-4 w-4 text-muted-foreground" />
-          ) : (
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-          )}
-        </div>
-      </CardHeader>
-
-      {expanded && (
-        <CardContent>
-          {auditResult.isLoading && (
-            <div className="space-y-2">
-              {[1, 2, 3].map((n) => (
-                <Skeleton
-                  key={n}
-                  className="h-10 w-full"
-                />
-              ))}
-            </div>
-          )}
-          {!auditResult.isLoading &&
-            auditResult.data?.data.data.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                Chưa có lịch sử thay đổi.
-              </p>
-            )}
-          {auditResult.data?.data.data.map((entry, idx) => (
-            <div
-              key={idx}
-              className="flex gap-3 py-2"
-            >
-              <div className="flex flex-col items-center">
-                <div className="h-2.5 w-2.5 rounded-full bg-primary mt-1.5" />
-                {idx < (auditResult.data?.data.data.length ?? 0) - 1 && (
-                  <div className="flex-1 w-px bg-border mt-1" />
-                )}
-              </div>
-              <div className="pb-3">
-                <p className="text-sm font-medium">{entry.event}</p>
-                <p className="text-xs text-muted-foreground">
-                  {formatDateTimeVi(entry.at)} ·{" "}
-                  {ACTOR_ROLE_LABEL[entry.actorRole]}
-                </p>
-                {entry.note && (
-                  <p className="mt-0.5 text-xs text-muted-foreground italic">
-                    {entry.note}
-                  </p>
-                )}
-              </div>
-            </div>
-          ))}
-        </CardContent>
-      )}
-    </Card>
-  );
-}
 
 interface AdminWithdrawalDetailPanelProps {
   withdrawalId: string;
@@ -991,10 +900,6 @@ export default function AdminWithdrawalDetailPanel({
         </CardContent>
       </Card>
 
-      <AuditLog
-        withdrawalId={w.id}
-        enabled
-      />
     </div>
   );
 }

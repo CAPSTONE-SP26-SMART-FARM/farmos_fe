@@ -48,6 +48,17 @@ interface AdminMedicineFormPanelProps {
 
 const FORM_OPTIONS = MedicineFormSchema.options;
 
+// Đơn vị thường gặp cho thuốc BVTV / phân bón.
+const UNIT_OPTIONS = [
+  { value: "ml", label: "ml (mililít)" },
+  { value: "L", label: "L (lít)" },
+  { value: "g", label: "g (gram)" },
+  { value: "kg", label: "kg (kilogram)" },
+  { value: "gói", label: "Gói" },
+  { value: "chai", label: "Chai" },
+  { value: "bao", label: "Bao" },
+] as const;
+
 export default function AdminMedicineFormPanel({
   mode,
   initialData,
@@ -66,7 +77,6 @@ export default function AdminMedicineFormPanel({
       scientificName: initialData?.scientificName ?? "",
       form: initialData?.form ?? ("OTHER" as MedicineFormType),
       unit: initialData?.unit ?? "",
-      strength: initialData?.strength ?? "",
       contraindications: initialData?.contraindications ?? "",
       sideEffects: initialData?.sideEffects ?? "",
       withdrawalPeriodDays: initialData?.withdrawalPeriodDays ?? undefined,
@@ -90,7 +100,6 @@ export default function AdminMedicineFormPanel({
     const sanitized: CreateMedicineBodyType = {
       ...data,
       scientificName: data.scientificName?.trim() || undefined,
-      strength: data.strength?.trim() || undefined,
       contraindications: data.contraindications?.trim() || undefined,
       sideEffects: data.sideEffects?.trim() || undefined,
     };
@@ -106,7 +115,6 @@ export default function AdminMedicineFormPanel({
           scientificName: sanitized.scientificName ?? null,
           form: sanitized.form,
           unit: sanitized.unit,
-          strength: sanitized.strength ?? null,
           contraindications: sanitized.contraindications ?? null,
           sideEffects: sanitized.sideEffects ?? null,
           withdrawalPeriodDays: sanitized.withdrawalPeriodDays ?? null,
@@ -215,7 +223,7 @@ export default function AdminMedicineFormPanel({
 
         <Separator />
 
-        {/* Form + Đơn vị + Hàm lượng */}
+        {/* Dạng + Đơn vị */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
             <Label htmlFor="med-form">
@@ -254,31 +262,28 @@ export default function AdminMedicineFormPanel({
             <Label htmlFor="med-unit">
               Đơn vị <span className="text-destructive">*</span>
             </Label>
-            <Input
-              id="med-unit"
-              placeholder="VD: viên, ml, g, gói"
-              {...register("unit")}
-              aria-invalid={Boolean(errors.unit)}
+            <Controller
+              name="unit"
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger id="med-unit">
+                    <SelectValue placeholder="Chọn đơn vị" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {UNIT_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             />
             {errors.unit && (
               <p className="text-destructive text-xs">{errors.unit.message}</p>
             )}
           </div>
-        </div>
-
-        <div className="space-y-1">
-          <Label htmlFor="med-strength">Hàm lượng</Label>
-          <Input
-            id="med-strength"
-            placeholder="VD: 500mg, 10%"
-            {...register("strength")}
-            aria-invalid={Boolean(errors.strength)}
-          />
-          {errors.strength && (
-            <p className="text-destructive text-xs">
-              {errors.strength.message}
-            </p>
-          )}
         </div>
 
         {/* Số ngày ngừng thuốc */}
