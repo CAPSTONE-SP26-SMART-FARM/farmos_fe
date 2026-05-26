@@ -26,7 +26,15 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { CheckCircle2, PackageCheck, Recycle, XCircle } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  PackageCheck,
+  Recycle,
+  Tractor,
+  Warehouse,
+  XCircle,
+} from "lucide-react";
 import { useMemo } from "react";
 import { Controller, useForm } from "react-hook-form";
 
@@ -115,6 +123,15 @@ function CompleteRecoveryForm({
     [request.scheduledAt],
   );
 
+  // Outcome quyết định bởi BE lúc tạo request — admin chỉ confirm tình trạng
+  // vật lý từng board. Default phòng case request cũ chưa có metadata field.
+  const boardOutcome: "purchase" | "available" =
+    request.metadata?.boardOutcomeOnComplete ??
+    (request.metadata?.recoveryReason === "subscription_ended"
+      ? "available"
+      : "purchase");
+  const isReturnToWarehouse = boardOutcome === "available";
+
   return (
     <>
       <DialogHeader className="shrink-0 space-y-1 border-b px-6 py-4 pr-12 text-left">
@@ -123,12 +140,72 @@ function CompleteRecoveryForm({
           Hoàn tất thu hồi
         </DialogTitle>
         <DialogDescription>
-          Ghi nhận tình trạng từng thiết bị sau khi thu tại hiện trường. Sau
-          khi xác nhận, yêu cầu sẽ đóng — không thể chỉnh sửa.
+          {isReturnToWarehouse
+            ? "Thiết bị sẽ được trả về kho hệ thống sau khi xác nhận — chủ trại không còn quyền sử dụng. Hành động này không thể hoàn tác."
+            : "Thiết bị sẽ được giữ lại cho chủ trại dùng tiếp ở vụ sau sau khi xác nhận. Yêu cầu sẽ đóng và không thể chỉnh sửa."}
         </DialogDescription>
       </DialogHeader>
 
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-4">
+        <div
+          className={
+            "flex items-start gap-2 rounded-md border p-3 text-sm " +
+            (isReturnToWarehouse
+              ? "border-red-300 bg-red-50 dark:border-red-900/60 dark:bg-red-950/30"
+              : "border-emerald-300 bg-emerald-50 dark:border-emerald-900/60 dark:bg-emerald-950/30")
+          }
+        >
+          {isReturnToWarehouse ? (
+            <Warehouse
+              aria-hidden="true"
+              className="mt-0.5 h-4 w-4 shrink-0 text-red-700 dark:text-red-300"
+            />
+          ) : (
+            <Tractor
+              aria-hidden="true"
+              className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700 dark:text-emerald-300"
+            />
+          )}
+          <div className="space-y-0.5">
+            <p
+              className={
+                "font-medium " +
+                (isReturnToWarehouse
+                  ? "text-red-900 dark:text-red-200"
+                  : "text-emerald-900 dark:text-emerald-200")
+              }
+            >
+              {isReturnToWarehouse
+                ? "Đích đến: trả về kho hệ thống"
+                : "Đích đến: giữ cho chủ trại dùng tiếp"}
+            </p>
+            <p
+              className={
+                "text-xs " +
+                (isReturnToWarehouse
+                  ? "text-red-800/80 dark:text-red-200/80"
+                  : "text-emerald-800/80 dark:text-emerald-200/80")
+              }
+            >
+              {isReturnToWarehouse
+                ? "Gói thuê của chủ trại đã kết thúc. Thiết bị thu được tốt sẽ chuyển sang trạng thái 'sẵn sàng cho thuê' trong kho."
+                : "Gói thuê còn hiệu lực. Thiết bị thu được tốt sẽ chuyển về trạng thái 'chờ lắp' của chủ trại — dùng được ở vụ sau."}
+            </p>
+            {isReturnToWarehouse && (
+              <p className="mt-1 flex items-start gap-1 text-xs text-red-900 dark:text-red-200">
+                <AlertTriangle
+                  aria-hidden="true"
+                  className="mt-0.5 h-3 w-3 shrink-0"
+                />
+                <span>
+                  Chủ trại sẽ phải đăng ký gói thuê mới và cấu hình lại từ đầu
+                  nếu muốn dùng lại sau này.
+                </span>
+              </p>
+            )}
+          </div>
+        </div>
+
         {scheduledLabel && (
           <p className="rounded-md border bg-muted/20 px-3 py-2 text-sm">
             <span className="text-muted-foreground">Đã lên lịch:</span>{" "}
@@ -256,10 +333,15 @@ function CompleteRecoveryForm({
         <Button
           type="submit"
           form="complete-recovery-form"
+          variant={isReturnToWarehouse ? "destructive" : "default"}
           disabled={mutation.isPending || boards.length === 0}
         >
           <CheckCircle2 className="h-4 w-4" />
-          {mutation.isPending ? "Đang xử lý..." : "Xác nhận đã thu xong"}
+          {mutation.isPending
+            ? "Đang xử lý..."
+            : isReturnToWarehouse
+              ? "Xác nhận thu về kho"
+              : "Xác nhận đã thu xong"}
         </Button>
       </DialogFooter>
     </>
