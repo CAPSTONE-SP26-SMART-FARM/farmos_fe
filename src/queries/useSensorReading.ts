@@ -166,7 +166,11 @@ export const useSensorStats = (
 export function useSensorReadingRealtime(
   assignmentId: string | undefined,
   role: "owner" | "manager",
+  options?: { skipDeviceLifecycle?: boolean },
 ): void {
+  // Caller có thể tắt 3 listener IotDevice* khi đã mount `useMilestoneAssignmentsRealtime`
+  // ở scope ngoài (vd: SensorOverviewTab) để tránh trùng invalidate cùng query key.
+  const skipDeviceLifecycle = options?.skipDeviceLifecycle ?? false;
   const connected = useSocketStore((s) => s.connected);
   const queryClient = useQueryClient();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -241,9 +245,11 @@ export function useSensorReadingRealtime(
     socket.on(RealtimeEvents.SensorTimeoutRecovered, handleSensorHealth);
     socket.on(RealtimeEvents.SensorHardwareIssueDetected, handleSensorHealth);
     socket.on(RealtimeEvents.SensorAlertRecovered, handleSensorHealth);
-    socket.on(RealtimeEvents.IotDeviceActivated, handleDeviceLifecycle);
-    socket.on(RealtimeEvents.IotDeviceStatusChanged, handleDeviceLifecycle);
-    socket.on(RealtimeEvents.IotDeviceSwapped, handleDeviceLifecycle);
+    if (!skipDeviceLifecycle) {
+      socket.on(RealtimeEvents.IotDeviceActivated, handleDeviceLifecycle);
+      socket.on(RealtimeEvents.IotDeviceStatusChanged, handleDeviceLifecycle);
+      socket.on(RealtimeEvents.IotDeviceSwapped, handleDeviceLifecycle);
+    }
 
     return () => {
       socket.off("sensor.reading.changed", handleReadingChanged);
@@ -255,12 +261,23 @@ export function useSensorReadingRealtime(
         handleSensorHealth,
       );
       socket.off(RealtimeEvents.SensorAlertRecovered, handleSensorHealth);
-      socket.off(RealtimeEvents.IotDeviceActivated, handleDeviceLifecycle);
-      socket.off(RealtimeEvents.IotDeviceStatusChanged, handleDeviceLifecycle);
-      socket.off(RealtimeEvents.IotDeviceSwapped, handleDeviceLifecycle);
+      if (!skipDeviceLifecycle) {
+        socket.off(RealtimeEvents.IotDeviceActivated, handleDeviceLifecycle);
+        socket.off(
+          RealtimeEvents.IotDeviceStatusChanged,
+          handleDeviceLifecycle,
+        );
+        socket.off(RealtimeEvents.IotDeviceSwapped, handleDeviceLifecycle);
+      }
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [connected, assignmentId, debouncedInvalidate, invalidateAssignments]);
+  }, [
+    connected,
+    assignmentId,
+    debouncedInvalidate,
+    invalidateAssignments,
+    skipDeviceLifecycle,
+  ]);
 }
 
 /**

@@ -375,7 +375,11 @@ function KitReadingsBody({
       return a.sensorId.localeCompare(b.sensorId);
     });
   }, [rawReadings]);
-  useSensorReadingRealtime(assignmentId, "manager");
+  // Skip device lifecycle — `useMilestoneAssignmentsRealtime` ở MilestoneSensorSection
+  // đã cover IotDevice* events, tránh trùng invalidate cùng query key.
+  useSensorReadingRealtime(assignmentId, "manager", {
+    skipDeviceLifecycle: true,
+  });
 
   function goToDetail(sensorId: string) {
     const base = `/dashboard/manager/sensor-readings/${assignmentId}/sensors/${sensorId}`;
@@ -421,21 +425,29 @@ function KitReadingsSection({
   assignment,
   showDeviceHeading,
   backUrl,
+  milestoneStatus,
 }: {
   assignment: MilestoneAssignmentDetailResType;
   showDeviceHeading: boolean;
   backUrl?: string;
+  milestoneStatus?: string;
 }) {
   const [open, setOpen] = useState(false);
   const assignmentId = assignment.assignmentId;
   const device = assignment.device;
   const sensorCount = assignment.sensors?.length ?? 0;
-  const statusActive = device?.status === "active";
-  const statusDot = statusActive
-    ? "bg-emerald-500"
-    : device?.status === "error"
-      ? "bg-red-500"
-      : "bg-amber-500";
+  // Khi board active nhưng milestone chưa start (vd reuse từ M trước), board
+  // đang ở trạng thái "Chờ giai đoạn bắt đầu" — dot phải khớp badge (zinc),
+  // không show xanh "đang chảy data" gây hiểu nhầm.
+  const isWaitingMilestoneStart =
+    device?.status === "active" && milestoneStatus === "pending";
+  const statusDot = isWaitingMilestoneStart
+    ? "bg-zinc-400"
+    : device?.status === "active"
+      ? "bg-emerald-500"
+      : device?.status === "error"
+        ? "bg-red-500"
+        : "bg-amber-500";
 
   // Khi không có header → không có trigger; mount body trực tiếp để giữ
   // tương thích ngược (hiện tại mọi caller đều truyền showDeviceHeading=true).
@@ -486,7 +498,10 @@ function KitReadingsSection({
             </span>
           </div>
           <div className="shrink-0">
-            <DeviceStatusBadge status={device.status} />
+            <DeviceStatusBadge
+              status={device.status}
+              milestoneStatus={milestoneStatus}
+            />
           </div>
           <ChevronDown
             className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
@@ -661,6 +676,7 @@ export function MilestoneSensorSection({
               assignment={a}
               showDeviceHeading
               backUrl={backUrl}
+              milestoneStatus={milestone.status}
             />
           ))}
         </div>

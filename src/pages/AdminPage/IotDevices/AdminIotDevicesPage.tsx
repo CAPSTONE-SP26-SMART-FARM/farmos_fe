@@ -282,19 +282,23 @@ export default function AdminIotDevicesPage() {
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() =>
-                  navigate("/dashboard/admin/iot-devices/install-queue")
+                  navigate(
+                    "/dashboard/admin/iot-kit-requests?type=INSTALL_SCHEDULE&status=pending",
+                  )
                 }
               >
                 <Truck className="mr-2 h-4 w-4" />
-                Hàng đợi cài đặt
+                Yêu cầu cần lắp đặt
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() =>
-                  navigate("/dashboard/admin/iot-devices/recovery-queue")
+                  navigate(
+                    "/dashboard/admin/iot-kit-requests?type=RECOVERY_SCHEDULE&status=pending",
+                  )
                 }
               >
                 <Undo2 className="mr-2 h-4 w-4" />
-                Hàng đợi thu hồi
+                Yêu cầu cần thu lại
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

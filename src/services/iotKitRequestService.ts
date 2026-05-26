@@ -106,6 +106,9 @@ export const iotKitRequestService = {
   listAdmin: (query: ListKitRequestsQueryType) =>
     api.get<ListKitRequestsResType>(buildListUrl(EP.LIST_ADMIN, query)),
 
+  listManager: (query: ListKitRequestsQueryType) =>
+    api.get<ListKitRequestsResType>(buildListUrl(EP.LIST_MANAGER, query)),
+
   /** Detail trả thêm `devices[]` khi type=INSTALL_SCHEDULE. */
   detail: (id: string) => api.get<KitRequestDetailResType>(EP.DETAIL(id)),
 

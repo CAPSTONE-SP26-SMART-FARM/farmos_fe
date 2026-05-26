@@ -287,7 +287,11 @@ function KitReadingsBody({ assignmentId }: { assignmentId: string }) {
   const navigate = useNavigate();
   const readingsQuery = useOwnerLatestSensorReadings(assignmentId, !!assignmentId);
   const readings = readingsQuery.data?.data ?? [];
-  useSensorReadingRealtime(assignmentId, "owner");
+  // Skip device lifecycle — `useMilestoneAssignmentsRealtime` ở MilestoneSensorSection
+  // đã cover IotDevice* events, tránh trùng invalidate cùng query key.
+  useSensorReadingRealtime(assignmentId, "owner", {
+    skipDeviceLifecycle: true,
+  });
 
   function goToDetail(sensorId: string) {
     navigate(
