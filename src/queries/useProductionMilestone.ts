@@ -832,6 +832,34 @@ export const useOwnerListPurchaseBoards = (
   });
 
 // ============================================================
+// Previous milestone IoT assignments (cross-milestone pre-select)
+// ============================================================
+
+export const useManagerListPreviousAssignments = (
+  milestoneId: string,
+  enabled = true,
+) =>
+  useQuery({
+    queryKey:
+      QUERY_KEYS.manager.productionMilestones.previousAssignments(milestoneId),
+    queryFn: () =>
+      milestoneIotDeviceService.listPreviousAssignments(milestoneId),
+    enabled: !!milestoneId && enabled,
+  });
+
+export const useOwnerListPreviousAssignments = (
+  milestoneId: string,
+  enabled = true,
+) =>
+  useQuery({
+    queryKey:
+      QUERY_KEYS.owner.productionMilestones.previousAssignments(milestoneId),
+    queryFn: () =>
+      ownerMilestoneIotDeviceService.listPreviousAssignments(milestoneId),
+    enabled: !!milestoneId && enabled,
+  });
+
+// ============================================================
 // Bulk Assign IoT Devices
 // ============================================================
 

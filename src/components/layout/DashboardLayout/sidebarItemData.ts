@@ -144,7 +144,7 @@ export const sidebarData: SidebarData = {
           ],
         },
         {
-          title: "Yêu Cầu Kit",
+          title: "Yêu cầu hỗ trợ thiết bị",
           url: "/dashboard/admin/iot-kit-requests",
           icon: Wrench,
         },
@@ -309,7 +309,7 @@ export const sidebarData: SidebarData = {
           icon: PackagePlus,
         },
         {
-          title: "Yêu Cầu Kit",
+          title: "Yêu cầu hỗ trợ thiết bị",
           url: "/dashboard/owner/iot-kit-requests",
           icon: Wrench,
         },

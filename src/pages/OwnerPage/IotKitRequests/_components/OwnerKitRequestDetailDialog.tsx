@@ -51,9 +51,9 @@ export function OwnerKitRequestDetailDialog({ requestId, onClose }: Props) {
       >
         <DialogContent className="flex max-h-[min(85vh,820px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
           <DialogHeader className="shrink-0 space-y-1 border-b px-6 py-4 pr-12 text-left">
-            <DialogTitle>Chi tiết yêu cầu kit</DialogTitle>
+            <DialogTitle>Chi tiết yêu cầu hỗ trợ</DialogTitle>
             <DialogDescription>
-              Thông tin trao đổi giữa bạn và quản trị viên về thiết bị IoT.
+              Thông tin trao đổi giữa bạn và quản trị viên về thiết bị.
             </DialogDescription>
           </DialogHeader>
 

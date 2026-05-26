@@ -10,11 +10,16 @@ import { onMutationError } from "@/lib/axios";
 import type {
   CancelRequestBodyType,
   CompleteInstallBodyType,
+  CompleteRecoveryBodyType,
+  CompleteSwapBodyType,
   CreateFaultReportBodyType,
   KitInstallBulkResType,
   ListKitRequestsQueryType,
+  ListReplacementDevicesQueryType,
   RejectRequestBodyType,
   ResolveFaultBodyType,
+  ScheduleRecoveryBodyType,
+  ScheduleSwapBodyType,
 } from "@/schemaValidatation/iotKitRequest";
 import { iotKitRequestService } from "@/services/iotKitRequestService";
 
@@ -191,6 +196,110 @@ export const useStartInstall = () => {
       toastBulkResult(res, "Đã bắt đầu lắp đặt");
     },
     onError: (error) => onMutationError(error, "Bắt đầu lắp đặt thất bại"),
+  });
+};
+
+// ============================================================
+// SWAP workflow — admin (FAULT_REPORT lifecycle)
+// ============================================================
+
+export const useReplacementDevices = (
+  query: ListReplacementDevicesQueryType,
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: QUERY_KEYS.iotKitRequests.replacementDevices(query),
+    queryFn: () => iotKitRequestService.listReplacementDevices(query),
+    enabled,
+    placeholderData: keepPreviousData,
+  });
+
+export const useScheduleSwap = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: ScheduleSwapBodyType }) =>
+      iotKitRequestService.scheduleSwap(id, body),
+    onSuccess: async (_res, { id }) => {
+      await qc.invalidateQueries({ queryKey: KIT_KEY });
+      await qc.invalidateQueries({
+        queryKey: QUERY_KEYS.iotKitRequests.detail(id),
+      });
+      // Replacement device reserved → list available cần refresh
+      await qc.invalidateQueries({
+        queryKey: ["iot-kit-requests", "replacement-devices"],
+      });
+      toast.success("Đã lên lịch thay thiết bị");
+    },
+    onError: (error) => onMutationError(error, "Lên lịch thay thất bại"),
+  });
+};
+
+export const useCompleteSwap = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: CompleteSwapBodyType }) =>
+      iotKitRequestService.completeSwap(id, body),
+    onSuccess: async (_res, { id }) => {
+      await qc.invalidateQueries({ queryKey: KIT_KEY });
+      await qc.invalidateQueries({
+        queryKey: QUERY_KEYS.iotKitRequests.detail(id),
+      });
+      // BE swap board (old → revoked/available, new → inactive) — invalidate
+      // device cache cả 3 role.
+      for (const key of DEVICE_KEYS_ALL) {
+        await qc.invalidateQueries({ queryKey: key });
+      }
+      await qc.invalidateQueries({
+        queryKey: ["iot-kit-requests", "replacement-devices"],
+      });
+      toast.success("Đã hoàn tất thay thiết bị");
+    },
+    onError: (error) => onMutationError(error, "Hoàn tất thay thất bại"),
+  });
+};
+
+// ── RECOVERY workflow — admin ─────────────────────────────────────────
+
+export const useScheduleRecovery = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      body,
+    }: {
+      id: string;
+      body: ScheduleRecoveryBodyType;
+    }) => iotKitRequestService.scheduleRecovery(id, body),
+    onSuccess: async (_res, { id }) => {
+      await qc.invalidateQueries({ queryKey: KIT_KEY });
+      await qc.invalidateQueries({
+        queryKey: QUERY_KEYS.iotKitRequests.detail(id),
+      });
+      toast.success("Đã lên lịch thu hồi");
+    },
+    onError: (error) => onMutationError(error, "Lên lịch thu hồi thất bại"),
+  });
+};
+
+export const useCompleteRecovery = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      body,
+    }: {
+      id: string;
+      body: CompleteRecoveryBodyType;
+    }) => iotKitRequestService.completeRecovery(id, body),
+    onSuccess: async (_res, { id }) => {
+      await qc.invalidateQueries({ queryKey: KIT_KEY });
+      await qc.invalidateQueries({
+        queryKey: QUERY_KEYS.iotKitRequests.detail(id),
+      });
+      // BE chưa flip device status ở phase 1 — không cần invalidate device cache
+      toast.success("Đã hoàn tất thu hồi");
+    },
+    onError: (error) => onMutationError(error, "Hoàn tất thu hồi thất bại"),
   });
 };
 

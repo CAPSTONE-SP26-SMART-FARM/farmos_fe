@@ -112,6 +112,13 @@ export const TrackingLogItemSchema = z.object({
   changedByEmail: z.string().nullable().optional(),
   changedByUser: TrackingLogUserSchema.nullable().optional(),
   requestId: z.string().nullable(),
+  // Human-readable entity name resolved by BE (cropName / "#order stageName" /
+  // task title / device name). Persists for soft-deleted entities too.
+  entityLabel: z.string().nullable().optional(),
+  // Parent milestone for child entities (employee_task, iot_device_assignment).
+  // Lets FE roll task rows under their milestone card without N+1 lookups.
+  entityParentId: z.string().uuid().nullable().optional(),
+  entityParentLabel: z.string().nullable().optional(),
 });
 export type TrackingLogItemType = z.infer<typeof TrackingLogItemSchema>;
 
@@ -163,6 +170,15 @@ export type DiffFieldType = z.infer<typeof DiffFieldSchema>;
 
 const TrackedEntitySchema = z.object({
   entityId: z.string().uuid(),
+  // Human-readable label (cropName / "#order stageName" / task title / null).
+  // Null when entity was deleted between approve-time and diff call → FE falls
+  // back to short entityId.
+  label: z.string().nullable(),
+  // Plan/actual values keyed by fieldName. `plan` = snapshot at approve time,
+  // `actual` = live DB value. `fields[]` still carries per-field variance /
+  // changeCount / lastChangedAt that the object form can't express.
+  plan: z.record(z.string(), z.unknown()),
+  actual: z.record(z.string(), z.unknown()),
   fields: z.array(DiffFieldSchema),
 });
 export type TrackedEntityType = z.infer<typeof TrackedEntitySchema>;

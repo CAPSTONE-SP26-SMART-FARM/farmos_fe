@@ -2,7 +2,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -11,7 +10,6 @@ import EmptyState from "@/components/common/EmptyState";
 import ErrorState from "@/components/common/ErrorState";
 import ProPagination from "@/components/common/pro-pagination";
 import {
-  KitRequestDirectionBadge,
   KitRequestStatusBadge,
   KitRequestTypeBadge,
 } from "@/components/iot-kit-request/KitRequestBadges";
@@ -130,13 +128,6 @@ export default function AdminIotKitRequestsPage() {
       ),
     },
     {
-      accessorKey: "direction",
-      header: "Hướng",
-      cell: ({ row }) => (
-        <KitRequestDirectionBadge direction={row.original.direction} />
-      ),
-    },
-    {
       accessorKey: "type",
       header: "Loại",
       cell: ({ row }) => <KitRequestTypeBadge type={row.original.type} />,
@@ -154,20 +145,6 @@ export default function AdminIotKitRequestsPage() {
       accessorKey: "status",
       header: "Trạng thái",
       cell: ({ row }) => <KitRequestStatusBadge status={row.original.status} />,
-    },
-    {
-      accessorKey: "handlerId",
-      header: "Người xử lý",
-      cell: ({ row }) =>
-        row.original.handlerId ? (
-          row.original.handlerId === me?.id ? (
-            <Badge variant="default">Tôi</Badge>
-          ) : (
-            <Badge variant="outline">Admin khác</Badge>
-          )
-        ) : (
-          <span className="text-muted-foreground text-xs">Chưa nhận</span>
-        ),
     },
     {
       accessorKey: "updatedAt",
@@ -193,28 +170,28 @@ export default function AdminIotKitRequestsPage() {
     <div className="space-y-6 p-4 md:p-6 animate-in fade-in duration-300">
       <div className="space-y-1">
         <Badge className="mb-2">Quản trị hệ thống</Badge>
-        <h1 className="text-2xl font-bold">Yêu cầu kit IoT</h1>
+        <h1 className="text-2xl font-bold">Yêu cầu hỗ trợ thiết bị</h1>
         <p className="text-muted-foreground">
-          Tiếp nhận báo lỗi từ owner và đề xuất lịch lắp đặt khi cần.
+          Tiếp nhận báo lỗi, lên lịch lắp đặt, thay thế và thu hồi thiết bị cho chủ trang trại.
         </p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
-          label="Chờ tiếp nhận"
+          label="Chờ nhận"
           value={kpi.pendingClaim}
           tone={kpi.pendingClaim > 0 ? "warning" : "default"}
         />
         <KpiCard
-          label="Tôi đang xử lý"
+          label="Bạn đang xử lý"
           value={kpi.myInProgress}
         />
         <KpiCard
-          label="Chờ owner duyệt lịch"
+          label="Chờ chủ duyệt lịch"
           value={kpi.awaitingOwner}
         />
         <KpiCard
-          label="Đã xử lý hôm nay"
+          label="Xong hôm nay"
           value={kpi.resolvedToday}
           tone="success"
         />
@@ -226,10 +203,6 @@ export default function AdminIotKitRequestsPage() {
             <ClipboardList className="h-4 w-4" />
             Danh sách yêu cầu
           </CardTitle>
-          <CardDescription>
-            Cả 2 chiều OWNER_TO_ADMIN và ADMIN_TO_OWNER. Click vào dòng để xem
-            chi tiết và xử lý.
-          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <AdminKitRequestFilterBar
@@ -253,7 +226,7 @@ export default function AdminIotKitRequestsPage() {
 
           {listQuery.isError ? (
             <ErrorState
-              message="Không tải được danh sách yêu cầu kit."
+              message="Không tải được danh sách yêu cầu hỗ trợ."
               onRetry={() => listQuery.refetch()}
             />
           ) : !listQuery.isLoading && items.length === 0 ? (

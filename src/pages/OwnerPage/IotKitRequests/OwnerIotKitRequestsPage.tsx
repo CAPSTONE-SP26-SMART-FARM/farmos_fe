@@ -2,7 +2,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -80,16 +79,23 @@ export default function OwnerIotKitRequestsPage() {
   };
 
   // BE chấp nhận 1 `status` filter; trên FE 2 tab ánh xạ tới tập hợp status.
-  // → Fetch không kèm status (1 trang đủ), filter client-side để tránh phải
-  // chạy nhiều query. Owner thường chỉ có < 100 request → cost hợp lý.
-  const query = useMyKitRequests({ page, limit: PAGE_LIMIT });
+  // → Fetch tối đa 100 không kèm status, filter + paginate client-side để
+  // tab "Đã xử lý" không bị các request đang mở chiếm hết slot page đầu.
+  // Owner thường có < 100 request → đủ; cần aggregate endpoint nếu vượt.
+  const query = useMyKitRequests({ page: 1, limit: 100 });
   const data = query.data?.data;
   const items = data?.data ?? [];
-  const meta = data?.meta;
 
   const tabItems = useMemo(
     () => items.filter((r) => TAB_STATUSES[tab].includes(r.status)),
     [items, tab],
+  );
+
+  const totalPages = Math.max(1, Math.ceil(tabItems.length / PAGE_LIMIT));
+  const safePage = Math.min(page, totalPages);
+  const pagedItems = useMemo(
+    () => tabItems.slice((safePage - 1) * PAGE_LIMIT, safePage * PAGE_LIMIT),
+    [tabItems, safePage],
   );
 
   // KPI tính trên page hiện tại — đủ với pagination size 10 vì owner không
@@ -181,28 +187,28 @@ export default function OwnerIotKitRequestsPage() {
     <div className="space-y-6 animate-in fade-in duration-300">
       <div className="space-y-1">
         <Badge className="mb-2">Cổng chủ trang trại</Badge>
-        <h1 className="text-2xl font-bold">Yêu cầu kit IoT</h1>
+        <h1 className="text-2xl font-bold">Yêu cầu hỗ trợ thiết bị</h1>
         <p className="text-muted-foreground">
-          Theo dõi báo lỗi của bạn và đề xuất lịch lắp từ quản trị viên.
+          Theo dõi yêu cầu hỗ trợ thiết bị: báo lỗi, lịch lắp đặt, thay thế và thu hồi.
         </p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
-          label="Chờ tôi phản hồi"
+          label="Chờ bạn duyệt"
           value={kpi.needsResponse}
           tone={kpi.needsResponse > 0 ? "warning" : "default"}
         />
         <KpiCard
-          label="Đang được xử lý"
+          label="Đang xử lý"
           value={kpi.inProgress}
         />
         <KpiCard
-          label="Đã chốt lịch"
+          label="Đã hẹn lịch"
           value={kpi.scheduled}
         />
         <KpiCard
-          label="Đã đóng tháng này"
+          label="Xong tháng này"
           value={kpi.closedThisMonth}
           tone="success"
         />
@@ -214,10 +220,6 @@ export default function OwnerIotKitRequestsPage() {
             <Wrench className="h-4 w-4" />
             Danh sách yêu cầu
           </CardTitle>
-          <CardDescription>
-            Bao gồm cả yêu cầu bạn gửi quản trị và yêu cầu quản trị gửi bạn
-            (lịch lắp).
-          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Tabs
@@ -232,7 +234,7 @@ export default function OwnerIotKitRequestsPage() {
 
           {query.isError ? (
             <ErrorState
-              message="Không tải được danh sách yêu cầu kit."
+              message="Không tải được danh sách yêu cầu hỗ trợ."
               onRetry={() => query.refetch()}
             />
           ) : !query.isLoading && tabItems.length === 0 ? (
@@ -248,7 +250,7 @@ export default function OwnerIotKitRequestsPage() {
           ) : (
             <DataTable
               columns={columns}
-              data={tabItems}
+              data={pagedItems}
               isLoading={query.isLoading}
               actions={[
                 {
@@ -263,10 +265,10 @@ export default function OwnerIotKitRequestsPage() {
             />
           )}
 
-          {meta && meta.totalPages > 1 && (
+          {totalPages > 1 && (
             <ProPagination
-              totalPages={meta.totalPages}
-              currentPage={meta.page}
+              totalPages={totalPages}
+              currentPage={safePage}
               buildHref={buildHref}
             />
           )}

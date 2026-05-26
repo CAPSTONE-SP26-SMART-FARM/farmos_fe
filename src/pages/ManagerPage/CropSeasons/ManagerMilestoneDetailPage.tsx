@@ -86,6 +86,7 @@ import {
   useManagerListMilestoneAssignments,
   useManagerUnassignIotDevice,
   useManagerListPurchaseBoards,
+  useManagerListPreviousAssignments,
   useManagerBulkAssignIotDevices,
   useManagerIotConfig,
   useManagerUpdateIotConfig,
@@ -914,6 +915,43 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
   const boards = purchaseQuery.data?.data.data ?? [];
   const boardsMeta = purchaseQuery.data?.data.meta;
 
+  const previousQuery = useManagerListPreviousAssignments(
+    milestoneId,
+    showPicker,
+  );
+  const previousIds = previousQuery.data?.data.data;
+  const previousSet = useMemo(
+    () => new Set(previousIds ?? []),
+    [previousIds],
+  );
+
+  /** Seed selection with devices already assigned in earlier milestones — once per picker open. */
+  const preselectAppliedRef = useRef(false);
+  useEffect(() => {
+    if (!showPicker) {
+      preselectAppliedRef.current = false;
+      return;
+    }
+    if (preselectAppliedRef.current) return;
+    if (!previousIds) return;
+    preselectAppliedRef.current = true;
+    if (previousIds.length === 0) return;
+    setSelected((prev) => {
+      const next = new Set(prev);
+      for (const id of previousIds) next.add(id);
+      return next;
+    });
+  }, [showPicker, previousIds]);
+
+  /** Capture device names as boards load so pre-selected rows show real labels in result modal. */
+  useEffect(() => {
+    for (const b of boards) {
+      if (selected.has(b.id) && b.deviceName?.trim()) {
+        deviceLabelByIdRef.current.set(b.id, b.deviceName.trim());
+      }
+    }
+  }, [boards, selected]);
+
   const bulkMutation = useManagerBulkAssignIotDevices(milestoneId);
   const unassignMutation = useManagerUnassignIotDevice(milestoneId);
 
@@ -1072,6 +1110,12 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
                 setPickerPage(1);
               }}
             />
+            {previousSet.size > 0 && (
+              <p className="text-xs text-muted-foreground rounded-md bg-muted/50 px-3 py-2">
+                Đã tự chọn sẵn {previousSet.size} thiết bị từ các mốc trước
+                trong mùa vụ này. Bỏ chọn nếu không muốn dùng lại.
+              </p>
+            )}
             <div className="flex items-center gap-2 text-xs">
               <Checkbox
                 checked={allSelected}
@@ -1093,25 +1137,40 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
                   Hiện không còn thiết bị trống để gán.
                 </p>
               ) : (
-                boards.map((dev) => (
-                  <label
-                    key={dev.id}
-                    className="flex items-center gap-2 rounded-md border p-3 hover:bg-muted/50 cursor-pointer"
-                  >
-                    <Checkbox
-                      checked={selected.has(dev.id)}
-                      onCheckedChange={(v) => toggleSelect(dev.id, !!v)}
-                    />
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{dev.deviceName}</p>
-                      {milestoneIotModuleTypeVi(dev.deviceType) && (
-                        <p className="text-xs text-muted-foreground leading-snug">
-                          {milestoneIotModuleTypeVi(dev.deviceType)}
-                        </p>
-                      )}
-                    </div>
-                  </label>
-                ))
+                boards.map((dev) => {
+                  const usedBefore = previousSet.has(dev.id);
+                  return (
+                    <label
+                      key={dev.id}
+                      className="flex items-center gap-2 rounded-md border p-3 hover:bg-muted/50 cursor-pointer"
+                    >
+                      <Checkbox
+                        checked={selected.has(dev.id)}
+                        onCheckedChange={(v) => toggleSelect(dev.id, !!v)}
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-medium text-sm">
+                            {dev.deviceName}
+                          </p>
+                          {usedBefore && (
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px]"
+                            >
+                              Đã dùng ở mốc trước
+                            </Badge>
+                          )}
+                        </div>
+                        {milestoneIotModuleTypeVi(dev.deviceType) && (
+                          <p className="text-xs text-muted-foreground leading-snug">
+                            {milestoneIotModuleTypeVi(dev.deviceType)}
+                          </p>
+                        )}
+                      </div>
+                    </label>
+                  );
+                })
               )}
             </div>
             {boardsMeta && boardsMeta.totalPages > 1 && (

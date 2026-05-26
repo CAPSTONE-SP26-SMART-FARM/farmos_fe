@@ -22,6 +22,7 @@ export const KIT_REQUEST_STATUS_LABEL: Record<KitRequestStatusType, string> = {
 export const KIT_REQUEST_TYPE_LABEL: Record<KitRequestTypeType, string> = {
   FAULT_REPORT: "Báo lỗi thiết bị",
   INSTALL_SCHEDULE: "Lịch lắp đặt",
+  RECOVERY_SCHEDULE: "Thu hồi thiết bị",
 };
 
 export const KIT_REQUEST_DIRECTION_LABEL: Record<

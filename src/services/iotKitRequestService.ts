@@ -4,14 +4,20 @@ import { api } from "@/lib/axios";
 import type {
   CancelRequestBodyType,
   CompleteInstallBodyType,
+  CompleteRecoveryBodyType,
+  CompleteSwapBodyType,
   CreateFaultReportBodyType,
   KitInstallBulkResType,
   KitRequestDetailResType,
   KitRequestResType,
   ListKitRequestsQueryType,
   ListKitRequestsResType,
+  ListReplacementDevicesQueryType,
+  ListReplacementDevicesResType,
   RejectRequestBodyType,
   ResolveFaultBodyType,
+  ScheduleRecoveryBodyType,
+  ScheduleSwapBodyType,
 } from "@/schemaValidatation/iotKitRequest";
 
 /**
@@ -59,6 +65,37 @@ export const iotKitRequestService = {
   completeInstall: (id: string, body: CompleteInstallBodyType) =>
     api.post<KitInstallBulkResType, CompleteInstallBodyType>(
       EP.COMPLETE_INSTALL(id),
+      body,
+    ),
+
+  // ── SWAP workflow — admin (FAULT_REPORT) ────────────────────────────
+  listReplacementDevices: (query: ListReplacementDevicesQueryType) =>
+    api.get<ListReplacementDevicesResType>(
+      `${EP.REPLACEMENT_DEVICES}?${queryString.stringify({ ...query }, QS_OPTIONS)}`,
+    ),
+
+  scheduleSwap: (id: string, body: ScheduleSwapBodyType) =>
+    api.post<KitRequestResType, ScheduleSwapBodyType>(
+      EP.SCHEDULE_SWAP(id),
+      body,
+    ),
+
+  completeSwap: (id: string, body: CompleteSwapBodyType) =>
+    api.post<KitRequestResType, CompleteSwapBodyType>(
+      EP.COMPLETE_SWAP(id),
+      body,
+    ),
+
+  // ── RECOVERY workflow — admin (RECOVERY_SCHEDULE) ───────────────────
+  scheduleRecovery: (id: string, body: ScheduleRecoveryBodyType) =>
+    api.post<KitRequestResType, ScheduleRecoveryBodyType>(
+      EP.SCHEDULE_RECOVERY(id),
+      body,
+    ),
+
+  completeRecovery: (id: string, body: CompleteRecoveryBodyType) =>
+    api.post<KitRequestResType, CompleteRecoveryBodyType>(
+      EP.COMPLETE_RECOVERY(id),
       body,
     ),
 

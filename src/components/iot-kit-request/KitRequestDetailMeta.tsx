@@ -2,7 +2,6 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { DEVICE_STATUS_LABEL_ADMIN } from "@/constants/iotDeviceDisplay";
 import {
-  KitRequestDirectionBadge,
   KitRequestStatusBadge,
   KitRequestTypeBadge,
 } from "./KitRequestBadges";
@@ -36,7 +35,6 @@ export function KitRequestDetailMeta({ request }: { request: RequestLike }) {
       <div className="flex flex-wrap items-center gap-2">
         <KitRequestStatusBadge status={request.status} />
         <KitRequestTypeBadge type={request.type} />
-        <KitRequestDirectionBadge direction={request.direction} />
         <span className="ml-auto font-mono text-xs text-muted-foreground">
           {request.requestNumber}
         </span>
