@@ -74,26 +74,54 @@ export const ActiveTicketCategoryListResSchema = z.object({
 //  - `code` regex: /^[A-Z][A-Z0-9_]{2,63}$/ — UPPERCASE, 3-64 ký tự.
 //  - `metadata` là JSONB optional, hỗ trợ creditCost / maxOpenTickets /
 //    requireAttachment / doctorSilenceMinutesOverride / allowedDoctorTypes.
-export const CreateTicketCategoryBodySchema = z.object({
-  code: z
-    .string()
-    .trim()
-    .regex(
-      /^[A-Z][A-Z0-9_]{2,63}$/,
-      "Mã phải in hoa, bắt đầu bằng chữ cái, độ dài 3-64 ký tự (chỉ chứa A-Z, 0-9, _).",
-    ),
-  name: z.string().trim().min(1, "Tên danh mục không được để trống."),
-  description: z.string().optional(),
-  unitPrice: z.number().min(0, "Đơn giá không được âm."),
-  defaultCommissionPercent: z
-    .number()
-    .min(0)
-    .max(100, "Hoa hồng không vượt quá 100%."),
-  eligibleForSubscriptionGrant: z.boolean(),
-  eligibleForPurchase: z.boolean(),
-  featureCode: z.string().trim().min(1, "Feature code là bắt buộc."),
-  metadata: TicketCategoryMetadataSchema.optional(),
-});
+// featureCode chỉ bắt buộc khi `eligibleForSubscriptionGrant=true` — match BE
+// superRefine ở ticket-category.model.ts. Khi tắt switch, FE gửi `null` để clear.
+const FEATURE_CODE_FORMAT_REGEX = /^[A-Z][A-Z0-9_]{2,63}$/;
+
+export const CreateTicketCategoryBodySchema = z
+  .object({
+    code: z
+      .string()
+      .trim()
+      .regex(
+        /^[A-Z][A-Z0-9_]{2,63}$/,
+        "Mã phải in hoa, bắt đầu bằng chữ cái, độ dài 3-64 ký tự (chỉ chứa A-Z, 0-9, _).",
+      ),
+    name: z.string().trim().min(1, "Tên danh mục không được để trống."),
+    description: z.string().optional(),
+    unitPrice: z.number().min(0, "Đơn giá không được âm."),
+    defaultCommissionPercent: z
+      .number()
+      .min(0)
+      .max(100, "Hoa hồng không vượt quá 100%."),
+    eligibleForSubscriptionGrant: z.boolean(),
+    eligibleForPurchase: z.boolean(),
+    featureCode: z
+      .string()
+      .trim()
+      .max(64)
+      .nullable()
+      .optional(),
+    metadata: TicketCategoryMetadataSchema.optional(),
+  })
+  .superRefine((val, ctx) => {
+    if (val.eligibleForSubscriptionGrant) {
+      if (!val.featureCode) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["featureCode"],
+          message: "Bắt buộc nhập khi danh mục được cấp qua gói đăng ký.",
+        });
+      } else if (!FEATURE_CODE_FORMAT_REGEX.test(val.featureCode)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["featureCode"],
+          message:
+            "Sai định dạng — phải in hoa, bắt đầu bằng chữ cái, 3-64 ký tự (A-Z, 0-9, _).",
+        });
+      }
+    }
+  });
 
 export const ToggleTicketCategoryBodySchema = z.object({
   isActive: z.boolean(),
@@ -102,22 +130,43 @@ export const ToggleTicketCategoryBodySchema = z.object({
 // ── Update form schema (excludes create-only fields) ─────────────────────────
 // BE: `creditType` là bất biến hoàn toàn — không có trong update body.
 // `featureCode` chỉ sửa được khi chưa có ticket nào dùng category (BE check).
-export const UpdateTicketCategoryBodySchema = z.object({
-  name: z.string().trim().min(1, "Tên danh mục không được để trống."),
-  description: z.string().optional(),
-  unitPrice: z.number().min(0, "Đơn giá không được âm."),
-  defaultCommissionPercent: z
-    .number()
-    .min(0)
-    .max(100, "Hoa hồng không vượt quá 100%."),
-  eligibleForSubscriptionGrant: z.boolean(),
-  eligibleForPurchase: z.boolean(),
-  featureCode: z.preprocess(
-    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
-    z.string().min(1).optional(),
-  ),
-  metadata: TicketCategoryMetadataSchema.optional(),
-});
+// BE update schema không có superRefine — FE tự enforce để đảm bảo invariant.
+// Gửi `featureCode: null` khi tắt switch (BE accept nullable, clear giá trị cũ).
+export const UpdateTicketCategoryBodySchema = z
+  .object({
+    name: z.string().trim().min(1, "Tên danh mục không được để trống."),
+    description: z.string().optional(),
+    unitPrice: z.number().min(0, "Đơn giá không được âm."),
+    defaultCommissionPercent: z
+      .number()
+      .min(0)
+      .max(100, "Hoa hồng không vượt quá 100%."),
+    eligibleForSubscriptionGrant: z.boolean(),
+    eligibleForPurchase: z.boolean(),
+    featureCode: z.preprocess(
+      (v) => (typeof v === "string" && v.trim() === "" ? null : v),
+      z.string().max(64).nullable().optional(),
+    ),
+    metadata: TicketCategoryMetadataSchema.optional(),
+  })
+  .superRefine((val, ctx) => {
+    if (val.eligibleForSubscriptionGrant) {
+      if (!val.featureCode) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["featureCode"],
+          message: "Bắt buộc nhập khi danh mục được cấp qua gói đăng ký.",
+        });
+      } else if (!FEATURE_CODE_FORMAT_REGEX.test(val.featureCode)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["featureCode"],
+          message:
+            "Sai định dạng — phải in hoa, bắt đầu bằng chữ cái, 3-64 ký tự (A-Z, 0-9, _).",
+        });
+      }
+    }
+  });
 
 // ── Query schema ──────────────────────────────────────────────────────────────
 export const ListTicketCategoriesQuerySchema = PagingRequestSchema.extend({

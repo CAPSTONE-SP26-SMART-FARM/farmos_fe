@@ -62,6 +62,7 @@ import {
   Info,
   Loader2,
   Pencil,
+  Plus,
   Search,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -220,24 +221,29 @@ export default function AdminPackagesPage() {
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="secondary">Tổng: {meta?.totalItems ?? 0}</Badge>
-              <Button onClick={openCreate}>Tạo gói</Button>
             </div>
           </div>
         </section>
 
         <Card>
           <CardHeader className="space-y-4">
-            <div className="flex items-center gap-2">
-              <CardTitle>Danh sách gói dịch vụ</CardTitle>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  Mỗi gói gắn với một loại credit và số lượng credit cấp khi
-                  mua.
-                </TooltipContent>
-              </Tooltip>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2">
+                <CardTitle>Danh sách gói dịch vụ</CardTitle>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Mỗi gói gắn với một loại credit và số lượng credit cấp khi
+                    mua.
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <Button onClick={openCreate} size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                Tạo gói
+              </Button>
             </div>
             <div className="grid gap-3 md:grid-cols-[1fr_140px]">
               <div className="relative">

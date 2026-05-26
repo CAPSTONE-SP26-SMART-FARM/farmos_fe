@@ -20,6 +20,9 @@ export const useSystemConfigs = (prefix?: string, enabled = true) => {
 export const useTicketSystemConfigs = (enabled = true) =>
   useSystemConfigs("ticket.", enabled);
 
+export const useWithdrawalSystemConfigs = (enabled = true) =>
+  useSystemConfigs("withdrawal.", enabled);
+
 export const useFeatureFlagsConfigs = (enabled = true) =>
   useSystemConfigs("feature.", enabled);
 

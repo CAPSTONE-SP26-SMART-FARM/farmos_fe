@@ -191,40 +191,43 @@ export default function AdminMedicinesPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       <section className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
-        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div className="space-y-2">
-            <Badge className="mb-2">Cổng quản trị</Badge>
-            <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-              Danh Mục Thuốc
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
-              Quản lý danh mục thuốc dùng cho đơn thuốc — liều khuyến nghị, đường
-              dùng, thời gian ngừng thuốc và trạng thái sử dụng.
-            </p>
-          </div>
-          <Button onClick={() => setDialogState({ mode: "create" })}>
-            <Plus className="mr-2 h-4 w-4" />
-            Tạo thuốc
-          </Button>
+        <div className="space-y-2">
+          <Badge className="mb-2">Cổng quản trị</Badge>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+            Danh Mục Thuốc
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
+            Quản lý danh mục thuốc dùng cho đơn thuốc — liều khuyến nghị, đường
+            dùng, thời gian ngừng thuốc và trạng thái sử dụng.
+          </p>
         </div>
       </section>
 
       <Card className="overflow-hidden border-border/70">
         <CardHeader className="bg-muted/30">
-          <div className="flex items-center gap-2">
-            <CardTitle className="flex items-center gap-2">
-              <Pill className="h-5 w-5 text-primary" />
-              Danh sách thuốc
-            </CardTitle>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent>
-                Danh mục thuốc chuẩn để bác sĩ chọn khi kê đơn. Trạng thái vô
-                hiệu chỉ ẩn ở đơn mới, không ảnh hưởng đơn đã kê.
-              </TooltipContent>
-            </Tooltip>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2">
+                <Pill className="h-5 w-5 text-primary" />
+                Danh sách thuốc
+              </CardTitle>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  Danh mục thuốc chuẩn để bác sĩ chọn khi kê đơn. Trạng thái vô
+                  hiệu chỉ ẩn ở đơn mới, không ảnh hưởng đơn đã kê.
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <Button
+              onClick={() => setDialogState({ mode: "create" })}
+              size="sm"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Tạo thuốc
+            </Button>
           </div>
         </CardHeader>
 

@@ -33,29 +33,43 @@ export function NavMain({ groups, setClickedItem }: NavMainProps) {
     localStorage.setItem(STORAGE_KEY, title);
   };
 
-  // Flatten both top-level items AND any nested sub-items so the active-URL
-  // match picks the single best match (longest prefix wins) regardless of
-  // nesting depth.
-  const allUrls = groups.flatMap((group) =>
+  // Flatten both top-level items AND any nested sub-items. Each candidate
+  // carries the item's own `url` (used to mark it active) plus the list of
+  // path prefixes that should match — defaulting to [url] but allowing extras
+  // via `activeMatch` for detail pages outside the item's own URL.
+  const candidates = groups.flatMap((group) =>
     group.items.flatMap((item) =>
       item.items && item.items.length > 0
-        ? item.items.map((sub) => sub.url)
-        : [item.url],
+        ? item.items.map((sub) => ({
+            url: sub.url,
+            matchers: [sub.url, ...(sub.activeMatch ?? [])],
+          }))
+        : [
+            {
+              url: item.url,
+              matchers: [item.url, ...(item.activeMatch ?? [])],
+            },
+          ],
     ),
   );
 
-  const activeItemUrl = allUrls.reduce((current, url) => {
-    const isRootPath = /^\/dashboard\/\w+$/.test(url);
-    const matches = isRootPath
-      ? location.pathname === url
-      : location.pathname.startsWith(url);
+  const activeItemUrl = candidates.reduce(
+    (current, candidate) => {
+      const bestMatchLen = candidate.matchers.reduce((best, matcher) => {
+        const isRootPath = /^\/dashboard\/\w+$/.test(matcher);
+        const matches = isRootPath
+          ? location.pathname === matcher
+          : location.pathname.startsWith(matcher);
+        return matches && matcher.length > best ? matcher.length : best;
+      }, 0);
 
-    if (!matches) {
-      return current;
-    }
-
-    return url.length > current.length ? url : current;
-  }, "");
+      if (bestMatchLen === 0) return current;
+      return bestMatchLen > current.length
+        ? { url: candidate.url, length: bestMatchLen }
+        : current;
+    },
+    { url: "", length: 0 },
+  ).url;
 
   return (
     <>

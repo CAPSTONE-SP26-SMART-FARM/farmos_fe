@@ -43,6 +43,7 @@ import AdminMedicinesPage from "@/pages/AdminPage/Medicines/AdminMedicinesPage";
 // import AdminSeasonTemplateUsagePage from "@/pages/AdminPage/SeasonTemplates/AdminSeasonTemplateUsagePage";
 import AdminMedicineFreeTextStatsPage from "@/pages/AdminPage/Medicines/AdminMedicineFreeTextStatsPage";
 import AdminTicketSystemConfigsPage from "@/pages/AdminPage/SystemConfigs/AdminTicketSystemConfigsPage";
+import AdminWithdrawalSystemConfigsPage from "@/pages/AdminPage/SystemConfigs/AdminWithdrawalSystemConfigsPage";
 import AdminDqsLeaderboardPage from "@/pages/AdminPage/DQS/AdminDqsLeaderboardPage";
 import AdminDoctorDqsDetailPage from "@/pages/AdminPage/DQS/AdminDoctorDqsDetailPage";
 import AdminTicketDetailPage from "@/pages/AdminPage/Tickets/AdminTicketDetailPage";
@@ -356,6 +357,11 @@ const routes: AppRoutes = [
       {
         path: "/dashboard/admin/system-configs/tickets",
         component: AdminTicketSystemConfigsPage,
+        allowedRoles: [RoleName.Admin],
+      },
+      {
+        path: "/dashboard/admin/system-configs/withdrawals",
+        component: AdminWithdrawalSystemConfigsPage,
         allowedRoles: [RoleName.Admin],
       },
       // ── Module 3 — Admin DQS (Wave 4) ──
