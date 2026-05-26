@@ -106,6 +106,12 @@ export const KitRequestResSchema = z.object({
           }),
         )
         .optional(),
+      milestoneId: z.string().optional(),
+      installReason: z.enum(["crop_approved", "milestone_started"]).optional(),
+      recoveryReason: z
+        .enum(["milestone_transition", "cropseason_completed", "subscription_ended"])
+        .optional(),
+      boardOutcomeOnComplete: z.enum(["purchase", "available"]).optional(),
     })
     .nullable(),
   createdAt: z.string(),

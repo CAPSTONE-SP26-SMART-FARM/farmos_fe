@@ -66,6 +66,17 @@ export const useAdminKitRequestList = (
     placeholderData: keepPreviousData,
   });
 
+export const useManagerKitRequestList = (
+  query: ListKitRequestsQueryType,
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: QUERY_KEYS.iotKitRequests.listManager(query),
+    queryFn: () => iotKitRequestService.listManager(query),
+    enabled,
+    placeholderData: keepPreviousData,
+  });
+
 export const useKitRequestDetail = (id: string, enabled = true) =>
   useQuery({
     queryKey: QUERY_KEYS.iotKitRequests.detail(id),

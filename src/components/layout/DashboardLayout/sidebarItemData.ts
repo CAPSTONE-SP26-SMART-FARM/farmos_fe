@@ -114,18 +114,6 @@ export const sidebarData: SidebarData = {
               title: "Danh sách thiết bị",
               url: "/dashboard/admin/iot-devices",
             },
-            {
-              title: "Cần lắp đặt",
-              url: "/dashboard/admin/iot-devices/install-queue",
-            },
-            {
-              title: "Cần thu lại",
-              url: "/dashboard/admin/iot-devices/recovery-queue",
-            },
-            {
-              title: "Cần xử lý",
-              url: "/dashboard/admin/iot-devices/attention-queue",
-            },
           ],
         },
         {
@@ -365,6 +353,11 @@ export const sidebarData: SidebarData = {
           title: "Giám Sát Sự Cố",
           url: "/dashboard/manager/tickets",
           icon: Ticket,
+        },
+        {
+          title: "Yêu cầu hỗ trợ thiết bị",
+          url: "/dashboard/manager/iot-kit-requests",
+          icon: Wrench,
         },
       ],
     },

@@ -29,6 +29,12 @@ import {
 import { cn } from "@/lib/utils";
 
 const LIST_BASE = "/dashboard/admin/iot-devices";
+const KIT_REQUESTS_INSTALL =
+  "/dashboard/admin/iot-kit-requests?type=INSTALL_SCHEDULE&status=pending";
+const KIT_REQUESTS_RECOVERY =
+  "/dashboard/admin/iot-kit-requests?type=RECOVERY_SCHEDULE&status=pending";
+const KIT_REQUESTS_FAULT =
+  "/dashboard/admin/iot-kit-requests?type=FAULT_REPORT&status=pending";
 
 export default function AdminIotDashboardPage() {
   const overviewQuery = useAdminIotOverview();
@@ -112,8 +118,8 @@ export default function AdminIotDashboardPage() {
                 ? `Thiết bị cũ nhất: ${overview.actionRequired.errorDevices.oldest.label} · đã lỗi ${overview.actionRequired.errorDevices.oldest.ageDays} ngày`
                 : "Không có thiết bị lỗi nào."
             }
-            actionLabel="Xem danh sách thiết bị lỗi"
-            href={`${LIST_BASE}?status=error`}
+            actionLabel="Xem yêu cầu báo lỗi"
+            href={KIT_REQUESTS_FAULT}
           />
           <ActionRequiredCard
             tone="warning"
@@ -124,8 +130,8 @@ export default function AdminIotDashboardPage() {
                 ? `Thiết bị cũ nhất: ${overview.actionRequired.pendingInstall.oldest.label} · đã chờ ${overview.actionRequired.pendingInstall.oldest.ageDays} ngày`
                 : "Không có thiết bị nào đang chờ."
             }
-            actionLabel="Mở hàng đợi cài đặt"
-            href={`${LIST_BASE}/install-queue`}
+            actionLabel="Mở yêu cầu cần lắp đặt"
+            href={KIT_REQUESTS_INSTALL}
           />
           <ActionRequiredCard
             tone="warning"
@@ -136,8 +142,8 @@ export default function AdminIotDashboardPage() {
                 ? `Quá hạn lâu nhất: ${recoveryOldestDays} ngày`
                 : "Không có thiết bị nào quá hạn cần thu hồi."
             }
-            actionLabel="Mở hàng đợi thu hồi"
-            href={`${LIST_BASE}/recovery-queue`}
+            actionLabel="Mở yêu cầu cần thu lại"
+            href={KIT_REQUESTS_RECOVERY}
           />
         </div>
       </section>
@@ -190,16 +196,16 @@ export default function AdminIotDashboardPage() {
             hint="Tìm kiếm, lọc, thao tác hàng loạt"
           />
           <QuickLink
-            to={`${LIST_BASE}/install-queue`}
+            to={KIT_REQUESTS_INSTALL}
             icon={Truck}
-            title="Hàng đợi cài đặt"
-            hint="Nhóm theo trang trại"
+            title="Yêu cầu cần lắp đặt"
+            hint="Lịch lắp do hệ thống tạo theo vụ mùa"
           />
           <QuickLink
-            to={`${LIST_BASE}/recovery-queue`}
+            to={KIT_REQUESTS_RECOVERY}
             icon={Undo2}
-            title="Hàng đợi thu hồi"
-            hint="Thiết bị quá hạn cần thu hồi"
+            title="Yêu cầu cần thu lại"
+            hint="Lịch thu hồi khi gói thuê hết hạn"
           />
           <QuickLink
             to="/dashboard/admin/iot-kits"

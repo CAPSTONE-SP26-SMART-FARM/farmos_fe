@@ -58,7 +58,43 @@ type SearchHook = (
   unknown
 >;
 
-export function DeviceStatusBadge({ status }: { status: string }) {
+export function DeviceStatusBadge({
+  status,
+  milestoneStatus,
+}: {
+  status: string;
+  /**
+   * Khi truyền vào, badge sẽ override label theo bối cảnh milestone:
+   *  - `inactive` + milestone `in_progress` → "Chờ kích hoạt" (board đã sẵn
+   *    sàng nhưng chưa nhận data đầu tiên).
+   *  - `active` + milestone `pending` → "Chờ giai đoạn bắt đầu" (board reuse
+   *    từ giai đoạn trước, hiện đang chờ giai đoạn này bắt đầu — cron sensor
+   *    health monitor cũng skip flag error trong khoảng này).
+   */
+  milestoneStatus?: string;
+}) {
+  if (status === "inactive" && milestoneStatus === "in_progress") {
+    return (
+      <Badge
+        variant="outline"
+        className="text-[10px] inline-flex items-center gap-1.5"
+      >
+        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+        Chờ kích hoạt
+      </Badge>
+    );
+  }
+  if (status === "active" && milestoneStatus === "pending") {
+    return (
+      <Badge
+        variant="outline"
+        className="text-[10px] inline-flex items-center gap-1.5"
+      >
+        <span className="h-1.5 w-1.5 rounded-full bg-zinc-400" />
+        Chờ giai đoạn bắt đầu
+      </Badge>
+    );
+  }
   const meta =
     DEVICE_STATUS_META[status as DeviceStatusType] ??
     ({ label: status, dot: "bg-zinc-400", variant: "outline" } as const);
@@ -84,6 +120,11 @@ interface Props {
    * Default: true (filters shown).
    */
   showFilters?: boolean;
+  /**
+   * Truyền milestone status xuống `DeviceStatusBadge` để override label
+   * khi board active nhưng milestone chưa start (M2 reuse từ M1).
+   */
+  milestoneStatus?: string;
 }
 
 export function MilestoneAssignmentsList({
@@ -93,6 +134,7 @@ export function MilestoneAssignmentsList({
   emptyState,
   pageSize = 5,
   showFilters = true,
+  milestoneStatus,
 }: Props) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -186,7 +228,10 @@ export function MilestoneAssignmentsList({
               <span className="text-xs text-muted-foreground truncate">
                 {a.device.deviceName?.trim() || "Thiết bị không xác định"}
               </span>
-              <DeviceStatusBadge status={a.device.status} />
+              <DeviceStatusBadge
+                status={a.device.status}
+                milestoneStatus={milestoneStatus}
+              />
               <Badge variant="outline" className="text-[10px] shrink-0">
                 {a.sensors.length} cảm biến
               </Badge>

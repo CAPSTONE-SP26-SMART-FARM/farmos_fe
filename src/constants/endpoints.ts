@@ -719,6 +719,7 @@ export const API_ENDPOINTS = {
     // ── Shared ────────────────────────────────────────────────────────
     LIST_MY: "/iot-kit-request/my", // owner
     LIST_ADMIN: "/iot-kit-request/admin/list", // admin
+    LIST_MANAGER: "/iot-kit-request/manager/list", // manager (read-only theo farm phụ trách)
     DETAIL: (id: string) => `/iot-kit-request/${id}`, // any — embed devices[]
     CANCEL: (id: string) => `/iot-kit-request/${id}/cancel`, // owner FAULT, admin both
   },
@@ -839,6 +840,11 @@ export const QUERY_KEYS = {
     listAdmin: (query?: Record<string, unknown>) => [
       "iot-kit-requests",
       "admin",
+      ...(query !== undefined ? [query] : []),
+    ],
+    listManager: (query?: Record<string, unknown>) => [
+      "iot-kit-requests",
+      "manager",
       ...(query !== undefined ? [query] : []),
     ],
     detail: (id: string) => ["iot-kit-requests", id],

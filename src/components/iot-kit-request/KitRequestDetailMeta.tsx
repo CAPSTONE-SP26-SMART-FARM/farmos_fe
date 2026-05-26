@@ -2,11 +2,15 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { DEVICE_STATUS_LABEL_ADMIN } from "@/constants/iotDeviceDisplay";
 import {
+  KitRequestBoardOutcomeBadge,
+  KitRequestInstallReasonBadge,
+  KitRequestRecoveryReasonBadge,
   KitRequestStatusBadge,
   KitRequestTypeBadge,
 } from "./KitRequestBadges";
 import type {
   KitRequestDetailResType,
+  KitRequestDeviceType,
   KitRequestResType,
 } from "@/schemaValidatation/iotKitRequest";
 import { format, formatDistanceToNow } from "date-fns";
@@ -30,7 +34,23 @@ export function KitRequestDetailMeta({ request }: { request: RequestLike }) {
     "devices" in request ? request.devices : null;
   const isInstallSchedule = request.type === "INSTALL_SCHEDULE";
   const isRecoverySchedule = request.type === "RECOVERY_SCHEDULE";
-  const showDevices = (isInstallSchedule || isRecoverySchedule) && devices;
+  const isFaultReport = request.type === "FAULT_REPORT";
+  const showInstallRecoveryDevices =
+    (isInstallSchedule || isRecoverySchedule) && devices;
+
+  const faultyDevice =
+    isFaultReport && devices && request.iotDeviceId
+      ? devices.find((d) => d.id === request.iotDeviceId) ?? null
+      : null;
+  const replacementDeviceId = request.metadata?.replacementDeviceId;
+  const replacementDevice =
+    isFaultReport && devices && replacementDeviceId
+      ? devices.find((d) => d.id === replacementDeviceId) ?? null
+      : null;
+  const oldBoardOutcome = request.metadata?.oldBoardOutcome;
+  const installReason = request.metadata?.installReason;
+  const recoveryReason = request.metadata?.recoveryReason;
+  const boardOutcomeOnComplete = request.metadata?.boardOutcomeOnComplete;
 
   return (
     <div className="space-y-4 text-sm">
@@ -69,11 +89,29 @@ export function KitRequestDetailMeta({ request }: { request: RequestLike }) {
       <Separator />
 
       {/* Devices preview — INSTALL_SCHEDULE và RECOVERY_SCHEDULE */}
-      {showDevices && (
+      {showInstallRecoveryDevices && (
         <>
           <DevicesSection
             devices={devices}
             kind={isRecoverySchedule ? "recovery" : "install"}
+            installReason={isInstallSchedule ? installReason : undefined}
+            recoveryReason={isRecoverySchedule ? recoveryReason : undefined}
+            boardOutcomeOnComplete={
+              isRecoverySchedule ? boardOutcomeOnComplete : undefined
+            }
+          />
+          <Separator />
+        </>
+      )}
+
+      {/* FAULT_REPORT — hiển thị thiết bị hỏng + lịch thay + bộ kit thay thế */}
+      {isFaultReport && (
+        <>
+          <FaultDeviceSection
+            faultyDevice={faultyDevice}
+            replacementDevice={replacementDevice}
+            scheduledAt={request.scheduledAt}
+            oldBoardOutcome={oldBoardOutcome}
           />
           <Separator />
         </>
@@ -190,17 +228,142 @@ function SlaBadge({
   );
 }
 
+const OLD_BOARD_OUTCOME_LABEL: Record<"revoked" | "available", string> = {
+  revoked: "Đã thu hồi",
+  available: "Trả về kho",
+};
+
+function FaultDeviceSection({
+  faultyDevice,
+  replacementDevice,
+  scheduledAt,
+  oldBoardOutcome,
+}: {
+  faultyDevice: KitRequestDeviceType | null;
+  replacementDevice: KitRequestDeviceType | null;
+  scheduledAt: string | null | undefined;
+  oldBoardOutcome: "revoked" | "available" | undefined;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="space-y-1">
+        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+          Thiết bị báo lỗi
+        </p>
+        {faultyDevice ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-destructive/5 px-3 py-2">
+            <div className="flex items-center gap-2">
+              <span className="font-mono font-medium">
+                {faultyDevice.label ?? faultyDevice.deviceName}
+              </span>
+              {faultyDevice.label && (
+                <span className="text-xs text-muted-foreground">
+                  · {faultyDevice.deviceName}
+                </span>
+              )}
+            </div>
+            <Badge variant="outline" className="text-xs">
+              {DEVICE_STATUS_LABEL_ADMIN[faultyDevice.status] ??
+                faultyDevice.status}
+            </Badge>
+          </div>
+        ) : (
+          <p className="rounded-md border bg-muted/30 p-2 text-sm text-muted-foreground">
+            Không xác định được thiết bị (có thể đã bị xóa).
+          </p>
+        )}
+      </div>
+
+      {(scheduledAt || replacementDevice) && (
+        <div className="space-y-1">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            Lịch thay thiết bị
+          </p>
+          <div className="space-y-2 rounded-md border bg-muted/20 p-3 text-sm">
+            {scheduledAt && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-muted-foreground">Thời gian hẹn:</span>
+                <span className="font-medium">
+                  {format(new Date(scheduledAt), "dd/MM/yyyy HH:mm", {
+                    locale: vi,
+                  })}
+                </span>
+              </div>
+            )}
+            {replacementDevice ? (
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">Bộ kit thay thế:</span>
+                  <span className="font-mono font-medium">
+                    {replacementDevice.label ?? replacementDevice.deviceName}
+                  </span>
+                  {replacementDevice.label && (
+                    <span className="text-xs text-muted-foreground">
+                      · {replacementDevice.deviceName}
+                    </span>
+                  )}
+                </div>
+                <Badge variant="outline" className="text-xs">
+                  {DEVICE_STATUS_LABEL_ADMIN[replacementDevice.status] ??
+                    replacementDevice.status}
+                </Badge>
+              </div>
+            ) : (
+              scheduledAt && (
+                <p className="text-xs text-muted-foreground">
+                  Chưa gán bộ kit thay thế cụ thể.
+                </p>
+              )
+            )}
+            {oldBoardOutcome && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-muted-foreground">Tình trạng bộ kit cũ:</span>
+                <Badge variant="outline" className="text-xs">
+                  {OLD_BOARD_OUTCOME_LABEL[oldBoardOutcome]}
+                </Badge>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DevicesSection({
   devices,
   kind,
+  installReason,
+  recoveryReason,
+  boardOutcomeOnComplete,
 }: {
   devices: NonNullable<KitRequestDetailResType["devices"]>;
   kind: "install" | "recovery";
+  installReason?: "crop_approved" | "milestone_started";
+  recoveryReason?:
+    | "milestone_transition"
+    | "cropseason_completed"
+    | "subscription_ended";
+  boardOutcomeOnComplete?: "purchase" | "available";
 }) {
   const heading =
     kind === "recovery"
       ? "Thiết bị cần thu hồi"
       : "Thiết bị thuộc yêu cầu";
+
+  // Derive milestone order chung từ devices (sau M1 fix, mọi device 1 request
+  // thuộc cùng milestone). Hiện "Giai đoạn N" — KHÔNG hiện UUID.
+  const milestoneOrders = Array.from(
+    new Set(
+      devices
+        .map((d) => d.milestoneOrder)
+        .filter((o): o is number => o !== null && o !== undefined),
+    ),
+  ).sort((a, b) => a - b);
+  const milestoneLabel =
+    kind === "install" && milestoneOrders.length === 1
+      ? `Giai đoạn ${milestoneOrders[0]}`
+      : null;
   const emptyMessage =
     kind === "recovery"
       ? "Không còn thiết bị nào cần thu hồi — có thể đã thu xong hoặc owner không còn thiết bị nào."
@@ -226,6 +389,29 @@ function DevicesSection({
         <p className="text-xs uppercase tracking-wide text-muted-foreground">
           {heading} ({devices.length})
         </p>
+        {milestoneLabel && (
+          <Badge variant="secondary" className="text-xs">
+            {milestoneLabel}
+          </Badge>
+        )}
+        {installReason && (
+          <KitRequestInstallReasonBadge
+            reason={installReason}
+            className="text-xs"
+          />
+        )}
+        {recoveryReason && (
+          <KitRequestRecoveryReasonBadge
+            reason={recoveryReason}
+            className="text-xs"
+          />
+        )}
+        {boardOutcomeOnComplete && (
+          <KitRequestBoardOutcomeBadge
+            outcome={boardOutcomeOnComplete}
+            className="text-xs"
+          />
+        )}
         {Object.entries(statusCount).map(([status, count]) => (
           <Badge
             key={status}

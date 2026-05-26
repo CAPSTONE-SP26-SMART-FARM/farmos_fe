@@ -59,6 +59,12 @@ export function MilestoneSensorsPane({
     );
   }
 
+  // Cảnh báo ngưỡng cảm biến chỉ có ý nghĩa khi giai đoạn đang diễn ra —
+  // các mốc `pending` / `completed` không có sensor reading mới (BE cron cũng
+  // skip flag), nên ẩn cả cột phải để layout gọn + tránh hiển thị cảnh báo
+  // cũ gây hiểu nhầm.
+  const showAlerts = milestone?.status === "in_progress";
+
   return (
     <div className="flex gap-5 min-h-90">
       <div className="flex-1 min-w-0 space-y-6">
@@ -77,15 +83,17 @@ export function MilestoneSensorsPane({
           </div>
         )}
       </div>
-      <div className="w-72 xl:w-80 shrink-0">
-        <div className="sticky top-4 space-y-2">
-          <div className="flex items-center gap-1.5">
-            <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
-            <h4 className="text-sm font-semibold">Cảnh báo</h4>
+      {showAlerts && (
+        <div className="w-72 xl:w-80 shrink-0">
+          <div className="sticky top-4 space-y-2">
+            <div className="flex items-center gap-1.5">
+              <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+              <h4 className="text-sm font-semibold">Cảnh báo</h4>
+            </div>
+            <AlertsPanel isLoading={isLoading} zoneId={zoneId} />
           </div>
-          <AlertsPanel isLoading={isLoading} zoneId={zoneId} />
         </div>
-      </div>
+      )}
     </div>
   );
 }

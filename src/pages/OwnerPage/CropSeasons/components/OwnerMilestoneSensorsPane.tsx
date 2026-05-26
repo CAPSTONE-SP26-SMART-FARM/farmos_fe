@@ -49,6 +49,9 @@ export function OwnerMilestoneSensorsPane({
     );
   }
 
+  // Cảnh báo ngưỡng cảm biến chỉ ý nghĩa khi giai đoạn đang diễn ra.
+  const showAlerts = milestone?.status === "in_progress";
+
   return (
     <div className="flex gap-5 min-h-90">
       <div className="flex-1 min-w-0 space-y-6">
@@ -64,18 +67,20 @@ export function OwnerMilestoneSensorsPane({
           </div>
         )}
       </div>
-      <div className="w-72 xl:w-80 shrink-0">
-        <div className="sticky top-4 space-y-2">
-          <div className="flex items-center gap-1.5">
-            <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
-            <h4 className="text-sm font-semibold">Cảnh báo</h4>
+      {showAlerts && (
+        <div className="w-72 xl:w-80 shrink-0">
+          <div className="sticky top-4 space-y-2">
+            <div className="flex items-center gap-1.5">
+              <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+              <h4 className="text-sm font-semibold">Cảnh báo</h4>
+            </div>
+            <AlertsPanel
+              isLoading={isLoading}
+              zoneId={zoneId}
+            />
           </div>
-          <AlertsPanel
-            isLoading={isLoading}
-            zoneId={zoneId}
-          />
         </div>
-      </div>
+      )}
     </div>
   );
 }
