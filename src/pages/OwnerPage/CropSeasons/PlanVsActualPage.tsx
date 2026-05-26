@@ -6,10 +6,7 @@ import { QUERY_KEYS } from "@/constants/endpoints";
 import {
   ArrowLeft,
   GitCompareArrows,
-  History,
-  Inbox,
   RefreshCw,
-  Table2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,13 +24,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import ErrorState from "@/components/common/ErrorState";
 import LoadingCard from "@/components/common/LoadingCard";
 import EmptyState from "@/components/common/EmptyState";
 import { useTrackingDiff, useTrackingLog } from "@/queries/useTracking";
-import DiffTable from "./components/DiffTable";
 import TrackingTimeline from "./components/TrackingTimeline";
 import {
   computeTrackingStats,
@@ -129,7 +124,6 @@ function PlanVsActualPage() {
   const diff = diffData.data;
   const cropName = diff.cropSeason.cropName ?? "Mùa vụ";
   const tone = healthTone(stats!.onTimePct, stats!.total > 0);
-  const noTracked = diff.tracked.length === 0;
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -217,107 +211,28 @@ function PlanVsActualPage() {
           </div>
         </div>
 
-        {/* ── Combined empty state ────────────────────────────── */}
-        {noTracked ? (
-          <Card
-            className={`transition-opacity duration-500 delay-150 ease-out ${
-              show ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <Inbox className="h-8 w-8 text-muted-foreground mb-2" />
-              <p className="text-sm font-medium">
-                Chưa có dữ liệu so sánh nào
-              </p>
-              <p className="text-xs text-muted-foreground mt-1 max-w-md">
-                Mùa vụ chưa ghi nhận khác biệt giữa kế hoạch và thực tế.
-                Dữ liệu sẽ xuất hiện khi có hoạt động cập nhật.
-              </p>
+        <div
+          className={`transition-opacity duration-500 delay-150 ease-out ${
+            show ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Lịch sử thay đổi</CardTitle>
+              <CardDescription>
+                Theo dõi từng chỉnh sửa theo thời gian, kèm nguồn gốc
+                (thủ công / hệ thống / cảm biến…).
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TrackingTimeline
+                cropSeasonId={cropSeasonId!}
+                initialData={logData?.data}
+                isLoading={loadingLog}
+              />
             </CardContent>
           </Card>
-        ) : (
-          /* ── Tabs ────────────────────────────────────────── */
-          <div
-            className={`transition-opacity duration-500 delay-150 ease-out ${
-              show ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            <Tabs
-              defaultValue="diff"
-              className="space-y-4"
-            >
-              <TabsList>
-                <TabsTrigger
-                  value="diff"
-                  className="gap-1.5"
-                >
-                  <Table2 className="h-3.5 w-3.5" />
-                  Bảng so sánh
-                </TabsTrigger>
-                <TabsTrigger
-                  value="timeline"
-                  className="gap-1.5"
-                >
-                  <History className="h-3.5 w-3.5" />
-                  Timeline
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent
-                value="diff"
-                className="space-y-5 mt-0"
-              >
-                {!noTracked && (
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base">
-                        Chi tiết so sánh theo trường
-                      </CardTitle>
-                      <CardDescription>
-                        Mỗi hàng hiển thị giá trị kế hoạch và thực tế cạnh nhau,
-                        kèm sai số, số lần đổi và thời điểm chỉnh sửa cuối. Chọn{" "}
-                        <strong className="font-medium text-foreground">
-                          Lịch sử
-                        </strong>{" "}
-                        để xem chi tiết từng bước.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <DiffTable
-                        tracked={diff.tracked}
-                        cropSeasonId={cropSeasonId!}
-                      />
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
-
-              <TabsContent
-                value="timeline"
-                className="mt-0"
-              >
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">
-                      Lịch sử thay đổi
-                    </CardTitle>
-                    <CardDescription>
-                      Theo dõi từng chỉnh sửa theo thời gian, kèm nguồn gốc
-                      (thủ công / hệ thống / cảm biến…).
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <TrackingTimeline
-                      cropSeasonId={cropSeasonId!}
-                      initialData={logData?.data}
-                      isLoading={loadingLog}
-                    />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
-        )}
+        </div>
       </div>
     </TooltipProvider>
   );
