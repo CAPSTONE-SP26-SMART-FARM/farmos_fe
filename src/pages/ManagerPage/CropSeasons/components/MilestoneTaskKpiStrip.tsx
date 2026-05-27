@@ -76,11 +76,11 @@ export function MilestoneTaskKpiStrip({
 }) {
   const tasksQuery = useManagerListEmployeeTasks(milestoneId, {
     page: 1,
-    limit: 200,
+    limit: 100,
   });
   const todayQuery = useManagerZoneTasksForToday(zoneId, {
     page: 1,
-    limit: 200,
+    limit: 100,
     milestoneId,
   });
 
