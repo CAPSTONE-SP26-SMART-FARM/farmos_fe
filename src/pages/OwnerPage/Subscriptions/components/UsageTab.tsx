@@ -39,6 +39,12 @@ interface UsageTabProps {
   featureCodes: string[];
 }
 
+const fmtNum = (n: number | null | undefined) =>
+  typeof n === "number" && Number.isFinite(n) ? n.toLocaleString("vi-VN") : "—";
+
+const safeNum = (n: number | null | undefined) =>
+  typeof n === "number" && Number.isFinite(n) ? n : 0;
+
 function progressTone(pct: number) {
   const full = pct >= 100;
   const near = pct >= 80 && !full;
@@ -74,7 +80,9 @@ function NumericQuotaRow({
   limit: number;
   remaining: number;
 }) {
-  const pct = limit > 0 ? Math.min(100, (used / limit) * 100) : 0;
+  const safeLimit = safeNum(limit);
+  const safeUsed = safeNum(used);
+  const pct = safeLimit > 0 ? Math.min(100, (safeUsed / safeLimit) * 100) : 0;
   const tone = progressTone(pct);
   return (
     <div
@@ -90,17 +98,17 @@ function NumericQuotaRow({
           <p className="mt-0.5 text-xs text-muted-foreground">
             Còn lại{" "}
             <span className="font-medium text-foreground tabular-nums">
-              {remaining.toLocaleString("vi-VN")}
+              {fmtNum(remaining)}
             </span>{" "}
-            / {limit.toLocaleString("vi-VN")}
+            / {fmtNum(limit)}
           </p>
         </div>
         <div className="flex flex-col items-end gap-1">
           <span className="text-2xl font-semibold leading-none tabular-nums">
-            {used.toLocaleString("vi-VN")}
+            {fmtNum(used)}
             <span className="text-sm font-normal text-muted-foreground">
               {" "}
-              / {limit.toLocaleString("vi-VN")}
+              / {fmtNum(limit)}
             </span>
           </span>
           <span className={cn("text-xs font-medium", tone.pctClass)}>
@@ -121,8 +129,9 @@ function PerFarmQuotaCard({
 }: {
   feature: Extract<MyQuotaFeatureType, { kind: "numeric_per_farm" }>;
 }) {
-  const { limit, perFarm } = feature;
-  const sorted = [...perFarm].sort((a, b) => b.used - a.used);
+  const limit = safeNum(feature.limit);
+  const perFarm = feature.perFarm ?? [];
+  const sorted = [...perFarm].sort((a, b) => safeNum(b.used) - safeNum(a.used));
   return (
     <div className="rounded-lg border bg-card p-4">
       <div className="flex items-center justify-between gap-2">
@@ -131,7 +140,7 @@ function PerFarmQuotaCard({
           <p className="font-medium">{formatFeatureLabel(feature.featureCode)}</p>
         </div>
         <Badge variant="outline" className="text-xs font-normal">
-          Hạn mức {limit.toLocaleString("vi-VN")} / nông trại
+          Hạn mức {fmtNum(limit)} / nông trại
         </Badge>
       </div>
 
@@ -142,8 +151,9 @@ function PerFarmQuotaCard({
       ) : (
         <div className="mt-3 divide-y rounded-md border">
           {sorted.map((row) => {
+            const rowUsed = safeNum(row.used);
             const pct =
-              limit > 0 ? Math.min(100, (row.used / limit) * 100) : 0;
+              limit > 0 ? Math.min(100, (rowUsed / limit) * 100) : 0;
             const tone = progressTone(pct);
             return (
               <div
@@ -160,7 +170,7 @@ function PerFarmQuotaCard({
                 />
                 <div className="col-span-2 flex items-baseline justify-end gap-2 sm:col-span-1">
                   <span className="text-sm font-semibold tabular-nums">
-                    {row.used}
+                    {rowUsed}
                     <span className="font-normal text-muted-foreground">
                       /{limit}
                     </span>
@@ -251,45 +261,44 @@ function buildQuotaRows(features: MyQuotaFeatureType[]): QuotaRow[] {
         pct: null,
       });
     } else if (feature.kind === "numeric") {
-      const pct =
-        feature.limit > 0
-          ? Math.min(100, (feature.used / feature.limit) * 100)
-          : 0;
+      const limit = safeNum(feature.limit);
+      const used = safeNum(feature.used);
+      const pct = limit > 0 ? Math.min(100, (used / limit) * 100) : 0;
       rows.push({
         key: feature.featureCode,
         featureCode: feature.featureCode,
         scope: "Toàn tài khoản",
-        limit: feature.limit.toLocaleString("vi-VN"),
-        used: feature.used.toLocaleString("vi-VN"),
-        remaining: feature.remaining.toLocaleString("vi-VN"),
+        limit: fmtNum(feature.limit),
+        used: fmtNum(feature.used),
+        remaining: fmtNum(feature.remaining),
         pct,
       });
     } else {
       // numeric_per_farm — expand một dòng cho mỗi farm để admin tra cứu nhanh
-      if (feature.perFarm.length === 0) {
+      const limit = safeNum(feature.limit);
+      const perFarm = feature.perFarm ?? [];
+      if (perFarm.length === 0) {
         rows.push({
           key: feature.featureCode,
           featureCode: feature.featureCode,
           scope: "Chưa có nông trại",
-          limit: feature.limit.toLocaleString("vi-VN"),
+          limit: fmtNum(feature.limit),
           used: "0",
-          remaining: feature.limit.toLocaleString("vi-VN"),
+          remaining: fmtNum(feature.limit),
           pct: 0,
         });
         continue;
       }
-      for (const row of feature.perFarm) {
-        const pct =
-          feature.limit > 0
-            ? Math.min(100, (row.used / feature.limit) * 100)
-            : 0;
+      for (const row of perFarm) {
+        const rowUsed = safeNum(row.used);
+        const pct = limit > 0 ? Math.min(100, (rowUsed / limit) * 100) : 0;
         rows.push({
           key: `${feature.featureCode}:${row.farmId}`,
           featureCode: feature.featureCode,
           scope: row.farmName,
-          limit: feature.limit.toLocaleString("vi-VN"),
-          used: row.used.toLocaleString("vi-VN"),
-          remaining: row.remaining.toLocaleString("vi-VN"),
+          limit: fmtNum(feature.limit),
+          used: fmtNum(row.used),
+          remaining: fmtNum(row.remaining),
           pct,
         });
       }
@@ -313,10 +322,14 @@ function UsageTab({ enabled, featureCodes }: UsageTabProps) {
   const { numericFeatures, perFarmFeatures, flagFeatures, summary } = useMemo(() => {
     const numeric = features
       .filter((f): f is Extract<MyQuotaFeatureType, { kind: "numeric" }> => f.kind === "numeric")
-      .map((f) => ({
-        ...f,
-        pct: f.limit > 0 ? Math.min(100, (f.used / f.limit) * 100) : 0,
-      }))
+      .map((f) => {
+        const limit = safeNum(f.limit);
+        const used = safeNum(f.used);
+        return {
+          ...f,
+          pct: limit > 0 ? Math.min(100, (used / limit) * 100) : 0,
+        };
+      })
       .sort((a, b) => b.pct - a.pct);
 
     const perFarm = features.filter(
@@ -333,8 +346,10 @@ function UsageTab({ enabled, featureCodes }: UsageTabProps) {
     const allPercents: number[] = [];
     for (const f of numeric) allPercents.push(f.pct);
     for (const f of perFarm) {
-      for (const row of f.perFarm) {
-        const pct = f.limit > 0 ? Math.min(100, (row.used / f.limit) * 100) : 0;
+      const limit = safeNum(f.limit);
+      for (const row of f.perFarm ?? []) {
+        const used = safeNum(row.used);
+        const pct = limit > 0 ? Math.min(100, (used / limit) * 100) : 0;
         allPercents.push(pct);
       }
     }
