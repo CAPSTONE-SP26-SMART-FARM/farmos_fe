@@ -28,6 +28,7 @@ import {
 } from "@/schemaValidatation/ticketCategory";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isAxiosError } from "axios";
+import { AnimatePresence, motion } from "framer-motion";
 import { Info, Loader2, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 import { useForm, type Resolver } from "react-hook-form";
@@ -138,6 +139,7 @@ export default function AdminTicketCategoryFormPanel({
     ? `ticket_cat_${watchedCode.toLowerCase()}`
     : "ticket_cat_<mã danh mục>";
 
+  const watchedGrant = watch("eligibleForSubscriptionGrant");
   const watchedFeatureCode = watch("featureCode");
   const featureCodeConflictRaw = watchedFeatureCode
     ? activeFeatureCodeMap.get(watchedFeatureCode)
@@ -150,9 +152,11 @@ export default function AdminTicketCategoryFormPanel({
 
   // Auto-suggest featureCode khi user gõ `code` — chỉ apply khi field còn rỗng
   // hoặc trùng suggestion trước đó, tránh ghi đè input của user.
+  // Skip nếu switch "cấp qua gói đăng ký" tắt — featureCode lúc đó vô nghĩa.
   const lastAutoFeatureCode = useRef<string>("");
   useEffect(() => {
     if (isEdit) return;
+    if (!watchedGrant) return;
     const suggested = deriveFeatureCode(watchedCode ?? "");
     if (!suggested) return;
     const current = form.getValues("featureCode") ?? "";
@@ -160,7 +164,21 @@ export default function AdminTicketCategoryFormPanel({
       setValue("featureCode", suggested, { shouldValidate: false });
       lastAutoFeatureCode.current = suggested;
     }
-  }, [watchedCode, form, setValue, isEdit]);
+  }, [watchedCode, watchedGrant, form, setValue, isEdit]);
+
+  // Khi tắt switch "cấp qua gói đăng ký" → clear featureCode để submit gửi null.
+  // Khi bật lại → trigger auto-suggest qua effect ở trên (reset ref).
+  const prevGrantRef = useRef<boolean>(watchedGrant ?? false);
+  useEffect(() => {
+    const prev = prevGrantRef.current;
+    if (prev && !watchedGrant) {
+      setValue("featureCode", "", { shouldValidate: false });
+      lastAutoFeatureCode.current = "";
+    } else if (!prev && watchedGrant) {
+      lastAutoFeatureCode.current = "";
+    }
+    prevGrantRef.current = watchedGrant ?? false;
+  }, [watchedGrant, setValue]);
 
   const suggestionChips = useMemo(() => {
     const set = new Set<string>(STANDARD_FEATURE_CODES);
@@ -173,6 +191,11 @@ export default function AdminTicketCategoryFormPanel({
     !!watchedFeatureCode && !FEATURE_CODE_REGEX.test(watchedFeatureCode);
 
   const onSubmit = async (data: FormShape) => {
+    // BE accept featureCode null khi không cấp qua gói đăng ký — gửi null thay
+    // vì giá trị rác còn sót trong form state để clear field ở DB.
+    const normalizedFeatureCode = data.eligibleForSubscriptionGrant
+      ? data.featureCode || null
+      : null;
     try {
       if (isEdit && category) {
         const updateBody: UpdateTicketCategoryBodyType = {
@@ -182,13 +205,16 @@ export default function AdminTicketCategoryFormPanel({
           defaultCommissionPercent: data.defaultCommissionPercent,
           eligibleForSubscriptionGrant: data.eligibleForSubscriptionGrant,
           eligibleForPurchase: data.eligibleForPurchase,
-          featureCode: data.featureCode,
+          featureCode: normalizedFeatureCode,
           metadata: data.metadata,
         };
         await updateMutation.mutateAsync({ id: category.id, body: updateBody });
         toast.success("Đã cập nhật danh mục ticket.");
       } else {
-        await createMutation.mutateAsync(data);
+        await createMutation.mutateAsync({
+          ...data,
+          featureCode: normalizedFeatureCode,
+        });
         toast.success("Đã tạo danh mục ticket mới.");
       }
       onBack();
@@ -363,131 +389,147 @@ export default function AdminTicketCategoryFormPanel({
         </CardContent>
       </Card>
 
-      {/* ── Section 3: Liên kết hệ thống ──────────────────────────── */}
+      {/* ── Section 3: Quyền truy cập & Liên kết gói ─────────────── */}
+      {/* Switch "Cấp qua gói đăng ký" nằm trên đầu — FeatureCode chỉ ý nghĩa
+          khi switch bật → conditional render bên dưới để giảm noise UI. */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Liên kết hệ thống</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="tc-featureCode">
-              Feature code <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="tc-featureCode"
-              {...register("featureCode", {
-                setValueAs: (v) =>
-                  typeof v === "string" ? v.trim().toUpperCase() : v,
-              })}
-              onChange={(e) => {
-                const next = e.target.value.toUpperCase();
-                setValue("featureCode", next, { shouldValidate: false });
-                lastAutoFeatureCode.current = "__user_edited__";
-              }}
-              placeholder="VD: TICKET_DISEASE_CREDITS"
-              aria-invalid={
-                Boolean(errors.featureCode) ||
-                Boolean(featureCodeConflict) ||
-                featureCodeFormatInvalid
-              }
-              className="font-mono uppercase"
-            />
-            <div className="flex flex-wrap items-center gap-1.5 pt-1">
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                <Sparkles className="h-3 w-3" /> Gợi ý:
-              </span>
-              {suggestionChips.map((code) => {
-                const taken = activeFeatureCodeMap.get(code);
-                const takenBySelf = taken && taken.id === category?.id;
-                const isActive = watchedFeatureCode === code;
-                const isTakenByOther = taken && !takenBySelf;
-                return (
-                  <button
-                    key={code}
-                    type="button"
-                    disabled={Boolean(isTakenByOther)}
-                    onClick={() => {
-                      setValue("featureCode", code, { shouldValidate: true });
-                      lastAutoFeatureCode.current = "__user_edited__";
-                    }}
-                    className={`rounded-md border px-2 py-0.5 text-xs font-mono transition-colors ${
-                      isActive
-                        ? "border-primary bg-primary/10 text-primary"
-                        : isTakenByOther
-                          ? "border-destructive/30 bg-destructive/5 text-destructive/60 cursor-not-allowed line-through"
-                          : "border-border bg-muted/30 hover:bg-muted"
-                    }`}
-                    title={
-                      isTakenByOther
-                        ? `Đã dùng bởi category "${taken!.name}"`
-                        : "Bấm để áp dụng"
-                    }
-                  >
-                    {code}
-                  </button>
-                );
-              })}
-            </div>
-            {errors.featureCode ? (
-              <p className="text-destructive text-xs">
-                {errors.featureCode.message}
-              </p>
-            ) : featureCodeConflict ? (
-              <p className="text-destructive text-xs">
-                Feature code này đang được category active{" "}
-                <strong>"{featureCodeConflict.name}"</strong> (
-                <code>{featureCodeConflict.code}</code>) sử dụng. Hãy chọn mã
-                khác hoặc vô hiệu hoá category đó trước.
-              </p>
-            ) : featureCodeFormatInvalid ? (
-              <p className="text-destructive text-xs">
-                Định dạng không hợp lệ — phải UPPERCASE, bắt đầu bằng chữ cái,
-                3-64 ký tự (A-Z, 0-9, _).
-              </p>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                Mỗi category nên có featureCode riêng. Mã chuẩn dạng{" "}
-                <code>TICKET_*_CREDITS</code>.
-                {isEdit && (
-                  <span className="block mt-0.5">
-                    Chỉ sửa được khi chưa có ticket nào dùng category này.
-                  </span>
-                )}
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ── Section 4: Quyền truy cập ─────────────────────────────── */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Quyền truy cập</CardTitle>
+          <CardTitle className="text-base">
+            Quyền truy cập & Liên kết gói
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-start justify-between gap-4 rounded-lg border p-3">
             <div className="space-y-0.5 flex-1">
               <p className="text-sm font-medium">Cấp qua gói đăng ký</p>
               <p className="text-xs text-muted-foreground">
-                Trừ vào quota subscription (entitlement match featureCode) khi
-                farmer tạo ticket trên mobile.
+                Bật khi muốn danh mục này trừ vào quota của gói thuê bao. Khi
+                bật, cần khai báo Feature code để khớp với entitlement của gói.
               </p>
             </div>
             <Switch
               id="tc-subscriptionGrant"
-              checked={watch("eligibleForSubscriptionGrant")}
+              checked={watchedGrant}
               onCheckedChange={(v) =>
-                setValue("eligibleForSubscriptionGrant", Boolean(v))
+                setValue("eligibleForSubscriptionGrant", Boolean(v), {
+                  shouldValidate: true,
+                })
               }
+              aria-label="Cấp qua gói đăng ký"
             />
           </div>
+
+          <AnimatePresence initial={false}>
+            {watchedGrant && (
+              <motion.div
+                key="featureCode-block"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="space-y-1.5 rounded-lg border bg-muted/20 p-3">
+                  <Label htmlFor="tc-featureCode">
+                    Feature code <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="tc-featureCode"
+                    {...register("featureCode", {
+                      setValueAs: (v) =>
+                        typeof v === "string" ? v.trim().toUpperCase() : v,
+                    })}
+                    onChange={(e) => {
+                      const next = e.target.value.toUpperCase();
+                      setValue("featureCode", next, { shouldValidate: false });
+                      lastAutoFeatureCode.current = "__user_edited__";
+                    }}
+                    placeholder="VD: TICKET_DISEASE_CREDITS"
+                    aria-invalid={
+                      Boolean(errors.featureCode) ||
+                      Boolean(featureCodeConflict) ||
+                      featureCodeFormatInvalid
+                    }
+                    className="font-mono uppercase"
+                  />
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" /> Gợi ý:
+                    </span>
+                    {suggestionChips.map((code) => {
+                      const taken = activeFeatureCodeMap.get(code);
+                      const takenBySelf = taken && taken.id === category?.id;
+                      const isActive = watchedFeatureCode === code;
+                      const isTakenByOther = taken && !takenBySelf;
+                      return (
+                        <button
+                          key={code}
+                          type="button"
+                          disabled={Boolean(isTakenByOther)}
+                          onClick={() => {
+                            setValue("featureCode", code, {
+                              shouldValidate: true,
+                            });
+                            lastAutoFeatureCode.current = "__user_edited__";
+                          }}
+                          className={`rounded-md border px-2 py-0.5 text-xs font-mono transition-colors ${
+                            isActive
+                              ? "border-primary bg-primary/10 text-primary"
+                              : isTakenByOther
+                                ? "border-destructive/30 bg-destructive/5 text-destructive/60 cursor-not-allowed line-through"
+                                : "border-border bg-muted/30 hover:bg-muted"
+                          }`}
+                          title={
+                            isTakenByOther
+                              ? `Đã dùng bởi danh mục "${taken!.name}"`
+                              : "Bấm để áp dụng"
+                          }
+                        >
+                          {code}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {errors.featureCode ? (
+                    <p className="text-destructive text-xs">
+                      {errors.featureCode.message}
+                    </p>
+                  ) : featureCodeConflict ? (
+                    <p className="text-destructive text-xs">
+                      Feature code này đang được danh mục đang hoạt động{" "}
+                      <strong>"{featureCodeConflict.name}"</strong> (
+                      <code>{featureCodeConflict.code}</code>) sử dụng. Hãy
+                      chọn mã khác hoặc vô hiệu hoá danh mục đó trước.
+                    </p>
+                  ) : featureCodeFormatInvalid ? (
+                    <p className="text-destructive text-xs">
+                      Sai định dạng — phải in hoa, bắt đầu bằng chữ cái, 3-64
+                      ký tự (A-Z, 0-9, _).
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Mỗi danh mục nên có Feature code riêng. Mã chuẩn dạng{" "}
+                      <code>TICKET_*_CREDITS</code>.
+                      {isEdit && (
+                        <span className="block mt-0.5">
+                          Chỉ sửa được khi chưa có ticket nào dùng danh mục
+                          này.
+                        </span>
+                      )}
+                    </p>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <div className="flex items-start justify-between gap-4 rounded-lg border p-3">
             <div className="space-y-0.5 flex-1">
               <p className="text-sm font-medium">Cho phép mua lẻ</p>
               <p className="text-xs text-muted-foreground">
                 Trừ vào pool credit riêng{" "}
                 <code>{category?.creditType ?? previewCreditType}</code> khi
-                owner mua ticket bundle bound vào danh mục này.
+                chủ trang trại mua gói ticket gắn vào danh mục này.
               </p>
             </div>
             <Switch
@@ -496,6 +538,7 @@ export default function AdminTicketCategoryFormPanel({
               onCheckedChange={(v) =>
                 setValue("eligibleForPurchase", Boolean(v))
               }
+              aria-label="Cho phép mua lẻ"
             />
           </div>
         </CardContent>

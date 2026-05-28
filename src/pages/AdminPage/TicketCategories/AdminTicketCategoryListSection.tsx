@@ -49,6 +49,7 @@ import {
   Loader2,
   PackageOpen,
   Pencil,
+  Plus,
   Power,
   Search,
   Tag,
@@ -67,11 +68,13 @@ const formatVnd = (amount: number) =>
   }).format(amount);
 
 interface AdminTicketCategoryListSectionProps {
+  onCreate?: () => void;
   onViewDetail?: (category: TicketCategoryType) => void;
   onEdit?: (category: TicketCategoryType) => void;
 }
 
 export default function AdminTicketCategoryListSection({
+  onCreate,
   onViewDetail,
   onEdit,
 }: AdminTicketCategoryListSectionProps) {
@@ -252,20 +255,28 @@ export default function AdminTicketCategoryListSection({
 
       <Card className="overflow-hidden border-border/70">
         <CardHeader className="bg-muted/30">
-          <div className="flex items-center gap-2">
-            <CardTitle className="flex items-center gap-2">
-              <Tag className="h-5 w-5 text-primary" />
-              Danh Mục Ticket
-            </CardTitle>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent>
-                Quản lý danh mục dịch vụ ticket — đơn giá, hoa hồng và quyền
-                truy cập (gói / mua lẻ).
-              </TooltipContent>
-            </Tooltip>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2">
+                <Tag className="h-5 w-5 text-primary" />
+                Danh Mục Ticket
+              </CardTitle>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  Quản lý danh mục dịch vụ ticket — đơn giá, hoa hồng và quyền
+                  truy cập (gói / mua lẻ).
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            {onCreate && (
+              <Button onClick={onCreate} size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                Tạo danh mục
+              </Button>
+            )}
           </div>
         </CardHeader>
 

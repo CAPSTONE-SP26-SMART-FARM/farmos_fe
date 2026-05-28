@@ -14,15 +14,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import { getApiErrorMessageVi } from "@/lib/error-message";
 import {
-  useTicketSystemConfigs,
   useUpsertSystemConfig,
+  useWithdrawalSystemConfigs,
 } from "@/queries/useSystemConfig";
 import {
-  TICKET_SYSTEM_CONFIG_KEY_MAP,
-  TicketSystemConfigFormSchema,
+  WITHDRAWAL_SYSTEM_CONFIG_KEY_MAP,
+  WithdrawalSystemConfigFormSchema,
   type SystemConfigItemType,
-  type TicketSystemConfigFormKey,
-  type TicketSystemConfigFormType,
+  type WithdrawalSystemConfigFormKey,
+  type WithdrawalSystemConfigFormType,
 } from "@/schemaValidatation/systemConfig";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -31,8 +31,8 @@ import {
   Lock,
   Pencil,
   Save,
-  Settings,
   Undo2,
+  Wallet,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -44,129 +44,81 @@ import {
 } from "react-hook-form";
 import { toast } from "sonner";
 
-// ── Page Admin — Cấu hình quy trình ticket (B18) ─────────────────────────
-// 7 ticket key (xem TICKET_SYSTEM_CONFIG_KEY_MAP). BE endpoint single-key
-// upsert (`PATCH /admin/system-configs/:key`); FE gọi tuần tự, chỉ key đã đổi.
+// ── Page Admin — Cấu hình rút tiền bác sĩ ────────────────────────────────
+// 3 withdrawal key (xem WITHDRAWAL_SYSTEM_CONFIG_KEY_MAP). BE endpoint
+// single-key upsert (`PATCH /admin/system-configs/:key`); FE gọi tuần tự,
+// chỉ key đã đổi.
 
 interface FieldDef {
-  key: TicketSystemConfigFormKey;
+  key: WithdrawalSystemConfigFormKey;
   label: string;
   unit: string;
   helperText?: string;
   step?: number;
-  /** Format helper text dựa trên giá trị hiện tại (vd "300 giây ≈ 5 phút"). */
+  /** Format helper text dựa trên giá trị hiện tại (vd "24 giờ ≈ 1 ngày"). */
   liveHelper?: (value: number) => string;
 }
 
-// Helpers human-readable theo đơn vị nguồn (BE lưu hours/minutes/seconds tuỳ key).
-function formatSecondsHuman(s: number): string {
-  if (!Number.isFinite(s) || s <= 0) return "";
-  if (s < 60) return `≈ ${s} giây`;
-  if (s < 3600) return `≈ ${(s / 60).toFixed(s % 60 === 0 ? 0 : 1)} phút`;
-  if (s < 86400) return `≈ ${(s / 3600).toFixed(s % 3600 === 0 ? 0 : 1)} giờ`;
-  return `≈ ${(s / 86400).toFixed(s % 86400 === 0 ? 0 : 1)} ngày`;
+const vndFormatter = new Intl.NumberFormat("vi-VN");
+
+function formatVndHuman(amount: number): string {
+  if (!Number.isFinite(amount) || amount <= 0) return "";
+  return `≈ ${vndFormatter.format(amount)}đ`;
 }
-function formatMinutesHuman(m: number): string {
-  if (!Number.isFinite(m) || m <= 0) return "";
-  if (m < 60) return "";
-  if (m < 1440) return `≈ ${(m / 60).toFixed(m % 60 === 0 ? 0 : 1)} giờ`;
-  return `≈ ${(m / 1440).toFixed(m % 1440 === 0 ? 0 : 1)} ngày`;
-}
+
 function formatHoursHuman(h: number): string {
   if (!Number.isFinite(h) || h <= 0) return "";
   if (h < 24) return "";
   return `≈ ${(h / 24).toFixed(h % 24 === 0 ? 0 : 1)} ngày`;
 }
 
-const GROUP_LIFECYCLE: FieldDef[] = [
+const GROUP_AMOUNT: FieldDef[] = [
   {
-    key: "auto_close_hours",
-    label: "Thời gian tự đóng ticket",
+    key: "min_amount",
+    label: "Số tiền tối thiểu mỗi lần rút",
+    unit: "đ",
+    helperText:
+      "Bác sĩ chỉ được tạo yêu cầu rút khi số dư đạt từ mức này trở lên.",
+    liveHelper: formatVndHuman,
+  },
+  {
+    key: "max_amount",
+    label: "Số tiền tối đa mỗi lần rút",
+    unit: "đ",
+    helperText:
+      "Mỗi yêu cầu rút không được vượt quá mức này. Phải lớn hơn hoặc bằng số tiền tối thiểu.",
+    liveHelper: formatVndHuman,
+  },
+];
+
+const GROUP_COOLDOWN: FieldDef[] = [
+  {
+    key: "not_received_cooldown_hours",
+    label: "Thời gian chờ báo chưa nhận tiền",
     unit: "giờ",
     helperText:
-      "Sau khi bác sĩ giải quyết, nếu người tạo không xác nhận trong khoảng này, hệ thống tự đóng và thanh toán hoa hồng.",
+      "Sau khi yêu cầu được duyệt, bác sĩ phải chờ hết khoảng thời gian này mới được báo cáo chưa nhận được tiền.",
     liveHelper: formatHoursHuman,
   },
-  {
-    key: "auto_close_notify_at_fraction",
-    label: "Thời điểm gửi nhắc đóng ticket",
-    unit: "tỉ lệ",
-    helperText:
-      "Hệ thống nhắc người tạo khi đã qua tỉ lệ này của thời gian chờ tự đóng (ví dụ 0.667 = đã qua 2/3 thời gian).",
-    step: 0.001,
-  },
-  {
-    key: "doctor_silence_minutes",
-    label: "Ngưỡng im lặng của bác sĩ",
-    unit: "phút",
-    helperText:
-      "Bác sĩ đã nhận ticket nhưng không xử lý quá thời gian này, hệ thống sẽ hỏi người tạo chuyển sang AI xử lý hoặc hoàn ticket.",
-    liveHelper: formatMinutesHuman,
-  },
-  {
-    key: "ai_fallback_minutes",
-    label: "Thời gian chờ AI tiếp nhận",
-    unit: "phút",
-    helperText:
-      "Sau thời gian này nếu không bác sĩ nào nhận ticket, AI sẽ tự xử lý.",
-    liveHelper: formatMinutesHuman,
-  },
 ];
-
-const GROUP_PRIORITY_WINDOW: FieldDef[] = [
-  {
-    key: "priority_window_platinum_sec",
-    label: "Cửa sổ Bạch kim (tier 1)",
-    unit: "giây",
-    helperText:
-      "Gửi ticket đầu tiên cho bác sĩ hạng Bạch kim đang trực tuyến (BR-67, mặc định 0).",
-    liveHelper: formatSecondsHuman,
-  },
-  {
-    key: "priority_window_gold_sec",
-    label: "Cửa sổ Vàng (tier 2)",
-    unit: "giây",
-    helperText:
-      "Sau khoảng này, nếu chưa bác sĩ nào nhận, hệ thống mở rộng cho hạng Vàng.",
-    liveHelper: formatSecondsHuman,
-  },
-  {
-    key: "priority_window_silver_sec",
-    label: "Cửa sổ Bạc (tier 3)",
-    unit: "giây",
-    helperText:
-      "Sau khoảng này, hệ thống mở rộng cho bác sĩ hạng Bạc.",
-    liveHelper: formatSecondsHuman,
-  },
-  {
-    key: "priority_window_bronze_sec",
-    label: "Cửa sổ Đồng (tier 4)",
-    unit: "giây",
-    helperText:
-      "Sau khoảng này, hệ thống mở rộng cho bác sĩ hạng Đồng — bước cuối trước khi AI tiếp nhận.",
-    liveHelper: formatSecondsHuman,
-  },
-];
-
-// `prescription_usage_min_chars` + `solution_field_min_chars` chưa tồn tại trong
-// `TICKET_SYSTEM_CONFIG_SEEDS` của BE nên không hiển thị ở UI này. Khi BE bổ
-// sung 2 key đó, thêm vào schema + key map và render thêm group "Chất lượng".
 
 // Helper: lookup BE config item theo FE form key.
 function findConfigItem(
   items: SystemConfigItemType[] | undefined,
-  formKey: TicketSystemConfigFormKey,
+  formKey: WithdrawalSystemConfigFormKey,
 ): SystemConfigItemType | undefined {
-  const beKey = TICKET_SYSTEM_CONFIG_KEY_MAP[formKey];
+  const beKey = WITHDRAWAL_SYSTEM_CONFIG_KEY_MAP[formKey];
   return items?.find((x) => x.key === beKey);
 }
 
 function buildDefaultsFromConfigs(
   items: SystemConfigItemType[] | undefined,
-): Partial<TicketSystemConfigFormType> {
-  const result: Partial<TicketSystemConfigFormType> = {};
+): Partial<WithdrawalSystemConfigFormType> {
+  const result: Partial<WithdrawalSystemConfigFormType> = {};
   (
-    Object.keys(TICKET_SYSTEM_CONFIG_KEY_MAP) as TicketSystemConfigFormKey[]
+    Object.keys(
+      WITHDRAWAL_SYSTEM_CONFIG_KEY_MAP,
+    ) as WithdrawalSystemConfigFormKey[]
   ).forEach((formKey) => {
     const item = findConfigItem(items, formKey);
     if (item) {
@@ -180,9 +132,6 @@ function buildDefaultsFromConfigs(
   return result;
 }
 
-// Render 1 field number với suffix unit (pattern từ AdminTicketCategoriesPage).
-// `readOnly` true → input disabled, không nhập được; dùng cho chế độ xem.
-// `currentValue` truyền vào `liveHelper` để show "= X giờ" động dưới input.
 function NumberField({
   field,
   register,
@@ -191,8 +140,8 @@ function NumberField({
   currentValue,
 }: {
   field: FieldDef;
-  register: UseFormRegister<TicketSystemConfigFormType>;
-  errors: Partial<Record<TicketSystemConfigFormKey, { message?: string }>>;
+  register: UseFormRegister<WithdrawalSystemConfigFormType>;
+  errors: Partial<Record<WithdrawalSystemConfigFormKey, { message?: string }>>;
   readOnly: boolean;
   currentValue?: number;
 }) {
@@ -211,7 +160,7 @@ function NumberField({
           type="number"
           step={field.step ?? 1}
           disabled={readOnly}
-          {...register(field.key as Path<TicketSystemConfigFormType>, {
+          {...register(field.key as Path<WithdrawalSystemConfigFormType>, {
             valueAsNumber: true,
           })}
           aria-invalid={Boolean(err)}
@@ -233,28 +182,26 @@ function NumberField({
   );
 }
 
-export default function AdminTicketSystemConfigsPage() {
-  const configsQuery = useTicketSystemConfigs();
+export default function AdminWithdrawalSystemConfigsPage() {
+  const configsQuery = useWithdrawalSystemConfigs();
   const upsertMutation = useUpsertSystemConfig();
 
   const items = configsQuery.data?.data?.data;
 
   // Mặc định trang ở chế độ XEM (read-only). Bấm "Chỉnh sửa" mới mở form.
-  // "Hủy" hoặc lưu thành công → quay về read-only.
   const [isEditing, setIsEditing] = useState(false);
 
   const defaultValues = useMemo(() => buildDefaultsFromConfigs(items), [items]);
 
-  const form = useForm<TicketSystemConfigFormType>({
-    resolver: zodResolver(TicketSystemConfigFormSchema),
-    defaultValues: defaultValues as TicketSystemConfigFormType,
+  const form = useForm<WithdrawalSystemConfigFormType>({
+    resolver: zodResolver(WithdrawalSystemConfigFormSchema),
+    defaultValues: defaultValues as WithdrawalSystemConfigFormType,
   });
   useClearServerFieldErrors(form);
 
-  // Khi data từ BE về sau lần load đầu → reset form với value mới.
   useEffect(() => {
     if (items) {
-      form.reset(defaultValues as TicketSystemConfigFormType);
+      form.reset(defaultValues as WithdrawalSystemConfigFormType);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items]);
@@ -267,18 +214,16 @@ export default function AdminTicketSystemConfigsPage() {
     formState: { errors, isSubmitting, isDirty, dirtyFields },
   } = form;
 
-  // Watch toàn bộ form để truyền `currentValue` vào NumberField — cho phép
-  // hiển thị live helper text ("= X phút", "= X giờ").
   const watchedValues = useWatch({ control });
 
   const isPending = upsertMutation.isPending || isSubmitting;
   const readOnly = !isEditing;
 
-  const onSubmit = async (data: TicketSystemConfigFormType) => {
-    // Chỉ gửi các key user đã đổi (giảm risk + race với config khác).
-    // Nếu form chưa load (dirtyFields rỗng) → không submit.
+  const onSubmit = async (data: WithdrawalSystemConfigFormType) => {
     const keysToUpdate = (
-      Object.keys(TICKET_SYSTEM_CONFIG_KEY_MAP) as TicketSystemConfigFormKey[]
+      Object.keys(
+        WITHDRAWAL_SYSTEM_CONFIG_KEY_MAP,
+      ) as WithdrawalSystemConfigFormKey[]
     ).filter((k) => dirtyFields[k]);
 
     if (keysToUpdate.length === 0) {
@@ -286,12 +231,11 @@ export default function AdminTicketSystemConfigsPage() {
       return;
     }
 
-    // Lấy `valueType` & `description` cũ từ BE response để gửi lại đúng.
     let successCount = 0;
     const failures: { key: string; message: string }[] = [];
 
     for (const formKey of keysToUpdate) {
-      const beKey = TICKET_SYSTEM_CONFIG_KEY_MAP[formKey];
+      const beKey = WITHDRAWAL_SYSTEM_CONFIG_KEY_MAP[formKey];
       const oldItem = findConfigItem(items, formKey);
       try {
         await upsertMutation.mutateAsync({
@@ -318,7 +262,6 @@ export default function AdminTicketSystemConfigsPage() {
 
     if (failures.length === 0) {
       toast.success(`Đã cập nhật ${successCount} cấu hình.`);
-      // Lưu thành công → quay về chế độ xem.
       setIsEditing(false);
     } else if (successCount === 0) {
       toast.error(
@@ -328,7 +271,6 @@ export default function AdminTicketSystemConfigsPage() {
       toast.warning(
         `Đã cập nhật ${successCount}/${keysToUpdate.length} cấu hình. Có ${failures.length} key lỗi.`,
       );
-      // Log chi tiết để Admin biết key nào fail.
       failures.forEach((f) =>
         console.warn(`[system-config] ${f.key}: ${f.message}`),
       );
@@ -336,7 +278,7 @@ export default function AdminTicketSystemConfigsPage() {
   };
 
   const handleResetToServer = () => {
-    reset(defaultValues as TicketSystemConfigFormType);
+    reset(defaultValues as WithdrawalSystemConfigFormType);
     toast.info("Đã khôi phục về giá trị đang lưu trên hệ thống.");
   };
 
@@ -345,8 +287,7 @@ export default function AdminTicketSystemConfigsPage() {
   };
 
   const handleCancelEdit = () => {
-    // Bỏ chỉnh sửa → revert về giá trị BE và đóng edit mode.
-    reset(defaultValues as TicketSystemConfigFormType);
+    reset(defaultValues as WithdrawalSystemConfigFormType);
     setIsEditing(false);
   };
 
@@ -355,19 +296,19 @@ export default function AdminTicketSystemConfigsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Cấu Hình Quy Trình Ticket
+            <Wallet className="h-5 w-5" />
+            Cấu Hình Rút Tiền Bác Sĩ
           </CardTitle>
           <CardDescription>
-            Tham số vận hành vòng đời ticket — thời gian tự đóng, ngưỡng im lặng
-            của bác sĩ, thứ tự ưu tiên gửi ticket, thời gian chờ AI tiếp nhận và
-            ngưỡng chất lượng nội dung bác sĩ.
+            Quản lý hạn mức và thời gian chờ cho yêu cầu rút tiền của bác sĩ. Thay
+            đổi áp dụng ngay cho yêu cầu rút mới; yêu cầu đang xử lý vẫn theo
+            cấu hình tại thời điểm tạo.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {configsQuery.isLoading ? (
             <div className="space-y-3">
-              {Array.from({ length: 8 }).map((_, i) => (
+              {Array.from({ length: 3 }).map((_, i) => (
                 <Skeleton
                   key={i}
                   className="h-10 w-full"
@@ -382,12 +323,20 @@ export default function AdminTicketSystemConfigsPage() {
                 {getApiErrorMessageVi(configsQuery.error)}
               </AlertDescription>
             </Alert>
+          ) : !items || items.length === 0 ? (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Chưa có cấu hình rút tiền</AlertTitle>
+              <AlertDescription>
+                Hệ thống chưa khởi tạo các cấu hình mặc định cho rút tiền. Vui
+                lòng liên hệ kỹ thuật để chạy seed dữ liệu.
+              </AlertDescription>
+            </Alert>
           ) : (
             <form
               onSubmit={handleSubmit(onSubmit)}
               className="space-y-6"
             >
-              {/* Banner chỉ thị mode hiện tại */}
               {readOnly ? (
                 <Alert>
                   <Lock className="h-4 w-4" />
@@ -406,19 +355,20 @@ export default function AdminTicketSystemConfigsPage() {
                     Đang chỉnh sửa
                   </AlertTitle>
                   <AlertDescription className="text-xs text-amber-900/80">
-                    Sau khi lưu, các giá trị mới sẽ áp dụng cho ticket được tạo
-                    sau thời điểm này. Ticket đang chạy vẫn dùng giá trị cũ.
+                    Sau khi lưu, các giá trị mới sẽ áp dụng cho yêu cầu rút tiền
+                    được tạo sau thời điểm này. Yêu cầu đang xử lý vẫn dùng giá
+                    trị cũ.
                   </AlertDescription>
                 </Alert>
               )}
 
-              {/* Group 1: Lifecycle */}
+              {/* Group 1: Hạn mức */}
               <fieldset className="space-y-4">
                 <legend className="text-sm font-semibold mb-2">
-                  Vòng đời ticket
+                  Hạn mức số tiền
                 </legend>
                 <div className="grid gap-4 md:grid-cols-2">
-                  {GROUP_LIFECYCLE.map((field) => (
+                  {GROUP_AMOUNT.map((field) => (
                     <NumberField
                       key={field.key}
                       field={field}
@@ -435,22 +385,22 @@ export default function AdminTicketSystemConfigsPage() {
 
               <Separator />
 
-              {/* Group 2: Priority window */}
+              {/* Group 2: Cooldown */}
               <fieldset className="space-y-4">
                 <legend className="text-sm font-semibold mb-2">
-                  Thứ tự ưu tiên gửi ticket
+                  Thời gian chờ khiếu nại
                 </legend>
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription className="text-xs">
-                    Quy trình gửi ticket lũy tiến theo 4 hạng: Bạch kim → Vàng
-                    → Bạc → Đồng. Mỗi giá trị là khoảng chờ TRƯỚC khi mở rộng
-                    sang hạng tiếp theo. Sau cùng, nếu vẫn chưa bác sĩ nào
-                    nhận, AI sẽ tự tiếp nhận theo cấu hình ở mục Vòng đời.
+                    Sau khi admin duyệt yêu cầu rút tiền, bác sĩ phải chờ hết
+                    khoảng thời gian này mới được phép báo "chưa nhận tiền" để
+                    đối soát lại. Thời gian chờ ngắn giúp xử lý nhanh nhưng dễ
+                    tạo khiếu nại sớm khi ngân hàng chưa kịp chuyển.
                   </AlertDescription>
                 </Alert>
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                  {GROUP_PRIORITY_WINDOW.map((field) => (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {GROUP_COOLDOWN.map((field) => (
                     <NumberField
                       key={field.key}
                       field={field}
@@ -467,7 +417,6 @@ export default function AdminTicketSystemConfigsPage() {
 
               <Separator />
 
-              {/* Footer actions — đổi theo edit-mode */}
               <div className="flex items-center justify-end gap-2">
                 {readOnly ? (
                   <Button

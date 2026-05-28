@@ -53,9 +53,6 @@ export function CompleteCropSeasonButton({
     return all.filter((r) => r.cropSeasonId === season.id).length;
   }, [harvestQuery.data, season.id]);
 
-  if (season.status !== ProductionStatusName.Active) return null;
-  if (!allMilestonesCompleted) return null;
-
   // Cảnh báo khi user kết thúc mùa vụ trễ hơn 2 tháng so với ngày thu hoạch
   // dự kiến — dễ là quên đóng mùa vụ chứ không phải thu hoạch thực sự muộn
   // đến vậy, nên chặn 1 nhịp để confirm trước khi ghi nhận actualHarvestDate.
@@ -65,6 +62,9 @@ export function CompleteCropSeasonButton({
     if (Number.isNaN(expected.getTime())) return false;
     return isAfter(new Date(), addMonths(expected, 2));
   }, [season.expectedHarvestDate]);
+
+  if (season.status !== ProductionStatusName.Active) return null;
+  if (!allMilestonesCompleted) return null;
 
   const handleClick = () => {
     // Đợi harvest query xong rồi mới quyết định flow; nếu đang loading,
