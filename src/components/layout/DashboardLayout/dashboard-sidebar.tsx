@@ -59,8 +59,17 @@ export function DashboardSidebar(props: DashboardSidebarProps) {
   }
 
   const allNavGroups = getNavGroupsByRole(user.role as RoleNameType);
+  // Owner hết hạn sub: giấu các group `requiresSubscription`, nhưng vẫn giữ
+  // những item bên trong có `accessibleWhenInactive: true` (vd: trang xem
+  // yêu cầu thu hồi thiết bị từ admin để owner biết tình trạng và gia hạn).
   const navGroups: NavGroup[] = isOwner && !hasActiveSubscription
-    ? allNavGroups.filter((g) => !g.requiresSubscription)
+    ? allNavGroups
+        .map((g) => {
+          if (!g.requiresSubscription) return g;
+          const keptItems = g.items.filter((it) => it.accessibleWhenInactive);
+          return keptItems.length > 0 ? { ...g, items: keptItems } : null;
+        })
+        .filter((g): g is NavGroup => g !== null)
     : allNavGroups;
 
   return (

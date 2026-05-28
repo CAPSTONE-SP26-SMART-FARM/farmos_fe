@@ -535,10 +535,12 @@ const routes: AppRoutes = [
         requiresActiveSubscription: true,
       },
       {
+        // Cho phép owner truy cập kể cả khi subscription hết hạn — owner cần
+        // xem được yêu cầu thu hồi thiết bị của admin để biết tình trạng và
+        // chủ động gia hạn lại. Đây là chỗ duy nhất hé cửa khi sub inactive.
         path: "/dashboard/owner/iot-kit-requests",
         component: OwnerIotKitRequestsPage,
         allowedRoles: [RoleName.Owner],
-        requiresActiveSubscription: true,
       },
       {
         path: "/dashboard/owner/daily-logs",

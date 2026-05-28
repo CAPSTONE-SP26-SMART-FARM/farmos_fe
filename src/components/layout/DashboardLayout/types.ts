@@ -8,6 +8,9 @@ export interface NavItem {
   icon: LucideIcon;
   isActive?: boolean;
   items?: NavSubItem[];
+  // Item nằm trong group `requiresSubscription` nhưng vẫn cho owner truy cập
+  // khi sub hết hạn — ví dụ trang xem yêu cầu thu hồi của admin.
+  accessibleWhenInactive?: boolean;
   // Extra path prefixes that should keep this item highlighted (e.g. detail
   // pages reached from this item but living under a different URL).
   activeMatch?: string[];

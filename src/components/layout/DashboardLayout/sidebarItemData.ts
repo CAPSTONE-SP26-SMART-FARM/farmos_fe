@@ -306,6 +306,7 @@ export const sidebarData: SidebarData = {
           title: "Yêu cầu hỗ trợ thiết bị",
           url: "/dashboard/owner/iot-kit-requests",
           icon: Wrench,
+          accessibleWhenInactive: true,
         },
       ],
     },

@@ -479,23 +479,15 @@ function KitReadingsSection({
           </div>
           <div className="flex flex-col min-w-0 flex-1 leading-tight">
             <div className="flex items-center gap-1.5 min-w-0">
-              <span className="text-sm font-semibold text-foreground truncate">
-                {device.deviceName}
+              <span className="text-sm font-semibold text-foreground truncate font-mono">
+                {device.label || device.deviceName}
               </span>
-              {device.label && (
-                <span className="font-mono text-xs text-muted-foreground shrink-0">
-                  {device.label}
-                </span>
-              )}
             </div>
-            <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
-              {device.deviceType}
-              {sensorCount > 0 && (
-                <span className="ml-1.5 normal-case text-muted-foreground/80">
-                  · {sensorCount} cảm biến
-                </span>
-              )}
-            </span>
+            {sensorCount > 0 && (
+              <span className="text-[10px] text-muted-foreground font-medium">
+                {sensorCount} cảm biến
+              </span>
+            )}
           </div>
           <div className="shrink-0">
             <DeviceStatusBadge
