@@ -176,6 +176,59 @@ export const useManagerUnassignFarmerFromTask = (milestoneId: string) => {
   });
 };
 
+// ── Bulk operations ────────────────────────────────────────────────────
+// Run single-task endpoints in parallel (BE has no bulk endpoint yet).
+// Aggregate result and invalidate once to avoid N toasts / refetches.
+
+type BulkResult = { ok: number; fail: number };
+
+const summarizeBulk = (
+  results: PromiseSettledResult<unknown>[],
+  successLabel: string,
+  failLabel: string,
+): BulkResult => {
+  const ok = results.filter((r) => r.status === "fulfilled").length;
+  const fail = results.length - ok;
+  if (fail === 0) toast.success(`${successLabel} ${ok} nhiệm vụ`);
+  else if (ok === 0) toast.error(`${failLabel} ${fail} nhiệm vụ, mời thử lại`);
+  else toast.warning(`${successLabel} ${ok} nhiệm vụ, ${fail} thất bại`);
+  return { ok, fail };
+};
+
+export const useManagerBulkDeleteEmployeeTasks = (milestoneId: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (taskIds: string[]): Promise<BulkResult> => {
+      const results = await Promise.allSettled(
+        taskIds.map((id) =>
+          managerEmployeeTaskService.delete(id, milestoneId),
+        ),
+      );
+      return summarizeBulk(results, "Đã xóa", "Xóa thất bại");
+    },
+    onSettled: () => {
+      invalidateManagerEmployeeTasksQueriesForMilestone(qc, milestoneId);
+    },
+  });
+};
+
+export const useManagerBulkUnassignEmployeeTasks = (milestoneId: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (taskIds: string[]): Promise<BulkResult> => {
+      const results = await Promise.allSettled(
+        taskIds.map((id) =>
+          managerEmployeeTaskService.unassign(id, milestoneId),
+        ),
+      );
+      return summarizeBulk(results, "Đã hủy gán", "Hủy gán thất bại");
+    },
+    onSettled: () => {
+      invalidateManagerEmployeeTasksQueriesForMilestone(qc, milestoneId);
+    },
+  });
+};
+
 // ── Complete Task ──────────────────────────────────────────────────────
 
 export const useManagerCompleteEmployeeTask = (milestoneId: string) => {

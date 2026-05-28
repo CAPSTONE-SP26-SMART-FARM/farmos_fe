@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Dialog,
@@ -37,6 +38,8 @@ import useDebounce from "@/hooks/useDebounce";
 import { TaskLogHistoryPanel } from "@/pages/ManagerPage/CropSeasons/components/TaskLogHistoryPanel";
 import {
   useManagerAssignFarmerToTask,
+  useManagerBulkDeleteEmployeeTasks,
+  useManagerBulkUnassignEmployeeTasks,
   useManagerCompleteEmployeeTask,
   useManagerCreateEmployeeTaskBatch,
   useManagerDeleteEmployeeTask,
@@ -46,6 +49,7 @@ import {
   useManagerUnassignFarmerFromTask,
   useManagerUpdateEmployeeTask,
 } from "@/queries/useEmployeeTask";
+import { MilestoneTasksBulkActionBar } from "./_components/MilestoneTasksBulkActionBar";
 import { useManagerListEmployeeTaskTemplates } from "@/queries/useEmployeeTaskTemplate";
 import type {
   CreateEmployeeTaskItemType,
@@ -74,7 +78,7 @@ import {
   UserMinus,
   UserPlus,
 } from "lucide-react";
-import { useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 
 // ============================================================
 // Constants
@@ -1576,6 +1580,9 @@ export default function ManagerMilestoneTasksSection({
   const assignMutation = useManagerAssignFarmerToTask(milestoneId);
   const unassignMutation = useManagerUnassignFarmerFromTask(milestoneId);
   const completeMutation = useManagerCompleteEmployeeTask(milestoneId);
+  const bulkDeleteMutation = useManagerBulkDeleteEmployeeTasks(milestoneId);
+  const bulkUnassignMutation =
+    useManagerBulkUnassignEmployeeTasks(milestoneId);
 
   const farmersQuery = useManagerEligibleFarmers(milestoneId);
   const farmers = useMemo(() => {
@@ -1602,6 +1609,86 @@ export default function ManagerMilestoneTasksSection({
   >({});
   const [confirmUnassignTask, setConfirmUnassignTask] =
     useState<EmployeeTaskResType | null>(null);
+
+  // ── Multi-select state ──
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [confirmBulkUnassign, setConfirmBulkUnassign] = useState(false);
+  const bulkPending =
+    bulkDeleteMutation.isPending || bulkUnassignMutation.isPending;
+
+  // Clear selection when context that changes the visible list changes.
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [
+    milestoneId,
+    query.page,
+    debouncedSearch,
+    statusFilter,
+    priorityFilter,
+    createdInPlanFilter,
+    sortByDueDate,
+  ]);
+
+  const selectableIds = useMemo(
+    () => tasks.filter((t) => !isTaskLocked(t)).map((t) => t.id),
+    [tasks],
+  );
+  const allSelected =
+    selectableIds.length > 0 &&
+    selectableIds.every((id) => selectedIds.has(id));
+  const hasAssignedSelection = useMemo(
+    () => tasks.some((t) => selectedIds.has(t.id) && !!t.assignedTo),
+    [tasks, selectedIds],
+  );
+
+  const toggleOne = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleAll = useCallback(() => {
+    setSelectedIds((prev) => {
+      const isAll =
+        selectableIds.length > 0 &&
+        selectableIds.every((id) => prev.has(id));
+      return isAll ? new Set() : new Set(selectableIds);
+    });
+  }, [selectableIds]);
+
+  const handleToggleSelectMode = useCallback(() => {
+    setSelectMode((v) => !v);
+    setSelectedIds(new Set());
+  }, []);
+
+  const handleBulkDelete = useCallback(() => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    bulkDeleteMutation.mutate(ids, {
+      onSettled: () => {
+        setSelectedIds(new Set());
+        setConfirmBulkDelete(false);
+      },
+    });
+  }, [bulkDeleteMutation, selectedIds]);
+
+  const handleBulkUnassign = useCallback(() => {
+    const ids = tasks
+      .filter((t) => selectedIds.has(t.id) && !!t.assignedTo)
+      .map((t) => t.id);
+    if (ids.length === 0) return;
+    bulkUnassignMutation.mutate(ids, {
+      onSettled: () => {
+        setSelectedIds(new Set());
+        setConfirmBulkUnassign(false);
+      },
+    });
+  }, [bulkUnassignMutation, tasks, selectedIds]);
 
   const handleDelete = (taskId: string) => {
     deleteMutation.mutate(taskId, {
@@ -1810,6 +1897,16 @@ export default function ManagerMilestoneTasksSection({
             Xóa bộ lọc
           </Button>
         )}
+        {canEdit && (
+          <Button
+            variant={selectMode ? "secondary" : "ghost"}
+            size="sm"
+            className="h-7 text-xs ml-auto"
+            onClick={handleToggleSelectMode}
+          >
+            {selectMode ? "Thoát chọn nhiều" : "Chọn nhiều"}
+          </Button>
+        )}
       </div>
 
       {/* Task list */}
@@ -1831,15 +1928,41 @@ export default function ManagerMilestoneTasksSection({
         >
           {tasks.map((task) => {
             const PIcon = PRIORITY_META[task.priority].icon;
+            const isSelected = selectedIds.has(task.id);
+            const locked = isTaskLocked(task);
+            const selectableInMode = selectMode && !locked;
             return (
               <motion.div
                 key={task.id}
                 variants={CHILD_ITEM_MOTION}
-                className="rounded-md border px-3 py-2 text-sm hover:bg-muted/50 transition-colors cursor-pointer space-y-2"
-                onClick={() => setSelectedTaskId(task.id)}
+                className={`rounded-md border px-3 py-2 text-sm transition-colors space-y-2 ${
+                  selectMode && locked
+                    ? "opacity-60"
+                    : "hover:bg-muted/50 cursor-pointer"
+                } ${
+                  isSelected
+                    ? "bg-primary/5 border-primary/40"
+                    : ""
+                }`}
+                onClick={() => {
+                  if (selectMode) {
+                    if (selectableInMode) toggleOne(task.id);
+                  } else {
+                    setSelectedTaskId(task.id);
+                  }
+                }}
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0 flex-1">
+                    {selectMode && (
+                      <Checkbox
+                        checked={isSelected}
+                        disabled={locked || bulkPending}
+                        onCheckedChange={() => toggleOne(task.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label={`Chọn nhiệm vụ ${task.title}`}
+                      />
+                    )}
                     <PIcon
                       className={`h-3.5 w-3.5 shrink-0 ${PRIORITY_META[task.priority].className}`}
                     />
@@ -1880,7 +2003,7 @@ export default function ManagerMilestoneTasksSection({
                     >
                       {getTaskDisplayStatus(task).label}
                     </Badge>
-                    {canEdit && (
+                    {canEdit && !selectMode && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
@@ -1936,7 +2059,7 @@ export default function ManagerMilestoneTasksSection({
                   </div>
                 </div>
 
-                {canEdit && !isTaskLocked(task) && (
+                {canEdit && !selectMode && !isTaskLocked(task) && (
                   <AnimatePresence
                     mode="wait"
                     initial={false}
@@ -2055,6 +2178,19 @@ export default function ManagerMilestoneTasksSection({
         </div>
       )}
 
+      {selectMode && selectedIds.size > 0 && (
+        <MilestoneTasksBulkActionBar
+          selectedCount={selectedIds.size}
+          hasAssignedSelection={hasAssignedSelection}
+          allSelected={allSelected}
+          isPending={bulkPending}
+          onToggleAll={toggleAll}
+          onClear={() => setSelectedIds(new Set())}
+          onRequestDelete={() => setConfirmBulkDelete(true)}
+          onRequestUnassign={() => setConfirmBulkUnassign(true)}
+        />
+      )}
+
       <TaskDetailSheet
         taskId={selectedTaskId}
         canEditContent={canEditContent}
@@ -2085,6 +2221,28 @@ export default function ManagerMilestoneTasksSection({
         variant="destructive"
         onCancel={() => setConfirmUnassignTask(null)}
         onConfirm={handleUnassign}
+      />
+
+      <ConfirmDialog
+        open={confirmBulkDelete}
+        title={`Xóa ${selectedIds.size} nhiệm vụ?`}
+        description="Các nhiệm vụ đã chọn sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác."
+        confirmLabel={bulkDeleteMutation.isPending ? "Đang xóa..." : "Xóa"}
+        variant="destructive"
+        onCancel={() => setConfirmBulkDelete(false)}
+        onConfirm={handleBulkDelete}
+      />
+
+      <ConfirmDialog
+        open={confirmBulkUnassign}
+        title="Hủy gán nông dân hàng loạt?"
+        description="Các nhiệm vụ đã chọn (đang có nông dân) sẽ được gỡ gán. Bạn có thể gán lại sau."
+        confirmLabel={
+          bulkUnassignMutation.isPending ? "Đang hủy gán..." : "Hủy gán"
+        }
+        variant="destructive"
+        onCancel={() => setConfirmBulkUnassign(false)}
+        onConfirm={handleBulkUnassign}
       />
     </div>
   );
