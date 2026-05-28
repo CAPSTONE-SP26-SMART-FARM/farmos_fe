@@ -309,14 +309,23 @@ export default function SensorDetailPage() {
           const periodLabel =
             PERIOD_OPTIONS.find((o) => o.value === period)?.label.toLowerCase() ??
             period;
+          // Khi bộ IoT hỏng (error/damaged), giá trị "hiện tại" thực ra là số đo
+          // cuối cùng trước khi hỏng → đổi nhãn + tone để user không hiểu nhầm.
+          const isSensorBroken =
+            reading.sensorStatus === "error" ||
+            reading.sensorStatus === "damaged";
+          const currentLabel = isSensorBroken
+            ? "Giá trị cuối ghi nhận"
+            : "Giá trị hiện tại";
+          const currentTone = isSensorBroken ? "danger" : "primary";
           return (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <SensorStatBadge
-            label="Giá trị hiện tại"
+            label={currentLabel}
             value={stats?.currentValue ?? null}
             unit={meta.unit}
             icon={Activity}
-            tone="primary"
+            tone={currentTone}
             isLoading={isStatsLoading}
           />
           <SensorStatBadge

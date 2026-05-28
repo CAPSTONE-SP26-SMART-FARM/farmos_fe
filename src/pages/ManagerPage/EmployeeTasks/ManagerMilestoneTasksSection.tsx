@@ -1,7 +1,5 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -9,20 +7,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -30,51 +22,59 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import useDebounce from "@/hooks/useDebounce";
 import { TaskLogHistoryPanel } from "@/pages/ManagerPage/CropSeasons/components/TaskLogHistoryPanel";
 import {
-  Plus,
-  Trash2,
-  Pencil,
-  MoreVertical,
-  ClipboardList,
-  Flag,
-  AlertTriangle,
-  UserPlus,
-  UserMinus,
-  Eye,
-  FileText,
-  ChevronLeft,
-  ChevronRight,
-  CheckCircle2,
-  NotebookPen,
-} from "lucide-react";
-import { AnimatePresence, motion, type Variants } from "framer-motion";
-import { useMemo, useState, type FormEvent } from "react";
-import {
-  useManagerListEmployeeTasks,
-  useManagerCreateEmployeeTaskBatch,
-  useManagerUpdateEmployeeTask,
-  useManagerDeleteEmployeeTask,
   useManagerAssignFarmerToTask,
-  useManagerUnassignFarmerFromTask,
   useManagerCompleteEmployeeTask,
+  useManagerCreateEmployeeTaskBatch,
+  useManagerDeleteEmployeeTask,
   useManagerEligibleFarmers,
   useManagerEmployeeTaskDetail,
+  useManagerListEmployeeTasks,
+  useManagerUnassignFarmerFromTask,
+  useManagerUpdateEmployeeTask,
 } from "@/queries/useEmployeeTask";
 import { useManagerListEmployeeTaskTemplates } from "@/queries/useEmployeeTaskTemplate";
 import type {
+  CreateEmployeeTaskItemType,
   EmployeeTaskResType,
+  ListEmployeeTasksQueryType,
   TaskPriorityType,
   TaskStatusType,
-  ListEmployeeTasksQueryType,
-  CreateEmployeeTaskItemType,
 } from "@/schemaValidatation/employeeTask";
 import type { EmployeeTaskTemplateResType } from "@/schemaValidatation/employeeTaskTemplate";
-import useDebounce from "@/hooks/useDebounce";
 import { format } from "date-fns";
+import { AnimatePresence, motion, type Variants } from "framer-motion";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  Eye,
+  Flag,
+  MoreVertical,
+  NotebookPen,
+  Pencil,
+  Plus,
+  Sparkles,
+  Trash2,
+  UserMinus,
+  UserPlus,
+} from "lucide-react";
+import { useMemo, useState, type FormEvent } from "react";
 
 // ============================================================
 // Constants
@@ -98,9 +98,12 @@ function getTaskDisplayStatus(task: EmployeeTaskResType): {
   label: string;
   variant: "default" | "secondary" | "outline" | "destructive";
 } {
-  if (task.status === "cancelled") return { label: "Đã hủy", variant: "destructive" };
-  if (task.status === "verified") return { label: "Đã xác minh", variant: "default" };
-  if (task.status === "completed") return { label: "Hoàn thành", variant: "outline" };
+  if (task.status === "cancelled")
+    return { label: "Đã hủy", variant: "destructive" };
+  if (task.status === "verified")
+    return { label: "Đã xác minh", variant: "default" };
+  if (task.status === "completed")
+    return { label: "Hoàn thành", variant: "outline" };
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -114,7 +117,9 @@ function getTaskDisplayStatus(task: EmployeeTaskResType): {
     return { label: "Lên lịch", variant: "secondary" };
   }
 
-  return STATUS_META[task.status] ?? { label: task.status, variant: "secondary" };
+  return (
+    STATUS_META[task.status] ?? { label: task.status, variant: "secondary" }
+  );
 }
 
 const PRIORITY_META: Record<
@@ -303,7 +308,7 @@ function BatchCreateInlinePanel({
             size="sm"
             onClick={() => setShowTemplates((prev) => !prev)}
           >
-            <FileText className="h-4 w-4 mr-1" />
+            <Sparkles className="h-4 w-4 mr-1" />
             {showTemplates ? "Ẩn template" : "Chọn template"}
           </Button>
           <Button
@@ -730,216 +735,222 @@ function TaskDetailSheet({
             </div>
           ) : (
             <div className="space-y-4">
-            {!isEditing ? (
-              /* ── Read-only view: detail + logs gộp chung ── */
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Ưu tiên</p>
-                    <p
-                      className={`font-medium ${PRIORITY_META[task.priority].className}`}
-                    >
-                      {PriorityIcon && <PriorityIcon className="h-3.5 w-3.5 inline mr-1" />}
-                      {PRIORITY_META[task.priority].label}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Trạng thái</p>
-                    <p className="font-medium">
-                      {STATUS_META[task.status].label}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">
-                      Người được gán
-                    </p>
-                    <p>{getAssigneeLabel(task.assignedTo)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Ngày gán</p>
-                    <p>{formatDate(task.assignedDate)}</p>
-                  </div>
-                  {task.completedAt && (
+              {!isEditing ? (
+                /* ── Read-only view: detail + logs gộp chung ── */
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Ưu tiên</p>
+                      <p
+                        className={`font-medium ${PRIORITY_META[task.priority].className}`}
+                      >
+                        {PriorityIcon && (
+                          <PriorityIcon className="h-3.5 w-3.5 inline mr-1" />
+                        )}
+                        {PRIORITY_META[task.priority].label}
+                      </p>
+                    </div>
                     <div>
                       <p className="text-xs text-muted-foreground">
-                        Hoàn thành
+                        Trạng thái
                       </p>
-                      <p>{formatDate(task.completedAt)}</p>
+                      <p className="font-medium">
+                        {STATUS_META[task.status].label}
+                      </p>
                     </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">
+                        Người được gán
+                      </p>
+                      <p>{getAssigneeLabel(task.assignedTo)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Ngày gán</p>
+                      <p>{formatDate(task.assignedDate)}</p>
+                    </div>
+                    {task.completedAt && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">
+                          Hoàn thành
+                        </p>
+                        <p>{formatDate(task.completedAt)}</p>
+                      </div>
+                    )}
+                    {task.verifiedAt && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">
+                          Xác minh
+                        </p>
+                        <p>{formatDate(task.verifiedAt)}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {task.description && (
+                    <>
+                      <Separator />
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">
+                          Mô tả
+                        </p>
+                        <p className="text-sm whitespace-pre-line">
+                          {task.description}
+                        </p>
+                      </div>
+                    </>
                   )}
-                  {task.verifiedAt && (
-                    <div>
-                      <p className="text-xs text-muted-foreground">Xác minh</p>
-                      <p>{formatDate(task.verifiedAt)}</p>
-                    </div>
+
+                  <Separator />
+
+                  <div className="text-xs text-muted-foreground space-y-0.5">
+                    <p>Tạo lúc: {formatDate(task.createdAt)}</p>
+                    <p>Cập nhật: {formatDate(task.updatedAt)}</p>
+                  </div>
+
+                  {zoneId && (
+                    <>
+                      <Separator />
+                      <div>
+                        <p className="text-xs font-semibold flex items-center gap-1.5 mb-2">
+                          <NotebookPen className="h-3.5 w-3.5" />
+                          Nhật ký
+                        </p>
+                        <TaskLogHistoryPanel
+                          zoneId={zoneId}
+                          employeeTaskId={task.id}
+                        />
+                      </div>
+                    </>
                   )}
                 </div>
-
-                {task.description && (
-                  <>
-                    <Separator />
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">
-                        Mô tả
-                      </p>
-                      <p className="text-sm whitespace-pre-line">
-                        {task.description}
-                      </p>
-                    </div>
-                  </>
-                )}
-
-                <Separator />
-
-                <div className="text-xs text-muted-foreground space-y-0.5">
-                  <p>Tạo lúc: {formatDate(task.createdAt)}</p>
-                  <p>Cập nhật: {formatDate(task.updatedAt)}</p>
-                </div>
-
-                {zoneId && (
-                  <>
-                    <Separator />
-                    <div>
-                      <p className="text-xs font-semibold flex items-center gap-1.5 mb-2">
-                        <NotebookPen className="h-3.5 w-3.5" />
-                        Nhật ký
-                      </p>
-                      <TaskLogHistoryPanel
-                        zoneId={zoneId}
-                        employeeTaskId={task.id}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-            ) : (
-              /* ── Edit form ── */
-              <form
-                className="space-y-3"
-                onSubmit={handleSaveForm}
-              >
-                <div>
-                  <label className="text-xs font-medium">Tiêu đề</label>
-                  <Input
-                    className="mt-1 h-8 text-sm"
-                    value={editForm.title}
-                    onChange={(e) =>
-                      setEditForm((f) => ({ ...f, title: e.target.value }))
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-medium">Mô tả</label>
-                  <Textarea
-                    className="mt-1 min-h-15 text-sm"
-                    value={editForm.description}
-                    onChange={(e) =>
-                      setEditForm((f) => ({
-                        ...f,
-                        description: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-medium">Ưu tiên</label>
-                  <Select
-                    value={editForm.priority}
-                    onValueChange={(v) =>
-                      setEditForm((f) => ({
-                        ...f,
-                        priority: v as TaskPriorityType,
-                      }))
-                    }
-                  >
-                    <SelectTrigger className="mt-1 h-8 text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Thấp</SelectItem>
-                      <SelectItem value="normal">Bình thường</SelectItem>
-                      <SelectItem value="high">Cao</SelectItem>
-                      <SelectItem value="urgent">Khẩn cấp</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </form>
-            )}
-          </div>
+              ) : (
+                /* ── Edit form ── */
+                <form
+                  className="space-y-3"
+                  onSubmit={handleSaveForm}
+                >
+                  <div>
+                    <label className="text-xs font-medium">Tiêu đề</label>
+                    <Input
+                      className="mt-1 h-8 text-sm"
+                      value={editForm.title}
+                      onChange={(e) =>
+                        setEditForm((f) => ({ ...f, title: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium">Mô tả</label>
+                    <Textarea
+                      className="mt-1 min-h-15 text-sm"
+                      value={editForm.description}
+                      onChange={(e) =>
+                        setEditForm((f) => ({
+                          ...f,
+                          description: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium">Ưu tiên</label>
+                    <Select
+                      value={editForm.priority}
+                      onValueChange={(v) =>
+                        setEditForm((f) => ({
+                          ...f,
+                          priority: v as TaskPriorityType,
+                        }))
+                      }
+                    >
+                      <SelectTrigger className="mt-1 h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Thấp</SelectItem>
+                        <SelectItem value="normal">Bình thường</SelectItem>
+                        <SelectItem value="high">Cao</SelectItem>
+                        <SelectItem value="urgent">Khẩn cấp</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </form>
+              )}
+            </div>
           )}
 
           {task && (
-          <DialogFooter>
-            {isEditing ? (
-              <>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setIsEditing(false)}
-                >
-                  Hủy
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={handleSave}
-                  disabled={updateMutation.isPending}
-                >
-                  {updateMutation.isPending ? "Đang lưu..." : "Lưu"}
-                </Button>
-              </>
-            ) : canEdit && !isTaskLocked(task) ? (
-              <>
-                {!task.assignedTo ? (
+            <DialogFooter>
+              {isEditing ? (
+                <>
                   <Button
+                    type="button"
                     size="sm"
                     variant="outline"
-                    onClick={() => setShowAssign(true)}
+                    onClick={() => setIsEditing(false)}
                   >
-                    <UserPlus className="h-3.5 w-3.5 mr-1" />
-                    Gán nông dân
+                    Hủy
                   </Button>
-                ) : (
                   <Button
+                    type="button"
                     size="sm"
-                    variant="outline"
-                    onClick={() => setConfirmUnassign(true)}
+                    onClick={handleSave}
+                    disabled={updateMutation.isPending}
                   >
-                    <UserMinus className="h-3.5 w-3.5 mr-1" />
-                    Hủy gán
+                    {updateMutation.isPending ? "Đang lưu..." : "Lưu"}
                   </Button>
-                )}
-                {canEditContent && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={startEditing}
-                  >
-                    <Pencil className="h-3.5 w-3.5 mr-1" />
-                    Chỉnh sửa
-                  </Button>
-                )}
-                {!lockComplete &&
-                  (task.status === "pending" ||
-                    task.status === "in_progress") && (
+                </>
+              ) : canEdit && !isTaskLocked(task) ? (
+                <>
+                  {!task.assignedTo ? (
                     <Button
                       size="sm"
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                      disabled={completeMutation.isPending}
-                      onClick={() =>
-                        completeMutation.mutate(task.id, {
-                          onSuccess: () => onClose(),
-                        })
-                      }
+                      variant="outline"
+                      onClick={() => setShowAssign(true)}
                     >
-                      <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                      Hoàn thành
+                      <UserPlus className="h-3.5 w-3.5 mr-1" />
+                      Gán nông dân
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setConfirmUnassign(true)}
+                    >
+                      <UserMinus className="h-3.5 w-3.5 mr-1" />
+                      Hủy gán
                     </Button>
                   )}
-              </>
-            ) : null}
-          </DialogFooter>
+                  {canEditContent && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={startEditing}
+                    >
+                      <Pencil className="h-3.5 w-3.5 mr-1" />
+                      Chỉnh sửa
+                    </Button>
+                  )}
+                  {!lockComplete &&
+                    (task.status === "pending" ||
+                      task.status === "in_progress") && (
+                      <Button
+                        size="sm"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                        disabled={completeMutation.isPending}
+                        onClick={() =>
+                          completeMutation.mutate(task.id, {
+                            onSuccess: () => onClose(),
+                          })
+                        }
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                        Hoàn thành
+                      </Button>
+                    )}
+                </>
+              ) : null}
+            </DialogFooter>
           )}
         </DialogContent>
       </Dialog>
@@ -1044,7 +1055,9 @@ export function ManagerMilestoneTaskAssignmentScreen({
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [createdInPlanFilter, setCreatedInPlanFilter] = useState<string>("all");
-  const [sortByDueDate, setSortByDueDate] = useState<"asc" | "desc" | "none">("none");
+  const [sortByDueDate, setSortByDueDate] = useState<"asc" | "desc" | "none">(
+    "none",
+  );
   const [farmerSelections, setFarmerSelections] = useState<
     Record<string, string>
   >({});
@@ -1069,7 +1082,14 @@ export function ManagerMilestoneTaskAssignmentScreen({
             : undefined,
       sortByDueDate: sortByDueDate !== "none" ? sortByDueDate : undefined,
     }),
-    [query, debouncedSearch, statusFilter, priorityFilter, createdInPlanFilter, sortByDueDate],
+    [
+      query,
+      debouncedSearch,
+      statusFilter,
+      priorityFilter,
+      createdInPlanFilter,
+      sortByDueDate,
+    ],
   );
 
   const { data, isLoading } = useManagerListEmployeeTasks(
@@ -1153,7 +1173,9 @@ export function ManagerMilestoneTaskAssignmentScreen({
           className="h-8 text-xs w-44"
         />
         <div className="flex items-center gap-1">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Trạng thái:</span>
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            Trạng thái:
+          </span>
           <Select
             value={statusFilter}
             onValueChange={(v) => {
@@ -1175,7 +1197,9 @@ export function ManagerMilestoneTaskAssignmentScreen({
           </Select>
         </div>
         <div className="flex items-center gap-1">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Ưu tiên:</span>
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            Ưu tiên:
+          </span>
           <Select
             value={priorityFilter}
             onValueChange={(v) => {
@@ -1196,7 +1220,9 @@ export function ManagerMilestoneTaskAssignmentScreen({
           </Select>
         </div>
         <div className="flex items-center gap-1">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Loại:</span>
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            Loại:
+          </span>
           <Select
             value={createdInPlanFilter}
             onValueChange={(v) => {
@@ -1215,7 +1241,9 @@ export function ManagerMilestoneTaskAssignmentScreen({
           </Select>
         </div>
         <div className="flex items-center gap-1">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Deadline:</span>
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            Deadline:
+          </span>
           <Select
             value={sortByDueDate}
             onValueChange={(v) => {
@@ -1233,7 +1261,11 @@ export function ManagerMilestoneTaskAssignmentScreen({
             </SelectContent>
           </Select>
         </div>
-        {(search || statusFilter !== "all" || priorityFilter !== "all" || createdInPlanFilter !== "all" || sortByDueDate !== "none") && (
+        {(search ||
+          statusFilter !== "all" ||
+          priorityFilter !== "all" ||
+          createdInPlanFilter !== "all" ||
+          sortByDueDate !== "none") && (
           <Button
             variant="ghost"
             size="sm"
@@ -1369,17 +1401,26 @@ export function ManagerMilestoneTaskAssignmentScreen({
                             ))}
                           </SelectContent>
                         </Select>
-                        <Button
-                          size="sm"
-                          className="h-8"
-                          onClick={() => handleAssign(task.id)}
-                          disabled={
-                            assignMutation.isPending ||
-                            !farmerSelections[task.id]?.trim()
-                          }
-                        >
-                          {assignMutation.isPending ? "Đang gán..." : "Gán"}
-                        </Button>
+                        {(() => {
+                          // Chỉ disable / "Đang gán..." cho ĐÚNG row đang mutate,
+                          // không phải mọi row dùng chung mutation instance.
+                          const isAssigningThis =
+                            assignMutation.isPending &&
+                            assignMutation.variables?.taskId === task.id;
+                          return (
+                            <Button
+                              size="sm"
+                              className="h-8"
+                              onClick={() => handleAssign(task.id)}
+                              disabled={
+                                isAssigningThis ||
+                                !farmerSelections[task.id]?.trim()
+                              }
+                            >
+                              {isAssigningThis ? "Đang gán..." : "Gán"}
+                            </Button>
+                          );
+                        })()}
                       </motion.div>
                     ) : (
                       <motion.div
@@ -1393,7 +1434,10 @@ export function ManagerMilestoneTaskAssignmentScreen({
                           variant="outline"
                           className="h-8"
                           onClick={() => setConfirmUnassignTask(task)}
-                          disabled={unassignMutation.isPending}
+                          disabled={
+                            unassignMutation.isPending &&
+                            unassignMutation.variables === task.id
+                          }
                         >
                           <UserMinus className="h-3.5 w-3.5 mr-1" />
                           Hủy gán
@@ -1490,7 +1534,9 @@ export default function ManagerMilestoneTasksSection({
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [createdInPlanFilter, setCreatedInPlanFilter] = useState<string>("all");
-  const [sortByDueDate, setSortByDueDate] = useState<"asc" | "desc" | "none">("none");
+  const [sortByDueDate, setSortByDueDate] = useState<"asc" | "desc" | "none">(
+    "none",
+  );
 
   const effectiveQuery = useMemo(
     () => ({
@@ -1510,7 +1556,14 @@ export default function ManagerMilestoneTasksSection({
             : undefined,
       sortByDueDate: sortByDueDate !== "none" ? sortByDueDate : undefined,
     }),
-    [query, debouncedSearch, statusFilter, priorityFilter, createdInPlanFilter, sortByDueDate],
+    [
+      query,
+      debouncedSearch,
+      statusFilter,
+      priorityFilter,
+      createdInPlanFilter,
+      sortByDueDate,
+    ],
   );
 
   const { data, isLoading } = useManagerListEmployeeTasks(
@@ -1648,7 +1701,9 @@ export default function ManagerMilestoneTasksSection({
           className="h-7 text-xs w-36"
         />
         <div className="flex items-center gap-1">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Trạng thái:</span>
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            Trạng thái:
+          </span>
           <Select
             value={statusFilter}
             onValueChange={(v) => {
@@ -1670,7 +1725,9 @@ export default function ManagerMilestoneTasksSection({
           </Select>
         </div>
         <div className="flex items-center gap-1">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Ưu tiên:</span>
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            Ưu tiên:
+          </span>
           <Select
             value={priorityFilter}
             onValueChange={(v) => {
@@ -1691,7 +1748,9 @@ export default function ManagerMilestoneTasksSection({
           </Select>
         </div>
         <div className="flex items-center gap-1">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Loại:</span>
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            Loại:
+          </span>
           <Select
             value={createdInPlanFilter}
             onValueChange={(v) => {
@@ -1710,7 +1769,9 @@ export default function ManagerMilestoneTasksSection({
           </Select>
         </div>
         <div className="flex items-center gap-1">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Deadline:</span>
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            Deadline:
+          </span>
           <Select
             value={sortByDueDate}
             onValueChange={(v) => {
@@ -1728,7 +1789,11 @@ export default function ManagerMilestoneTasksSection({
             </SelectContent>
           </Select>
         </div>
-        {(search || statusFilter !== "all" || priorityFilter !== "all" || createdInPlanFilter !== "all" || sortByDueDate !== "none") && (
+        {(search ||
+          statusFilter !== "all" ||
+          priorityFilter !== "all" ||
+          createdInPlanFilter !== "all" ||
+          sortByDueDate !== "none") && (
           <Button
             variant="ghost"
             size="sm"
@@ -1793,7 +1858,9 @@ export default function ManagerMilestoneTasksSection({
                       <p className="text-[10px] text-muted-foreground truncate">
                         {getAssigneeLabel(task.assignedTo)}
                         {task.startDate && (
-                          <span className="ml-1.5">· Bắt đầu: {formatDate(task.startDate)}</span>
+                          <span className="ml-1.5">
+                            · Bắt đầu: {formatDate(task.startDate)}
+                          </span>
                         )}
                       </p>
                     </div>
@@ -1835,7 +1902,8 @@ export default function ManagerMilestoneTasksSection({
                             <Eye className="h-4 w-4 mr-2" />
                             Xem chi tiết
                           </DropdownMenuItem>
-                          {!isTaskLocked(task) && !lockComplete &&
+                          {!isTaskLocked(task) &&
+                            !lockComplete &&
                             (task.status === "pending" ||
                               task.status === "in_progress") && (
                               <DropdownMenuItem
@@ -1906,19 +1974,26 @@ export default function ManagerMilestoneTasksSection({
                             ))}
                           </SelectContent>
                         </Select>
-                        <Button
-                          size="sm"
-                          className="h-7"
-                          onClick={() => handleAssign(task.id)}
-                          disabled={
-                            assignMutation.isPending ||
-                            !farmerSelections[task.id]?.trim()
-                          }
-                        >
-                          {assignMutation.isPending
-                            ? "Đang gán..."
-                            : "Gán ngay"}
-                        </Button>
+                        {(() => {
+                          // Chỉ disable / "Đang gán..." cho ĐÚNG row đang mutate,
+                          // không phải mọi row dùng chung mutation instance.
+                          const isAssigningThis =
+                            assignMutation.isPending &&
+                            assignMutation.variables?.taskId === task.id;
+                          return (
+                            <Button
+                              size="sm"
+                              className="h-7"
+                              onClick={() => handleAssign(task.id)}
+                              disabled={
+                                isAssigningThis ||
+                                !farmerSelections[task.id]?.trim()
+                              }
+                            >
+                              {isAssigningThis ? "Đang gán..." : "Gán ngay"}
+                            </Button>
+                          );
+                        })()}
                       </motion.div>
                     ) : (
                       <motion.div
@@ -1933,7 +2008,10 @@ export default function ManagerMilestoneTasksSection({
                           variant="outline"
                           className="h-7"
                           onClick={() => setConfirmUnassignTask(task)}
-                          disabled={unassignMutation.isPending}
+                          disabled={
+                            unassignMutation.isPending &&
+                            unassignMutation.variables === task.id
+                          }
                         >
                           <UserMinus className="h-3.5 w-3.5 mr-1" />
                           Hủy gán

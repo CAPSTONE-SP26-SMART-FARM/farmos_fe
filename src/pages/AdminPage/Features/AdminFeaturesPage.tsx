@@ -30,7 +30,7 @@ import type {
   FeatureMenuType,
   ListFeaturesQueryType,
 } from "@/schemaValidatation/feature";
-import { Info, Pencil, Search, Trash2 } from "lucide-react";
+import { Info, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -40,6 +40,7 @@ import { toast } from "sonner";
 import {
   type FormState,
   INITIAL_FORM,
+  TICKET_INITIAL_FORM,
   toCreatePayload,
   toUpdatePayload,
   toFormState,
@@ -131,6 +132,12 @@ export default function AdminFeaturesPage() {
     setDialogOpen(false);
   };
 
+  const openCreateTicketDialog = () => {
+    setEditingFeatureCode(null);
+    setForm(TICKET_INITIAL_FORM);
+    setDialogOpen(true);
+  };
+
   const onSubmit = async () => {
     if (!form.code.trim() || !form.name.trim()) {
       toast.error("Vui lòng nhập mã và tên tính năng.");
@@ -191,7 +198,13 @@ export default function AdminFeaturesPage() {
                 dịch vụ.
               </p>
             </div>
-            <Badge variant="secondary">Tổng: {meta?.totalItems ?? 0}</Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary">Tổng: {meta?.totalItems ?? 0}</Badge>
+              <Button onClick={openCreateTicketDialog} size="sm">
+                <Plus className="mr-1 h-4 w-4" />
+                Tạo tính năng ticket
+              </Button>
+            </div>
           </div>
         </section>
 
@@ -314,6 +327,7 @@ export default function AdminFeaturesPage() {
         setEditingFeatureCode={setEditingFeatureCode}
         isSubmitting={isSubmitting}
         onSubmit={onSubmit}
+        ticketOnly
       />
 
       <ConfirmDialog
