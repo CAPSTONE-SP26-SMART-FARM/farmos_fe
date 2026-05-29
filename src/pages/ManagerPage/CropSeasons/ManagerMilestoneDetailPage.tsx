@@ -94,9 +94,7 @@ import {
 } from "@/queries/useProductionMilestone";
 import { useManagerCropSeasonDetail } from "@/queries/useCropSeason";
 import { useDynamicBreadcrumb } from "@/stores/breadcrumbStore";
-import ManagerMilestoneTasksSection, {
-  ManagerMilestoneTaskAssignmentScreen,
-} from "@/pages/ManagerPage/EmployeeTasks/ManagerMilestoneTasksSection";
+import TasksStepContainer from "@/pages/ManagerPage/EmployeeTasks/_components/TasksStep/TasksStepContainer";
 import {
   useManagerListEmployeeTasks,
   invalidateManagerEmployeeTasksQueriesForMilestone,
@@ -208,13 +206,18 @@ function groupAssignmentsByZone(
 
 function listEligibleSensorTypesInZone(
   zoneAssignments: MilestoneAssignmentDetailResType[],
+  allowedSensorTypes?: readonly string[],
 ): string[] {
+  // BE giữ nguyên `a.sensors` của assignment cũ khi user đổi iotConfig.sensorTypes
+  // ở Step 0. FE phải intersect thêm với danh sách đã chọn hiện tại để row form
+  // ngưỡng khớp đúng cấu hình Step 0.
+  const allowedSet = allowedSensorTypes ? new Set(allowedSensorTypes) : null;
   const s = new Set<string>();
   for (const a of zoneAssignments) {
     for (const b of a.sensors) {
-      if (THRESHOLD_ALLOWED_SENSOR_TYPES.has(b.sensorType)) {
-        s.add(b.sensorType);
-      }
+      if (!THRESHOLD_ALLOWED_SENSOR_TYPES.has(b.sensorType)) continue;
+      if (allowedSet && !allowedSet.has(b.sensorType)) continue;
+      s.add(b.sensorType);
     }
   }
   return sortEligibleSensorTypes(Array.from(s));
@@ -1613,11 +1616,13 @@ function ZoneBulkThresholdPanel({
   zoneId,
   zoneTitle,
   zoneAssignments,
+  allowedSensorTypes,
 }: {
   milestoneId: string;
   zoneId: string;
   zoneTitle: string;
   zoneAssignments: MilestoneAssignmentDetailResType[];
+  allowedSensorTypes?: readonly string[];
 }) {
   const qc = useQueryClient();
   const assignmentIds = useMemo(
@@ -1642,7 +1647,10 @@ function ZoneBulkThresholdPanel({
     packsMap.set(id, thresholdQueries[i]?.data?.data?.data ?? []);
   }
 
-  const sensorTypesSorted = listEligibleSensorTypesInZone(zoneAssignments);
+  const sensorTypesSorted = listEligibleSensorTypesInZone(
+    zoneAssignments,
+    allowedSensorTypes,
+  );
 
   const mergedByType: Record<string, SensorThresholdItemResType> = {};
   for (const st of sensorTypesSorted) {
@@ -1910,8 +1918,11 @@ function ZoneBulkThresholdPanel({
 
 const MilestoneSensorThresholdStepSection = ({
   milestoneId,
+  allowedSensorTypes,
 }: {
   milestoneId: string;
+  /** sensorTypes hiện chọn ở Step 0 — dùng để filter row form ngưỡng. */
+  allowedSensorTypes?: readonly string[];
 }) => {
   const assignmentsQuery = useManagerListMilestoneAssignments(milestoneId);
   const assignments = assignmentsQuery.data?.data.data ?? [];
@@ -1956,6 +1967,7 @@ const MilestoneSensorThresholdStepSection = ({
           zoneId={zid}
           zoneTitle={`Khu vực ${idx + 1}`}
           zoneAssignments={zoneAssignments}
+          allowedSensorTypes={allowedSensorTypes}
         />
       ))}
     </div>
@@ -1969,7 +1981,6 @@ const MilestoneSensorThresholdStepSection = ({
 const TasksAndAssignmentStep = ({
   milestoneId,
   canEdit,
-  hasTasks,
   lockComplete,
 }: {
   milestoneId: string;
@@ -1978,42 +1989,12 @@ const TasksAndAssignmentStep = ({
   /** True khi cropSeason ở planning → ẩn nút "Hoàn thành" + lock status select. */
   lockComplete: boolean;
 }) => {
-  const [showAssignment, setShowAssignment] = useState(false);
-
-  if (showAssignment) {
-    return (
-      <ManagerMilestoneTaskAssignmentScreen
-        milestoneId={milestoneId}
-        canEdit={canEdit}
-        onBack={() => setShowAssignment(false)}
-      />
-    );
-  }
-
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div />
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={!hasTasks}
-          onClick={() => setShowAssignment(true)}
-        >
-          Gán nông dân cho nhiệm vụ
-        </Button>
-      </div>
-      {!hasTasks && (
-        <p className="text-xs text-amber-600">
-          Cần tạo ít nhất 1 nhiệm vụ trước khi gán nhân viên.
-        </p>
-      )}
-      <ManagerMilestoneTasksSection
-        milestoneId={milestoneId}
-        canEdit={canEdit}
-        lockComplete={lockComplete}
-      />
-    </div>
+    <TasksStepContainer
+      milestoneId={milestoneId}
+      canEdit={canEdit}
+      lockComplete={lockComplete}
+    />
   );
 };
 
@@ -2549,7 +2530,10 @@ const ManagerMilestoneDetailPage = () => {
 
           {/* Step 1: Cảm biến — ngưỡng theo khu vực, lưu đồng loạt */}
           {currentStep === 1 && (
-            <MilestoneSensorThresholdStepSection milestoneId={msId} />
+            <MilestoneSensorThresholdStepSection
+              milestoneId={msId}
+              allowedSensorTypes={iotConfig?.sensorTypes}
+            />
           )}
 
           {/* Step 2: Tasks & Farmer Assignment (final step) */}

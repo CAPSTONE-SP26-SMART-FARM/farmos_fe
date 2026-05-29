@@ -229,6 +229,29 @@ export const useManagerBulkUnassignEmployeeTasks = (milestoneId: string) => {
   });
 };
 
+export const useManagerBulkAssignEmployeeTasks = (milestoneId: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      taskIds,
+      farmerId,
+    }: {
+      taskIds: string[];
+      farmerId: string;
+    }): Promise<BulkResult> => {
+      const results = await Promise.allSettled(
+        taskIds.map((id) =>
+          managerEmployeeTaskService.assign(id, milestoneId, { farmerId }),
+        ),
+      );
+      return summarizeBulk(results, "Đã gán", "Gán thất bại");
+    },
+    onSettled: () => {
+      invalidateManagerEmployeeTasksQueriesForMilestone(qc, milestoneId);
+    },
+  });
+};
+
 // ── Complete Task ──────────────────────────────────────────────────────
 
 export const useManagerCompleteEmployeeTask = (milestoneId: string) => {

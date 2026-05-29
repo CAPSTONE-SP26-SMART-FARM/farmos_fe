@@ -734,9 +734,12 @@ export const useManagerUpdateIotConfig = (
         ),
       });
       // Sensor binding may be regenerated when sensorTypes change in planning.
+      // Invalidate the LIST query (plural) that Step 1 threshold panel consumes
+      // via useManagerListMilestoneAssignments. Singular `assignment(id)` is a
+      // different key (detail of one assignment) and was a stale typo here.
       qc.invalidateQueries({
         queryKey:
-          QUERY_KEYS.manager.productionMilestones.assignment(milestoneId),
+          QUERY_KEYS.manager.productionMilestones.assignments(milestoneId),
       });
       invalidateAllManagerSensorThresholdQueries(qc);
       invalidateManagerEmployeeTasksQueriesForMilestone(qc, milestoneId);
