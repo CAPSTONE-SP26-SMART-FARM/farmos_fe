@@ -9,6 +9,7 @@ import {
   HandCoins,
   LayoutDashboard,
   Map,
+  Milestone,
   Package,
   PackagePlus,
   Pill,
@@ -146,11 +147,11 @@ export const sidebarData: SidebarData = {
         //   url: "/dashboard/admin/season-templates",
         //   icon: Sprout,
         // },
-        // {
-        //   title: "Mẫu Cột Mốc",
-        //   url: "/dashboard/admin/milestone-templates",
-        //   icon: Milestone,
-        // },
+        {
+          title: "Mẫu Cột Mốc",
+          url: "/dashboard/admin/milestone-templates",
+          icon: Milestone,
+        },
         {
           title: "Loại Cây Trồng",
           url: "/dashboard/admin/crop-categories",

@@ -105,6 +105,7 @@ import OwnerTicketsPage from "@/pages/OwnerPage/Tickets/OwnerTicketsPage";
 import ManagerTicketsPage from "@/pages/ManagerPage/Tickets/ManagerTicketsPage";
 import DoctorTicketsPage from "@/pages/DoctorPage/Tickets/DoctorTicketsPage";
 import { RoleName } from "@/constants/role";
+import AdminMilestoneTemplatePage from "@/pages/AdminPage/AdminMilestoneTemplatePage";
 
 const routes: AppRoutes = [
   {
@@ -113,7 +114,10 @@ const routes: AppRoutes = [
       { path: "/", component: HomePage },
       { path: "/order-success", component: OrderSuccessPage },
       { path: "/order-fail", component: OrderFailPage },
-      { path: "/help/incident-reporting", component: IncidentReportingHelpPage },
+      {
+        path: "/help/incident-reporting",
+        component: IncidentReportingHelpPage,
+      },
       { path: "/help/doctor-guide", component: DoctorGuideHelpPage },
     ],
   },
@@ -260,11 +264,11 @@ const routes: AppRoutes = [
         component: AdminUsersPage,
         allowedRoles: [RoleName.Admin],
       },
-      // {
-      //   path: "/dashboard/admin/milestone-templates",
-      //   component: AdminMilestoneTemplatePage,
-      //   allowedRoles: [RoleName.Admin],
-      // },
+      {
+        path: "/dashboard/admin/milestone-templates",
+        component: AdminMilestoneTemplatePage,
+        allowedRoles: [RoleName.Admin],
+      },
       {
         path: "/dashboard/admin/farms",
         component: AdminFarmsPage,
