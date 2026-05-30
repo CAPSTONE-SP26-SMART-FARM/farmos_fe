@@ -17,7 +17,9 @@ import type {
   ListKitRequestsQueryType,
   ListReplacementDevicesQueryType,
   RejectRequestBodyType,
+  ReportOverdueBodyType,
   ResolveFaultBodyType,
+  ScheduleInstallBodyType,
   ScheduleRecoveryBodyType,
   ScheduleSwapBodyType,
 } from "@/schemaValidatation/iotKitRequest";
@@ -311,6 +313,38 @@ export const useCompleteRecovery = () => {
       toast.success("Đã hoàn tất thu hồi");
     },
     onError: (error) => onMutationError(error, "Hoàn tất thu hồi thất bại"),
+  });
+};
+
+export const useScheduleInstall = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: ScheduleInstallBodyType }) =>
+      iotKitRequestService.scheduleInstall(id, body),
+    onSuccess: async (_res, { id }) => {
+      await qc.invalidateQueries({ queryKey: KIT_KEY });
+      await qc.invalidateQueries({
+        queryKey: QUERY_KEYS.iotKitRequests.detail(id),
+      });
+      toast.success("Đã lên lịch lắp đặt");
+    },
+    onError: (error) => onMutationError(error, "Lên lịch lắp đặt thất bại"),
+  });
+};
+
+export const useReportOverdue = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: ReportOverdueBodyType }) =>
+      iotKitRequestService.reportOverdue(id, body),
+    onSuccess: async (_res, { id }) => {
+      await qc.invalidateQueries({ queryKey: KIT_KEY });
+      await qc.invalidateQueries({
+        queryKey: QUERY_KEYS.iotKitRequests.detail(id),
+      });
+      toast.success("Đã báo quá hạn tới quản trị viên");
+    },
+    onError: (error) => onMutationError(error, "Báo quá hạn thất bại"),
   });
 };
 

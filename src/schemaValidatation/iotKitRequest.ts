@@ -112,6 +112,8 @@ export const KitRequestResSchema = z.object({
         .enum(["milestone_transition", "cropseason_completed", "subscription_ended"])
         .optional(),
       boardOutcomeOnComplete: z.enum(["purchase", "available"]).optional(),
+      ownerOverdueReportedAt: z.string().optional(),
+      ownerOverdueReason: z.string().optional(),
     })
     .nullable(),
   createdAt: z.string(),
@@ -205,6 +207,30 @@ export const completeInstallSchema = z.object({
   resolutionNote: z.string().optional(),
 });
 export type CompleteInstallBodyType = z.infer<typeof completeInstallSchema>;
+
+// — Schedule install — admin chốt giờ ghé lắp (optional, ≤ slaDeadline)
+export const scheduleInstallSchema = z.object({
+  scheduledAt: z
+    .string()
+    .min(1, "Vui lòng chọn thời gian hẹn")
+    .refine(
+      (v) => {
+        const d = new Date(v);
+        return !isNaN(d.getTime()) && d.getTime() > Date.now();
+      },
+      "Thời gian hẹn phải sau hiện tại",
+    ),
+});
+export type ScheduleInstallBodyType = z.infer<typeof scheduleInstallSchema>;
+
+// — Owner báo quá hạn (reason optional)
+export const reportOverdueSchema = z.object({
+  reason: z
+    .string()
+    .max(500, "Lý do tối đa 500 ký tự")
+    .optional(),
+});
+export type ReportOverdueBodyType = z.infer<typeof reportOverdueSchema>;
 
 // ============================================================
 // SWAP workflow — admin lên lịch + hoàn tất thay board mới (FAULT_REPORT)

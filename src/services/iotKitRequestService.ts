@@ -15,7 +15,9 @@ import type {
   ListReplacementDevicesQueryType,
   ListReplacementDevicesResType,
   RejectRequestBodyType,
+  ReportOverdueBodyType,
   ResolveFaultBodyType,
+  ScheduleInstallBodyType,
   ScheduleRecoveryBodyType,
   ScheduleSwapBodyType,
 } from "@/schemaValidatation/iotKitRequest";
@@ -56,6 +58,12 @@ export const iotKitRequestService = {
     api.post<KitRequestResType, RejectRequestBodyType>(EP.REJECT(id), body),
 
   // ── INSTALL_SCHEDULE — Admin bulk actions ───────────────────────────
+  scheduleInstall: (id: string, body: ScheduleInstallBodyType) =>
+    api.post<KitRequestResType, ScheduleInstallBodyType>(
+      EP.SCHEDULE_INSTALL(id),
+      body,
+    ),
+
   startInstall: (id: string) =>
     api.post<KitInstallBulkResType, Record<string, never>>(
       EP.START_INSTALL(id),
@@ -65,6 +73,13 @@ export const iotKitRequestService = {
   completeInstall: (id: string, body: CompleteInstallBodyType) =>
     api.post<KitInstallBulkResType, CompleteInstallBodyType>(
       EP.COMPLETE_INSTALL(id),
+      body,
+    ),
+
+  // ── Owner báo quá hạn ───────────────────────────────────────────────
+  reportOverdue: (id: string, body: ReportOverdueBodyType) =>
+    api.post<KitRequestResType, ReportOverdueBodyType>(
+      EP.REPORT_OVERDUE(id),
       body,
     ),
 

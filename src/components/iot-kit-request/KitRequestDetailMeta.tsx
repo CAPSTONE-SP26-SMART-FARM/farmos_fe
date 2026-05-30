@@ -26,10 +26,18 @@ import { vi } from "date-fns/locale";
 
 type RequestLike = KitRequestResType | KitRequestDetailResType;
 
-const formatDateTime = (iso: string | null | undefined): string =>
-  iso ? format(new Date(iso), "dd/MM/yyyy HH:mm", { locale: vi }) : "—";
-
-export function KitRequestDetailMeta({ request }: { request: RequestLike }) {
+/**
+ * `section` prop cho phép parent (vd admin dialog với tab layout) render riêng
+ * phần info hoặc devices. Mặc định "all" giữ behavior cũ — owner dialog không
+ * cần đổi.
+ */
+export function KitRequestDetailMeta({
+  request,
+  section = "all",
+}: {
+  request: RequestLike;
+  section?: "all" | "info" | "devices";
+}) {
   const devices =
     "devices" in request ? request.devices : null;
   const isInstallSchedule = request.type === "INSTALL_SCHEDULE";
@@ -37,6 +45,8 @@ export function KitRequestDetailMeta({ request }: { request: RequestLike }) {
   const isFaultReport = request.type === "FAULT_REPORT";
   const showInstallRecoveryDevices =
     (isInstallSchedule || isRecoverySchedule) && devices;
+  const showInfo = section === "all" || section === "info";
+  const showDevices = section === "all" || section === "devices";
 
   const faultyDevice =
     isFaultReport && devices && request.iotDeviceId
@@ -52,44 +62,83 @@ export function KitRequestDetailMeta({ request }: { request: RequestLike }) {
   const recoveryReason = request.metadata?.recoveryReason;
   const boardOutcomeOnComplete = request.metadata?.boardOutcomeOnComplete;
 
+  // Section "devices" only → render gọn không separator/header trùng
+  if (section === "devices") {
+    if (showInstallRecoveryDevices) {
+      return (
+        <div className="text-sm">
+          <DevicesSection
+            devices={devices}
+            kind={isRecoverySchedule ? "recovery" : "install"}
+            installReason={isInstallSchedule ? installReason : undefined}
+            recoveryReason={isRecoverySchedule ? recoveryReason : undefined}
+            boardOutcomeOnComplete={
+              isRecoverySchedule ? boardOutcomeOnComplete : undefined
+            }
+          />
+        </div>
+      );
+    }
+    if (isFaultReport) {
+      return (
+        <div className="text-sm">
+          <FaultDeviceSection
+            faultyDevice={faultyDevice}
+            replacementDevice={replacementDevice}
+            scheduledAt={request.scheduledAt}
+            oldBoardOutcome={oldBoardOutcome}
+          />
+        </div>
+      );
+    }
+    return (
+      <p className="rounded-md border bg-muted/30 p-3 text-sm text-muted-foreground">
+        Yêu cầu này không gắn thiết bị nào.
+      </p>
+    );
+  }
+
   return (
     <div className="space-y-4 text-sm">
-      <div className="flex flex-wrap items-center gap-2">
-        <KitRequestStatusBadge status={request.status} />
-        <KitRequestTypeBadge type={request.type} />
-        <span className="ml-auto font-mono text-xs text-muted-foreground">
-          {request.requestNumber}
-        </span>
-      </div>
+      {showInfo && (
+        <>
+          <div className="flex flex-wrap items-center gap-2">
+            <KitRequestStatusBadge status={request.status} />
+            <KitRequestTypeBadge type={request.type} />
+            <span className="ml-auto font-mono text-xs text-muted-foreground">
+              {request.requestNumber}
+            </span>
+          </div>
 
-      {/* SLA badge — chỉ INSTALL_SCHEDULE */}
-      {isInstallSchedule && request.slaDeadline && (
-        <SlaBadge slaDeadline={request.slaDeadline} status={request.status} />
+          {/* SLA badge — chỉ INSTALL_SCHEDULE */}
+          {isInstallSchedule && request.slaDeadline && (
+            <SlaBadge slaDeadline={request.slaDeadline} status={request.status} />
+          )}
+
+          <Separator />
+
+          <div className="space-y-2">
+            <div className="space-y-0.5">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                Tiêu đề
+              </p>
+              <p className="font-medium leading-snug">{request.title}</p>
+            </div>
+            <div className="space-y-0.5">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                Mô tả
+              </p>
+              <p className="whitespace-pre-line text-sm leading-relaxed">
+                {request.description}
+              </p>
+            </div>
+          </div>
+
+          <Separator />
+        </>
       )}
 
-      <Separator />
-
-      <div className="space-y-2">
-        <div className="space-y-0.5">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            Tiêu đề
-          </p>
-          <p className="font-medium leading-snug">{request.title}</p>
-        </div>
-        <div className="space-y-0.5">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            Mô tả
-          </p>
-          <p className="whitespace-pre-line text-sm leading-relaxed">
-            {request.description}
-          </p>
-        </div>
-      </div>
-
-      <Separator />
-
-      {/* Devices preview — INSTALL_SCHEDULE và RECOVERY_SCHEDULE */}
-      {showInstallRecoveryDevices && (
+      {showDevices && showInstallRecoveryDevices && (
         <>
           <DevicesSection
             devices={devices}
@@ -104,8 +153,7 @@ export function KitRequestDetailMeta({ request }: { request: RequestLike }) {
         </>
       )}
 
-      {/* FAULT_REPORT — hiển thị thiết bị hỏng + lịch thay + bộ kit thay thế */}
-      {isFaultReport && (
+      {showDevices && isFaultReport && (
         <>
           <FaultDeviceSection
             faultyDevice={faultyDevice}
@@ -117,67 +165,37 @@ export function KitRequestDetailMeta({ request }: { request: RequestLike }) {
         </>
       )}
 
-      <div className="grid gap-x-4 gap-y-2 sm:grid-cols-2">
-        <MetaRow label="Tạo lúc" value={formatDateTime(request.createdAt)} />
-        <MetaRow label="Cập nhật" value={formatDateTime(request.updatedAt)} />
-        {request.completedAt && (
-          <MetaRow
-            label="Hoàn tất lắp"
-            value={formatDateTime(request.completedAt)}
-          />
-        )}
-        {request.resolvedAt && (
-          <MetaRow
-            label="Đóng yêu cầu"
-            value={formatDateTime(request.resolvedAt)}
-          />
-        )}
-        {request.cancelledAt && (
-          <MetaRow
-            label="Hủy yêu cầu"
-            value={formatDateTime(request.cancelledAt)}
-          />
-        )}
-      </div>
-
-      {request.resolutionNote && (
+      {showInfo && (
         <>
-          <Separator />
-          <div className="space-y-1">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-              Ghi chú xử lý từ quản trị
-            </p>
-            <p className="rounded-md border bg-muted/30 p-2 text-sm leading-relaxed">
-              {request.resolutionNote}
-            </p>
-          </div>
+          {request.resolutionNote && (
+            <>
+              <Separator />
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Ghi chú xử lý từ quản trị
+                </p>
+                <p className="rounded-md border bg-muted/30 p-2 text-sm leading-relaxed">
+                  {request.resolutionNote}
+                </p>
+              </div>
+            </>
+          )}
+
+          {request.cancelReason && (
+            <>
+              <Separator />
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Lý do hủy / từ chối
+                </p>
+                <p className="rounded-md border bg-muted/30 p-2 text-sm leading-relaxed">
+                  {request.cancelReason}
+                </p>
+              </div>
+            </>
+          )}
         </>
       )}
-
-      {request.cancelReason && (
-        <>
-          <Separator />
-          <div className="space-y-1">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-              Lý do hủy / từ chối
-            </p>
-            <p className="rounded-md border bg-muted/30 p-2 text-sm leading-relaxed">
-              {request.cancelReason}
-            </p>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-function MetaRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="space-y-0.5">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
-      <p className="font-medium">{value}</p>
     </div>
   );
 }
@@ -200,7 +218,7 @@ function SlaBadge({
   if (isTerminal) {
     return (
       <div className="rounded-md border bg-muted/30 p-3 text-sm">
-        <span className="text-muted-foreground">SLA: </span>
+        <span className="text-muted-foreground">Hạn lắp đặt: </span>
         <span className="font-medium">
           {format(deadline, "dd/MM/yyyy HH:mm", { locale: vi })}
         </span>
@@ -218,7 +236,7 @@ function SlaBadge({
       }
     >
       <Badge variant={isOverdue ? "destructive" : "default"}>
-        {isOverdue ? "Quá hạn SLA" : "Trong SLA"}
+        {isOverdue ? "Quá hạn lắp đặt" : "Trong hạn lắp đặt"}
       </Badge>
       <span className="text-muted-foreground">
         Hạn lắp đặt: {format(deadline, "dd/MM/yyyy HH:mm", { locale: vi })}

@@ -698,10 +698,16 @@ export const API_ENDPOINTS = {
 
     // ── INSTALL_SCHEDULE — auto-create khi owner approve season ───────
     // Admin chỉ có 2 hành động bulk theo request scope:
+    SCHEDULE_INSTALL: (id: string) =>
+      `/iot-kit-request/admin/${id}/schedule-install`, // admin: chốt giờ ghé lắp (optional)
     START_INSTALL: (id: string) =>
       `/iot-kit-request/admin/${id}/start-install`, // admin: purchase → install
     COMPLETE_INSTALL: (id: string) =>
       `/iot-kit-request/admin/${id}/complete-install`, // admin: install → inactive
+
+    // ── Owner báo quá hạn (sau khi qua slaDeadline) ──────────────────
+    REPORT_OVERDUE: (id: string) =>
+      `/iot-kit-request/${id}/report-overdue`,
 
     // ── SWAP workflow — admin xử lý FAULT_REPORT bằng cách thay board mới ─
     REPLACEMENT_DEVICES: "/iot-kit-request/admin/replacement-devices", // admin: list board available
