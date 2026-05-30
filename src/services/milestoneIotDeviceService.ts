@@ -86,9 +86,17 @@ export const milestoneIotDeviceService = {
         ),
     ),
 
-  listPreviousAssignments: (milestoneId: string) =>
-    api.get<{ data: string[] }>(
-      MANAGER.MILESTONE_IOT_DEVICE.PREVIOUS_ASSIGNMENTS(milestoneId),
+  listPreviousAssignments: (
+    milestoneId: string,
+    query: ListAvailableIotDevicesQueryType,
+  ) =>
+    api.get<ListAvailableIotDevicesResType>(
+      MANAGER.MILESTONE_IOT_DEVICE.PREVIOUS_ASSIGNMENTS(milestoneId) +
+        "?" +
+        queryString.stringify(
+          { ...query },
+          { skipEmptyString: true, skipNull: true },
+        ),
     ),
 
   bulkAssign: (milestoneId: string, body: BulkAssignIotDevicesBodyType) =>
@@ -160,9 +168,17 @@ export const ownerMilestoneIotDeviceService = {
         ),
     ),
 
-  listPreviousAssignments: (milestoneId: string) =>
-    api.get<{ data: string[] }>(
-      OWNER.MILESTONE_IOT_DEVICE.PREVIOUS_ASSIGNMENTS(milestoneId),
+  listPreviousAssignments: (
+    milestoneId: string,
+    query: ListAvailableIotDevicesQueryType,
+  ) =>
+    api.get<ListAvailableIotDevicesResType>(
+      OWNER.MILESTONE_IOT_DEVICE.PREVIOUS_ASSIGNMENTS(milestoneId) +
+        "?" +
+        queryString.stringify(
+          { ...query },
+          { skipEmptyString: true, skipNull: true },
+        ),
     ),
 
   bulkAssign: (milestoneId: string, body: BulkAssignIotDevicesBodyType) =>

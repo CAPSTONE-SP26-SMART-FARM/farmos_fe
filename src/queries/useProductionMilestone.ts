@@ -29,7 +29,12 @@ import type {
   UnbindSensorsBodyType,
 } from "@/schemaValidatation/milestoneIotDevice";
 import type { UpsertSensorThresholdBodyType } from "@/schemaValidatation/sensorThreshold";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { AxiosError } from "axios";
 import type { ApiResponseType } from "@/types/api";
@@ -837,26 +842,36 @@ export const useOwnerListPurchaseBoards = (
 
 export const useManagerListPreviousAssignments = (
   milestoneId: string,
+  query: ListAvailableIotDevicesQueryType,
   enabled = true,
 ) =>
   useQuery({
-    queryKey:
-      QUERY_KEYS.manager.productionMilestones.previousAssignments(milestoneId),
+    queryKey: [
+      ...QUERY_KEYS.manager.productionMilestones.previousAssignments(
+        milestoneId,
+      ),
+      query,
+    ],
     queryFn: () =>
-      milestoneIotDeviceService.listPreviousAssignments(milestoneId),
+      milestoneIotDeviceService.listPreviousAssignments(milestoneId, query),
     enabled: !!milestoneId && enabled,
+    placeholderData: keepPreviousData,
   });
 
 export const useOwnerListPreviousAssignments = (
   milestoneId: string,
+  query: ListAvailableIotDevicesQueryType,
   enabled = true,
 ) =>
   useQuery({
-    queryKey:
-      QUERY_KEYS.owner.productionMilestones.previousAssignments(milestoneId),
+    queryKey: [
+      ...QUERY_KEYS.owner.productionMilestones.previousAssignments(milestoneId),
+      query,
+    ],
     queryFn: () =>
-      ownerMilestoneIotDeviceService.listPreviousAssignments(milestoneId),
+      ownerMilestoneIotDeviceService.listPreviousAssignments(milestoneId, query),
     enabled: !!milestoneId && enabled,
+    placeholderData: keepPreviousData,
   });
 
 // ============================================================

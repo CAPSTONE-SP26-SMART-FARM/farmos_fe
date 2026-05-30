@@ -37,6 +37,25 @@ export function invalidateManagerEmployeeTasksQueriesForMilestone(
   qc.refetchQueries({ predicate, type: "active" });
 }
 
+// Milestone list trả về badge "cần tạo nhiệm vụ / gán nông dân" — phải invalidate
+// sau khi tạo task hoặc gán farmer để badge cập nhật ngay.
+function invalidateMilestoneListQueries(
+  qc: QueryClient,
+  role: "manager" | "owner",
+) {
+  qc.invalidateQueries({
+    predicate: (query) => {
+      const k = query.queryKey;
+      return (
+        Array.isArray(k) &&
+        k[0] === role &&
+        k[1] === "production-milestones" &&
+        k[3] === "list"
+      );
+    },
+  });
+}
+
 // ============================================================
 // Manager
 // ============================================================
@@ -81,6 +100,7 @@ export const useManagerCreateEmployeeTaskBatch = (milestoneId: string) => {
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.manager.employeeTasks.list(milestoneId),
       });
+      invalidateMilestoneListQueries(qc, "manager");
     },
     onError: (error) => onMutationError(error, "Tạo nhiệm vụ thất bại"),
   });
@@ -126,6 +146,7 @@ export const useManagerDeleteEmployeeTask = (milestoneId: string) => {
       qc.removeQueries({
         queryKey: QUERY_KEYS.manager.employeeTasks.detail(taskId, milestoneId),
       });
+      invalidateMilestoneListQueries(qc, "manager");
     },
     onError: (error) => onMutationError(error, "Xóa nhiệm vụ thất bại"),
   });
@@ -151,6 +172,7 @@ export const useManagerAssignFarmerToTask = (milestoneId: string) => {
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.manager.employeeTasks.detail(taskId, milestoneId),
       });
+      invalidateMilestoneListQueries(qc, "manager");
     },
     onError: (error) => onMutationError(error, "Gán nông dân thất bại"),
   });
@@ -171,6 +193,7 @@ export const useManagerUnassignFarmerFromTask = (milestoneId: string) => {
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.manager.employeeTasks.detail(taskId, milestoneId),
       });
+      invalidateMilestoneListQueries(qc, "manager");
     },
     onError: (error) => onMutationError(error, "Hủy gán nông dân thất bại"),
   });
@@ -269,6 +292,7 @@ export const useOwnerCreateEmployeeTaskBatch = (milestoneId: string) => {
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.owner.employeeTasks.list(milestoneId),
       });
+      invalidateMilestoneListQueries(qc, "owner");
     },
     onError: (error) => onMutationError(error, "Tạo nhiệm vụ thất bại"),
   });
@@ -314,6 +338,7 @@ export const useOwnerDeleteEmployeeTask = (milestoneId: string) => {
       qc.removeQueries({
         queryKey: QUERY_KEYS.owner.employeeTasks.detail(taskId, milestoneId),
       });
+      invalidateMilestoneListQueries(qc, "owner");
     },
     onError: (error) => onMutationError(error, "Xóa nhiệm vụ thất bại"),
   });
@@ -339,6 +364,7 @@ export const useOwnerAssignFarmerToTask = (milestoneId: string) => {
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.owner.employeeTasks.detail(taskId, milestoneId),
       });
+      invalidateMilestoneListQueries(qc, "owner");
     },
     onError: (error) => onMutationError(error, "Gán nông dân thất bại"),
   });
@@ -359,6 +385,7 @@ export const useOwnerUnassignFarmerFromTask = (milestoneId: string) => {
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.owner.employeeTasks.detail(taskId, milestoneId),
       });
+      invalidateMilestoneListQueries(qc, "owner");
     },
     onError: (error) => onMutationError(error, "Hủy gán nông dân thất bại"),
   });

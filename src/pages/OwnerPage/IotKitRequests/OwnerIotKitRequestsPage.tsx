@@ -14,6 +14,7 @@ import {
   KitRequestStatusBadge,
   KitRequestTypeBadge,
 } from "@/components/iot-kit-request/KitRequestBadges";
+import { KitRequestSlaCell } from "@/components/iot-kit-request/KitRequestSlaCell";
 import {
   OPEN_KIT_REQUEST_STATUSES,
   TERMINAL_KIT_REQUEST_STATUSES,
@@ -131,45 +132,96 @@ export default function OwnerIotKitRequestsPage() {
     return { needsResponse, inProgress, scheduled, closedThisMonth };
   }, [items]);
 
-  const columns: ColumnDef<KitRequestResType>[] = [
-    {
-      accessorKey: "requestNumber",
-      header: "Mã",
-      cell: ({ row }) => (
-        <span className="font-mono text-xs">{row.original.requestNumber}</span>
-      ),
-    },
-    {
-      accessorKey: "type",
-      header: "Loại",
-      cell: ({ row }) => <KitRequestTypeBadge type={row.original.type} />,
-    },
-    {
-      accessorKey: "title",
-      header: "Tiêu đề",
-      cell: ({ row }) => (
-        <span className="block max-w-72 truncate font-medium">
-          {row.original.title}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "status",
-      header: "Trạng thái",
-      cell: ({ row }) => <KitRequestStatusBadge status={row.original.status} />,
-    },
-    {
-      accessorKey: "updatedAt",
-      header: "Cập nhật",
-      cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground">
-          {format(new Date(row.original.updatedAt), "dd/MM HH:mm", {
-            locale: vi,
-          })}
-        </span>
-      ),
-    },
-  ];
+  const columns: ColumnDef<KitRequestResType>[] = useMemo(() => {
+    const base: ColumnDef<KitRequestResType>[] = [
+      {
+        accessorKey: "requestNumber",
+        header: "Mã",
+        cell: ({ row }) => (
+          <span className="font-mono text-xs">{row.original.requestNumber}</span>
+        ),
+      },
+      {
+        accessorKey: "type",
+        header: "Loại",
+        cell: ({ row }) => <KitRequestTypeBadge type={row.original.type} />,
+      },
+      {
+        accessorKey: "title",
+        header: "Tiêu đề",
+        cell: ({ row }) => (
+          <span className="block max-w-72 truncate font-medium">
+            {row.original.title}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "status",
+        header: "Trạng thái",
+        cell: ({ row }) => <KitRequestStatusBadge status={row.original.status} />,
+      },
+    ];
+
+    if (tab === "open") {
+      base.push({
+        id: "slaDeadline",
+        header: "Lịch hẹn / hạn chót",
+        cell: ({ row }) => (
+          <KitRequestSlaCell
+            type={row.original.type}
+            status={row.original.status}
+            slaDeadline={row.original.slaDeadline}
+            scheduledAt={row.original.scheduledAt}
+            metadata={row.original.metadata}
+          />
+        ),
+      });
+    }
+
+    if (tab === "closed") {
+      base.push({
+        id: "scheduleInfo",
+        header: "Lịch lắp / hẹn",
+        cell: ({ row }) => {
+          const { scheduledAt, completedAt, createdAt, type } = row.original;
+          // INSTALL_SCHEDULE không có scheduledAt (auto-create, admin lắp ngay)
+          // → show completedAt (đã lắp xong) hoặc createdAt (chưa lắp xong)
+          // SWAP / RECOVERY → scheduledAt là lịch admin hẹn ghé
+          let label: string;
+          let date: string | null;
+          if (type === "INSTALL_SCHEDULE") {
+            if (completedAt) {
+              label = "Đã lắp";
+              date = completedAt;
+            } else {
+              label = "Tạo yêu cầu";
+              date = createdAt;
+            }
+          } else if (type === "RECOVERY_SCHEDULE") {
+            label = completedAt ? "Đã thu hồi" : "Hẹn thu hồi";
+            date = completedAt ?? scheduledAt;
+          } else {
+            // FAULT_REPORT (swap flow)
+            label = completedAt ? "Đã thay" : "Hẹn thay";
+            date = completedAt ?? scheduledAt;
+          }
+          if (!date) {
+            return <span className="text-xs text-muted-foreground">—</span>;
+          }
+          return (
+            <div className="flex flex-col">
+              <span className="text-xs text-muted-foreground">{label}</span>
+              <span className="text-sm font-medium">
+                {format(new Date(date), "HH:mm dd/MM/yyyy", { locale: vi })}
+              </span>
+            </div>
+          );
+        },
+      });
+    }
+
+    return base;
+  }, [tab]);
 
   const buildHref = (next: number | undefined | null) => {
     const params = new URLSearchParams(searchParams);

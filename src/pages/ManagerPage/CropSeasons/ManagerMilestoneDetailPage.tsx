@@ -900,6 +900,8 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
   const [showPicker, setShowPicker] = useState(false);
   const [pickerPage, setPickerPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [prevPage, setPrevPage] = useState(1);
+  const [prevSearch, setPrevSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkResult, setBulkResult] =
     useState<BulkAssignIotDevicesResType | null>(null);
@@ -939,31 +941,28 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
 
   const previousQuery = useManagerListPreviousAssignments(
     milestoneId,
+    { page: prevPage, limit: 10, search: prevSearch || undefined },
     showPicker,
   );
-  const previousIds = previousQuery.data?.data.data;
-  const previousSet = useMemo(
-    () => new Set(previousIds ?? []),
-    [previousIds],
-  );
+  const previousBoards = previousQuery.data?.data.data ?? [];
+  const previousMeta = previousQuery.data?.data.meta;
 
-  /** Seed selection with devices already assigned in earlier milestones — once per picker open. */
-  const preselectAppliedRef = useRef(false);
+  /** Auto-seed selection with devices loaded from earlier milestones — apply each
+   * time a new previous page resolves so user paginating sees them pre-checked. */
   useEffect(() => {
-    if (!showPicker) {
-      preselectAppliedRef.current = false;
-      return;
-    }
-    if (preselectAppliedRef.current) return;
-    if (!previousIds) return;
-    preselectAppliedRef.current = true;
-    if (previousIds.length === 0) return;
+    if (!showPicker) return;
+    if (previousBoards.length === 0) return;
     setSelected((prev) => {
       const next = new Set(prev);
-      for (const id of previousIds) next.add(id);
+      for (const b of previousBoards) {
+        next.add(b.id);
+        if (b.deviceName?.trim()) {
+          deviceLabelByIdRef.current.set(b.id, b.deviceName.trim());
+        }
+      }
       return next;
     });
-  }, [showPicker, previousIds]);
+  }, [showPicker, previousBoards]);
 
   /** Capture device names as boards load so pre-selected rows show real labels in result modal. */
   useEffect(() => {
@@ -982,6 +981,8 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
     setSelected(new Set());
     setSearch("");
     setPickerPage(1);
+    setPrevSearch("");
+    setPrevPage(1);
   };
 
   const handleBulkAssign = () => {
@@ -1204,36 +1205,12 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
           if (!v) closePicker();
         }}
       >
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="sm:max-w-[1000px]">
           <DialogHeader>
             <DialogTitle>Gán thiết bị cho mốc</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
-            <Input
-              placeholder="Tìm kiếm theo tên…"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPickerPage(1);
-              }}
-            />
-            {previousSet.size > 0 && (
-              <p className="text-xs text-muted-foreground rounded-md bg-muted/50 px-3 py-2">
-                Đã tự chọn sẵn {previousSet.size} thiết bị từ các mốc trước
-                trong mùa vụ này. Bỏ chọn nếu không muốn dùng lại.
-              </p>
-            )}
-            <div className="flex items-center gap-2 text-xs">
-              <Checkbox
-                checked={allSelected}
-                disabled={boards.length === 0}
-                onCheckedChange={(v) => toggleSelectAll(!!v)}
-              />
-              <span>Chọn cả trang này ({selected.size} thiết bị đã chọn)</span>
-            </div>
-
-            {/* Selected state — hiển thị các thiết bị đang chọn dạng tag/chip
-                để manager review & bỏ chọn nhanh trước khi gán */}
+          <div className="space-y-4">
+            {/* Đã chọn — chip review luôn nổi ở trên */}
             {selected.size > 0 && (
               <div className="rounded-md border bg-muted/30 p-2 space-y-1.5">
                 <div className="flex items-center justify-between gap-2">
@@ -1256,6 +1233,7 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
                     const label =
                       deviceLabelByIdRef.current.get(id) ??
                       boards.find((b) => b.id === id)?.deviceName ??
+                      previousBoards.find((b) => b.id === id)?.deviceName ??
                       "Thiết bị đã chọn";
                     return (
                       <span
@@ -1280,22 +1258,165 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
                 </div>
               </div>
             )}
-            <div className="space-y-2 max-h-80 overflow-y-auto">
-              {purchaseQuery.isLoading ? (
-                [0, 1, 2].map((i) => (
-                  <Skeleton
-                    key={i}
-                    className="h-14 w-full"
-                  />
-                ))
-              ) : boards.length === 0 ? (
-                <p className="py-6 text-center text-sm text-muted-foreground">
-                  Hiện không còn thiết bị trống để gán.
+
+            {(() => {
+              const hasPrevious =
+                (previousMeta?.totalItems ?? previousBoards.length) > 0 ||
+                previousQuery.isLoading ||
+                !!prevSearch;
+              return (
+            <div
+              className={cn(
+                "grid grid-cols-1 gap-4",
+                hasPrevious && "md:grid-cols-2",
+              )}
+            >
+            {/* Section 1 — Thiết bị đã dùng ở mốc trước trong mùa vụ */}
+            {hasPrevious && (
+            <div className="rounded-md border bg-muted/10 p-3 space-y-2">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <p className="text-sm font-semibold flex items-center gap-2">
+                  <RefreshCw className="h-3.5 w-3.5 text-primary" />
+                  Thiết bị đã dùng ở mốc trước
+                  {previousMeta && (
+                    <Badge
+                      variant="secondary"
+                      className="text-[10px]"
+                    >
+                      {previousMeta.totalItems}
+                    </Badge>
+                  )}
                 </p>
-              ) : (
-                boards.map((dev) => {
-                  const usedBefore = previousSet.has(dev.id);
-                  return (
+                <span className="text-xs text-muted-foreground">
+                  Tự chọn sẵn — bỏ chọn nếu không muốn dùng lại
+                </span>
+              </div>
+              <Input
+                placeholder="Tìm theo tên trong danh sách đã dùng…"
+                value={prevSearch}
+                onChange={(e) => {
+                  setPrevSearch(e.target.value);
+                  setPrevPage(1);
+                }}
+                className="h-8 text-sm"
+              />
+              <div className="space-y-2 max-h-44 overflow-y-auto">
+                {previousQuery.isLoading ? (
+                  [0, 1].map((i) => (
+                    <Skeleton
+                      key={i}
+                      className="h-12 w-full"
+                    />
+                  ))
+                ) : previousBoards.length === 0 ? (
+                  <p className="py-4 text-center text-xs text-muted-foreground">
+                    {prevSearch
+                      ? "Không có thiết bị nào khớp tìm kiếm."
+                      : "Chưa có thiết bị nào được dùng ở mốc trước trong mùa vụ này."}
+                  </p>
+                ) : (
+                  previousBoards.map((dev) => (
+                    <label
+                      key={dev.id}
+                      className="flex items-center gap-2 rounded-md border bg-background p-2.5 hover:bg-muted/50 cursor-pointer"
+                    >
+                      <Checkbox
+                        checked={selected.has(dev.id)}
+                        onCheckedChange={(v) => toggleSelect(dev.id, !!v)}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">
+                          {dev.deviceName}
+                        </p>
+                        {milestoneIotModuleTypeVi(dev.deviceType) && (
+                          <p className="text-xs text-muted-foreground leading-snug">
+                            {milestoneIotModuleTypeVi(dev.deviceType)}
+                          </p>
+                        )}
+                      </div>
+                    </label>
+                  ))
+                )}
+              </div>
+              {previousMeta && previousMeta.totalPages > 1 && (
+                <div className="flex items-center justify-between pt-1 text-xs">
+                  <span className="text-muted-foreground">
+                    Trang {prevPage} / {previousMeta.totalPages}
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7"
+                      disabled={prevPage <= 1}
+                      onClick={() => setPrevPage((p) => p - 1)}
+                    >
+                      Trước
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7"
+                      disabled={prevPage >= previousMeta.totalPages}
+                      onClick={() => setPrevPage((p) => p + 1)}
+                    >
+                      Sau
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            )}
+            {/* Section 2 — Thiết bị còn xài được */}
+            <div className="rounded-md border p-3 space-y-2">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <p className="text-sm font-semibold flex items-center gap-2">
+                  <Cpu className="h-3.5 w-3.5 text-primary" />
+                  Thiết bị còn xài được
+                  {boardsMeta && (
+                    <Badge
+                      variant="secondary"
+                      className="text-[10px]"
+                    >
+                      {boardsMeta.totalItems}
+                    </Badge>
+                  )}
+                </p>
+              </div>
+              <Input
+                placeholder="Tìm theo tên thiết bị…"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPickerPage(1);
+                }}
+                className="h-8 text-sm"
+              />
+              <div className="flex items-center gap-2 text-xs">
+                <Checkbox
+                  checked={allSelected}
+                  disabled={boards.length === 0}
+                  onCheckedChange={(v) => toggleSelectAll(!!v)}
+                />
+                <span>Chọn cả trang này</span>
+              </div>
+              <div className="space-y-2 max-h-56 overflow-y-auto">
+                {purchaseQuery.isLoading ? (
+                  [0, 1, 2].map((i) => (
+                    <Skeleton
+                      key={i}
+                      className="h-14 w-full"
+                    />
+                  ))
+                ) : boards.length === 0 ? (
+                  <p className="py-6 text-center text-sm text-muted-foreground">
+                    {search
+                      ? "Không có thiết bị nào khớp tìm kiếm."
+                      : "Hiện không còn thiết bị trống để gán."}
+                  </p>
+                ) : (
+                  boards.map((dev) => (
                     <label
                       key={dev.id}
                       className="flex items-center gap-2 rounded-md border p-3 hover:bg-muted/50 cursor-pointer"
@@ -1304,20 +1425,10 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
                         checked={selected.has(dev.id)}
                         onCheckedChange={(v) => toggleSelect(dev.id, !!v)}
                       />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-medium text-sm">
-                            {dev.deviceName}
-                          </p>
-                          {usedBefore && (
-                            <Badge
-                              variant="secondary"
-                              className="text-[10px]"
-                            >
-                              Đã dùng ở mốc trước
-                            </Badge>
-                          )}
-                        </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">
+                          {dev.deviceName}
+                        </p>
                         {milestoneIotModuleTypeVi(dev.deviceType) && (
                           <p className="text-xs text-muted-foreground leading-snug">
                             {milestoneIotModuleTypeVi(dev.deviceType)}
@@ -1325,35 +1436,40 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
                         )}
                       </div>
                     </label>
-                  );
-                })
+                  ))
+                )}
+              </div>
+              {boardsMeta && boardsMeta.totalPages > 1 && (
+                <div className="flex items-center justify-between pt-1 text-xs">
+                  <span className="text-muted-foreground">
+                    Trang {pickerPage} / {boardsMeta.totalPages}
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7"
+                      disabled={pickerPage <= 1}
+                      onClick={() => setPickerPage((p) => p - 1)}
+                    >
+                      Trước
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7"
+                      disabled={pickerPage >= boardsMeta.totalPages}
+                      onClick={() => setPickerPage((p) => p + 1)}
+                    >
+                      Sau
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
-            {boardsMeta && boardsMeta.totalPages > 1 && (
-              <div className="flex items-center justify-between pt-2 text-xs">
-                <span>
-                  Trang {pickerPage} / {boardsMeta.totalPages}
-                </span>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={pickerPage <= 1}
-                    onClick={() => setPickerPage((p) => p - 1)}
-                  >
-                    Trước
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={pickerPage >= boardsMeta.totalPages}
-                    onClick={() => setPickerPage((p) => p + 1)}
-                  >
-                    Sau
-                  </Button>
-                </div>
-              </div>
-            )}
+            </div>
+              );
+            })()}
           </div>
           <DialogFooter>
             <Button

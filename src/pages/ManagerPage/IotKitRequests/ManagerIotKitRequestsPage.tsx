@@ -14,6 +14,7 @@ import {
   KitRequestStatusBadge,
   KitRequestTypeBadge,
 } from "@/components/iot-kit-request/KitRequestBadges";
+import { KitRequestSlaCell } from "@/components/iot-kit-request/KitRequestSlaCell";
 import {
   OPEN_KIT_REQUEST_STATUSES,
   TERMINAL_KIT_REQUEST_STATUSES,
@@ -24,8 +25,6 @@ import type {
   KitRequestStatusType,
 } from "@/schemaValidatation/iotKitRequest";
 import type { ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
 import { Eye, Wrench } from "lucide-react";
 import { useMemo } from "react";
 import { useSearchParams } from "react-router";
@@ -155,14 +154,16 @@ export default function ManagerIotKitRequestsPage() {
       cell: ({ row }) => <KitRequestStatusBadge status={row.original.status} />,
     },
     {
-      accessorKey: "updatedAt",
-      header: "Cập nhật",
+      id: "slaDeadline",
+      header: "Lịch hẹn / hạn chót",
       cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground">
-          {format(new Date(row.original.updatedAt), "dd/MM HH:mm", {
-            locale: vi,
-          })}
-        </span>
+        <KitRequestSlaCell
+          type={row.original.type}
+          status={row.original.status}
+          slaDeadline={row.original.slaDeadline}
+          scheduledAt={row.original.scheduledAt}
+          metadata={row.original.metadata}
+        />
       ),
     },
   ];

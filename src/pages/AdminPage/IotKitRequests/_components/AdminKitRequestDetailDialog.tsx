@@ -26,6 +26,8 @@ import { ScheduleSwapDialog } from "./ScheduleSwapDialog";
 import { CompleteSwapDialog } from "./CompleteSwapDialog";
 import { ScheduleRecoveryDialog } from "./ScheduleRecoveryDialog";
 import { CompleteRecoveryDialog } from "./CompleteRecoveryDialog";
+import { ScheduleInstallDialog } from "./ScheduleInstallDialog";
+import { AlertTriangle } from "lucide-react";
 
 /**
  * Dialog trung tâm cho chi tiết kit request (admin).
@@ -70,6 +72,7 @@ export function AdminKitRequestDetailDialog({ requestId, onClose }: Props) {
   const [completeSwapOpen, setCompleteSwapOpen] = useState(false);
   const [scheduleRecoveryOpen, setScheduleRecoveryOpen] = useState(false);
   const [completeRecoveryOpen, setCompleteRecoveryOpen] = useState(false);
+  const [scheduleInstallOpen, setScheduleInstallOpen] = useState(false);
 
   const devices = request?.devices ?? [];
   const purchaseDevices = devices.filter((d) => d.status === "purchase");
@@ -79,6 +82,12 @@ export function AdminKitRequestDetailDialog({ requestId, onClose }: Props) {
   const isNoHandler = !!request && !request.handlerId;
 
   const isInstallSchedule = request?.type === "INSTALL_SCHEDULE";
+  const hasInstallScheduled = !!request?.scheduledAt;
+  const showScheduleInstall =
+    isInstallSchedule &&
+    (request?.status === "pending" || request?.status === "in_progress") &&
+    (isMyHandler || isNoHandler) &&
+    !hasInstallScheduled;
   const showStartInstall =
     isInstallSchedule &&
     (request?.status === "pending" || request?.status === "in_progress") &&
@@ -121,6 +130,7 @@ export function AdminKitRequestDetailDialog({ requestId, onClose }: Props) {
     hasRecoveryScheduled;
 
   const hasAction =
+    showScheduleInstall ||
     showStartInstall ||
     showCompleteInstall ||
     isFaultPending ||
@@ -129,6 +139,9 @@ export function AdminKitRequestDetailDialog({ requestId, onClose }: Props) {
     showCompleteSwap ||
     showScheduleRecovery ||
     showCompleteRecovery;
+
+  const overdueReportedAt = request?.metadata?.ownerOverdueReportedAt ?? null;
+  const overdueReason = request?.metadata?.ownerOverdueReason ?? null;
 
   return (
     <>
@@ -159,6 +172,30 @@ export function AdminKitRequestDetailDialog({ requestId, onClose }: Props) {
               )
             ) : (
               <>
+                {overdueReportedAt && (
+                  <div className="mb-3 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
+                    <div className="flex items-center gap-2 font-medium text-destructive">
+                      <AlertTriangle className="h-4 w-4" />
+                      Chủ trang trại báo quá hạn lúc{" "}
+                      {format(
+                        new Date(overdueReportedAt),
+                        "HH:mm dd/MM/yyyy",
+                        { locale: vi },
+                      )}
+                    </div>
+                    {overdueReason && (
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Lý do: {overdueReason}
+                      </p>
+                    )}
+                  </div>
+                )}
+                {isInstallSchedule && hasInstallScheduled && request.scheduledAt && (
+                  <ScheduledCallout
+                    kind="install"
+                    scheduledAt={request.scheduledAt}
+                  />
+                )}
                 {hasSwapScheduled && request.scheduledAt && (
                   <ScheduledCallout
                     kind="swap"
@@ -178,6 +215,16 @@ export function AdminKitRequestDetailDialog({ requestId, onClose }: Props) {
 
           {request && hasAction && (
             <DialogFooter className="shrink-0 flex-row flex-wrap gap-2 border-t px-6 py-4 sm:justify-end">
+              {showScheduleInstall && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setScheduleInstallOpen(true)}
+                >
+                  <CalendarClock className="h-4 w-4" />
+                  Lên lịch lắp
+                </Button>
+              )}
               {showStartInstall && (
                 <Button
                   type="button"
@@ -261,6 +308,11 @@ export function AdminKitRequestDetailDialog({ requestId, onClose }: Props) {
 
       {request && isInstallSchedule && (
         <>
+          <ScheduleInstallDialog
+            open={scheduleInstallOpen}
+            request={request}
+            onClose={() => setScheduleInstallOpen(false)}
+          />
           <StartInstallDialog
             open={startOpen}
             requestId={request.id}
@@ -344,7 +396,7 @@ function ScheduledCallout({
   kind,
   scheduledAt,
 }: {
-  kind: "swap" | "recovery";
+  kind: "swap" | "recovery" | "install";
   scheduledAt: string;
 }) {
   const label = format(new Date(scheduledAt), "HH:mm 'ngày' dd/MM/yyyy", {
@@ -357,11 +409,17 @@ function ScheduledCallout({
           actionLabel: "Hoàn tất thay thiết bị",
           verb: "thay",
         }
-      : {
-          title: "Đã lên lịch thu hồi thiết bị",
-          actionLabel: "Hoàn tất thu hồi",
-          verb: "thu",
-        };
+      : kind === "recovery"
+        ? {
+            title: "Đã lên lịch thu hồi thiết bị",
+            actionLabel: "Hoàn tất thu hồi",
+            verb: "thu",
+          }
+        : {
+            title: "Đã lên lịch lắp đặt thiết bị",
+            actionLabel: "Bắt đầu lắp đặt",
+            verb: "lắp",
+          };
   return (
     <div className="mb-4 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm dark:border-amber-900/50 dark:bg-amber-950/30">
       <CalendarClock
