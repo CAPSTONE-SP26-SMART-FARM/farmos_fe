@@ -18,7 +18,10 @@ import type {
   ZoneManagerResType,
 } from "@/schemaValidatation/zoneMember";
 import type { MessageResType } from "@/types/api";
-import type { IotCoverageResType } from "@/schemaValidatation/iotCoverage";
+import type {
+  CropSeasonIotCoverageResType,
+  IotCoverageResType,
+} from "@/schemaValidatation/iotCoverage";
 
 const ZONES = API_ENDPOINTS.ZONES;
 const MANAGER = API_ENDPOINTS.MANAGER;
@@ -57,6 +60,17 @@ export const zoneService = {
   getIotCoverage: (zoneId: string, kitId?: string | null) =>
     api.get<IotCoverageResType>(
       `${ZONES.IOT_COVERAGE(zoneId)}?${queryString.stringify(
+        { kitId: kitId || undefined },
+        { skipEmptyString: true, skipNull: true },
+      )}`,
+    ),
+
+  // Crop-season scoped coverage — dùng cho mọi widget nằm dưới ngữ cảnh crop
+  // season (sensor overview tab, milestone sensor pane). Khác zone-scoped:
+  // mẫu số là cropSeason.totalAreaSqm, count đã dedupe per device.
+  getCropSeasonIotCoverage: (cropSeasonId: string, kitId?: string | null) =>
+    api.get<CropSeasonIotCoverageResType>(
+      `${ZONES.CROP_SEASON_IOT_COVERAGE(cropSeasonId)}?${queryString.stringify(
         { kitId: kitId || undefined },
         { skipEmptyString: true, skipNull: true },
       )}`,

@@ -13,7 +13,10 @@ import {
   KitRequestStatusBadge,
   KitRequestTypeBadge,
 } from "@/components/iot-kit-request/KitRequestBadges";
-import { KitRequestSlaCell } from "@/components/iot-kit-request/KitRequestSlaCell";
+import {
+  KitRequestDeadlineCell,
+  KitRequestScheduleCell,
+} from "@/components/iot-kit-request/KitRequestSlaCell";
 import { useAdminKitRequestList } from "@/queries/useIotKitRequest";
 import type {
   KitRequestDirectionType,
@@ -147,14 +150,22 @@ export default function AdminIotKitRequestsPage() {
     },
     {
       id: "slaDeadline",
-      header: "Lịch hẹn / hạn chót",
+      header: "Hạn chót",
       cell: ({ row }) => (
-        <KitRequestSlaCell
-          type={row.original.type}
+        <KitRequestDeadlineCell
           status={row.original.status}
           slaDeadline={row.original.slaDeadline}
-          scheduledAt={row.original.scheduledAt}
           metadata={row.original.metadata}
+        />
+      ),
+    },
+    {
+      id: "scheduledAt",
+      header: "Lịch hẹn",
+      cell: ({ row }) => (
+        <KitRequestScheduleCell
+          type={row.original.type}
+          scheduledAt={row.original.scheduledAt}
         />
       ),
     },

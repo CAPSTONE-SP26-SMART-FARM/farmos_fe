@@ -58,7 +58,7 @@ export function TaskManagementPanel({ cropSeason, readOnly = false }: TaskManage
         <ClipboardList className="h-10 w-10 text-muted-foreground/30" />
         <p className="text-sm font-medium">Chưa có mốc công việc</p>
         <p className="text-xs text-muted-foreground">
-          Tạo mốc trong vụ mùa này để bắt đầu giao nhiệm vụ.
+          Tạo mốc trong mùa vụ này để bắt đầu giao nhiệm vụ.
         </p>
       </div>
     );

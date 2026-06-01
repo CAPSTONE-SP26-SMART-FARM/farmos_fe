@@ -31,14 +31,24 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useIotCoverage } from "@/queries/useIotCoverage";
+import {
+  useCropSeasonIotCoverage,
+  useIotCoverage,
+} from "@/queries/useIotCoverage";
 import { isApiErrorResponse } from "@/lib/utils";
 import { getApiErrorMessageVi } from "@/lib/error-message";
 import type { IotDeviceKitResType } from "@/schemaValidatation/iotKit";
 import { cn } from "@/lib/utils";
 
-interface IotCoverageWidgetProps {
-  zoneId: string;
+// Scope của widget. Truyền 1 trong 2:
+//  - `zoneId` → tính theo cả zone (dùng cho trang Farm/Zone, mua kit cho zone)
+//  - `cropSeasonId` → tính theo diện tích vùng trồng của crop season
+//    (mọi widget nằm dưới ngữ cảnh crop season / milestone)
+type IotCoverageWidgetScope =
+  | { zoneId: string; cropSeasonId?: undefined }
+  | { cropSeasonId: string; zoneId?: undefined };
+
+type IotCoverageWidgetProps = IotCoverageWidgetScope & {
   zoneName?: string;
   // Danh sách kit để render dropdown (đã filter active). Bỏ trống = ẩn picker.
   kitOptions?: IotDeviceKitResType[];
@@ -51,7 +61,7 @@ interface IotCoverageWidgetProps {
   // CTA "Mua thêm bộ Kit" — caller cung cấp khi user có quyền mua (owner).
   // Bấm sẽ nhận kitId hiện đang chọn để điều hướng đến trang chi tiết kit.
   onBuyKit?: (kitId: string) => void;
-}
+};
 
 function formatM2(n: number | null | undefined) {
   if (n == null || !Number.isFinite(n)) return "—";
@@ -60,6 +70,7 @@ function formatM2(n: number | null | undefined) {
 
 export default function IotCoverageWidget({
   zoneId,
+  cropSeasonId,
   zoneName,
   kitOptions,
   autoPickFirstKit = true,
@@ -91,7 +102,19 @@ export default function IotCoverageWidget({
     userPickedKitId ??
     (autoPickFirstKit ? pickableKits[0]?.id : undefined);
 
-  const query = useIotCoverage(zoneId, selectedKitId ?? null);
+  // Mỗi widget instance chỉ chạy 1 trong 2 query nhờ flag `enabled`. Hook còn
+  // lại vẫn được gọi để giữ thứ tự hook ổn định giữa các render.
+  const zoneQuery = useIotCoverage(
+    zoneId ?? null,
+    selectedKitId ?? null,
+    !!zoneId,
+  );
+  const cropSeasonQuery = useCropSeasonIotCoverage(
+    cropSeasonId ?? null,
+    selectedKitId ?? null,
+    !!cropSeasonId,
+  );
+  const query = cropSeasonId ? cropSeasonQuery : zoneQuery;
 
   // ── Loading ────────────────────────────────────────────────────────────
   if (query.isLoading) {
@@ -153,22 +176,27 @@ export default function IotCoverageWidget({
   const data = query.data?.data;
   if (!data) return null;
 
+  // Normalize 2 response shape về cùng 1 set field. Zone scope dùng
+  // `areaSqm`, crop-season scope dùng `cropSeasonAreaSqm`. `gapSqm` ở
+  // crop-season có thể null (khi diện tích chưa khai báo) — coerce về 0 cho
+  // phép tính ratio, và dùng status === "unknown" để ẩn UI số liệu.
+  const areaSqm =
+    "cropSeasonAreaSqm" in data ? data.cropSeasonAreaSqm : data.zoneAreaSqm;
   const {
-    zoneAreaSqm,
     kitCoverageSqm,
     requiredKitCount,
     currentActiveCoverage,
     activeDeviceCount,
-    gapSqm,
     status,
   } = data;
+  const gapSqm = data.gapSqm ?? 0;
 
   const selectedKit = pickableKits.find((k) => k.id === selectedKitId);
 
-  // Tỉ lệ phủ — chỉ tính khi zone có khai báo diện tích.
+  // Tỉ lệ phủ — chỉ tính khi đã có diện tích đối chiếu.
   const coverageRatio =
-    zoneAreaSqm && zoneAreaSqm > 0
-      ? Math.min(100, (currentActiveCoverage / zoneAreaSqm) * 100)
+    areaSqm && areaSqm > 0
+      ? Math.min(100, (currentActiveCoverage / areaSqm) * 100)
       : 0;
 
   // Số bộ kit cần bổ sung — ưu tiên giá trị BE trả; fallback tự tính từ
@@ -295,7 +323,7 @@ export default function IotCoverageWidget({
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">
                 Đã phủ {formatM2(currentActiveCoverage)} m² /{" "}
-                {formatM2(zoneAreaSqm)} m²
+                {formatM2(areaSqm)} m²
               </span>
               <span className="font-medium">
                 {coverageRatio.toFixed(0)}%
@@ -317,7 +345,7 @@ export default function IotCoverageWidget({
             <KpiCard
               icon={Ruler}
               label="Diện tích khu vực"
-              value={zoneAreaSqm != null ? `${formatM2(zoneAreaSqm)} m²` : "—"}
+              value={areaSqm != null ? `${formatM2(areaSqm)} m²` : "—"}
               hint={
                 status === "unknown" ? "Khu vực chưa khai báo" : undefined
               }

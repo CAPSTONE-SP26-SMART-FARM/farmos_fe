@@ -28,6 +28,7 @@ import {
   isApiErrorResponse,
   isApiErrorUnprocessableEntityResponse,
 } from "@/lib/utils";
+import { getRoleLabelVi } from "@/constants/role";
 import { useOwnerCreateFarmMember } from "@/queries/useOwner";
 import {
   CreateFarmMemberBodySchema,
@@ -130,11 +131,8 @@ const AddMemberDialog = ({ farmCode, open, onOpenChange }: Props) => {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Vai trò</p>
-                  <Badge
-                    variant="secondary"
-                    className="capitalize"
-                  >
-                    {form.getValues("role")}
+                  <Badge variant="secondary">
+                    {getRoleLabelVi(form.getValues("role"))}
                   </Badge>
                 </div>
               </div>

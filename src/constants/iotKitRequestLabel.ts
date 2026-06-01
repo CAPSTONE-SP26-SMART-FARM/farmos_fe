@@ -64,7 +64,7 @@ export const KIT_REQUEST_RECOVERY_REASON_LABEL: Record<
   string
 > = {
   milestone_transition: "Chuyển sang vụ mới",
-  cropseason_completed: "Vụ mùa đã kết thúc",
+  cropseason_completed: "Mùa vụ đã kết thúc",
   subscription_ended: "Gói thuê đã kết thúc",
 };
 
@@ -72,7 +72,7 @@ export const KIT_REQUEST_INSTALL_REASON_LABEL: Record<
   "crop_approved" | "milestone_started",
   string
 > = {
-  crop_approved: "Duyệt vụ mùa mới",
+  crop_approved: "Duyệt mùa vụ mới",
   milestone_started: "Bắt đầu giai đoạn mới",
 };
 

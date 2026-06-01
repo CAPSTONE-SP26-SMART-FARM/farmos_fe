@@ -68,7 +68,13 @@ export function MilestoneSensorsPane({
   return (
     <div className="flex gap-5 min-h-90">
       <div className="flex-1 min-w-0 space-y-6">
-        {zoneId && <IotCoverageWidget zoneId={zoneId} />}
+        {/* Ưu tiên scope theo crop season (mẫu số = diện tích vùng trồng).
+            Khi milestone chưa gắn crop season (legacy) → fallback zone scope. */}
+        {milestone?.cropSeasonId ? (
+          <IotCoverageWidget cropSeasonId={milestone.cropSeasonId} />
+        ) : zoneId ? (
+          <IotCoverageWidget zoneId={zoneId} />
+        ) : null}
         {milestone ? (
           <MilestoneSensorSection
             milestone={milestone}

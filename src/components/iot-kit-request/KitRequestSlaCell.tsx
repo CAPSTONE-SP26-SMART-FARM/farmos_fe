@@ -3,21 +3,17 @@ import { vi } from "date-fns/locale";
 import type {
   KitRequestResType,
   KitRequestStatusType,
+  KitRequestTypeType,
 } from "@/schemaValidatation/iotKitRequest";
 
 /**
- * Cell hiển thị thời gian cam kết của request kit IoT.
+ * Cell hiển thị thời gian cam kết của kit request — chia 2 cell riêng:
+ *  - `KitRequestDeadlineCell`: hạn chót (slaDeadline) + overdue + owner báo
+ *    quá hạn
+ *  - `KitRequestScheduleCell`: lịch hẹn admin chốt (scheduledAt) — label
+ *    theo type
+ *
  * Dùng chung cho 3 trang: owner / admin / manager.
- *
- * Hiển thị tối đa 2 dòng:
- *   - "Hẹn lắp/thay/thu hồi: ..."  → scheduledAt (admin chốt giờ ghé)
- *   - "Hạn chót: ..."              → slaDeadline (cam kết phải lắp xong trước)
- *
- * Theo BE hiện tại:
- *   - INSTALL_SCHEDULE: có slaDeadline, không scheduledAt
- *   - SWAP / RECOVERY: có scheduledAt, không slaDeadline
- *
- * Hạn chót quá deadline + request chưa đóng → highlight đỏ.
  */
 
 const TERMINAL_STATUSES: KitRequestStatusType[] = [
@@ -29,45 +25,33 @@ const TERMINAL_STATUSES: KitRequestStatusType[] = [
 const fmt = (iso: string) =>
   format(new Date(iso), "HH:mm dd/MM/yyyy", { locale: vi });
 
-export function KitRequestSlaCell({
-  type,
+// ============================================================
+// Cell 1 — Hạn chót
+// ============================================================
+
+type DeadlineCellProps = Pick<
+  KitRequestResType,
+  "status" | "slaDeadline" | "metadata"
+>;
+
+export function KitRequestDeadlineCell({
   status,
   slaDeadline,
-  scheduledAt,
   metadata,
-}: Pick<
-  KitRequestResType,
-  "type" | "status" | "slaDeadline" | "scheduledAt" | "metadata"
->) {
+}: DeadlineCellProps) {
   const overdueReportedAt = metadata?.ownerOverdueReportedAt ?? null;
   const isTerminal = TERMINAL_STATUSES.includes(status);
-
-  const scheduledLabel =
-    type === "RECOVERY_SCHEDULE"
-      ? "Hẹn thu hồi"
-      : type === "FAULT_REPORT"
-        ? "Hẹn thay"
-        : "Hẹn lắp";
-
   const isOverdue =
     !!slaDeadline &&
     !isTerminal &&
     new Date(slaDeadline).getTime() < Date.now();
 
-  if (!scheduledAt && !slaDeadline && !overdueReportedAt) {
+  if (!slaDeadline && !overdueReportedAt) {
     return <span className="text-xs text-muted-foreground">—</span>;
   }
 
   return (
     <div className="flex flex-col gap-0.5">
-      {scheduledAt && (
-        <div className="flex flex-col">
-          <span className="text-xs text-muted-foreground">
-            {scheduledLabel}
-          </span>
-          <span className="text-sm font-medium">{fmt(scheduledAt)}</span>
-        </div>
-      )}
       {slaDeadline && (
         <div className="flex flex-col">
           <span
@@ -102,4 +86,34 @@ export function KitRequestSlaCell({
       )}
     </div>
   );
+}
+
+// ============================================================
+// Cell 2 — Lịch hẹn
+// ============================================================
+
+type ScheduleCellProps = Pick<KitRequestResType, "type" | "scheduledAt">;
+
+export function KitRequestScheduleCell({
+  type,
+  scheduledAt,
+}: ScheduleCellProps) {
+  if (!scheduledAt) {
+    return <span className="text-xs text-muted-foreground">—</span>;
+  }
+
+  const label = scheduleLabelByType(type);
+
+  return (
+    <div className="flex flex-col">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-sm font-medium">{fmt(scheduledAt)}</span>
+    </div>
+  );
+}
+
+function scheduleLabelByType(type: KitRequestTypeType): string {
+  if (type === "RECOVERY_SCHEDULE") return "Hẹn thu hồi";
+  if (type === "FAULT_REPORT") return "Hẹn thay";
+  return "Hẹn lắp";
 }

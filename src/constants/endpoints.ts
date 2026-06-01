@@ -473,6 +473,11 @@ export const API_ENDPOINTS = {
     },
     // BE: GET /zones/:id/iot-coverage?kitId=... (admin, owner, manager)
     IOT_COVERAGE: (zoneId: string) => `/zones/${zoneId}/iot-coverage`,
+    // BE: GET /crop-seasons/:id/iot-coverage?kitId=... (admin, owner, manager)
+    // Denominator = cropSeason.totalAreaSqm; counts deduped per device across
+    // overlapping milestones. Use this for any UI under a crop-season scope.
+    CROP_SEASON_IOT_COVERAGE: (cropSeasonId: string) =>
+      `/crop-seasons/${cropSeasonId}/iot-coverage`,
   },
   // ── Ticket v2 ─────────────────────────────────────────────────────────
   TICKET_CATEGORIES: {
@@ -1557,6 +1562,12 @@ export const QUERY_KEYS = {
       "zone",
       zoneId,
       // Phân biệt query "không kit" với query có kitId — BE trả khác nhau.
+      kitId ?? null,
+    ],
+    byCropSeason: (cropSeasonId: string, kitId?: string | null) => [
+      "iot-coverage",
+      "crop-season",
+      cropSeasonId,
       kitId ?? null,
     ],
   },

@@ -13,10 +13,11 @@ import type { DeviceStatusType } from "@/schemaValidatation/iotDevice";
 /**
  * Button "Báo lỗi" — chèn vào trang detail thiết bị IoT (owner / manager).
  *
- * Guard: chỉ cho phép báo lỗi khi thiết bị đã ở status `error` — tránh tạo
- * fault report cho thiết bị đang hoạt động bình thường (BE complete-swap sẽ
- * 422 SwapOldBoardNotInError sau này). Cron `sensor-health-monitor` tự flip
- * sang `error` khi phát hiện mất kết nối — user chờ trạng thái này rồi báo.
+ * Guard:
+ *   - `error`: cron sensor-health-monitor đã flip → cho báo (case active hỏng).
+ *   - `inactive`: kit đã lắp xong mà bật không lên → cho báo (BE tự flip → error,
+ *     nhưng chỉ pass khi vụ mùa đang diễn ra; BE trả 422 nếu vụ mùa chưa active).
+ *   - Các status khác: chặn (chưa lắp / đang hoạt động OK / đã thu hồi).
  */
 
 interface ReportFaultButtonProps {
@@ -30,15 +31,15 @@ interface ReportFaultButtonProps {
 
 function explainReason(status: DeviceStatusType | undefined): string | null {
   if (status === undefined) return null;
-  if (status === "error") return null;
+  if (status === "error" || status === "inactive") return null;
   if (status === "available")
     return "Thiết bị còn trong kho, chưa thuê — không thể báo lỗi.";
   if (status === "revoked")
     return "Thiết bị đã thu hồi về kho — không thể báo lỗi.";
   if (status === "active")
     return "Thiết bị đang hoạt động bình thường. Hệ thống sẽ tự phát hiện sự cố — nếu thiết bị hỏng, chờ vài phút để hệ thống cập nhật trạng thái.";
-  if (status === "install" || status === "inactive" || status === "purchase")
-    return "Thiết bị chưa hoạt động — chưa có dữ liệu để báo lỗi.";
+  if (status === "install" || status === "purchase")
+    return "Thiết bị chưa lắp xong — chưa thể báo lỗi.";
   return "Chỉ báo lỗi khi hệ thống đã phát hiện thiết bị gặp sự cố.";
 }
 
@@ -52,10 +53,14 @@ export function ReportFaultButton({
 }: ReportFaultButtonProps) {
   const [open, setOpen] = useState(false);
 
-  // Whitelist: chỉ status `error` được báo. Nếu parent không truyền status
-  // (legacy caller chưa cập nhật) — vẫn cho click để không phá flow cũ.
+  // Whitelist: status `error` (cron đã flip) hoặc `inactive` (kit bật ko lên,
+  // BE validate vụ mùa đang diễn ra rồi tự flip → error). Parent không truyền
+  // status → vẫn cho click để không phá flow cũ.
   const disabled =
-    !iotDeviceId || (deviceStatus !== undefined && deviceStatus !== "error");
+    !iotDeviceId ||
+    (deviceStatus !== undefined &&
+      deviceStatus !== "error" &&
+      deviceStatus !== "inactive");
   const reason = disabled ? explainReason(deviceStatus) : null;
 
   const button = (

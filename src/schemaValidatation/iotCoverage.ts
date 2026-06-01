@@ -31,3 +31,24 @@ export const IotCoverageResSchema = z.object({
   status: IotCoverageStatusEnum,
 });
 export type IotCoverageResType = z.infer<typeof IotCoverageResSchema>;
+
+// BE: GET /crop-seasons/:id/iot-coverage?kitId=...
+// Denominator là `cropSeason.totalAreaSqm` (diện tích vùng trồng), không phải
+// `zone.areaSqm`. activeDeviceCount là số device distinct (đã dedupe).
+export const CropSeasonIotCoverageResSchema = z.object({
+  cropSeasonId: z.string().uuid(),
+  zoneId: z.string().uuid(),
+  // null khi crop season chưa cấu hình totalAreaSqm.
+  cropSeasonAreaSqm: z.number().nullable(),
+  kitId: z.string().uuid().nullable(),
+  kitCoverageSqm: z.number().nullable(),
+  requiredKitCount: z.number().int().nullable(),
+  currentActiveCoverage: z.number(),
+  activeDeviceCount: z.number().int(),
+  // null khi cropSeasonAreaSqm null.
+  gapSqm: z.number().nullable(),
+  status: IotCoverageStatusEnum,
+});
+export type CropSeasonIotCoverageResType = z.infer<
+  typeof CropSeasonIotCoverageResSchema
+>;

@@ -105,7 +105,7 @@ export default function AdminSeasonTemplateUsagePage() {
             )}
           </CardTitle>
           <CardDescription>
-            Danh sách vụ mùa đã apply mẫu này (chỉ tính các vụ đã được duyệt qua
+            Danh sách mùa vụ đã apply mẫu này (chỉ tính các vụ đã được duyệt qua
             ProductionRequest — BR-115).
           </CardDescription>
         </CardHeader>

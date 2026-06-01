@@ -36,7 +36,7 @@ export default function AdminCropCategoriesPage() {
               thống. Với mỗi loại cây, bạn có thể thiết lập số cây cho phép
               trồng trên một mét vuông đất và thời gian sinh trưởng thông
               thường — hệ thống sẽ dựa vào đây để cảnh báo khi quản lý vùng
-              nhập thông số bất hợp lý lúc tạo vụ mùa.
+              nhập thông số bất hợp lý lúc tạo mùa vụ.
             </p>
           </div>
           <Button onClick={() => setState({ mode: "create" })}>

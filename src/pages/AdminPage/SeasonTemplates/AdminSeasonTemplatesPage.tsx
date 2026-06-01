@@ -239,7 +239,7 @@ export default function AdminSeasonTemplatesPage() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Sprout className="h-5 w-5 text-emerald-600" />
-                Mẫu Vụ Mùa
+                Mẫu Mùa Vụ
               </CardTitle>
               <CardDescription>
                 Mẫu starter định nghĩa giai đoạn, công việc và ngưỡng cảm biến.
@@ -427,7 +427,7 @@ export default function AdminSeasonTemplatesPage() {
         >
           <SheetHeader className="px-6 pt-6 pb-2">
             <SheetTitle>
-              {editTargetId ? "Chỉnh Sửa Mẫu Vụ Mùa" : "Tạo Mẫu Vụ Mùa Mới"}
+              {editTargetId ? "Chỉnh Sửa Mẫu Mùa Vụ" : "Tạo Mẫu Mùa Vụ Mới"}
             </SheetTitle>
             <SheetDescription>
               Thiết kế giai đoạn, công việc và ngưỡng cảm biến. Lưu sẽ tăng
