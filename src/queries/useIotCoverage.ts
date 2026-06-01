@@ -20,3 +20,24 @@ export const useIotCoverage = (
     retry: false, // 404 zone / 404 kit không phải lỗi tạm thời.
   });
 };
+
+// Crop-season scoped coverage. Dùng cho UI nằm dưới 1 crop season cụ thể:
+// denominator là `cropSeason.totalAreaSqm` chứ không phải `zone.areaSqm`,
+// và `activeDeviceCount` đã dedupe per device qua các milestone overlap.
+export const useCropSeasonIotCoverage = (
+  cropSeasonId: string | null | undefined,
+  kitId?: string | null,
+  enabled = true,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.iotCoverage.byCropSeason(
+      cropSeasonId ?? "",
+      kitId ?? null,
+    ),
+    queryFn: () =>
+      zoneService.getCropSeasonIotCoverage(cropSeasonId ?? "", kitId ?? null),
+    enabled: !!cropSeasonId && enabled,
+    staleTime: 30 * 1000,
+    retry: false,
+  });
+};

@@ -513,7 +513,7 @@ function OwnerTaskManagementPanel({
         <ClipboardList className="h-10 w-10 text-muted-foreground/30" />
         <p className="text-sm font-medium">Chưa có mốc công việc</p>
         <p className="text-xs text-muted-foreground">
-          Quản lý sẽ tạo mốc và task khi vụ mùa bắt đầu.
+          Quản lý sẽ tạo mốc và task khi mùa vụ bắt đầu.
         </p>
       </div>
     );

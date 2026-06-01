@@ -24,6 +24,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
@@ -66,6 +67,7 @@ export default function ProductionRequestDetailPanel({
   >(null);
   const [showRejectForm, setShowRejectForm] = useState(false);
 
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const farmQuery = useOwnerGetMyFarm();
   const detailQuery = useOwnerRequestDetail(requestId);
@@ -129,6 +131,20 @@ export default function ProductionRequestDetailPanel({
         await queryClient.refetchQueries({
           queryKey: QUERY_KEYS.zones.byFarm(farmId),
         });
+      }
+
+      if (confirmAction === "approve") {
+        toast.success("Đã duyệt kế hoạch sản xuất", {
+          description:
+            "Hệ thống sẽ chuẩn bị lắp đặt thiết bị cho mùa vụ này.",
+          duration: 8000,
+          action: {
+            label: "Xem yêu cầu thiết bị",
+            onClick: () => navigate("/dashboard/owner/iot-kit-requests"),
+          },
+        });
+      } else if (confirmAction === "reject") {
+        toast.success("Đã từ chối kế hoạch sản xuất");
       }
 
       setConfirmAction(null);

@@ -1617,7 +1617,11 @@ function ZoneBulkThresholdRow({
   const viLabel = SENSOR_TYPE_LABELS[sensorType] ?? "Chỉ báo không xác định";
   const SIcon = SENSOR_TYPE_ICON[sensorType];
   const bindings = bindingsForEligibleSensorType(zoneAssignments, sensorType);
-  const unitSuffix = bindings[0]?.unit ? ` ${bindings[0].unit}` : "";
+  // Cường độ ánh sáng hiển thị theo % (thang chung toàn app), không dùng đơn
+  // vị "lux" do thiết bị trả về — tránh lệch với dashboard và phần xem ngưỡng.
+  const displayUnit =
+    sensorType === "light_intensity" ? "%" : (bindings[0]?.unit ?? "");
+  const unitSuffix = displayUnit ? ` ${displayUnit}` : "";
   const { strictMin, strictMax } = aggregateStrictDeviceBounds(bindings);
 
   const saved =

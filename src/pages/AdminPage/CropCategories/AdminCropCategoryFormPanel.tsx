@@ -457,7 +457,7 @@ export default function AdminCropCategoryFormPanel({
                 </p>
               )}
               <p className="text-xs text-muted-foreground">
-                Khi quản lý tạo vụ mùa, hệ thống sẽ chỉ chấp nhận số cây trồng
+                Khi quản lý tạo mùa vụ, hệ thống sẽ chỉ chấp nhận số cây trồng
                 nằm trong khoảng này.
               </p>
             </div>
@@ -492,7 +492,7 @@ export default function AdminCropCategoryFormPanel({
               ) : cycleExample ? (
                 <p className="text-xs text-muted-foreground">
                   Số ngày trung bình từ lúc trồng đến lúc thu hoạch. Với chu kỳ{" "}
-                  <strong>{cycleExample.value}</strong> ngày, khi tạo vụ mùa cho
+                  <strong>{cycleExample.value}</strong> ngày, khi tạo mùa vụ cho
                   loại cây này, hệ thống chỉ chấp nhận đặt thời gian thu hoạch
                   trong khoảng <strong>{cycleExample.min}</strong> đến{" "}
                   <strong>{cycleExample.max}</strong> ngày sau khi trồng.
@@ -500,7 +500,7 @@ export default function AdminCropCategoryFormPanel({
               ) : (
                 <p className="text-xs text-muted-foreground">
                   Số ngày trung bình từ lúc trồng đến lúc thu hoạch. Hệ thống sẽ
-                  cảnh báo nếu vụ mùa được đặt thời gian quá ngắn hoặc quá dài
+                  cảnh báo nếu mùa vụ được đặt thời gian quá ngắn hoặc quá dài
                   so với chu kỳ chuẩn. Có thể bỏ trống nếu loại cây không có chu
                   kỳ cố định.
                 </p>

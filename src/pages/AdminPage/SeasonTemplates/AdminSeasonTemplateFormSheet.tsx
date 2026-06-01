@@ -176,7 +176,7 @@ export default function AdminSeasonTemplateFormSheet({
         <div className="flex w-full items-center justify-between">
           <p className="text-xs text-muted-foreground">
             {mode === "edit" && initialData
-              ? `Lưu sẽ tăng phiên bản từ v${initialData.version ?? 1} lên v${(initialData.version ?? 1) + 1}. Vụ mùa cũ KHÔNG bị ảnh hưởng.`
+              ? `Lưu sẽ tăng phiên bản từ v${initialData.version ?? 1} lên v${(initialData.version ?? 1) + 1}. Mùa vụ cũ KHÔNG bị ảnh hưởng.`
               : "Sau khi lưu, mẫu sẽ ở phiên bản 1, hoạt động (active)."}
           </p>
           <div className="flex gap-2">

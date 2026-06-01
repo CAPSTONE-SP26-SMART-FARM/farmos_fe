@@ -34,7 +34,7 @@ export function HistoryMenu({
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuItem onSelect={() => onSelect("seasons")}>
           <Sprout className="h-4 w-4 mr-2" />
-          Lịch sử vụ mùa
+          Lịch sử mùa vụ
         </DropdownMenuItem>
         <DropdownMenuItem
           disabled={!hasCurrentSeason}

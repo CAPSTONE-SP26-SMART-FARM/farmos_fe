@@ -27,9 +27,9 @@ export function OwnerHistoryView({
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center border rounded-md bg-muted/20">
         <History className="h-10 w-10 text-muted-foreground/30 mb-3" />
-        <p className="text-sm font-medium">Chưa có lịch sử vụ mùa</p>
+        <p className="text-sm font-medium">Chưa có lịch sử mùa vụ</p>
         <p className="text-xs text-muted-foreground mt-1">
-          Các vụ mùa đã hoàn thành hoặc huỷ sẽ xuất hiện ở đây
+          Các mùa vụ đã hoàn thành hoặc huỷ sẽ xuất hiện ở đây
         </p>
       </div>
     );

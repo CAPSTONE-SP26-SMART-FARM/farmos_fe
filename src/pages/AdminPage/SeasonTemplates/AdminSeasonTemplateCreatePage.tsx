@@ -159,7 +159,7 @@ export default function AdminSeasonTemplateCreatePage() {
           </Button>
           <h1 className="text-2xl font-semibold flex items-center gap-2">
             <Sprout className="h-6 w-6 text-emerald-600" />
-            Tạo Mẫu Vụ Mùa Mới
+            Tạo Mẫu Mùa Vụ Mới
           </h1>
           <p className="text-sm text-muted-foreground max-w-2xl">
             Mẫu (template) là <strong>blueprint khởi tạo</strong> — Quản lý/Chủ trang trại

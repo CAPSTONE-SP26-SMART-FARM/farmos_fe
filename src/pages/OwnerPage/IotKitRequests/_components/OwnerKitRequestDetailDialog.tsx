@@ -216,7 +216,7 @@ function ReportOverdueDialog({
             id="overdue-reason"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="vd: Chưa thấy kỹ thuật viên liên hệ, vụ mùa sắp gieo..."
+            placeholder="vd: Chưa thấy kỹ thuật viên liên hệ, mùa vụ sắp gieo..."
             maxLength={500}
             rows={3}
           />

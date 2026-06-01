@@ -336,9 +336,9 @@ export default function OwnerCropSeasonsPageV2() {
             <Card>
               <CardContent className="py-16 text-center">
                 <Wheat className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
-                <p className="text-sm font-medium">Chưa có vụ mùa hiện tại</p>
+                <p className="text-sm font-medium">Chưa có mùa vụ hiện tại</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Quản lý sẽ tạo vụ mùa khi bắt đầu sản xuất.
+                  Quản lý sẽ tạo mùa vụ khi bắt đầu sản xuất.
                 </p>
               </CardContent>
             </Card>
@@ -352,7 +352,7 @@ export default function OwnerCropSeasonsPageV2() {
                       Có yêu cầu chờ bạn duyệt
                     </p>
                     <p className="text-xs text-amber-800/80 dark:text-amber-200/70 mt-0.5">
-                      Quản lý đã gửi kế hoạch sản xuất cho vụ mùa này. Mời bạn
+                      Quản lý đã gửi kế hoạch sản xuất cho mùa vụ này. Mời bạn
                       xem và phê duyệt hoặc từ chối.
                     </p>
                   </div>
@@ -400,7 +400,7 @@ export default function OwnerCropSeasonsPageV2() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-base font-semibold">Lịch sử vụ mùa</h2>
+                <h2 className="text-base font-semibold">Lịch sử mùa vụ</h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Các vụ đã hoàn thành hoặc huỷ ở khu vực này
                 </p>
@@ -495,7 +495,7 @@ export default function OwnerCropSeasonsPageV2() {
               <Card>
                 <CardContent className="py-16 text-center">
                   <p className="text-sm text-muted-foreground">
-                    Chưa có vụ mùa hiện tại để xem lịch sử duyệt.
+                    Chưa có mùa vụ hiện tại để xem lịch sử duyệt.
                   </p>
                 </CardContent>
               </Card>
@@ -518,7 +518,7 @@ export default function OwnerCropSeasonsPageV2() {
               Thu hoạch ·{" "}
               {(view === "history-seasons" && historyDetail
                 ? historyDetail.cropName
-                : nowSeason?.cropName) ?? "Vụ mùa"}
+                : nowSeason?.cropName) ?? "Mùa vụ"}
             </DialogTitle>
           </DialogHeader>
           {(() => {

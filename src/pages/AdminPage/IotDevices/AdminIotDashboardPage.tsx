@@ -199,7 +199,7 @@ export default function AdminIotDashboardPage() {
             to={KIT_REQUESTS_INSTALL}
             icon={Truck}
             title="Yêu cầu cần lắp đặt"
-            hint="Lịch lắp do hệ thống tạo theo vụ mùa"
+            hint="Lịch lắp do hệ thống tạo theo mùa vụ"
           />
           <QuickLink
             to={KIT_REQUESTS_RECOVERY}

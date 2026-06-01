@@ -224,8 +224,8 @@ export default function AdminCropCategoryListSection({
                 <Info className="h-4 w-4 text-muted-foreground cursor-help" />
               </TooltipTrigger>
               <TooltipContent>
-                Đây là danh sách loại cây mà quản lý sẽ chọn khi tạo vụ mùa. Khi
-                bạn chỉnh sửa mật độ ở đây, các vụ mùa đã tạo trước đó vẫn giữ
+                Đây là danh sách loại cây mà quản lý sẽ chọn khi tạo mùa vụ. Khi
+                bạn chỉnh sửa mật độ ở đây, các mùa vụ đã tạo trước đó vẫn giữ
                 nguyên thông số ban đầu và không bị ảnh hưởng.
               </TooltipContent>
             </Tooltip>
@@ -380,7 +380,7 @@ export default function AdminCropCategoryListSection({
             <DialogDescription>
               Sau khi vô hiệu hoá, quản lý sẽ{" "}
               <strong>không còn thấy loại cây này</strong> trong danh sách khi
-              tạo vụ mùa mới. Các vụ mùa đã tạo trước đó vẫn giữ nguyên thông
+              tạo mùa vụ mới. Các mùa vụ đã tạo trước đó vẫn giữ nguyên thông
               tin và không bị ảnh hưởng.
             </DialogDescription>
           </DialogHeader>

@@ -612,7 +612,7 @@ export function OwnerSensorOverviewTab({ cropSeason }: { cropSeason: CropSeasonT
   return (
     <div className="flex gap-5 min-h-90">
       <div className="flex-1 min-w-0 space-y-6">
-        <IotCoverageWidget zoneId={cropSeason.zoneId} />
+        <IotCoverageWidget cropSeasonId={cropSeason.id} />
         {milestones.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center border rounded-md bg-muted/20">
             <Radio className="h-10 w-10 text-muted-foreground/30 mb-3" />

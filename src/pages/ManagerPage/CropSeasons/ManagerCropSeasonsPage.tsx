@@ -337,7 +337,7 @@ export default function ManagerCropSeasonsPage() {
             <Card>
               <CardContent className="py-16 text-center">
                 <Wheat className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
-                <p className="text-sm font-medium">Chưa có vụ mùa hiện tại</p>
+                <p className="text-sm font-medium">Chưa có mùa vụ hiện tại</p>
                 <p className="text-xs text-muted-foreground mt-1 mb-4">
                   Tạo mùa vụ mới để bắt đầu lên kế hoạch
                 </p>
@@ -404,7 +404,7 @@ export default function ManagerCropSeasonsPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-base font-semibold">Lịch sử vụ mùa</h2>
+                <h2 className="text-base font-semibold">Lịch sử mùa vụ</h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Các vụ đã hoàn thành hoặc huỷ ở khu vực này
                 </p>
@@ -464,7 +464,7 @@ export default function ManagerCropSeasonsPage() {
               <div>
                 <h2 className="text-base font-semibold">Lịch sử duyệt</h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Các lần gửi duyệt của vụ mùa hiện tại
+                  Các lần gửi duyệt của mùa vụ hiện tại
                 </p>
               </div>
               <Button
@@ -490,7 +490,7 @@ export default function ManagerCropSeasonsPage() {
               <Card>
                 <CardContent className="py-16 text-center">
                   <p className="text-sm text-muted-foreground">
-                    Chưa có vụ mùa hiện tại để xem lịch sử duyệt.
+                    Chưa có mùa vụ hiện tại để xem lịch sử duyệt.
                   </p>
                 </CardContent>
               </Card>
@@ -512,7 +512,7 @@ export default function ManagerCropSeasonsPage() {
         >
           <DialogHeader>
             <DialogTitle>
-              Thu hoạch · {nowSeason?.cropName ?? "Vụ mùa"}
+              Thu hoạch · {nowSeason?.cropName ?? "Mùa vụ"}
             </DialogTitle>
           </DialogHeader>
           {nowSeason && (
@@ -525,8 +525,8 @@ export default function ManagerCropSeasonsPage() {
 
       <ConfirmDialog
         open={confirmReplacePlan}
-        title="Xóa vụ mùa planning hiện tại?"
-        description="Nếu tiếp tục, hệ thống sẽ xóa vụ mùa planning hiện tại rồi mở form tạo vụ mùa mới. Hành động này không thể hoàn tác."
+        title="Xóa mùa vụ planning hiện tại?"
+        description="Nếu tiếp tục, hệ thống sẽ xóa mùa vụ planning hiện tại rồi mở form tạo mùa vụ mới. Hành động này không thể hoàn tác."
         confirmLabel={isDeletingCropSeason ? "Đang xóa..." : "Xóa và tạo mới"}
         cancelLabel="Huỷ"
         variant="destructive"

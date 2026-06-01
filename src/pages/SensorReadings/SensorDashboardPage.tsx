@@ -57,7 +57,7 @@ export default function SensorDashboardPage({
         <div className="text-center space-y-1">
           <p className="text-base font-medium">Chưa có dữ liệu cảm biến</p>
           <p className="text-sm">
-            Cần có vụ mùa đang thực hiện với thiết bị IoT đã gán để xem dữ liệu.
+            Cần có mùa vụ đang thực hiện với thiết bị IoT đã gán để xem dữ liệu.
           </p>
         </div>
       </div>

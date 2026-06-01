@@ -96,6 +96,7 @@ function formatDate(value: string | null | undefined) {
 }
 
 function formatThresholdText(sensor: {
+  sensorType?: string;
   threshold?: {
     optimalMin: number | null;
     optimalMax: number | null;
@@ -107,7 +108,10 @@ function formatThresholdText(sensor: {
   if (!t || t.optimalMin == null || t.optimalMax == null) {
     return "Chưa cấu hình ngưỡng";
   }
-  const unit = sensor.unit ? ` ${sensor.unit}` : "";
+  // Cường độ ánh sáng hiển thị theo % (thang chung toàn app), không dùng "lux".
+  const displayUnit =
+    sensor.sensorType === "light_intensity" ? "%" : (sensor.unit ?? "");
+  const unit = displayUnit ? ` ${displayUnit}` : "";
   return `${t.optimalMin} - ${t.optimalMax}${unit} (${t.source})`;
 }
 

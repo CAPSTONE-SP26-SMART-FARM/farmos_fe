@@ -191,7 +191,8 @@ export const useReplyProductionRequest = (requestId: string) => {
       });
       await qc.invalidateQueries({ queryKey: ["crop-seasons"] });
       await qc.refetchQueries({ queryKey: ["crop-seasons"] });
-      toast.success("Đã phản hồi yêu cầu thành công!");
+      // Toast hiển thị ở component (ProductionRequestDetailPanel) để phân biệt
+      // duyệt / từ chối và gắn link điều hướng tới trang Yêu cầu thiết bị.
     },
     onError: (error) => onMutationError(error, "Phản hồi thất bại"),
   });

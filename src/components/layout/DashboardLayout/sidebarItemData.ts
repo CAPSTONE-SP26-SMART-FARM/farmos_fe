@@ -278,7 +278,7 @@ export const sidebarData: SidebarData = {
           icon: Building2,
         },
         {
-          title: "Vụ Mùa",
+          title: "Mùa Vụ",
           url: "/dashboard/owner/crop-seasons",
           icon: Sprout,
         },
@@ -348,7 +348,7 @@ export const sidebarData: SidebarData = {
           icon: Map,
         },
         {
-          title: "Quản Lý Vụ Mùa",
+          title: "Quản Lý Mùa Vụ",
           url: "/dashboard/manager/crop-seasons",
           icon: Sprout,
         },
