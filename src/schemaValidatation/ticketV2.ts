@@ -52,3 +52,29 @@ export const ListTicketsV2ResSchema = z.object({
 
 export type TicketV2ResType = z.infer<typeof TicketV2ResSchema>;
 export type ListTicketsV2ResType = z.infer<typeof ListTicketsV2ResSchema>;
+
+// ── GET /me/ticket-balance ────────────────────────────────────────────────
+// Per-category ticket balance for the caller. BE resolves the underlying
+// owner from caller's role: owner → self, manager → managed zone's farm,
+// farmer → assigned farm. Manager without an active zone assignment receives
+// `{ data: [] }`.
+export const TicketBalancePerCategorySchema = z.object({
+  categoryConfigId: z.string().uuid(),
+  categoryCode: z.string(),
+  categoryName: z.string(),
+  featureCode: z.string().nullable(),
+  creditType: z.string(),
+  unitPrice: z.number(),
+  fromSubscription: z.number(),
+  fromPurchased: z.number(),
+  total: z.number(),
+});
+
+export const TicketBalanceResSchema = z.object({
+  data: z.array(TicketBalancePerCategorySchema),
+});
+
+export type TicketBalancePerCategoryType = z.infer<
+  typeof TicketBalancePerCategorySchema
+>;
+export type TicketBalanceResType = z.infer<typeof TicketBalanceResSchema>;

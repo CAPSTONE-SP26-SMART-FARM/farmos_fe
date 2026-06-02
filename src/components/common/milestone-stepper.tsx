@@ -12,13 +12,11 @@ interface MilestoneStepperProps {
   steps: StepDefinition[];
   currentStep: number;
   stepStatuses: StepStatus[];
-  onStepClick?: (index: number) => void;
 }
 
 export function MilestoneStepper({
   steps,
   stepStatuses,
-  onStepClick,
 }: MilestoneStepperProps) {
   return (
     <nav aria-label="Tiến trình thiết lập mốc">
@@ -32,15 +30,12 @@ export function MilestoneStepper({
               key={index}
               className={cn("flex items-center", !isLast && "flex-1")}
             >
-              <button
-                type="button"
-                disabled={status === "locked"}
-                onClick={() => onStepClick?.(index)}
+              {/* Display-only — user chỉ chuyển step qua nút "Bước trước"/"Bước tiếp". */}
+              <div
+                aria-current={status === "current" ? "step" : undefined}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors text-left",
-                  status === "locked"
-                    ? "cursor-not-allowed opacity-50"
-                    : "cursor-pointer hover:bg-muted/50",
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-left cursor-default",
+                  status === "locked" && "opacity-50",
                   status === "current" && "bg-muted/60",
                 )}
               >
@@ -83,7 +78,7 @@ export function MilestoneStepper({
                     </p>
                   )}
                 </div>
-              </button>
+              </div>
 
               {!isLast && (
                 <div

@@ -5,6 +5,7 @@ import type {
   CancelTicketV2BodyType,
   ListTicketsV2QueryType,
   ListTicketsV2ResType,
+  TicketBalanceResType,
 } from "@/schemaValidatation/ticketV2";
 import type { MessageResType } from "@/types/api";
 
@@ -20,6 +21,7 @@ const ticketV2Service = {
     ),
   cancel: (id: string, body: CancelTicketV2BodyType) =>
     api.post<MessageResType, CancelTicketV2BodyType>(TV2.CANCEL(id), body),
+  myBalance: () => api.get<TicketBalanceResType>(TV2.ME_BALANCE),
 };
 
 export default ticketV2Service;
