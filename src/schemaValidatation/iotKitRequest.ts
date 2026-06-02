@@ -124,6 +124,9 @@ export type KitRequestResType = z.infer<typeof KitRequestResSchema>;
 // Detail response — base + devices[]
 export const KitRequestDetailResSchema = KitRequestResSchema.extend({
   devices: z.array(KitRequestDeviceSchema),
+  // True khi milestone của request là milestone cuối mùa vụ → ẩn nút lắp
+  // giai đoạn kế. Optional để an toàn với response cache cũ chưa có field.
+  isLastMilestone: z.boolean().optional(),
 });
 export type KitRequestDetailResType = z.infer<typeof KitRequestDetailResSchema>;
 
@@ -138,6 +141,11 @@ export const ListKitRequestsQuerySchema = PagingRequestSchema.extend({
   direction: KitRequestDirectionSchema.optional(),
   type: KitRequestTypeSchema.optional(),
   status: KitRequestStatusSchema.optional(),
+  // Lọc nhiều trạng thái cùng lúc (tab "Đang mở" / "Đã xử lý"). BE nhận mảng
+  // qua repeated query param `statuses=a&statuses=b`. Ưu tiên hơn `status`.
+  statuses: z.array(KitRequestStatusSchema).optional(),
+  // ISO datetime — chỉ lấy request có updatedAt >= mốc (KPI "xong tháng này").
+  updatedFrom: z.string().optional(),
   iotDeviceId: z.string().optional(),
   cropSeasonId: z.string().optional(),
   ownerId: z.string().optional(),
@@ -202,9 +210,17 @@ export const rejectRequestSchema = z.object({
 });
 export type RejectRequestBodyType = z.infer<typeof rejectRequestSchema>;
 
-// — Complete install — admin (bulk, chỉ resolutionNote optional)
+// — Start install — admin (purchase → install). deviceIds: chọn từng thiết bị,
+//   bỏ trống = toàn bộ device purchase thuộc scope.
+export const startInstallSchema = z.object({
+  deviceIds: z.array(z.string()).optional(),
+});
+export type StartInstallBodyType = z.infer<typeof startInstallSchema>;
+
+// — Complete install — admin (install → inactive). deviceIds: chọn từng thiết bị.
 export const completeInstallSchema = z.object({
   resolutionNote: z.string().optional(),
+  deviceIds: z.array(z.string()).optional(),
 });
 export type CompleteInstallBodyType = z.infer<typeof completeInstallSchema>;
 
@@ -222,6 +238,29 @@ export const scheduleInstallSchema = z.object({
     ),
 });
 export type ScheduleInstallBodyType = z.infer<typeof scheduleInstallSchema>;
+
+// — Tạo lịch lắp cho 1 milestone (owner/admin, sau khi thu hồi giai đoạn trước)
+//   Truyền milestoneId (chỉ định thẳng) HOẶC afterMilestoneId (milestone vừa
+//   thu hồi → BE lắp giai đoạn kế).
+export const createInstallScheduleSchema = z
+  .object({
+    milestoneId: z.string().optional(),
+    afterMilestoneId: z.string().optional(),
+    scheduledAt: z
+      .string()
+      .optional()
+      .refine(
+        (v) => !v || new Date(v).getTime() > Date.now(),
+        "Thời gian hẹn phải sau hiện tại",
+      ),
+  })
+  .refine((b) => !!b.milestoneId || !!b.afterMilestoneId, {
+    message: "Thiếu giai đoạn cần lắp",
+    path: ["milestoneId"],
+  });
+export type CreateInstallScheduleBodyType = z.infer<
+  typeof createInstallScheduleSchema
+>;
 
 // — Owner báo quá hạn (reason optional)
 export const reportOverdueSchema = z.object({
@@ -290,6 +329,17 @@ export const completeSwapSchema = z.object({
     .optional(),
 });
 export type CompleteSwapBodyType = z.infer<typeof completeSwapSchema>;
+
+// POST /admin/:id/complete-swap-install — hoàn tất lắp board mới sau swap
+export const completeSwapInstallSchema = z.object({
+  resolutionNote: z
+    .string()
+    .max(1000, "Ghi chú tối đa 1000 ký tự")
+    .optional(),
+});
+export type CompleteSwapInstallBodyType = z.infer<
+  typeof completeSwapInstallSchema
+>;
 
 // ============================================================
 // RECOVERY workflow — admin thu hồi kit sau khi sub hết hạn

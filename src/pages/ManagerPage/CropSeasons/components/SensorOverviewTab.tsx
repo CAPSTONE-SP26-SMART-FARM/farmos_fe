@@ -62,6 +62,7 @@ import { cn } from "@/lib/utils";
 import { MILESTONE_STATUS_META } from "./helpers";
 import IotCoverageWidget from "@/components/common/IotCoverageWidget";
 import { ReportFaultButton } from "@/components/iot-kit-request/ReportFaultButton";
+import { ScheduleNextInstallButton } from "@/components/iot-kit-request/ScheduleNextInstallButton";
 
 const KIT_PAGE_SIZE = 5;
 const STATUS_FILTER_ALL = "__all__";
@@ -588,6 +589,11 @@ export function MilestoneSensorSection({
 
   const totalLabel = pageMeta?.totalItems ?? fullAssignments.length;
   const hasMultipleKits = totalLabel > 1;
+  // Có device `purchase` (đã cấp, chưa lắp) → cho manager lên lịch lắp giai đoạn
+  // này. BE chặn nếu recovery giai đoạn trước chưa xong (toast lỗi rõ ràng).
+  const hasPurchaseDevice = fullAssignments.some(
+    (a) => a.device?.status === "purchase",
+  );
 
   return (
     <div className="space-y-3">
@@ -613,6 +619,14 @@ export function MilestoneSensorSection({
           )}
         </div>
         <Separator className="flex-1" />
+        {hasPurchaseDevice && (
+          <ScheduleNextInstallButton
+            milestoneId={milestone.id}
+            label="Lên lịch lắp giai đoạn này"
+            variant="outline"
+            className="shrink-0"
+          />
+        )}
       </div>
 
       <div className="flex items-center gap-2">

@@ -81,6 +81,21 @@ export const useRequestSnapshot = (
     enabled: !!cropSeasonId && !!requestId && enabled,
   });
 
+export const useMilestoneChanges = (
+  cropSeasonId: string,
+  milestoneId: string | null,
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: QUERY_KEYS.tracking.milestoneChanges(
+      cropSeasonId,
+      milestoneId ?? "",
+    ),
+    queryFn: () =>
+      trackingService.getMilestoneChanges(cropSeasonId, milestoneId!),
+    enabled: !!cropSeasonId && !!milestoneId && enabled,
+  });
+
 export const useRequestDiff = (
   cropSeasonId: string,
   query: ProductionRequestDiffQueryType,

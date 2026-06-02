@@ -13,6 +13,7 @@ import type {
   ProductionRequestDiffQueryType,
   FieldHistoryQueryType,
   FieldHistoryResType,
+  MilestoneChangesResType,
 } from "@/schemaValidatation/tracking";
 
 const T = API_ENDPOINTS.TRACKING;
@@ -64,5 +65,10 @@ export const trackingService = {
   ) =>
     api.get<ProductionRequestDiffResType>(
       `${T.REQUEST_DIFF(cropSeasonId)}?${queryString.stringify(query, { skipEmptyString: true, skipNull: true })}`,
+    ),
+
+  getMilestoneChanges: (cropSeasonId: string, milestoneId: string) =>
+    api.get<MilestoneChangesResType>(
+      T.MILESTONE_CHANGES(cropSeasonId, milestoneId),
     ),
 };

@@ -256,29 +256,41 @@ function ActionRequiredCard({
 }: ActionRequiredCardProps) {
   const styles = ACTION_TONE[tone];
   return (
-    <Card className={cn("border-l-4", styles.ring)}>
-      <CardContent className="flex items-start gap-4 p-4">
-        <div
-          className={cn(
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
-            styles.iconBg,
-          )}
-          aria-hidden
-        >
-          <Icon className={cn("h-5 w-5", styles.iconColor)} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="font-semibold leading-tight">{title}</p>
-          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-        </div>
-        <Button asChild variant="outline" size="sm">
-          <Link to={href} aria-label={actionLabel}>
+    <Link
+      to={href}
+      aria-label={actionLabel}
+      className="group block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <Card
+        className={cn(
+          "border-l-4 transition hover:border-foreground/30 hover:bg-muted/40 hover:shadow-sm",
+          styles.ring,
+        )}
+      >
+        <CardContent className="flex items-start gap-4 p-4">
+          <div
+            className={cn(
+              "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
+              styles.iconBg,
+            )}
+            aria-hidden
+          >
+            <Icon className={cn("h-5 w-5", styles.iconColor)} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold leading-tight">{title}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+          </div>
+          <span
+            className="mt-0.5 inline-flex items-center gap-1 whitespace-nowrap text-sm font-medium text-muted-foreground transition group-hover:text-foreground"
+            aria-hidden
+          >
             Xem
-            <ArrowRight className="ml-1 h-4 w-4" aria-hidden />
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
+            <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+          </span>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
 

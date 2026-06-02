@@ -119,6 +119,10 @@ export const TrackingLogItemSchema = z.object({
   // Lets FE roll task rows under their milestone card without N+1 lookups.
   entityParentId: z.string().uuid().nullable().optional(),
   entityParentLabel: z.string().nullable().optional(),
+  // Readable label for old/new value when the field references another entity
+  // (e.g. assignedTo → user full name). Set by B11 only; null elsewhere.
+  oldValueLabel: z.string().nullable().optional(),
+  newValueLabel: z.string().nullable().optional(),
 });
 export type TrackingLogItemType = z.infer<typeof TrackingLogItemSchema>;
 
@@ -264,6 +268,24 @@ export type FieldHistoryQueryType = z.infer<typeof FieldHistoryQuerySchema>;
 
 export const FieldHistoryResSchema = TrackingLogListResSchema;
 export type FieldHistoryResType = TrackingLogListResType;
+
+// ─── B11 — Milestone changes (detail dialog) ───────────────────────────────
+export const MilestoneChangeGroupSchema = z.object({
+  entityId: z.string().uuid(),
+  label: z.string().nullable(),
+  logs: z.array(TrackingLogItemSchema),
+});
+export type MilestoneChangeGroupType = z.infer<
+  typeof MilestoneChangeGroupSchema
+>;
+
+export const MilestoneChangesResSchema = z.object({
+  milestone: MilestoneChangeGroupSchema,
+  tasks: z.array(MilestoneChangeGroupSchema),
+});
+export type MilestoneChangesResType = z.infer<
+  typeof MilestoneChangesResSchema
+>;
 
 export const IotSwapBodySchema = z.object({
   oldAssignmentId: z.string().uuid("ID thiết bị cũ không hợp lệ"),

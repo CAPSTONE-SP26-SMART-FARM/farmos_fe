@@ -22,7 +22,10 @@ import {
   OPEN_KIT_REQUEST_STATUSES,
   TERMINAL_KIT_REQUEST_STATUSES,
 } from "@/constants/iotKitRequestLabel";
-import { useMyKitRequests } from "@/queries/useIotKitRequest";
+import {
+  useMyKitRequestCount,
+  useMyKitRequests,
+} from "@/queries/useIotKitRequest";
 import type {
   KitRequestResType,
   KitRequestStatusType,
@@ -82,58 +85,44 @@ export default function OwnerIotKitRequestsPage() {
     );
   };
 
-  // BE chấp nhận 1 `status` filter; trên FE 2 tab ánh xạ tới tập hợp status.
-  // → Fetch tối đa 100 không kèm status, filter + paginate client-side để
-  // tab "Đã xử lý" không bị các request đang mở chiếm hết slot page đầu.
-  // Owner thường có < 100 request → đủ; cần aggregate endpoint nếu vượt.
-  const query = useMyKitRequests({ page: 1, limit: 100 });
+  // Phân trang server-side thật: BE nhận `statuses` (tập status của tab) nên
+  // mỗi trang lấy đúng PAGE_LIMIT record, không gom toàn bộ về client.
+  const query = useMyKitRequests({
+    page,
+    limit: PAGE_LIMIT,
+    statuses: TAB_STATUSES[tab],
+  });
   const data = query.data?.data;
   const items = data?.data ?? [];
+  const meta = data?.meta;
 
-  const tabItems = useMemo(
-    () => items.filter((r) => TAB_STATUSES[tab].includes(r.status)),
-    [items, tab],
-  );
+  // KPI đếm chính xác qua meta.totalItems (mỗi thẻ 1 query nhẹ limit:1),
+  // không phụ thuộc trang đang xem.
+  const startOfMonthISO = useMemo(() => {
+    const d = new Date();
+    d.setDate(1);
+    d.setHours(0, 0, 0, 0);
+    return d.toISOString();
+  }, []);
 
-  const totalPages = Math.max(1, Math.ceil(tabItems.length / PAGE_LIMIT));
-  const safePage = Math.min(page, totalPages);
-  const pagedItems = useMemo(
-    () => tabItems.slice((safePage - 1) * PAGE_LIMIT, safePage * PAGE_LIMIT),
-    [tabItems, safePage],
-  );
+  const needsResponseCount = useMyKitRequestCount({
+    direction: "ADMIN_TO_OWNER",
+    type: "INSTALL_SCHEDULE",
+    status: "pending",
+  });
+  const inProgressCount = useMyKitRequestCount({ status: "in_progress" });
+  const scheduledCount = useMyKitRequestCount({ status: "accepted" });
+  const closedThisMonthCount = useMyKitRequestCount({
+    statuses: TERMINAL_KIT_REQUEST_STATUSES,
+    updatedFrom: startOfMonthISO,
+  });
 
-  // KPI tính trên page hiện tại — đủ với pagination size 10 vì owner không
-  // có quá nhiều request. Có thể đổi sang aggregate endpoint khi cần.
-  const kpi = useMemo(() => {
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
-
-    let needsResponse = 0;
-    let inProgress = 0;
-    let scheduled = 0;
-    let closedThisMonth = 0;
-
-    for (const r of items) {
-      if (
-        r.direction === "ADMIN_TO_OWNER" &&
-        r.type === "INSTALL_SCHEDULE" &&
-        r.status === "pending"
-      ) {
-        needsResponse += 1;
-      }
-      if (r.status === "in_progress") inProgress += 1;
-      if (r.status === "accepted") scheduled += 1;
-      if (
-        TERMINAL_KIT_REQUEST_STATUSES.includes(r.status) &&
-        new Date(r.updatedAt) >= startOfMonth
-      ) {
-        closedThisMonth += 1;
-      }
-    }
-
-    return { needsResponse, inProgress, scheduled, closedThisMonth };
-  }, [items]);
+  const kpi = {
+    needsResponse: needsResponseCount.data ?? 0,
+    inProgress: inProgressCount.data ?? 0,
+    scheduled: scheduledCount.data ?? 0,
+    closedThisMonth: closedThisMonthCount.data ?? 0,
+  };
 
   const columns: ColumnDef<KitRequestResType>[] = useMemo(() => {
     const base: ColumnDef<KitRequestResType>[] = [
@@ -302,7 +291,7 @@ export default function OwnerIotKitRequestsPage() {
               message="Không tải được danh sách yêu cầu hỗ trợ."
               onRetry={() => query.refetch()}
             />
-          ) : !query.isLoading && tabItems.length === 0 ? (
+          ) : !query.isLoading && items.length === 0 ? (
             <EmptyState
               icon={Wrench}
               title="Chưa có yêu cầu nào"
@@ -315,7 +304,7 @@ export default function OwnerIotKitRequestsPage() {
           ) : (
             <DataTable
               columns={columns}
-              data={pagedItems}
+              data={items}
               isLoading={query.isLoading}
               actions={[
                 {
@@ -330,10 +319,10 @@ export default function OwnerIotKitRequestsPage() {
             />
           )}
 
-          {totalPages > 1 && (
+          {meta && meta.totalPages > 1 && (
             <ProPagination
-              totalPages={totalPages}
-              currentPage={safePage}
+              totalPages={meta.totalPages}
+              currentPage={meta.page}
               buildHref={buildHref}
             />
           )}
