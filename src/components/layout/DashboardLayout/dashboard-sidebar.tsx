@@ -79,7 +79,7 @@ export function DashboardSidebar(props: DashboardSidebarProps) {
     >
       <SidebarHeader>
         <Link
-          to="/"
+          to={`/dashboard/${user.role}`}
           className="flex items-center gap-2 overflow-hidden font-bold text-xl"
           aria-label="FarmOS"
         >

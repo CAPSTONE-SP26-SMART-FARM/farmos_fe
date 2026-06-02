@@ -14,39 +14,32 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { OtpInput } from "@/components/common/OtpInput";
 import { TypeOfVerificationCode } from "@/constants/auth";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
 import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
+import { useOtpFlow } from "@/hooks/useOtpFlow";
 import {
   isApiErrorResponse,
   isApiErrorUnprocessableEntityResponse,
 } from "@/lib/utils";
 import { useRegister } from "@/queries";
-import { useSendOtp } from "@/queries/useAuth";
 import {
   RegisterBodySchema,
   type RegisterBodyType,
 } from "@/schemaValidatation/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
-
-import { Loader2 } from "lucide-react";
+import { AlertCircle, Clock, Loader2, MailCheck, ShieldCheck } from "lucide-react";
 
 import { Controller, useForm } from "react-hook-form";
 import { Link } from "react-router";
-
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 
-const ROLE_OPTIONS = [
-  { value: "doctor", label: "Bác sĩ" },
-  { value: "owner", label: "Chủ trang trại" },
-];
+const formatClock = (seconds: number) => {
+  const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
+  const ss = String(seconds % 60).padStart(2, "0");
+  return `${mm}:${ss}`;
+};
 
 function RegisterPage() {
   const form = useForm<RegisterBodyType>({
@@ -58,16 +51,63 @@ function RegisterPage() {
       confirmPassword: "",
       phone: "",
       code: "",
+      role: "owner",
     },
   });
 
   useClearServerFieldErrors(form);
 
   const { isPending, mutateAsync: register } = useRegister();
+  const { sentEmail, hasSent, isExpired, resend, validity, send, isSending } =
+    useOtpFlow(TypeOfVerificationCode.REGISTER);
 
-  const { isPending: isCodePending, mutate: sendCode } = useSendOtp();
+  const emailValue = form.watch("email");
+  const emailChangedAfterSend =
+    hasSent && sentEmail !== null && emailValue !== sentEmail;
+
+  const handleSendCode = async () => {
+    const emailValid = await form.trigger("email");
+    if (!emailValid) {
+      toast.error("Mời nhập email hợp lệ trước khi gửi mã");
+      return;
+    }
+    form.clearErrors(["code", "email"]);
+    form.setValue("code", "");
+    try {
+      await send(form.getValues("email"));
+      toast.success("Đã gửi mã OTP đến email của bạn");
+    } catch (error) {
+      if (isApiErrorResponse(error)) {
+        toast.error(
+          error.response?.data.message || "Gửi mã thất bại, mời thử lại",
+        );
+      }
+    }
+  };
 
   const handleSubmit = async (data: RegisterBodyType) => {
+    if (!hasSent) {
+      form.setError("code", {
+        type: "manual",
+        message: "Mời bấm \"Gửi mã\" để nhận OTP qua email",
+      });
+      return;
+    }
+    if (emailChangedAfterSend) {
+      form.setError("code", {
+        type: "manual",
+        message: "Email đã thay đổi, mời gửi lại mã cho email mới",
+      });
+      return;
+    }
+    if (isExpired) {
+      form.setError("code", {
+        type: "manual",
+        message: "Mã OTP đã hết hạn, mời bấm \"Gửi lại\"",
+      });
+      return;
+    }
+
     try {
       await register(data);
     } catch (error) {
@@ -85,21 +125,26 @@ function RegisterPage() {
     }
   };
 
-  const handleSendCode = async () => {
-    try {
-      sendCode({
-        email: form.getValues("email"),
-        type: TypeOfVerificationCode.REGISTER,
-      });
-    } catch {
-      // if(isApiErrorResponse(error) && error.response?.status === 400 && error.response.data.message === "") {
-      // }
-    }
-  };
+  const resendDisabled = isSending || resend.isCountingDown;
+  const resendLabel = isSending
+    ? "Đang gửi..."
+    : resend.isCountingDown
+      ? `Gửi lại sau ${resend.seconds}s`
+      : hasSent
+        ? "Gửi lại"
+        : "Gửi mã";
+
+  const otpHelperText = (() => {
+    if (emailChangedAfterSend)
+      return `Email đã đổi. Mã trước đó gửi cho ${sentEmail}`;
+    if (hasSent) return `Mã đã gửi đến ${sentEmail}`;
+    if (emailValue) return `Mã 6 chữ số sẽ được gửi đến ${emailValue}`;
+    return "Nhập email phía trên, sau đó bấm \"Gửi mã\"";
+  })();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-xl">
+      <Card className="w-full max-w-2xl">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">
             Đăng ký FarmOS
@@ -108,232 +153,241 @@ function RegisterPage() {
             Tạo tài khoản để bắt đầu.
           </CardDescription>
         </CardHeader>
-        <form onSubmit={form.handleSubmit(handleSubmit)}>
-          <CardContent>
-            <CardContent className="space-y-4 px-2">
-              <FieldGroup>
-                <div className="grid grid-cols-2 gap-3 space-y-1">
-                  <Controller
-                    name="email"
-                    control={form.control}
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="form-rhf-demo-title">
-                          Email
-                        </FieldLabel>
-                        <Input
-                          {...field}
-                          id="form-rhf-demo-title"
-                          aria-invalid={fieldState.invalid}
-                          placeholder="vd@gmail.com"
-                          autoComplete="off"
-                        />
-                        {fieldState.invalid && (
-                          <FieldError errors={[fieldState.error]} />
-                        )}
-                      </Field>
-                    )}
-                  />
-                  <Controller
-                    name="fullName"
-                    control={form.control}
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="form-rhf-demo-title">
-                          Họ và tên
-                        </FieldLabel>
-                        <Input
-                          {...field}
-                          id="form-rhf-demo-title"
-                          aria-invalid={fieldState.invalid}
-                          placeholder="Nguyễn Văn A"
-                          autoComplete="off"
-                        />
-                        {fieldState.invalid && (
-                          <FieldError errors={[fieldState.error]} />
-                        )}
-                      </Field>
-                    )}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <Controller
-                    name="phone"
-                    control={form.control}
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="form-rhf-demo-title">
-                          Số điện thoại
-                        </FieldLabel>
-                        <Input
-                          {...field}
-                          aria-invalid={fieldState.invalid}
-                          placeholder="0123456789"
-                          id="form-rhf-demo-title"
-                          autoComplete="off"
-                          value={field.value ?? ""}
-                        />
-                        {fieldState.invalid && (
-                          <FieldError errors={[fieldState.error]} />
-                        )}
-                      </Field>
-                    )}
-                  />
-                  <div className="p-0 m-0 flex gap-1.5 items-end">
-                    <Controller
-                      name="code"
-                      control={form.control}
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel htmlFor="form-rhf-demo-description">
-                            Mã OTP
-                          </FieldLabel>
-                          <Input
-                            {...field}
-                            id="form-rhf-demo-description"
-                          />
 
-                          {fieldState.invalid && (
-                            <FieldError errors={[fieldState.error]} />
-                          )}
-                        </Field>
+        <form onSubmit={form.handleSubmit(handleSubmit)}>
+          <CardContent className="space-y-6 px-6">
+            <FieldGroup>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Controller
+                  name="email"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="register-email">Email</FieldLabel>
+                      <Input
+                        {...field}
+                        id="register-email"
+                        aria-invalid={fieldState.invalid}
+                        placeholder="vd: ten@example.com"
+                        autoComplete="email"
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
                       )}
+                    </Field>
+                  )}
+                />
+                <Controller
+                  name="fullName"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="register-fullname">
+                        Họ và tên
+                      </FieldLabel>
+                      <Input
+                        {...field}
+                        id="register-fullname"
+                        aria-invalid={fieldState.invalid}
+                        placeholder="Nguyễn Văn A"
+                        autoComplete="name"
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+              </div>
+
+              <Controller
+                name="phone"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="register-phone">
+                      Số điện thoại
+                    </FieldLabel>
+                    <Input
+                      {...field}
+                      id="register-phone"
+                      aria-invalid={fieldState.invalid}
+                      placeholder="vd: 0123456789"
+                      autoComplete="tel"
+                      value={field.value ?? ""}
                     />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Controller
+                  name="password"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="register-password">
+                        Mật khẩu
+                      </FieldLabel>
+                      <Input
+                        {...field}
+                        id="register-password"
+                        type="password"
+                        autoComplete="new-password"
+                        placeholder="Ít nhất 6 ký tự"
+                        aria-invalid={fieldState.invalid}
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+                <Controller
+                  name="confirmPassword"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="register-confirm-password">
+                        Xác nhận mật khẩu
+                      </FieldLabel>
+                      <Input
+                        {...field}
+                        id="register-confirm-password"
+                        type="password"
+                        autoComplete="new-password"
+                        placeholder="Nhập lại mật khẩu"
+                        aria-invalid={fieldState.invalid}
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+              </div>
+            </FieldGroup>
+
+            <Controller
+              name="code"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <div
+                  className="rounded-lg border bg-muted/30 p-4 space-y-3"
+                  data-invalid={fieldState.invalid}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <ShieldCheck className="h-5 w-5 text-primary shrink-0" />
+                      <div className="min-w-0">
+                        <div className="font-medium text-sm">
+                          Xác minh email
+                        </div>
+                        <p
+                          className={
+                            emailChangedAfterSend
+                              ? "text-xs text-amber-600 dark:text-amber-500 mt-0.5 truncate"
+                              : "text-xs text-muted-foreground mt-0.5 truncate"
+                          }
+                          title={otpHelperText}
+                        >
+                          {otpHelperText}
+                        </p>
+                      </div>
+                    </div>
                     <Button
                       type="button"
                       variant="outline"
-                      className=""
+                      size="sm"
                       onClick={handleSendCode}
-                      disabled={isCodePending}
+                      disabled={resendDisabled}
+                      aria-label="Gửi mã OTP đến email"
                     >
-                      Gửi mã
+                      {isSending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <MailCheck className="h-4 w-4" />
+                      )}
+                      {resendLabel}
                     </Button>
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <Controller
-                    name="password"
-                    control={form.control}
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="form-rhf-demo-description">
-                          Mật khẩu
-                        </FieldLabel>
-                        <Input
-                          {...field}
-                          id="form-rhf-demo-description"
-                          type={"password"}
-                        />
-                        {fieldState.invalid && (
-                          <FieldError errors={[fieldState.error]} />
-                        )}
-                      </Field>
-                    )}
-                  />
 
-                  <Controller
-                    name="confirmPassword"
-                    control={form.control}
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="form-rhf-demo-description">
-                          Xác nhận mật khẩu
-                        </FieldLabel>
-                        <Input
-                          {...field}
-                          id="form-rhf-demo-description"
-                          type={"password"}
-                        />
-                        {fieldState.invalid && (
-                          <FieldError errors={[fieldState.error]} />
-                        )}
-                      </Field>
-                    )}
-                  />
+                  <div className="flex justify-center sm:justify-start">
+                    <OtpInput
+                      value={field.value ?? ""}
+                      onChange={(v) => {
+                        field.onChange(v);
+                        if (fieldState.error) form.clearErrors("code");
+                      }}
+                      invalid={fieldState.invalid || isExpired}
+                      disabled={isPending}
+                    />
+                  </div>
+
+                  {hasSent && !emailChangedAfterSend && (
+                    <div
+                      className={
+                        isExpired
+                          ? "flex items-center gap-1.5 text-xs text-destructive"
+                          : "flex items-center gap-1.5 text-xs text-muted-foreground"
+                      }
+                      aria-live="polite"
+                    >
+                      <Clock className="h-3.5 w-3.5" />
+                      {isExpired
+                        ? "Mã đã hết hạn, mời bấm \"Gửi lại\" để nhận mã mới"
+                        : `Mã có hiệu lực trong ${formatClock(validity.seconds)}`}
+                    </div>
+                  )}
+
+                  {emailChangedAfterSend && (
+                    <div
+                      className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-500"
+                      aria-live="polite"
+                    >
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      Email đã thay đổi, mời bấm "Gửi lại" để nhận mã cho email mới.
+                    </div>
+                  )}
+
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <Controller
-                    name="role"
-                    control={form.control}
-                    render={({ field, fieldState }) => (
-                      <Field
-                        data-invalid={fieldState.invalid}
-                        className="capitalize"
-                      >
-                        <FieldLabel htmlFor="form-rhf-select-language">
-                          Vai trò
-                        </FieldLabel>
-                        <Select
-                          name={field.name}
-                          value={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <SelectTrigger
-                            id="form-rhf-select-language"
-                            aria-invalid={fieldState.invalid}
-                            className="capitalize"
-                          >
-                            <SelectValue
-                              placeholder="Chọn vai trò"
-                              className="capitalize"
-                            />
-                          </SelectTrigger>
-                          <SelectContent
-                            position="item-aligned"
-                            className="capitalize"
-                          >
-                            {ROLE_OPTIONS.map((role) => (
-                              <SelectItem
-                                key={role.value}
-                                value={role.value}
-                                className="capitalize"
-                              >
-                                {role.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {fieldState.invalid && (
-                          <FieldError errors={[fieldState.error]} />
-                        )}
-                      </Field>
-                    )}
-                  />
-                </div>
-              </FieldGroup>
-            </CardContent>
-            <CardFooter className="flex flex-col gap-4 mt-6 px-2">
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isPending}
-              >
-                {isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Đang đăng ký...
-                  </>
-                ) : (
-                  "Đăng ký"
-                )}
-              </Button>
-              <div className="text-sm text-center text-muted-foreground">
-                Đã có tài khoản?{" "}
-                <Link
-                  to="/login"
-                  className="text-primary underline-offset-4 hover:underline"
-                >
-                  Đăng nhập
-                </Link>
-              </div>
-              <Link
-                to="/forgot-password"
-                className="text-sm text-center text-muted-foreground hover:underline"
-              >
-                Quên mật khẩu?
-              </Link>
-            </CardFooter>
+              )}
+            />
           </CardContent>
+
+          <CardFooter className="flex flex-col gap-3 mt-6 px-6">
+            <Button type="submit" className="w-full" disabled={isPending}>
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Đang đăng ký...
+                </>
+              ) : (
+                "Đăng ký"
+              )}
+            </Button>
+            <div className="text-sm text-center text-muted-foreground">
+              Đã có tài khoản?{" "}
+              <Link
+                to="/login"
+                className="text-primary underline-offset-4 hover:underline"
+              >
+                Đăng nhập
+              </Link>
+            </div>
+            <Link
+              to="/forgot-password"
+              className="text-sm text-center text-muted-foreground hover:underline"
+            >
+              Quên mật khẩu?
+            </Link>
+          </CardFooter>
         </form>
       </Card>
     </div>
