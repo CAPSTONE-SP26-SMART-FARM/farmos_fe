@@ -49,7 +49,7 @@ import { AdminKitRequestFilterBar } from "./_components/AdminKitRequestFilterBar
  * Để aggregate chính xác hơn, sau này thêm endpoint stats riêng.
  */
 
-const PAGE_LIMIT = 15;
+const PAGE_LIMIT = 10;
 
 export default function AdminIotKitRequestsPage() {
   const [searchParams, setSearchParams] = useSearchParams();

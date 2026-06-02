@@ -665,6 +665,8 @@ export const API_ENDPOINTS = {
       `/crop-seasons/${cropSeasonId}/production-requests/${requestId}/snapshot`,
     REQUEST_DIFF: (cropSeasonId: string) =>
       `/crop-seasons/${cropSeasonId}/production-requests/diff`,
+    MILESTONE_CHANGES: (cropSeasonId: string, milestoneId: string) =>
+      `/crop-seasons/${cropSeasonId}/tracking/milestones/${milestoneId}/changes`,
   },
   DASHBOARD: {
     ADMIN: "/dashboard/admin",
@@ -704,7 +706,9 @@ export const API_ENDPOINTS = {
     // ── INSTALL_SCHEDULE — auto-create khi owner approve season ───────
     // Admin chỉ có 2 hành động bulk theo request scope:
     SCHEDULE_INSTALL: (id: string) =>
-      `/iot-kit-request/admin/${id}/schedule-install`, // admin: chốt giờ ghé lắp (optional)
+      `/iot-kit-request/admin/${id}/schedule-install`, // owner+admin: chốt giờ ghé lắp (optional)
+    // Owner/admin tạo lịch lắp cho 1 milestone (giai đoạn kế) sau khi thu hồi xong
+    CREATE_INSTALL_SCHEDULE: "/iot-kit-request/install-schedule",
     START_INSTALL: (id: string) =>
       `/iot-kit-request/admin/${id}/start-install`, // admin: purchase → install
     COMPLETE_INSTALL: (id: string) =>
@@ -720,6 +724,10 @@ export const API_ENDPOINTS = {
       `/iot-kit-request/admin/${id}/schedule-swap`, // admin: chọn replacement + scheduledAt
     COMPLETE_SWAP: (id: string) =>
       `/iot-kit-request/admin/${id}/complete-swap`, // admin: thay xong tại hiện trường
+    START_SWAP_INSTALL: (id: string) =>
+      `/iot-kit-request/admin/${id}/start-swap-install`, // admin: lắp board mới (purchase → install)
+    COMPLETE_SWAP_INSTALL: (id: string) =>
+      `/iot-kit-request/admin/${id}/complete-swap-install`, // admin: hoàn tất lắp (install → inactive) + resolve
 
     // ── RECOVERY workflow — admin thu hồi kit sau khi sub expired ────────
     SCHEDULE_RECOVERY: (id: string) =>
@@ -1777,6 +1785,8 @@ export const QUERY_KEYS = {
       ["tracking", cropSeasonId, "field-history", query] as const,
     requestSnapshot: (cropSeasonId: string, requestId: string) =>
       ["tracking", cropSeasonId, "snapshot", requestId] as const,
+    milestoneChanges: (cropSeasonId: string, milestoneId: string) =>
+      ["tracking", cropSeasonId, "milestone-changes", milestoneId] as const,
   },
   dashboard: {
     admin: (period: string) => ["dashboard", "admin", period] as const,

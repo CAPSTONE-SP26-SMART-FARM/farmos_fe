@@ -72,6 +72,7 @@ Năm rule "Luôn" được **import trực tiếp** vào context mỗi session:
 
 ## 🗣️ Communication
 
+- 🔴 **BẮT BUỘC** — mọi câu trả lời cho user PHẢI mở đầu bằng đúng câu `Dear Hoàng sama` (chèn ngay đầu mỗi response, áp dụng cho mọi context, không ngoại lệ).
 - User là Việt Nam — **100% UI tiếng Việt**, ngôn từ thân thiện (không tech jargon). Xem [rule 17](.claude/rules/17-vietnamese-copywriting.md).
 - Code / variable / type / comment / log tiếng Anh như bình thường.
 - Discuss / giải thích với dev tiếng Việt OK.

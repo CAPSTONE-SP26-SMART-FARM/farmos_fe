@@ -51,6 +51,7 @@ import { cn } from "@/lib/utils";
 import { MILESTONE_STATUS_META } from "@/pages/ManagerPage/CropSeasons/components/helpers";
 import IotCoverageWidget from "@/components/common/IotCoverageWidget";
 import { ReportFaultButton } from "@/components/iot-kit-request/ReportFaultButton";
+import { ScheduleNextInstallButton } from "@/components/iot-kit-request/ScheduleNextInstallButton";
 
 const ALERTS_PAGE_SIZE = 5;
 
@@ -329,9 +330,16 @@ function KitReadingsBody({ assignmentId }: { assignmentId: string }) {
 function KitReadingsSection({
   assignment,
   showDeviceHeading,
+  milestoneStatus,
 }: {
   assignment: MilestoneAssignmentDetailResType;
   showDeviceHeading: boolean;
+  /**
+   * Truyền xuống `DeviceStatusBadge` để override label theo bối cảnh milestone:
+   * board `inactive` + milestone `in_progress` → "Chờ kích hoạt" (đã lắp, chờ
+   * nhận data đầu tiên) thay vì "Chờ giai đoạn bắt đầu".
+   */
+  milestoneStatus?: string;
 }) {
   const [open, setOpen] = useState(false);
   const assignmentId = assignment.assignmentId;
@@ -388,7 +396,7 @@ function KitReadingsSection({
             </span>
           </div>
           <div className="shrink-0">
-            <DeviceStatusBadge status={device.status} />
+            <DeviceStatusBadge status={device.status} milestoneStatus={milestoneStatus} />
           </div>
           <ChevronDown
             className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
@@ -481,6 +489,11 @@ export function MilestoneSensorSection({ milestone }: { milestone: ProductionMil
 
   const totalLabel = pageMeta?.totalItems ?? fullAssignments.length;
   const hasMultipleKits = totalLabel > 1;
+  // Có device `purchase` (đã cấp, chưa lắp) → cho owner lên lịch lắp giai đoạn
+  // này. BE chặn nếu recovery giai đoạn trước chưa xong (toast lỗi rõ ràng).
+  const hasPurchaseDevice = fullAssignments.some(
+    (a) => a.device?.status === "purchase",
+  );
 
   return (
     <div className="space-y-3">
@@ -503,6 +516,14 @@ export function MilestoneSensorSection({ milestone }: { milestone: ProductionMil
           )}
         </div>
         <Separator className="flex-1" />
+        {hasPurchaseDevice && (
+          <ScheduleNextInstallButton
+            milestoneId={milestone.id}
+            label="Lên lịch lắp giai đoạn này"
+            variant="outline"
+            className="shrink-0"
+          />
+        )}
       </div>
 
       <div className="flex items-center gap-2">
@@ -547,6 +568,7 @@ export function MilestoneSensorSection({ milestone }: { milestone: ProductionMil
               key={a.assignmentId}
               assignment={a}
               showDeviceHeading
+              milestoneStatus={milestone.status}
             />
           ))}
         </div>

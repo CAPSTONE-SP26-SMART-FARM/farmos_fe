@@ -102,8 +102,10 @@ const DEVICES_PER_PAGE = 8;
 
 export default function OwnerIotTrackingPage({
   embedded = false,
+  hideSubscriptionDevices = false,
 }: {
   embedded?: boolean;
+  hideSubscriptionDevices?: boolean;
 } = {}) {
   const navigate = useNavigate();
   const trackingQuery = useMyIotTracking();
@@ -247,38 +249,40 @@ export default function OwnerIotTrackingPage({
       </Card>
 
       {/* Subscription devices — devices admin gán trực tiếp qua hạn mức gói */}
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0">
-              <CardTitle className="flex items-center gap-2">
-                <Wifi className="h-5 w-5 text-primary" />
-                Thiết bị từ gói đăng ký ({subscriptionDevices.length})
-              </CardTitle>
-              <CardDescription>
-                Các thiết bị nằm trong hạn mức của gói đăng ký. Khi gói hết
-                hạn, các thiết bị này sẽ bị thu hồi.
-              </CardDescription>
+      {!hideSubscriptionDevices && (
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <CardTitle className="flex items-center gap-2">
+                  <Wifi className="h-5 w-5 text-primary" />
+                  Thiết bị từ gói đăng ký ({subscriptionDevices.length})
+                </CardTitle>
+                <CardDescription>
+                  Các thiết bị nằm trong hạn mức của gói đăng ký. Khi gói hết
+                  hạn, các thiết bị này sẽ bị thu hồi.
+                </CardDescription>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="shrink-0"
+                onClick={() => navigate("/dashboard/owner/iot")}
+              >
+                Xem tất cả thiết bị
+                <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+              </Button>
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              className="shrink-0"
-              onClick={() => navigate("/dashboard/owner/iot?tab=devices")}
-            >
-              Xem tất cả thiết bị
-              <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <DeviceTable
-            devices={subscriptionDevices}
-            emptyText="Chưa có thiết bị nào được cấp qua gói đăng ký."
-            onRowClick={(d) => setSelectedDeviceId(d.id)}
-          />
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent>
+            <DeviceTable
+              devices={subscriptionDevices}
+              emptyText="Chưa có thiết bị nào được cấp qua gói đăng ký."
+              onRowClick={(d) => setSelectedDeviceId(d.id)}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Kit orders */}
       <Card>

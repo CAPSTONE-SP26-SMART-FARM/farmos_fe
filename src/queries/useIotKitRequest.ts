@@ -12,7 +12,9 @@ import type {
   CompleteInstallBodyType,
   CompleteRecoveryBodyType,
   CompleteSwapBodyType,
+  CompleteSwapInstallBodyType,
   CreateFaultReportBodyType,
+  CreateInstallScheduleBodyType,
   KitInstallBulkResType,
   ListKitRequestsQueryType,
   ListReplacementDevicesQueryType,
@@ -22,6 +24,7 @@ import type {
   ScheduleInstallBodyType,
   ScheduleRecoveryBodyType,
   ScheduleSwapBodyType,
+  StartInstallBodyType,
 } from "@/schemaValidatation/iotKitRequest";
 import { iotKitRequestService } from "@/services/iotKitRequestService";
 
@@ -84,6 +87,46 @@ export const useKitRequestDetail = (id: string, enabled = true) =>
     queryKey: QUERY_KEYS.iotKitRequests.detail(id),
     queryFn: () => iotKitRequestService.detail(id),
     enabled: !!id && enabled,
+  });
+
+// ── KPI counts ────────────────────────────────────────────────────────
+// Đếm chính xác qua `meta.totalItems` (fetch limit:1) thay vì gom toàn bộ
+// record về client. Mỗi KPI là 1 query nhẹ, scope role giữ nguyên vì dùng
+// đúng endpoint listMy / listManager.
+
+type KitRequestCountFilter = Pick<
+  ListKitRequestsQueryType,
+  "direction" | "type" | "status" | "statuses" | "updatedFrom"
+>;
+
+const COUNT_PAGING = { page: 1, limit: 1 } as const;
+
+export const useMyKitRequestCount = (
+  filter: KitRequestCountFilter,
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: QUERY_KEYS.iotKitRequests.listMy({ ...filter, ...COUNT_PAGING }),
+    queryFn: () => iotKitRequestService.listMy({ ...filter, ...COUNT_PAGING }),
+    enabled,
+    placeholderData: keepPreviousData,
+    select: (res) => res.data.meta.totalItems,
+  });
+
+export const useManagerKitRequestCount = (
+  filter: KitRequestCountFilter,
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: QUERY_KEYS.iotKitRequests.listManager({
+      ...filter,
+      ...COUNT_PAGING,
+    }),
+    queryFn: () =>
+      iotKitRequestService.listManager({ ...filter, ...COUNT_PAGING }),
+    enabled,
+    placeholderData: keepPreviousData,
+    select: (res) => res.data.meta.totalItems,
   });
 
 // ============================================================
@@ -196,8 +239,9 @@ const toastBulkResult = (
 export const useStartInstall = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => iotKitRequestService.startInstall(id),
-    onSuccess: async (res, id) => {
+    mutationFn: ({ id, body }: { id: string; body: StartInstallBodyType }) =>
+      iotKitRequestService.startInstall(id, body),
+    onSuccess: async (res, { id }) => {
       await qc.invalidateQueries({ queryKey: KIT_KEY });
       await qc.invalidateQueries({
         queryKey: QUERY_KEYS.iotKitRequests.detail(id),
@@ -271,6 +315,49 @@ export const useCompleteSwap = () => {
   });
 };
 
+export const useStartSwapInstall = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id }: { id: string }) =>
+      iotKitRequestService.startSwapInstall(id),
+    onSuccess: async (_res, { id }) => {
+      await qc.invalidateQueries({ queryKey: KIT_KEY });
+      await qc.invalidateQueries({
+        queryKey: QUERY_KEYS.iotKitRequests.detail(id),
+      });
+      for (const key of DEVICE_KEYS_ALL) {
+        await qc.invalidateQueries({ queryKey: key });
+      }
+      toast.success("Đã bắt đầu lắp thiết bị mới");
+    },
+    onError: (error) => onMutationError(error, "Bắt đầu lắp thất bại"),
+  });
+};
+
+export const useCompleteSwapInstall = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      body,
+    }: {
+      id: string;
+      body: CompleteSwapInstallBodyType;
+    }) => iotKitRequestService.completeSwapInstall(id, body),
+    onSuccess: async (_res, { id }) => {
+      await qc.invalidateQueries({ queryKey: KIT_KEY });
+      await qc.invalidateQueries({
+        queryKey: QUERY_KEYS.iotKitRequests.detail(id),
+      });
+      for (const key of DEVICE_KEYS_ALL) {
+        await qc.invalidateQueries({ queryKey: key });
+      }
+      toast.success("Đã hoàn tất lắp thiết bị mới");
+    },
+    onError: (error) => onMutationError(error, "Hoàn tất lắp thất bại"),
+  });
+};
+
 // ── RECOVERY workflow — admin ─────────────────────────────────────────
 
 export const useScheduleRecovery = () => {
@@ -329,6 +416,23 @@ export const useScheduleInstall = () => {
       toast.success("Đã lên lịch lắp đặt");
     },
     onError: (error) => onMutationError(error, "Lên lịch lắp đặt thất bại"),
+  });
+};
+
+// Owner/admin tạo lịch lắp cho 1 milestone (giai đoạn kế) sau khi thu hồi xong
+export const useCreateInstallSchedule = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: CreateInstallScheduleBodyType) =>
+      iotKitRequestService.createInstallSchedule(body),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: KIT_KEY });
+      for (const key of DEVICE_KEYS_ALL) {
+        await qc.invalidateQueries({ queryKey: key });
+      }
+      toast.success("Đã tạo lịch lắp đặt giai đoạn kế");
+    },
+    onError: (error) => onMutationError(error, "Tạo lịch lắp đặt thất bại"),
   });
 };
 

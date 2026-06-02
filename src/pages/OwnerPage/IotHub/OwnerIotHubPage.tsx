@@ -1,44 +1,28 @@
 import { useState } from "react";
-import { Navigate, useSearchParams } from "react-router";
-
-export function RedirectToIotDevicesTab() {
-  return <Navigate to="/dashboard/owner/iot?tab=devices" replace />;
-}
-
-export function RedirectToIotOverviewTab() {
-  return <Navigate to="/dashboard/owner/iot?tab=overview" replace />;
-}
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Navigate, Link } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Cpu, ShoppingBag, Activity } from "lucide-react";
-import { Link } from "react-router";
+import { ShoppingBag } from "lucide-react";
 import type { IotDeviceResType } from "@/schemaValidatation/iotDevice";
 import IotDeviceList from "../IotDevices/IotDeviceList";
 import IotDeviceDetail from "../IotDevices/IotDeviceDetail";
 import OwnerIotTrackingPage from "../IotKits/OwnerIotTrackingPage";
 
+// Legacy routes /iot-devices và /iot-tracking gộp về trang IoT thống nhất.
+export function RedirectToIotDevicesTab() {
+  return <Navigate to="/dashboard/owner/iot" replace />;
+}
+
+export function RedirectToIotOverviewTab() {
+  return <Navigate to="/dashboard/owner/iot" replace />;
+}
+
 type DevicesNav = { level: 1 } | { level: 2; device: IotDeviceResType };
 
-const VALID_TABS = ["overview", "devices"] as const;
-type TabKey = (typeof VALID_TABS)[number];
-
 export default function OwnerIotHubPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const rawTab = searchParams.get("tab");
-  const tab: TabKey = (VALID_TABS as readonly string[]).includes(rawTab ?? "")
-    ? (rawTab as TabKey)
-    : "overview";
-
   const [devicesNav, setDevicesNav] = useState<DevicesNav>({ level: 1 });
 
-  const handleTabChange = (next: string) => {
-    const params = new URLSearchParams(searchParams);
-    params.set("tab", next);
-    setSearchParams(params, { replace: true });
-  };
-
-  if (tab === "devices" && devicesNav.level === 2) {
+  if (devicesNav.level === 2) {
     return (
       <IotDeviceDetail
         deviceId={devicesNav.device.id}
@@ -72,31 +56,16 @@ export default function OwnerIotHubPage() {
         </div>
       </section>
 
-      <Tabs value={tab} onValueChange={handleTabChange} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview" className="gap-1.5">
-            <Activity className="h-4 w-4" />
-            Hạn mức & Đơn kit
-          </TabsTrigger>
-          <TabsTrigger value="devices" className="gap-1.5">
-            <Cpu className="h-4 w-4" />
-            Thiết bị IoT
-          </TabsTrigger>
-        </TabsList>
+      {/* Card trên cùng: hạn mức kit từ gói đăng ký + các đơn mua thêm */}
+      <OwnerIotTrackingPage embedded hideSubscriptionDevices />
 
-        <TabsContent value="overview" className="mt-0">
-          <OwnerIotTrackingPage embedded />
-        </TabsContent>
-
-        <TabsContent value="devices" className="mt-0 space-y-4">
-          <IotDeviceList
-            farmId=""
-            farmName=""
-            actor="owner"
-            onDetail={(device) => setDevicesNav({ level: 2, device })}
-          />
-        </TabsContent>
-      </Tabs>
+      {/* Danh sách toàn bộ thiết bị IoT */}
+      <IotDeviceList
+        farmId=""
+        farmName=""
+        actor="owner"
+        onDetail={(device) => setDevicesNav({ level: 2, device })}
+      />
     </div>
   );
 }

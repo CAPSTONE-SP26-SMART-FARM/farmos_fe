@@ -6,7 +6,9 @@ import type {
   CompleteInstallBodyType,
   CompleteRecoveryBodyType,
   CompleteSwapBodyType,
+  CompleteSwapInstallBodyType,
   CreateFaultReportBodyType,
+  CreateInstallScheduleBodyType,
   KitInstallBulkResType,
   KitRequestDetailResType,
   KitRequestResType,
@@ -20,6 +22,7 @@ import type {
   ScheduleInstallBodyType,
   ScheduleRecoveryBodyType,
   ScheduleSwapBodyType,
+  StartInstallBodyType,
 } from "@/schemaValidatation/iotKitRequest";
 
 /**
@@ -64,10 +67,17 @@ export const iotKitRequestService = {
       body,
     ),
 
-  startInstall: (id: string) =>
-    api.post<KitInstallBulkResType, Record<string, never>>(
+  // Owner/admin tạo lịch lắp cho 1 milestone (giai đoạn kế) sau khi thu hồi xong
+  createInstallSchedule: (body: CreateInstallScheduleBodyType) =>
+    api.post<KitRequestResType, CreateInstallScheduleBodyType>(
+      EP.CREATE_INSTALL_SCHEDULE,
+      body,
+    ),
+
+  startInstall: (id: string, body: StartInstallBodyType) =>
+    api.post<KitInstallBulkResType, StartInstallBodyType>(
       EP.START_INSTALL(id),
-      {},
+      body,
     ),
 
   completeInstall: (id: string, body: CompleteInstallBodyType) =>
@@ -98,6 +108,18 @@ export const iotKitRequestService = {
   completeSwap: (id: string, body: CompleteSwapBodyType) =>
     api.post<KitRequestResType, CompleteSwapBodyType>(
       EP.COMPLETE_SWAP(id),
+      body,
+    ),
+
+  startSwapInstall: (id: string) =>
+    api.post<KitRequestResType, Record<string, never>>(
+      EP.START_SWAP_INSTALL(id),
+      {},
+    ),
+
+  completeSwapInstall: (id: string, body: CompleteSwapInstallBodyType) =>
+    api.post<KitRequestResType, CompleteSwapInstallBodyType>(
+      EP.COMPLETE_SWAP_INSTALL(id),
       body,
     ),
 

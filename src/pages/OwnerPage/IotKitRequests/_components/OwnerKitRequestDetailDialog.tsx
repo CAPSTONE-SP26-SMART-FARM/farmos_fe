@@ -11,6 +11,7 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { KitRequestDetailMeta } from "@/components/iot-kit-request/KitRequestDetailMeta";
+import { ScheduleNextInstallButton } from "@/components/iot-kit-request/ScheduleNextInstallButton";
 import {
   useKitRequestDetail,
   useReportOverdue,
@@ -66,6 +67,14 @@ export function OwnerKitRequestDetailDialog({ requestId, onClose }: Props) {
     new Date(request.slaDeadline).getTime() < Date.now() &&
     !overdueReportedAt;
 
+  // Recovery kết thúc milestone đã thu hồi xong → owner tự lên lịch lắp giai
+  // đoạn kế (BE resolve M+1 từ metadata.milestoneId của recovery này).
+  const showCreateNextInstall =
+    request?.type === "RECOVERY_SCHEDULE" &&
+    request?.status === "resolved" &&
+    request?.metadata?.recoveryReason === "milestone_transition" &&
+    !!request?.metadata?.milestoneId;
+
   return (
     <>
       <Dialog
@@ -118,8 +127,15 @@ export function OwnerKitRequestDetailDialog({ requestId, onClose }: Props) {
             )}
           </div>
 
-          {request && (isMyOpenFault || canReportOverdue) && (
+          {request && (isMyOpenFault || canReportOverdue || showCreateNextInstall) && (
             <DialogFooter className="shrink-0 border-t px-6 py-4 sm:justify-end">
+              {showCreateNextInstall && request.metadata?.milestoneId && (
+                <ScheduleNextInstallButton
+                  afterMilestoneId={request.metadata.milestoneId}
+                  size="default"
+                  onSuccess={onClose}
+                />
+              )}
               {canReportOverdue && (
                 <Button
                   type="button"
