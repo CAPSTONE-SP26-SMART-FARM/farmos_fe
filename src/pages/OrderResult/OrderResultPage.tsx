@@ -238,7 +238,7 @@ function OrderResultPage({ variant }: OrderResultPageProps) {
                 variant="outline"
                 asChild
               >
-                <Link to="/">
+                <Link to="/dashboard/owner">
                   <Home className="mr-2 h-4 w-4" />
                   Trang chủ
                 </Link>

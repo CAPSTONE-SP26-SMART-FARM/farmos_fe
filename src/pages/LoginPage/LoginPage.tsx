@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router";
 import { useLogin } from "@/queries/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/common/PasswordInput";
 import {
   Card,
   CardContent,
@@ -106,10 +107,11 @@ function LoginPage() {
                     <FieldLabel htmlFor="form-rhf-demo-description">
                       Mật khẩu
                     </FieldLabel>
-                    <Input
+                    <PasswordInput
                       {...field}
                       id="form-rhf-demo-description"
-                      type={"password"}
+                      aria-invalid={fieldState.invalid}
+                      autoComplete="current-password"
                     />
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />

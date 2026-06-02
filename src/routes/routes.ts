@@ -52,7 +52,7 @@ import AdminDoctorPayoutsPage from "@/pages/AdminPage/DoctorPayouts/AdminDoctorP
 import AdminUsersPage from "@/pages/AdminPage/Users/AdminUsersPage";
 import DoctorPage from "@/pages/DoctorPage/DoctorPage";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage/ForgotPasswordPage";
-import HomePage from "@/pages/HomePage/HomePage";
+import RootRedirect from "./RootRedirect";
 import IncidentReportingHelpPage from "@/pages/Help/IncidentReportingHelpPage";
 import DoctorGuideHelpPage from "@/pages/Help/DoctorGuideHelpPage";
 import LoginPage from "@/pages/LoginPage/LoginPage";
@@ -111,7 +111,7 @@ const routes: AppRoutes = [
   {
     layout: MainLayout,
     children: [
-      { path: "/", component: HomePage },
+      { path: "/", component: RootRedirect },
       { path: "/order-success", component: OrderSuccessPage },
       { path: "/order-fail", component: OrderFailPage },
       {
