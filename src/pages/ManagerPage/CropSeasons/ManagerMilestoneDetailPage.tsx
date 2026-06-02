@@ -58,6 +58,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Cpu,
+  Info,
   MoreVertical,
   Pencil,
   Plus,
@@ -66,7 +67,15 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Link,
   Navigate,
@@ -741,19 +750,29 @@ const MilestoneEditDialog = ({
 // Step 0 — IoT Config (tần suất đo + loại dữ liệu)
 // ============================================================
 
-const IotConfigSection = ({
-  cropSeasonId,
-  milestoneId,
-  isPlanning,
-  hasDevice,
-}: {
+export interface IotConfigSectionHandle {
+  /** Lưu cấu hình hiện tại (nếu cần) rồi trả `true` nếu OK chuyển step. */
+  saveAndAdvance: () => Promise<boolean>;
+}
+
+interface IotConfigSectionProps {
   cropSeasonId: string;
   milestoneId: string;
   /** Sau giai đoạn lập kế hoạch thì khóa không cho đổi danh sách loại đo. */
   isPlanning: boolean;
-  /** Đã có ít nhất 1 device gán vào mốc — hiển thị hint giải thích rebind. */
+  /** Đã có ít nhất 1 device gán vào mốc — gate hiển thị block sensor types. */
   hasDevice: boolean;
-}) => {
+  /** Gọi sau khi user bấm nút save trong section → parent tự chuyển step. */
+  onSavedAdvance?: () => void;
+}
+
+const IotConfigSection = forwardRef<
+  IotConfigSectionHandle,
+  IotConfigSectionProps
+>(function IotConfigSection(
+  { cropSeasonId, milestoneId, isPlanning, hasDevice, onSavedAdvance },
+  ref,
+) {
   const configQuery = useManagerIotConfig(cropSeasonId, milestoneId);
   const config = configQuery.data?.data;
   const isConfigured = config?.isConfigured ?? false;
@@ -772,17 +791,51 @@ const IotConfigSection = ({
 
   const noSensorSelected = sensorTypes.length === 0;
 
-  const handleSubmit = () => {
+  const sameAsServer =
+    isConfigured &&
+    !!config &&
+    config.sensorTypes.length === sensorTypes.length &&
+    config.sensorTypes.every((t) => sensorTypes.includes(t));
+
+  const persistConfig = async (): Promise<boolean> => {
     if (noSensorSelected) {
       toast.error("Chọn ít nhất một loại chỉ báo cần theo dõi.");
-      return;
+      return false;
     }
     const body: IotConfigPutBodyType = {
       readingIntervalSeconds: FIXED_IOT_READING_INTERVAL_SECONDS,
       sensorTypes,
     };
-    updateMutation.mutate(body);
+    try {
+      await updateMutation.mutateAsync(body);
+      return true;
+    } catch {
+      return false;
+    }
   };
+
+  const handleSubmit = async () => {
+    const ok = await persistConfig();
+    if (ok) onSavedAdvance?.();
+  };
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      saveAndAdvance: async () => {
+        // Chưa gán device → coi như không có gì để lưu (UI cũng ẩn block sensor).
+        // Parent sẽ skip thẳng step 1 (locked) sang step 2.
+        if (!hasDevice) return true;
+        // Đã configured và user không sửa gì — skip API call, advance luôn.
+        if (sameAsServer) return true;
+        return persistConfig();
+      },
+    }),
+    // persistConfig closure over sensorTypes/config — re-create handle khi
+    // các giá trị này thay đổi để parent luôn gọi đúng version mới nhất.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [hasDevice, sameAsServer, sensorTypes, config, updateMutation],
+  );
 
   const toggleSensor = (t: IotConfigSensorType, checked: boolean) => {
     setSensorTypes((prev) =>
@@ -796,6 +849,27 @@ const IotConfigSection = ({
 
   if (configQuery.isLoading) {
     return <Skeleton className="h-56 w-full" />;
+  }
+
+  // Chưa gán thiết bị → ẩn block sensor types + nút lưu. Hiển thị placeholder
+  // hướng dẫn user gán thiết bị trước.
+  if (!hasDevice) {
+    return (
+      <div className="max-w-2xl">
+        <div className="flex items-start gap-3 rounded-lg border border-dashed bg-muted/30 px-4 py-4 text-sm text-muted-foreground">
+          <Info className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">
+              Hãy gán thiết bị trước
+            </p>
+            <p className="text-xs">
+              Sau khi gán ít nhất một thiết bị, bạn sẽ chọn được loại chỉ báo
+              cần theo dõi cho mốc này.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const saveBlocked = updateMutation.isPending || noSensorSelected;
@@ -851,12 +925,10 @@ const IotConfigSection = ({
             khi gán thiết bị.
           </p>
         )}
-        {hasDevice && (
-          <p className="text-xs text-muted-foreground italic">
-            Thay đổi loại chỉ báo chỉ áp dụng cho thiết bị gán sau khi lưu.
-            Thiết bị đã gán giữ nguyên cảm biến hiện có.
-          </p>
-        )}
+        <p className="text-xs text-muted-foreground italic">
+          Thay đổi loại chỉ báo chỉ áp dụng cho thiết bị gán sau khi lưu. Thiết
+          bị đã gán giữ nguyên cảm biến hiện có.
+        </p>
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 border-t">
@@ -886,7 +958,7 @@ const IotConfigSection = ({
       </div>
     </div>
   );
-};
+});
 
 // ============================================================
 // Step 1 — IoT Device Bulk Assignment
@@ -1645,11 +1717,17 @@ function ZoneBulkThresholdRow({
       maxError = "Giá trị nhỏ nhất không được lớn hơn giá trị lớn nhất";
     }
     if (strictMin !== undefined && strictMax !== undefined) {
+      // Min phải nằm trong [strictMin, strictMax] — cả 2 chiều.
       if (minN !== undefined && minN < strictMin) {
-        minError = `Phải lớn hơn hoặc bằng ${strictMin}`;
+        minError = `Phải lớn hơn hoặc bằng ${strictMin}${unitSuffix}`;
+      } else if (minN !== undefined && minN > strictMax) {
+        minError = `Phải nhỏ hơn hoặc bằng ${strictMax}${unitSuffix}`;
       }
+      // Max phải nằm trong [strictMin, strictMax].
       if (maxN !== undefined && maxN > strictMax) {
-        maxError = `Phải nhỏ hơn hoặc bằng ${strictMax}`;
+        maxError = `Phải nhỏ hơn hoặc bằng ${strictMax}${unitSuffix}`;
+      } else if (maxN !== undefined && maxN < strictMin) {
+        maxError = `Phải lớn hơn hoặc bằng ${strictMin}${unitSuffix}`;
       }
     }
   }
@@ -1737,12 +1815,20 @@ function ZoneBulkThresholdPanel({
   zoneTitle,
   zoneAssignments,
   allowedSensorTypes,
+  registerSaver,
+  unregisterSaver,
 }: {
   milestoneId: string;
   zoneId: string;
   zoneTitle: string;
   zoneAssignments: MilestoneAssignmentDetailResType[];
   allowedSensorTypes?: readonly string[];
+  /**
+   * Cho phép parent (section) trigger save panel này khi user bấm "Bước tiếp".
+   * Trả `true` = OK (đã lưu hoặc không cần lưu), `false` = block advance.
+   */
+  registerSaver?: (zoneId: string, fn: () => Promise<boolean>) => void;
+  unregisterSaver?: (zoneId: string) => void;
 }) {
   const qc = useQueryClient();
   const assignmentIds = useMemo(
@@ -1847,12 +1933,16 @@ function ZoneBulkThresholdPanel({
         sensorType,
       );
       const { strictMin, strictMax } = aggregateStrictDeviceBounds(bindings);
-      if (
-        strictMin !== undefined &&
-        strictMax !== undefined &&
-        (minN < strictMin || maxN > strictMax)
-      ) {
-        return false;
+      if (strictMin !== undefined && strictMax !== undefined) {
+        // Cả min và max phải nằm trong [strictMin, strictMax].
+        if (
+          minN < strictMin ||
+          minN > strictMax ||
+          maxN < strictMin ||
+          maxN > strictMax
+        ) {
+          return false;
+        }
       }
     }
     return true;
@@ -1875,6 +1965,10 @@ function ZoneBulkThresholdPanel({
     assignmentIds,
     milestoneId,
   };
+
+  // True khi mutation được trigger từ auto-save (Bước tiếp) — skip toast success
+  // để parent có thể aggregate / silent. False khi user bấm "Lưu tất cả ngưỡng".
+  const silentSaveRef = useRef(false);
 
   const bulkSaveMutation = useMutation({
     mutationFn: async () => {
@@ -1921,7 +2015,10 @@ function ZoneBulkThresholdPanel({
         if (
           strictMin !== undefined &&
           strictMax !== undefined &&
-          (minN < strictMin || maxN > strictMax)
+          (minN < strictMin ||
+            minN > strictMax ||
+            maxN < strictMin ||
+            maxN > strictMax)
         ) {
           throw new Error(
             `Giá trị phải nằm trong khoảng cho phép của thiết bị (${strictMin} – ${strictMax}).`,
@@ -1942,7 +2039,9 @@ function ZoneBulkThresholdPanel({
       }
     },
     onSuccess: () => {
-      toast.success("Đã lưu tất cả ngưỡng trong khu vực");
+      if (!silentSaveRef.current) {
+        toast.success("Đã lưu tất cả ngưỡng trong khu vực");
+      }
       const { assignmentIds: ids, milestoneId: msId } = bulkSnapRef.current;
       for (const id of ids) {
         qc.invalidateQueries({
@@ -1965,6 +2064,48 @@ function ZoneBulkThresholdPanel({
       );
     },
   });
+
+  // Mutable ref giữ closure lưu mới nhất. Cho phép register 1 lần stable wrapper
+  // delegate về current closure → effect đăng ký không cần re-run mỗi render.
+  const saveFnRef = useRef<() => Promise<boolean>>(async () => true);
+  saveFnRef.current = async () => {
+    if (loading || hasError) return true; // panel chưa sẵn sàng → không block
+    if (editableTypes.length === 0) return true; // zone không có chỉ báo chỉnh được
+    if (!allDraftsValid) {
+      toast.error(`Khu vực "${zoneTitle}" có ngưỡng chưa hợp lệ.`);
+      return false;
+    }
+    // Dirty check: skip PUT nếu mọi chỉ báo đã là source "milestone" và draft
+    // trùng giá trị hiện tại trên BE → không spam mutation khi user chỉ
+    // ghé qua step để xem rồi advance.
+    const dirty = editableTypes.some((st) => {
+      const merged = mergedByType[st]!;
+      const d = drafts[st];
+      if (!d) return false;
+      if (merged.source !== "milestone") return true;
+      const t = merged.threshold;
+      if (!t) return true;
+      const minN = parseLocaleNumberInput(d.minStr);
+      const maxN = parseLocaleNumberInput(d.maxStr);
+      return t.optimalMin !== minN || t.optimalMax !== maxN;
+    });
+    if (!dirty) return true;
+    silentSaveRef.current = true;
+    try {
+      await bulkSaveMutation.mutateAsync();
+      return true;
+    } catch {
+      return false;
+    } finally {
+      silentSaveRef.current = false;
+    }
+  };
+
+  useEffect(() => {
+    if (!registerSaver) return;
+    registerSaver(zoneId, () => saveFnRef.current());
+    return () => unregisterSaver?.(zoneId);
+  }, [zoneId, registerSaver, unregisterSaver]);
 
   return (
     <div className="rounded-lg border bg-card/50 p-4 space-y-4">
@@ -2036,16 +2177,55 @@ function ZoneBulkThresholdPanel({
   );
 }
 
-const MilestoneSensorThresholdStepSection = ({
-  milestoneId,
-  allowedSensorTypes,
-}: {
+export interface ThresholdSectionHandle {
+  /** Lưu ngưỡng cho mọi zone panel đang render, trả `true` nếu chuyển step được. */
+  saveAndAdvance: () => Promise<boolean>;
+}
+
+interface MilestoneSensorThresholdStepSectionProps {
   milestoneId: string;
   /** sensorTypes hiện chọn ở Step 0 — dùng để filter row form ngưỡng. */
   allowedSensorTypes?: readonly string[];
-}) => {
+}
+
+const MilestoneSensorThresholdStepSection = forwardRef<
+  ThresholdSectionHandle,
+  MilestoneSensorThresholdStepSectionProps
+>(function MilestoneSensorThresholdStepSection(
+  { milestoneId, allowedSensorTypes },
+  ref,
+) {
   const assignmentsQuery = useManagerListMilestoneAssignments(milestoneId);
   const assignments = assignmentsQuery.data?.data.data ?? [];
+
+  // Registry các zone panel — mỗi panel tự đăng ký saver qua callback.
+  // Section iterate tuần tự khi user bấm "Bước tiếp" ở step 1.
+  const saversRef = useRef<Map<string, () => Promise<boolean>>>(new Map());
+  const registerSaver = useCallback(
+    (id: string, fn: () => Promise<boolean>) => {
+      saversRef.current.set(id, fn);
+    },
+    [],
+  );
+  const unregisterSaver = useCallback((id: string) => {
+    saversRef.current.delete(id);
+  }, []);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      saveAndAdvance: async () => {
+        const fns = Array.from(saversRef.current.values());
+        if (fns.length === 0) return true; // chưa render panel nào → không có gì để lưu
+        for (const fn of fns) {
+          const ok = await fn();
+          if (!ok) return false;
+        }
+        return true;
+      },
+    }),
+    [],
+  );
 
   if (assignmentsQuery.isLoading) {
     return <Skeleton className="h-32 w-full" />;
@@ -2088,11 +2268,13 @@ const MilestoneSensorThresholdStepSection = ({
           zoneTitle={`Khu vực ${idx + 1}`}
           zoneAssignments={zoneAssignments}
           allowedSensorTypes={allowedSensorTypes}
+          registerSaver={registerSaver}
+          unregisterSaver={unregisterSaver}
         />
       ))}
     </div>
   );
-};
+});
 
 // ============================================================
 // Step 3 — Tasks & Farmer Assignment
@@ -2221,6 +2403,16 @@ const ManagerMilestoneDetailPage = () => {
   const iotConfig = iotConfigQuery.data?.data ?? null;
   const isIotConfigured = iotConfig?.isConfigured ?? false;
 
+  // Ref tới IotConfigSection — nút "Bước tiếp" ở step 0 dùng để trigger
+  // save trước khi chuyển step.
+  const iotConfigRef = useRef<IotConfigSectionHandle | null>(null);
+  const [advancingStep0, setAdvancingStep0] = useState(false);
+
+  // Ref tới ThresholdSection — nút "Bước tiếp" ở step 1 trigger save mọi zone
+  // panel rồi mới chuyển sang step 2.
+  const thresholdRef = useRef<ThresholdSectionHandle | null>(null);
+  const [advancingStep1, setAdvancingStep1] = useState(false);
+
   // IoT assignments — list ALL active devices on this milestone (post bulk-assign).
   const assignmentsQuery = useManagerListMilestoneAssignments(msId, !!msId);
   const assignments = assignmentsQuery.data?.data.data ?? [];
@@ -2307,6 +2499,34 @@ const ManagerMilestoneDetailPage = () => {
   const handleSkipIotEntirely = () => {
     if (hasDevice) return;
     setCurrentStep(2);
+  };
+
+  // Step 0 → "Bước tiếp": chưa gán device thì skip-to-step-2 (step 1 locked);
+  // đã gán thì auto-save iot-config (qua imperative handle) rồi mới advance.
+  const handleAdvanceFromStep0 = async () => {
+    if (!hasDevice) {
+      setCurrentStep(2);
+      return;
+    }
+    setAdvancingStep0(true);
+    try {
+      const ok = await iotConfigRef.current?.saveAndAdvance();
+      if (ok) setCurrentStep(1);
+    } finally {
+      setAdvancingStep0(false);
+    }
+  };
+
+  // Step 1 → "Bước tiếp": auto-save ngưỡng cho mọi zone (silent, mỗi panel tự
+  // skip nếu chưa dirty) rồi mới chuyển step 2.
+  const handleAdvanceFromStep1 = async () => {
+    setAdvancingStep1(true);
+    try {
+      const ok = await thresholdRef.current?.saveAndAdvance();
+      if (ok) setCurrentStep(2);
+    } finally {
+      setAdvancingStep1(false);
+    }
   };
 
   const handleFinish = () => {
@@ -2525,11 +2745,11 @@ const ManagerMilestoneDetailPage = () => {
       {/* Stepper */}
       <Card>
         <CardContent className="pt-4 pb-4">
+          {/* Stepper display-only — user chuyển step bằng nút "Bước trước"/"Bước tiếp". */}
           <MilestoneStepper
             steps={STEP_DEFS}
             currentStep={currentStep}
             stepStatuses={stepStatuses}
-            onStepClick={handleStepClick}
           />
         </CardContent>
       </Card>
@@ -2605,14 +2825,25 @@ const ManagerMilestoneDetailPage = () => {
                   Bước trước
                 </Button>
               )}
-              {currentStep < 2 && (
+              {currentStep === 0 && (
                 <Button
                   variant="outline"
                   size="sm"
-                  disabled={stepStatuses[currentStep + 1] === "locked"}
-                  onClick={() => handleStepClick(currentStep + 1)}
+                  disabled={advancingStep0}
+                  onClick={handleAdvanceFromStep0}
                 >
-                  Bước tiếp
+                  {advancingStep0 ? "Đang lưu..." : "Bước tiếp"}
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              )}
+              {currentStep === 1 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={advancingStep1}
+                  onClick={handleAdvanceFromStep1}
+                >
+                  {advancingStep1 ? "Đang lưu..." : "Bước tiếp"}
                   <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               )}
@@ -2639,10 +2870,12 @@ const ManagerMilestoneDetailPage = () => {
               <IotBulkAssignSection milestoneId={msId} />
               <div className="border-t pt-6">
                 <IotConfigSection
+                  ref={iotConfigRef}
                   cropSeasonId={csId}
                   milestoneId={msId}
                   isPlanning={isPlanningCropSeason}
                   hasDevice={hasDevice}
+                  onSavedAdvance={() => setCurrentStep(1)}
                 />
               </div>
             </div>
@@ -2651,6 +2884,7 @@ const ManagerMilestoneDetailPage = () => {
           {/* Step 1: Cảm biến — ngưỡng theo khu vực, lưu đồng loạt */}
           {currentStep === 1 && (
             <MilestoneSensorThresholdStepSection
+              ref={thresholdRef}
               milestoneId={msId}
               allowedSensorTypes={iotConfig?.sensorTypes}
             />

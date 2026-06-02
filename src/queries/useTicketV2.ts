@@ -15,6 +15,15 @@ export const useTicketV2List = (query: ListTicketsV2QueryType) =>
     placeholderData: keepPreviousData,
   });
 
+// GET /me/ticket-balance — per-category balance (subscription + purchased).
+// Manager: BE auto-resolves owner via active zone-manager assignment.
+export const useMyTicketBalance = (enabled = true) =>
+  useQuery({
+    queryKey: QUERY_KEYS.ticketsV2.myBalance,
+    queryFn: () => ticketV2Service.myBalance(),
+    enabled,
+  });
+
 // POST /tickets/:id/cancel — Owner/Manager huỷ ticket khi status=OPEN.
 // Sau khi cancel: list pages (legacy `useOwnerTicketList`/`useManagerTicketList`)
 // và detail full payload (`useTicketFull`/`useAdminTicketFull`) cần refresh

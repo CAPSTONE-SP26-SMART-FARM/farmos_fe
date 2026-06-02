@@ -9,6 +9,7 @@ import { useManagerTicketList } from "@/queries/useTicket";
 import { useTicketV2List } from "@/queries/useTicketV2";
 import type { TicketIncidentResType } from "@/schemaValidatation/ticket";
 import type { CropSeasonType } from "@/types/cropSeason";
+import { IncidentTicketQuotaPanel } from "./IncidentTicketQuotaPanel";
 
 const SEVERITY_LABEL: Record<string, string> = {
   low: "Thấp",
@@ -130,6 +131,8 @@ export function IncidentTab({
 
   return (
     <div className="space-y-4">
+      <IncidentTicketQuotaPanel />
+
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {tickets.length > 0 ? `${tickets.length} sự cố gần đây` : "Không có sự cố nào"}

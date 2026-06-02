@@ -506,6 +506,9 @@ export const API_ENDPOINTS = {
   TICKET_V2: {
     LIST: "/tickets",
     CANCEL: (id: string) => `/tickets/${id}/cancel`,
+    // BE: GET /me/ticket-balance — per-category balance (subscription + purchased).
+    // Manager → BE resolves ownerId from zone-manager assignment; orphan → [].
+    ME_BALANCE: "/me/ticket-balance",
     // ADMIN_CLAWBACK: gỡ khỏi web FE — xem docs/ticket-v2/ticket-v2.md (2026-05-09)
     ADMIN_REPORT_REVENUE: "/admin/reports/ticket-revenue",
     ADMIN_REPORT_DOCTOR_COMMISSION: "/admin/reports/doctor-commission",
@@ -1741,6 +1744,7 @@ export const QUERY_KEYS = {
     root: ["tickets-v2"] as const,
     list: (query?: Record<string, unknown>) =>
       ["tickets-v2", "list", ...(query !== undefined ? [query] : [])] as const,
+    myBalance: ["tickets-v2", "me", "balance"] as const,
   },
   seasonTemplates: {
     root: ["season-templates"] as const,
