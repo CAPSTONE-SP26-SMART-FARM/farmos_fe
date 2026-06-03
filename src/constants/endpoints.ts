@@ -478,6 +478,12 @@ export const API_ENDPOINTS = {
     // overlapping milestones. Use this for any UI under a crop-season scope.
     CROP_SEASON_IOT_COVERAGE: (cropSeasonId: string) =>
       `/crop-seasons/${cropSeasonId}/iot-coverage`,
+    // BE: GET /production-milestones/:id/iot-coverage?kitId=... (admin, owner, manager)
+    // Denominator = the milestone's crop season totalAreaSqm; numerator counts
+    // ONLY this milestone's active assignments (deduped per device). Use this for
+    // any UI scoped to a single milestone.
+    MILESTONE_IOT_COVERAGE: (milestoneId: string) =>
+      `/production-milestones/${milestoneId}/iot-coverage`,
   },
   // ── Ticket v2 ─────────────────────────────────────────────────────────
   TICKET_CATEGORIES: {
@@ -1579,6 +1585,12 @@ export const QUERY_KEYS = {
       "iot-coverage",
       "crop-season",
       cropSeasonId,
+      kitId ?? null,
+    ],
+    byMilestone: (milestoneId: string, kitId?: string | null) => [
+      "iot-coverage",
+      "milestone",
+      milestoneId,
       kitId ?? null,
     ],
   },

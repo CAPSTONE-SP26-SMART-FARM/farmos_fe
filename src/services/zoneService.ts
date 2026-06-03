@@ -21,6 +21,7 @@ import type { MessageResType } from "@/types/api";
 import type {
   CropSeasonIotCoverageResType,
   IotCoverageResType,
+  MilestoneIotCoverageResType,
 } from "@/schemaValidatation/iotCoverage";
 
 const ZONES = API_ENDPOINTS.ZONES;
@@ -71,6 +72,17 @@ export const zoneService = {
   getCropSeasonIotCoverage: (cropSeasonId: string, kitId?: string | null) =>
     api.get<CropSeasonIotCoverageResType>(
       `${ZONES.CROP_SEASON_IOT_COVERAGE(cropSeasonId)}?${queryString.stringify(
+        { kitId: kitId || undefined },
+        { skipEmptyString: true, skipNull: true },
+      )}`,
+    ),
+
+  // Milestone-scoped coverage — dùng cho widget nằm dưới ngữ cảnh 1 mốc cụ thể
+  // (wizard cấu hình mốc, pane theo dõi mốc). Tử số CHỈ tính thiết bị của riêng
+  // mốc này; mẫu số là cropSeason.totalAreaSqm của mốc.
+  getMilestoneIotCoverage: (milestoneId: string, kitId?: string | null) =>
+    api.get<MilestoneIotCoverageResType>(
+      `${ZONES.MILESTONE_IOT_COVERAGE(milestoneId)}?${queryString.stringify(
         { kitId: kitId || undefined },
         { skipEmptyString: true, skipNull: true },
       )}`,

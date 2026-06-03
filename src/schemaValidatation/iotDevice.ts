@@ -11,6 +11,7 @@ export const DeviceStatusSchema = z.enum([
   "active",
   "error",
   "revoked",
+  "lost",
 ]);
 
 export const IotDeviceTypeSchema = z.enum([

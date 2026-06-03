@@ -12,7 +12,6 @@ import type {
   CompleteInstallBodyType,
   CompleteRecoveryBodyType,
   CompleteSwapBodyType,
-  CompleteSwapInstallBodyType,
   CreateFaultReportBodyType,
   CreateInstallScheduleBodyType,
   KitInstallBulkResType,
@@ -291,18 +290,51 @@ export const useScheduleSwap = () => {
   });
 };
 
-export const useCompleteSwap = () => {
+/** Gộp complete-swap + start/complete-swap-install — UI chỉ một nút "đã thay xong". */
+async function finishSwapAtSite(
+  requestId: string,
+  body: CompleteSwapBodyType,
+  replacementStatus?: string,
+) {
+  if (!replacementStatus || replacementStatus === "available") {
+    await iotKitRequestService.completeSwap(requestId, body);
+    await iotKitRequestService.startSwapInstall(requestId);
+    await iotKitRequestService.completeSwapInstall(requestId, {
+      resolutionNote: body.resolutionNote ?? undefined,
+    });
+    return;
+  }
+  if (replacementStatus === "purchase") {
+    await iotKitRequestService.startSwapInstall(requestId);
+    await iotKitRequestService.completeSwapInstall(requestId, {
+      resolutionNote: body.resolutionNote ?? undefined,
+    });
+    return;
+  }
+  if (replacementStatus === "install") {
+    await iotKitRequestService.completeSwapInstall(requestId, {
+      resolutionNote: body.resolutionNote ?? undefined,
+    });
+  }
+}
+
+export const useFinishSwapAtSite = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, body }: { id: string; body: CompleteSwapBodyType }) =>
-      iotKitRequestService.completeSwap(id, body),
+    mutationFn: ({
+      id,
+      body,
+      replacementStatus,
+    }: {
+      id: string;
+      body: CompleteSwapBodyType;
+      replacementStatus?: string;
+    }) => finishSwapAtSite(id, body, replacementStatus),
     onSuccess: async (_res, { id }) => {
       await qc.invalidateQueries({ queryKey: KIT_KEY });
       await qc.invalidateQueries({
         queryKey: QUERY_KEYS.iotKitRequests.detail(id),
       });
-      // BE swap board (old → revoked/available, new → inactive) — invalidate
-      // device cache cả 3 role.
       for (const key of DEVICE_KEYS_ALL) {
         await qc.invalidateQueries({ queryKey: key });
       }
@@ -312,49 +344,6 @@ export const useCompleteSwap = () => {
       toast.success("Đã hoàn tất thay thiết bị");
     },
     onError: (error) => onMutationError(error, "Hoàn tất thay thất bại"),
-  });
-};
-
-export const useStartSwapInstall = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id }: { id: string }) =>
-      iotKitRequestService.startSwapInstall(id),
-    onSuccess: async (_res, { id }) => {
-      await qc.invalidateQueries({ queryKey: KIT_KEY });
-      await qc.invalidateQueries({
-        queryKey: QUERY_KEYS.iotKitRequests.detail(id),
-      });
-      for (const key of DEVICE_KEYS_ALL) {
-        await qc.invalidateQueries({ queryKey: key });
-      }
-      toast.success("Đã bắt đầu lắp thiết bị mới");
-    },
-    onError: (error) => onMutationError(error, "Bắt đầu lắp thất bại"),
-  });
-};
-
-export const useCompleteSwapInstall = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({
-      id,
-      body,
-    }: {
-      id: string;
-      body: CompleteSwapInstallBodyType;
-    }) => iotKitRequestService.completeSwapInstall(id, body),
-    onSuccess: async (_res, { id }) => {
-      await qc.invalidateQueries({ queryKey: KIT_KEY });
-      await qc.invalidateQueries({
-        queryKey: QUERY_KEYS.iotKitRequests.detail(id),
-      });
-      for (const key of DEVICE_KEYS_ALL) {
-        await qc.invalidateQueries({ queryKey: key });
-      }
-      toast.success("Đã hoàn tất lắp thiết bị mới");
-    },
-    onError: (error) => onMutationError(error, "Hoàn tất lắp thất bại"),
   });
 };
 

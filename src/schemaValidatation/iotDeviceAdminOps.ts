@@ -30,6 +30,7 @@ export const IotOverviewInventorySchema = z.object({
   active: z.number().int().nonnegative(),
   error: z.number().int().nonnegative(),
   revoked: z.number().int().nonnegative(),
+  lost: z.number().int().nonnegative().optional().default(0),
   total: z.number().int().nonnegative(),
 });
 

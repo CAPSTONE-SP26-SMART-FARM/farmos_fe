@@ -19,6 +19,7 @@ import {
   Cpu,
   LayoutDashboard,
   Loader2,
+  MapPinOff,
   Package,
   PackageCheck,
   PlugZap,
@@ -71,6 +72,7 @@ const VALID_STATUSES: DeviceStatusType[] = [
   "active",
   "error",
   "revoked",
+  "lost",
 ];
 
 function parseStatus(value: string | null): DeviceStatusType | "all" {
@@ -224,6 +226,13 @@ export default function AdminIotDevicesPage() {
         value: inv?.revoked ?? 0,
         icon: ShieldOff,
         tone: "default" as const,
+      },
+      {
+        key: "lost" as const,
+        label: "Bị mất",
+        value: inv?.lost ?? 0,
+        icon: MapPinOff,
+        tone: "danger" as const,
       },
     ],
     [inv],

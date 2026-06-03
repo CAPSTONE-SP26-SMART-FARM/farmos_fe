@@ -57,6 +57,23 @@ export const KitRequestDeviceSchema = z.object({
 export type KitRequestDeviceType = z.infer<typeof KitRequestDeviceSchema>;
 
 // ============================================================
+// Contact — thông tin liên hệ farm/owner/manager. BE chỉ trả khi admin xem
+// detail (mirror KitRequestContactSchema của BE). Field nullable: dữ liệu
+// thiếu → FE ẩn dòng tương ứng.
+// ============================================================
+
+export const KitRequestContactSchema = z.object({
+  farmName: z.string().nullable(),
+  farmAddress: z.string().nullable(),
+  ownerName: z.string().nullable(),
+  ownerPhone: z.string().nullable(),
+  zoneName: z.string().nullable(),
+  managerName: z.string().nullable(),
+  managerPhone: z.string().nullable(),
+});
+export type KitRequestContactType = z.infer<typeof KitRequestContactSchema>;
+
+// ============================================================
 // Base — single request
 // ============================================================
 
@@ -127,6 +144,9 @@ export const KitRequestDetailResSchema = KitRequestResSchema.extend({
   // True khi milestone của request là milestone cuối mùa vụ → ẩn nút lắp
   // giai đoạn kế. Optional để an toàn với response cache cũ chưa có field.
   isLastMilestone: z.boolean().optional(),
+  // Thông tin liên hệ — chỉ có khi admin xem (BE gate theo role). Owner/manager
+  // không nhận field này → khối liên hệ không render.
+  contact: KitRequestContactSchema.nullable().optional(),
 });
 export type KitRequestDetailResType = z.infer<typeof KitRequestDetailResSchema>;
 

@@ -36,6 +36,9 @@ export const ListAlertsQuerySchema = z.object({
   page: z.number().int().positive().optional(),
   limit: z.number().int().positive().optional(),
   zoneId: z.string().uuid().optional(),
+  // Scope alert về đúng 1 milestone — BE lọc theo cửa sổ thời gian của milestone,
+  // tránh hiện alert của milestone cũ cùng zone.
+  milestoneId: z.string().uuid().optional(),
 });
 
 // ── Paging meta (mirror BE PagingMetaSchema) ───────────────────────────

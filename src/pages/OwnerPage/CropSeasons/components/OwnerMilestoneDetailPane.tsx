@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { CalendarDays, ClipboardList, Cpu } from "lucide-react";
 import { useOwnerIotConfig } from "@/queries/useProductionMilestone";
+import IotCoverageWidget from "@/components/common/IotCoverageWidget";
 import { MilestoneIotConfigSummary } from "@/pages/ManagerPage/CropSeasons/components/MilestoneIotConfigSummary";
 import type { ProductionMilestoneResType } from "@/schemaValidatation/productionMilestone";
 import OwnerMilestoneTasksSection from "@/pages/OwnerPage/EmployeeTasks/OwnerMilestoneTasksSection";
@@ -31,10 +32,15 @@ function IotConfigTab({
   const cfgQuery = useOwnerIotConfig(cropSeasonId, milestoneId, true);
   const config = cfgQuery.data?.data;
   return (
-    <MilestoneIotConfigSummary
-      config={config}
-      isLoading={cfgQuery.isLoading}
-    />
+    <div className="space-y-4">
+      {/* Độ phủ IoT của RIÊNG mốc này — chỉ tính thiết bị đã gán cho mốc, đối
+          chiếu diện tích vùng trồng. */}
+      {milestoneId ? <IotCoverageWidget milestoneId={milestoneId} /> : null}
+      <MilestoneIotConfigSummary
+        config={config}
+        isLoading={cfgQuery.isLoading}
+      />
+    </div>
   );
 }
 

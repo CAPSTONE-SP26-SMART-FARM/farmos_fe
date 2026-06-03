@@ -52,3 +52,26 @@ export const CropSeasonIotCoverageResSchema = z.object({
 export type CropSeasonIotCoverageResType = z.infer<
   typeof CropSeasonIotCoverageResSchema
 >;
+
+// BE: GET /production-milestones/:id/iot-coverage?kitId=...
+// Mẫu số là `cropSeason.totalAreaSqm` của mốc; tử số CHỈ tính assignment active
+// của riêng mốc này (đã dedupe per device) → mỗi mốc có độ phủ riêng.
+export const MilestoneIotCoverageResSchema = z.object({
+  milestoneId: z.string().uuid(),
+  // null cho mốc legacy chưa gắn mùa vụ.
+  cropSeasonId: z.string().uuid().nullable(),
+  // null khi mốc chưa gắn mùa vụ.
+  zoneId: z.string().uuid().nullable(),
+  // null khi mùa vụ chưa cấu hình totalAreaSqm.
+  cropSeasonAreaSqm: z.number().nullable(),
+  kitId: z.string().uuid().nullable(),
+  kitCoverageSqm: z.number().nullable(),
+  requiredKitCount: z.number().int().nullable(),
+  currentActiveCoverage: z.number(),
+  activeDeviceCount: z.number().int(),
+  gapSqm: z.number().nullable(),
+  status: IotCoverageStatusEnum,
+});
+export type MilestoneIotCoverageResType = z.infer<
+  typeof MilestoneIotCoverageResSchema
+>;

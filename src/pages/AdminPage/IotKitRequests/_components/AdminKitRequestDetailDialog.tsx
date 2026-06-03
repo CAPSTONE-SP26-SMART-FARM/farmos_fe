@@ -12,7 +12,8 @@ import { useKitRequestDetail } from "@/queries/useIotKitRequest";
 import { useAuthStore } from "@/stores/authStore";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { AlertTriangle, CalendarClock } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
+import { ScheduledSummary } from "./kitActionPanelShared";
 import { InstallActionPanel } from "./InstallActionPanel";
 import { FaultActionPanel } from "./FaultActionPanel";
 import { RecoveryActionPanel } from "./RecoveryActionPanel";
@@ -119,7 +120,19 @@ export function AdminKitRequestDetailDialog({ requestId, onClose }: Props) {
               )}
 
               {isFault && hasSwapScheduled && request.scheduledAt && (
-                <ScheduledCallout scheduledAt={request.scheduledAt} />
+                <div className="mb-4">
+                  <ScheduledSummary
+                    title="Đã lên lịch thay thiết bị"
+                    scheduledAt={request.scheduledAt}
+                  />
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Sau khi thay xong tại hiện trường, dùng{" "}
+                    <span className="font-medium text-foreground">
+                      Xác nhận đã thay xong
+                    </span>{" "}
+                    ở phần bên dưới để chốt yêu cầu.
+                  </p>
+                </div>
               )}
 
               <KitRequestDetailMeta request={request} />
@@ -164,29 +177,5 @@ export function AdminKitRequestDetailDialog({ requestId, onClose }: Props) {
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function ScheduledCallout({ scheduledAt }: { scheduledAt: string }) {
-  const label = format(new Date(scheduledAt), "HH:mm 'ngày' dd/MM/yyyy", {
-    locale: vi,
-  });
-  return (
-    <div className="mb-4 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm dark:border-amber-900/50 dark:bg-amber-950/30">
-      <CalendarClock
-        aria-hidden="true"
-        className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400"
-      />
-      <div>
-        <p className="font-medium text-amber-900 dark:text-amber-200">
-          Đã lên lịch thay thiết bị
-        </p>
-        <p className="text-amber-800/80 dark:text-amber-200/80">
-          Hẹn vào {label}. Khi đã thay xong tại hiện trường, bấm
-          <span className="mx-1 font-semibold">Xác nhận đã thay xong</span>
-          để chốt.
-        </p>
-      </div>
-    </div>
   );
 }

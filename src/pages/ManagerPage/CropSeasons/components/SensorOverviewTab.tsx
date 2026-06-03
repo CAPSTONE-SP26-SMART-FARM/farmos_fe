@@ -234,13 +234,22 @@ function AlertDetailDialog({
   );
 }
 
-export function AlertsPanel({ isLoading, zoneId }: { isLoading: boolean; zoneId: string }) {
+export function AlertsPanel({
+  isLoading,
+  zoneId,
+  milestoneId,
+}: {
+  isLoading: boolean;
+  zoneId: string;
+  /** Khi có → chỉ hiện cảnh báo của milestone này (BE lọc theo cửa sổ thời gian). */
+  milestoneId?: string;
+}) {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<AlertResType | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const query = useListAlerts(
-    { page, limit: ALERTS_PAGE_SIZE, zoneId },
+    { page, limit: ALERTS_PAGE_SIZE, zoneId, milestoneId },
     !!zoneId,
   );
   const raw = query.data?.data ?? [];
@@ -739,6 +748,11 @@ export function SensorOverviewTab({
     .slice()
     .sort((a, b) => a.milestoneOrder - b.milestoneOrder);
 
+  // Chỉ scope panel cảnh báo theo milestone khi đúng 1 mốc đang chạy (phổ biến —
+  // các giai đoạn tuần tự). Nhiều mốc cùng chạy → giữ phạm vi zone như cũ.
+  const scopedMilestoneId =
+    milestones.length === 1 ? milestones[0].id : undefined;
+
   if (listQuery.isLoading) {
     return (
       <div className="flex gap-4">
@@ -796,6 +810,7 @@ export function SensorOverviewTab({
           <AlertsPanel
             isLoading={listQuery.isLoading}
             zoneId={cropSeason.zoneId}
+            milestoneId={scopedMilestoneId}
           />
         </div>
       </div>

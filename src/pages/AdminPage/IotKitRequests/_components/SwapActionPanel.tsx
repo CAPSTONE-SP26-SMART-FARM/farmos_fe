@@ -1,9 +1,11 @@
 import { useMemo } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
-import { startOfDay } from "date-fns";
+import { format, startOfDay } from "date-fns";
+import { vi } from "date-fns/locale";
 import {
   AlertTriangle,
+  ArrowDown,
   ArrowRight,
   CalendarClock,
   CheckCircle2,
@@ -26,12 +28,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/common/EmptyState";
 import DatePickerField from "@/components/common/DatePickerField";
 import { DEVICE_STATUS_LABEL_ADMIN } from "@/constants/iotDeviceDisplay";
+import { cn } from "@/lib/utils";
 import {
-  useCompleteSwap,
+  useFinishSwapAtSite,
   useReplacementDevices,
   useScheduleSwap,
 } from "@/queries/useIotKitRequest";
 import { useAdminIotDeviceDetail } from "@/queries/useIotDevice";
+import type { DeviceStatusType } from "@/schemaValidatation/iotDevice";
 import {
   completeSwapSchema,
   scheduleSwapSchema,
@@ -42,18 +46,15 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   KIT_TIME_SLOTS,
+  ScheduledSummary,
+  StepBadge,
   composeKitScheduleIso,
 } from "./kitActionPanelShared";
-import {
-  CompleteSwapInstallCard,
-  StartSwapInstallCard,
-} from "./SwapInstallCards";
 
 /**
- * Panel inline cho nhánh "thay thiết bị" của FAULT_REPORT. Tự chọn card theo
- * trạng thái: chưa lên lịch → card lên lịch thay; đã lên lịch (có
- * metadata.replacementDeviceId) → card hoàn tất thay. Render trong dialog chi
- * tiết, không mở dialog lồng.
+ * Panel inline cho nhánh "thay thiết bị" của FAULT_REPORT — 2 bước:
+ *   1. Lên lịch thay (chọn kit + giờ hẹn)
+ *   2. Báo đã thay xong tại hiện trường (một nút — BE gộp swap + lắp đặt)
  */
 
 interface Props {
@@ -62,14 +63,14 @@ interface Props {
   onClose: () => void;
 }
 
+const AT_SITE_STATUSES: DeviceStatusType[] = [
+  "available",
+  "purchase",
+  "install",
+];
+
 export function SwapActionPanel({ request, faultyDeviceId, onClose }: Props) {
   const replacementId = request.metadata?.replacementDeviceId ?? null;
-  // Chọn card theo trạng thái board mới — tách "xác nhận đã thay" khỏi "lắp đặt":
-  //   chưa pick    → lên lịch thay
-  //   available    → xác nhận đã thay tại hiện trường (board mới chưa đổi status)
-  //   purchase     → bắt đầu lắp (purchase → install)
-  //   install      → hoàn tất lắp (install → inactive)
-  //   inactive/... → đã xong
   const replacementQuery = useAdminIotDeviceDetail(
     replacementId ?? "",
     !!replacementId,
@@ -88,34 +89,23 @@ export function SwapActionPanel({ request, faultyDeviceId, onClose }: Props) {
   if (replacementQuery.isLoading) {
     return <Skeleton className="h-40 w-full rounded-md" />;
   }
-  if (replacementStatus === "available") {
+  if (
+    replacementStatus &&
+    AT_SITE_STATUSES.includes(replacementStatus)
+  ) {
     return (
       <CompleteSwapCard
         request={request}
         faultyDeviceId={faultyDeviceId}
-        onClose={onClose}
-      />
-    );
-  }
-  if (replacementStatus === "purchase") {
-    return (
-      <StartSwapInstallCard
-        request={request}
-        onClose={onClose}
-      />
-    );
-  }
-  if (replacementStatus === "install") {
-    return (
-      <CompleteSwapInstallCard
-        request={request}
+        replacementStatus={replacementStatus}
         onClose={onClose}
       />
     );
   }
   return (
     <div className="rounded-md border bg-muted/30 p-4 text-sm text-muted-foreground">
-      Đã hoàn tất thay và lắp thiết bị mới cho yêu cầu này.
+      Đã hoàn tất thay thiết bị cho yêu cầu này. Thiết bị mới sẽ tự kích hoạt
+      khi gửi dữ liệu đầu tiên.
     </div>
   );
 }
@@ -138,7 +128,6 @@ function ScheduleSwapCard({ request, faultyDeviceId, onClose }: Props) {
   );
   const faultyDevice = faultyDeviceQuery.data?.data ?? null;
 
-  // Không filter theo farmId — board kho thường có farmId=null.
   const replacementQuery = useReplacementDevices({ page: 1, limit: 50 }, true);
   const replacements = replacementQuery.data?.data?.data ?? [];
 
@@ -150,6 +139,10 @@ function ScheduleSwapCard({ request, faultyDeviceId, onClose }: Props) {
     },
   });
   const today = useMemo(() => startOfDay(new Date()), []);
+  const slaDeadlineDate = request.slaDeadline
+    ? new Date(request.slaDeadline)
+    : null;
+  const maxDate = slaDeadlineDate ? startOfDay(slaDeadlineDate) : undefined;
 
   const onSubmit = form.handleSubmit((values) => {
     const composed = composeKitScheduleIso(
@@ -170,6 +163,12 @@ function ScheduleSwapCard({ request, faultyDeviceId, onClose }: Props) {
       }
       return;
     }
+    if (slaDeadlineDate && new Date(composed) > slaDeadlineDate) {
+      form.setError("scheduledTime", {
+        message: "Thời gian hẹn không được vượt quá hạn chót",
+      });
+      return;
+    }
     mutation.mutate(
       { id: request.id, body: parsed.data },
       { onSuccess: () => onClose() },
@@ -177,13 +176,14 @@ function ScheduleSwapCard({ request, faultyDeviceId, onClose }: Props) {
   });
 
   return (
-    <div>
+    <div className="rounded-md border p-4">
       <div className="mb-3 flex items-center gap-2">
+        <StepBadge active>1</StepBadge>
         <Replace
           aria-hidden="true"
-          className="h-4 w-4 text-muted-foreground"
+          className="h-4 w-4 shrink-0 text-muted-foreground"
         />
-        <div>
+        <div className="min-w-0 flex-1">
           <p className="font-medium">Lên lịch thay thiết bị</p>
           <p className="text-xs text-muted-foreground">
             Chọn bộ kit thay thế từ kho và thời điểm ghé thay.
@@ -225,6 +225,13 @@ function ScheduleSwapCard({ request, faultyDeviceId, onClose }: Props) {
         onSubmit={onSubmit}
         className="space-y-3"
       >
+        {slaDeadlineDate && (
+          <p className="text-xs text-muted-foreground">
+            Hạn thay thiết bị:{" "}
+            {format(slaDeadlineDate, "HH:mm dd/MM/yyyy", { locale: vi })} — hẹn
+            phải trước hạn này.
+          </p>
+        )}
         <Controller
           control={form.control}
           name="replacementDeviceId"
@@ -263,6 +270,7 @@ function ScheduleSwapCard({ request, faultyDeviceId, onClose }: Props) {
               error={fieldState.error?.message}
               placeholder="Chọn ngày"
               minDate={today}
+              maxDate={maxDate}
             />
           )}
         />
@@ -301,7 +309,7 @@ function ScheduleSwapCard({ request, faultyDeviceId, onClose }: Props) {
             </Field>
           )}
         />
-        <div className="flex justify-end">
+        <div className="flex justify-end pt-1">
           <Button
             type="submit"
             disabled={mutation.isPending || replacements.length === 0}
@@ -376,15 +384,25 @@ function ReplacementDeviceSelect({
   );
 }
 
-// ── Hoàn tất thay ────────────────────────────────────────────────────────
+// ── Báo đã thay xong (một bước tại hiện trường) ───────────────────────────
 
-function CompleteSwapCard({ request, faultyDeviceId, onClose }: Props) {
-  const mutation = useCompleteSwap();
+interface CompleteSwapProps extends Props {
+  replacementStatus: DeviceStatusType;
+}
+
+function CompleteSwapCard({
+  request,
+  faultyDeviceId,
+  replacementStatus,
+  onClose,
+}: CompleteSwapProps) {
+  const mutation = useFinishSwapAtSite();
   const replacementId = request.metadata?.replacementDeviceId ?? null;
+  const isResume = replacementStatus !== "available";
 
   const faultyDeviceQuery = useAdminIotDeviceDetail(
     faultyDeviceId ?? "",
-    !!faultyDeviceId,
+    !!faultyDeviceId && !isResume,
   );
   const faultyDevice = faultyDeviceQuery.data?.data ?? null;
 
@@ -401,93 +419,59 @@ function CompleteSwapCard({ request, faultyDeviceId, onClose }: Props) {
 
   const onSubmit = form.handleSubmit((values) =>
     mutation.mutate(
-      { id: request.id, body: values },
+      { id: request.id, body: values, replacementStatus },
       { onSuccess: () => onClose() },
     ),
   );
 
-  // Guard match BE (SwapOldBoardNotInError): thiết bị cũ phải đang ở `error`.
   const faultyStatus = faultyDevice?.status;
-  const isOldBoardReady = faultyStatus === "error";
-  const isOldBoardLoaded = !faultyDeviceQuery.isLoading && !!faultyDevice;
-  const canSubmit = !mutation.isPending && isOldBoardLoaded && isOldBoardReady;
+  const isOldBoardReady = isResume || faultyStatus === "error";
+  const isOldBoardLoaded = isResume || (!faultyDeviceQuery.isLoading && !!faultyDevice);
+  const canSubmit =
+    !mutation.isPending && isOldBoardLoaded && isOldBoardReady;
 
   return (
     <div className="rounded-md border p-4">
       <div className="mb-3 flex items-center gap-2">
+        <StepBadge active>2</StepBadge>
         <CheckCircle2
           aria-hidden="true"
-          className="h-4 w-4 text-muted-foreground"
+          className="h-4 w-4 shrink-0 text-muted-foreground"
         />
-        <div>
-          <p className="font-medium">Hoàn tất thay thiết bị</p>
+        <div className="min-w-0 flex-1">
+          <p className="font-medium">Báo đã thay xong</p>
           <p className="text-xs text-muted-foreground">
-            Xác nhận đã giao và lắp thiết bị thay thế — hai thiết bị đổi vai trò
-            ngay, không thể hoàn tác.
+            Xác nhận đã thu thiết bị cũ và lắp thiết bị mới tại hiện trường — một
+            thao tác, không thể hoàn tác.
           </p>
         </div>
       </div>
 
-      <div className="mb-3 grid gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
-        <div className="rounded-md border bg-muted/30 p-3">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            Thiết bị cũ
-          </p>
-          {faultyDeviceQuery.isLoading ? (
-            <Skeleton className="mt-1 h-5 w-3/4" />
-          ) : faultyDevice ? (
-            <>
-              <p className="mt-1 font-medium">
-                {faultyDevice.label ?? faultyDevice.deviceName}
-              </p>
-              {faultyDevice.label &&
-                faultyDevice.label !== faultyDevice.deviceName && (
-                  <p className="text-xs text-muted-foreground">
-                    {faultyDevice.deviceName}
-                  </p>
-                )}
-            </>
-          ) : (
-            <p className="mt-1 text-sm text-muted-foreground">—</p>
-          )}
-          <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-            Sẽ ngưng hoạt động sau khi hoàn tất
-          </p>
+      {request.scheduledAt && (
+        <div className="mb-3">
+          <ScheduledSummary
+            title="Đã hẹn thay thiết bị"
+            scheduledAt={request.scheduledAt}
+          />
         </div>
-        <ArrowRight
-          aria-hidden="true"
-          className="mx-auto h-5 w-5 text-muted-foreground"
+      )}
+
+      {isResume && (
+        <p className="mb-3 text-sm text-muted-foreground">
+          Đã xác nhận thay trước đó — bấm nút bên dưới để chốt hoàn tất yêu cầu.
+        </p>
+      )}
+
+      {!isResume && (
+        <SwapDevicePair
+          faultyDeviceQuery={faultyDeviceQuery}
+          faultyDevice={faultyDevice}
+          replacementQuery={replacementQuery}
+          replacementDevice={replacementDevice}
         />
-        <div className="rounded-md border bg-emerald-50/40 p-3 dark:bg-emerald-950/20">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            Thiết bị mới
-          </p>
-          {replacementQuery.isLoading ? (
-            <Skeleton className="mt-1 h-5 w-3/4" />
-          ) : replacementDevice ? (
-            <>
-              <p className="mt-1 font-medium">
-                {replacementDevice.label ?? replacementDevice.deviceName}
-              </p>
-              {replacementDevice.label &&
-                replacementDevice.label !== replacementDevice.deviceName && (
-                  <p className="text-xs text-muted-foreground">
-                    {replacementDevice.deviceName}
-                  </p>
-                )}
-            </>
-          ) : (
-            <p className="mt-1 text-sm text-muted-foreground">
-              Đã đặt riêng cho yêu cầu này
-            </p>
-          )}
-          <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-400">
-            Sẽ thay vào vị trí thiết bị cũ
-          </p>
-        </div>
-      </div>
+      )}
 
-      {isOldBoardLoaded && !isOldBoardReady && (
+      {!isResume && isOldBoardLoaded && !isOldBoardReady && (
         <div className="mb-3 flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm dark:border-amber-900/50 dark:bg-amber-950/30">
           <AlertTriangle
             aria-hidden="true"
@@ -515,34 +499,36 @@ function CompleteSwapCard({ request, faultyDeviceId, onClose }: Props) {
         onSubmit={onSubmit}
         className="space-y-3"
       >
-        <Controller
-          control={form.control}
-          name="oldBoardOutcome"
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>Xử lý thiết bị cũ</FieldLabel>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <OutcomeOption
-                  icon={Recycle}
-                  label="Thu hồi do hỏng"
-                  description="Đánh dấu hỏng vĩnh viễn, không tái dùng."
-                  checked={field.value === "revoked"}
-                  onSelect={() => field.onChange("revoked")}
-                />
-                <OutcomeOption
-                  icon={PackageCheck}
-                  label="Đưa về kho"
-                  description="Còn dùng được, sẽ kiểm tra để dùng lại."
-                  checked={field.value === "available"}
-                  onSelect={() => field.onChange("available")}
-                />
-              </div>
-              {fieldState.error ? (
-                <FieldError>{fieldState.error.message}</FieldError>
-              ) : null}
-            </Field>
-          )}
-        />
+        {!isResume && (
+          <Controller
+            control={form.control}
+            name="oldBoardOutcome"
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel>Xử lý thiết bị cũ</FieldLabel>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <OutcomeOption
+                    icon={Recycle}
+                    label="Thu hồi do hỏng"
+                    description="Đánh dấu hỏng vĩnh viễn, không tái dùng."
+                    checked={field.value === "revoked"}
+                    onSelect={() => field.onChange("revoked")}
+                  />
+                  <OutcomeOption
+                    icon={PackageCheck}
+                    label="Đưa về kho"
+                    description="Còn dùng được, sẽ kiểm tra để dùng lại."
+                    checked={field.value === "available"}
+                    onSelect={() => field.onChange("available")}
+                  />
+                </div>
+                {fieldState.error ? (
+                  <FieldError>{fieldState.error.message}</FieldError>
+                ) : null}
+              </Field>
+            )}
+          />
+        )}
         <Controller
           control={form.control}
           name="resolutionNote"
@@ -564,16 +550,105 @@ function CompleteSwapCard({ request, faultyDeviceId, onClose }: Props) {
             </Field>
           )}
         />
-        <div className="flex justify-end">
+        <div className="flex justify-end pt-1">
           <Button
             type="submit"
             disabled={!canSubmit}
           >
             <CheckCircle2 className="h-4 w-4" />
-            {mutation.isPending ? "Đang xử lý..." : "Xác nhận đã thay xong"}
+            {mutation.isPending
+              ? "Đang xử lý..."
+              : isResume
+                ? "Chốt hoàn tất"
+                : "Xác nhận đã thay xong"}
           </Button>
         </div>
       </form>
+    </div>
+  );
+}
+
+function SwapDevicePair({
+  faultyDeviceQuery,
+  faultyDevice,
+  replacementQuery,
+  replacementDevice,
+}: {
+  faultyDeviceQuery: { isLoading: boolean };
+  faultyDevice: {
+    label?: string | null;
+    deviceName: string;
+  } | null;
+  replacementQuery: { isLoading: boolean };
+  replacementDevice: {
+    label?: string | null;
+    deviceName: string;
+  } | null;
+}) {
+  return (
+    <div className="mb-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-stretch">
+      <div className="flex min-h-[5.5rem] flex-col rounded-md border bg-muted/30 p-3">
+        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+          Thiết bị cũ
+        </p>
+        {faultyDeviceQuery.isLoading ? (
+          <Skeleton className="mt-1 h-5 w-3/4" />
+        ) : faultyDevice ? (
+          <>
+            <p className="mt-1 font-medium">
+              {faultyDevice.label ?? faultyDevice.deviceName}
+            </p>
+            {faultyDevice.label &&
+              faultyDevice.label !== faultyDevice.deviceName && (
+                <p className="text-xs text-muted-foreground">
+                  {faultyDevice.deviceName}
+                </p>
+              )}
+          </>
+        ) : (
+          <p className="mt-1 text-sm text-muted-foreground">—</p>
+        )}
+        <p className="mt-auto pt-2 text-xs text-amber-600 dark:text-amber-400">
+          Sẽ ngưng hoạt động sau khi hoàn tất
+        </p>
+      </div>
+      <div className="flex items-center justify-center py-0.5 md:py-0">
+        <ArrowRight
+          aria-hidden="true"
+          className="hidden h-5 w-5 shrink-0 text-muted-foreground md:block"
+        />
+        <ArrowDown
+          aria-hidden="true"
+          className="h-5 w-5 shrink-0 text-muted-foreground md:hidden"
+        />
+      </div>
+      <div className="flex min-h-[5.5rem] flex-col rounded-md border bg-emerald-50/40 p-3 dark:bg-emerald-950/20">
+        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+          Thiết bị mới
+        </p>
+        {replacementQuery.isLoading ? (
+          <Skeleton className="mt-1 h-5 w-3/4" />
+        ) : replacementDevice ? (
+          <>
+            <p className="mt-1 font-medium">
+              {replacementDevice.label ?? replacementDevice.deviceName}
+            </p>
+            {replacementDevice.label &&
+              replacementDevice.label !== replacementDevice.deviceName && (
+                <p className="text-xs text-muted-foreground">
+                  {replacementDevice.deviceName}
+                </p>
+              )}
+          </>
+        ) : (
+          <p className="mt-1 text-sm text-muted-foreground">
+            Đã đặt riêng cho yêu cầu này
+          </p>
+        )}
+        <p className="mt-auto pt-2 text-xs text-emerald-600 dark:text-emerald-400">
+          Sẽ thay vào vị trí thiết bị cũ
+        </p>
+      </div>
     </div>
   );
 }
@@ -600,13 +675,17 @@ function OutcomeOption({
       role="radio"
       aria-checked={checked}
       onClick={onSelect}
-      className={`flex h-auto flex-col items-start gap-1 whitespace-normal p-3 text-left ${
-        checked ? "border-primary bg-primary/5 hover:bg-primary/10" : ""
-      }`}
+      className={cn(
+        "flex h-auto flex-col items-start gap-1 whitespace-normal p-3 text-left",
+        checked && "border-primary bg-primary/5 hover:bg-primary/10",
+      )}
     >
       <Icon
         aria-hidden="true"
-        className={`h-4 w-4 ${checked ? "text-primary" : "text-muted-foreground"}`}
+        className={cn(
+          "h-4 w-4",
+          checked ? "text-primary" : "text-muted-foreground",
+        )}
       />
       <span className="text-sm font-medium">{label}</span>
       <span className="text-xs text-muted-foreground">{description}</span>

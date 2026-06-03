@@ -34,19 +34,24 @@ import { useMemo, useState } from "react";
 import {
   useCropSeasonIotCoverage,
   useIotCoverage,
+  useMilestoneIotCoverage,
 } from "@/queries/useIotCoverage";
 import { isApiErrorResponse } from "@/lib/utils";
 import { getApiErrorMessageVi } from "@/lib/error-message";
 import type { IotDeviceKitResType } from "@/schemaValidatation/iotKit";
 import { cn } from "@/lib/utils";
 
-// Scope của widget. Truyền 1 trong 2:
-//  - `zoneId` → tính theo cả zone (dùng cho trang Farm/Zone, mua kit cho zone)
-//  - `cropSeasonId` → tính theo diện tích vùng trồng của crop season
-//    (mọi widget nằm dưới ngữ cảnh crop season / milestone)
+// Scope của widget. Truyền đúng 1 trong 3:
+//  - `zoneId` → tính theo cả zone (trang Farm/Zone, mua kit cho zone).
+//  - `cropSeasonId` → theo diện tích vùng trồng, cộng thiết bị toàn mùa vụ
+//    (dùng cho tab tổng quan cảm biến cấp mùa vụ, không gắn 1 mốc).
+//  - `milestoneId` → theo riêng 1 mốc: tử số CHỈ tính thiết bị của mốc đó
+//    (mỗi mốc gán bộ thiết bị khác nhau → độ phủ khác nhau). Dùng cho mọi UI
+//    nằm trong ngữ cảnh 1 mốc cụ thể (wizard cấu hình, pane theo dõi mốc).
 type IotCoverageWidgetScope =
-  | { zoneId: string; cropSeasonId?: undefined }
-  | { cropSeasonId: string; zoneId?: undefined };
+  | { zoneId: string; cropSeasonId?: undefined; milestoneId?: undefined }
+  | { cropSeasonId: string; zoneId?: undefined; milestoneId?: undefined }
+  | { milestoneId: string; zoneId?: undefined; cropSeasonId?: undefined };
 
 type IotCoverageWidgetProps = IotCoverageWidgetScope & {
   zoneName?: string;
@@ -71,6 +76,7 @@ function formatM2(n: number | null | undefined) {
 export default function IotCoverageWidget({
   zoneId,
   cropSeasonId,
+  milestoneId,
   zoneName,
   kitOptions,
   autoPickFirstKit = true,
@@ -102,8 +108,8 @@ export default function IotCoverageWidget({
     userPickedKitId ??
     (autoPickFirstKit ? pickableKits[0]?.id : undefined);
 
-  // Mỗi widget instance chỉ chạy 1 trong 2 query nhờ flag `enabled`. Hook còn
-  // lại vẫn được gọi để giữ thứ tự hook ổn định giữa các render.
+  // Mỗi widget instance chỉ chạy 1 trong 3 query nhờ flag `enabled`. Các hook
+  // còn lại vẫn được gọi để giữ thứ tự hook ổn định giữa các render.
   const zoneQuery = useIotCoverage(
     zoneId ?? null,
     selectedKitId ?? null,
@@ -114,7 +120,16 @@ export default function IotCoverageWidget({
     selectedKitId ?? null,
     !!cropSeasonId,
   );
-  const query = cropSeasonId ? cropSeasonQuery : zoneQuery;
+  const milestoneQuery = useMilestoneIotCoverage(
+    milestoneId ?? null,
+    selectedKitId ?? null,
+    !!milestoneId,
+  );
+  const query = milestoneId
+    ? milestoneQuery
+    : cropSeasonId
+      ? cropSeasonQuery
+      : zoneQuery;
 
   // ── Loading ────────────────────────────────────────────────────────────
   if (query.isLoading) {
