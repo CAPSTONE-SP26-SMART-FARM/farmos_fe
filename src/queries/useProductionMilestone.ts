@@ -281,6 +281,8 @@ export const useManagerAssignIotDevice = (milestoneId: string) => {
       });
       invalidateAllManagerSensorThresholdQueries(qc);
       invalidateManagerEmployeeTasksQueriesForMilestone(qc, milestoneId);
+      // Độ phủ IoT đổi sau khi gán thiết bị → refetch widget coverage.
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.iotCoverage.all });
     },
     onError: (error: AxiosError<ApiResponseType>) => {
       toast.error(error?.response?.data?.message ?? "Gán thiết bị thất bại");
@@ -336,6 +338,8 @@ export const useManagerUnassignIotDevice = (milestoneId: string) => {
         queryKey: ["manager", "production-milestones", "assignment"],
       });
       invalidateManagerEmployeeTasksQueriesForMilestone(qc, milestoneId);
+      // Độ phủ IoT đổi sau khi gỡ thiết bị → refetch widget coverage.
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.iotCoverage.all });
     },
     onError: (error: AxiosError<ApiResponseType>) => {
       toast.error(error?.response?.data?.message ?? "Gỡ thiết bị thất bại");
@@ -403,6 +407,8 @@ export const useOwnerAssignIotDevice = (milestoneId: string) => {
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.owner.productionMilestones.assignment(milestoneId),
       });
+      // Độ phủ IoT đổi sau khi gán thiết bị → refetch widget coverage.
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.iotCoverage.all });
     },
     onError: (error: AxiosError<ApiResponseType>) => {
       toast.error(error?.response?.data?.message ?? "Gán thiết bị thất bại");
@@ -455,6 +461,8 @@ export const useOwnerUnassignIotDevice = (milestoneId: string) => {
       qc.invalidateQueries({
         queryKey: ["owner", "production-milestones", "assignment"],
       });
+      // Độ phủ IoT đổi sau khi gỡ thiết bị → refetch widget coverage.
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.iotCoverage.all });
     },
     onError: (error: AxiosError<ApiResponseType>) => {
       toast.error(error?.response?.data?.message ?? "Gỡ thiết bị thất bại");
@@ -935,6 +943,8 @@ export const useManagerBulkAssignIotDevices = (milestoneId: string) => {
       });
       invalidateAllManagerSensorThresholdQueries(qc);
       invalidateManagerEmployeeTasksQueriesForMilestone(qc, milestoneId);
+      // Độ phủ IoT đổi sau khi gán hàng loạt → refetch widget coverage.
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.iotCoverage.all });
     },
     onError: (error: AxiosError<ApiResponseType>) => {
       toast.error(
@@ -995,6 +1005,8 @@ export const useOwnerBulkAssignIotDevices = (milestoneId: string) => {
           "available-devices",
         ],
       });
+      // Độ phủ IoT đổi sau khi gán hàng loạt → refetch widget coverage.
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.iotCoverage.all });
     },
     onError: (error: AxiosError<ApiResponseType>) => {
       toast.error(

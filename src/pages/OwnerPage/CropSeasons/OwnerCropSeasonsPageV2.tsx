@@ -344,28 +344,6 @@ export default function OwnerCropSeasonsPageV2() {
             </Card>
           ) : (
             <div className="space-y-4">
-              {nowSeason.status === ProductionStatusName.Sent && (
-                <div className="flex items-start gap-3 rounded-md border border-amber-300/60 bg-amber-50 px-4 py-3 dark:border-amber-700/40 dark:bg-amber-950/30">
-                  <ClipboardCheck className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-                      Có yêu cầu chờ bạn duyệt
-                    </p>
-                    <p className="text-xs text-amber-800/80 dark:text-amber-200/70 mt-0.5">
-                      Quản lý đã gửi kế hoạch sản xuất cho mùa vụ này. Mời bạn
-                      xem và phê duyệt hoặc từ chối.
-                    </p>
-                  </div>
-                  <Button
-                    size="sm"
-                    className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white"
-                    onClick={() => setView("history-requests")}
-                  >
-                    <ClipboardCheck className="h-3.5 w-3.5 mr-1.5" />
-                    Duyệt yêu cầu
-                  </Button>
-                </div>
-              )}
               <CropSeasonSummaryCard
                 season={nowSeason}
                 actions={

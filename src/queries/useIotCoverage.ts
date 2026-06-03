@@ -41,3 +41,24 @@ export const useCropSeasonIotCoverage = (
     retry: false,
   });
 };
+
+// Milestone-scoped coverage. Dùng cho UI gắn với 1 mốc cụ thể: tử số chỉ tính
+// thiết bị của riêng mốc đó (đã dedupe per device), mẫu số là totalAreaSqm của
+// mùa vụ. Mỗi mốc có độ phủ riêng tùy số thiết bị đã gán.
+export const useMilestoneIotCoverage = (
+  milestoneId: string | null | undefined,
+  kitId?: string | null,
+  enabled = true,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.iotCoverage.byMilestone(
+      milestoneId ?? "",
+      kitId ?? null,
+    ),
+    queryFn: () =>
+      zoneService.getMilestoneIotCoverage(milestoneId ?? "", kitId ?? null),
+    enabled: !!milestoneId && enabled,
+    staleTime: 30 * 1000,
+    retry: false,
+  });
+};

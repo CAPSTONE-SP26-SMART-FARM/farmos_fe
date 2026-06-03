@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { startOfDay } from "date-fns";
+import { format, startOfDay } from "date-fns";
+import { vi } from "date-fns/locale";
 import {
   AlertTriangle,
   CalendarClock,
@@ -110,6 +111,10 @@ function RecoveryScheduleCard({
     defaultValues: { scheduledDate: "", scheduledTime: "" },
   });
   const today = useMemo(() => startOfDay(new Date()), []);
+  const slaDeadlineDate = request.slaDeadline
+    ? new Date(request.slaDeadline)
+    : null;
+  const maxDate = slaDeadlineDate ? startOfDay(slaDeadlineDate) : undefined;
 
   const onSubmit = form.handleSubmit((values) => {
     const composed = composeKitScheduleIso(
@@ -120,6 +125,12 @@ function RecoveryScheduleCard({
     if (!parsed.success) {
       form.setError("scheduledTime", {
         message: parsed.error.issues[0]?.message ?? "Thời gian hẹn không hợp lệ",
+      });
+      return;
+    }
+    if (slaDeadlineDate && new Date(composed) > slaDeadlineDate) {
+      form.setError("scheduledTime", {
+        message: "Thời gian hẹn không được vượt quá hạn chót",
       });
       return;
     }
@@ -159,6 +170,13 @@ function RecoveryScheduleCard({
           onSubmit={onSubmit}
           className="space-y-3"
         >
+          {slaDeadlineDate && (
+            <p className="text-xs text-muted-foreground">
+              Hạn thu hồi:{" "}
+              {format(slaDeadlineDate, "HH:mm dd/MM/yyyy", { locale: vi })} —
+              hẹn phải trước hạn này.
+            </p>
+          )}
           <Controller
             control={form.control}
             name="scheduledDate"
@@ -171,6 +189,7 @@ function RecoveryScheduleCard({
                 error={fieldState.error?.message}
                 placeholder="Chọn ngày"
                 minDate={today}
+                maxDate={maxDate}
               />
             )}
           />

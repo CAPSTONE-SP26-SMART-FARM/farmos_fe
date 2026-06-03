@@ -61,9 +61,9 @@ const NOT_RECOVERED_OPTIONS: {
   value: RecoveryErrorReasonType;
   label: string;
 }[] = [
-  { value: "missing", label: "Mất tích" },
-  { value: "destroyed", label: "Bị phá hủy" },
-  { value: "owner_refused", label: "Chủ trang trại từ chối trả" },
+  { value: "missing", label: "Mất tích (đánh dấu bị mất)" },
+  { value: "destroyed", label: "Bị phá hủy (chuyển về lỗi)" },
+  { value: "owner_refused", label: "Chủ trang trại từ chối trả (chuyển về lỗi)" },
 ];
 
 export function RecoveryCompleteDialog({

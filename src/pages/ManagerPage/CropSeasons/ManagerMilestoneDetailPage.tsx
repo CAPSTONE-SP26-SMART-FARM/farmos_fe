@@ -50,6 +50,7 @@ import {
   type StepDefinition,
   type StepStatus,
 } from "@/components/common/milestone-stepper";
+import IotCoverageWidget from "@/components/common/IotCoverageWidget";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -2633,9 +2634,13 @@ const ManagerMilestoneDetailPage = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {/* Step 0: IoT — gán device (trên) + chọn loại chỉ báo (dưới) */}
+          {/* Step 0: IoT — độ phủ (trên) + gán device + chọn loại chỉ báo */}
           {currentStep === 0 && (
             <div className="space-y-6">
+              {/* Độ phủ IoT của RIÊNG mốc này — chỉ tính thiết bị đã gán cho
+                  mốc, đối chiếu diện tích vùng trồng. Giúp manager biết còn
+                  thiếu bao nhiêu m² ngay khi đang gán thiết bị. */}
+              {msId ? <IotCoverageWidget milestoneId={msId} /> : null}
               <IotBulkAssignSection milestoneId={msId} />
               <div className="border-t pt-6">
                 <IotConfigSection

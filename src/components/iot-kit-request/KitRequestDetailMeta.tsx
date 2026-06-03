@@ -9,12 +9,14 @@ import {
   KitRequestTypeBadge,
 } from "./KitRequestBadges";
 import type {
+  KitRequestContactType,
   KitRequestDetailResType,
   KitRequestDeviceType,
   KitRequestResType,
 } from "@/schemaValidatation/iotKitRequest";
 import { format, formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
+import { Building2, MapPin, Phone, UserRound } from "lucide-react";
 
 /**
  * Khối thông tin chi tiết readonly chia sẻ giữa owner dialog và admin dialog.
@@ -40,6 +42,10 @@ export function KitRequestDetailMeta({
 }) {
   const devices =
     "devices" in request ? request.devices : null;
+  // Khối liên hệ chỉ có khi admin xem (BE gate theo role). Hiện khi có ít nhất
+  // 1 thông tin để hiển thị.
+  const contact =
+    "contact" in request ? (request.contact ?? null) : null;
   const isInstallSchedule = request.type === "INSTALL_SCHEDULE";
   const isRecoverySchedule = request.type === "RECOVERY_SCHEDULE";
   const isFaultReport = request.type === "FAULT_REPORT";
@@ -134,6 +140,8 @@ export function KitRequestDetailMeta({
             </div>
           </div>
 
+          {contact && <ContactSection contact={contact} />}
+
           <Separator />
         </>
       )}
@@ -196,6 +204,97 @@ export function KitRequestDetailMeta({
           )}
         </>
       )}
+    </div>
+  );
+}
+
+/**
+ * Khối thông tin liên hệ — chỉ render trong dialog admin (BE chỉ trả `contact`
+ * cho role admin). Mỗi dòng tự ẩn khi thiếu dữ liệu; nếu không có gì để hiện
+ * thì bỏ luôn cả khối.
+ */
+function ContactSection({ contact }: { contact: KitRequestContactType }) {
+  const hasFarm = !!(contact.farmName || contact.farmAddress);
+  const hasOwner = !!(contact.ownerName || contact.ownerPhone);
+  const hasManager = !!(contact.managerName || contact.managerPhone);
+  if (!hasFarm && !hasOwner && !hasManager) return null;
+
+  return (
+    <div className="space-y-2 rounded-md border bg-muted/20 p-3">
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+        Thông tin liên hệ
+      </p>
+
+      {hasFarm && (
+        <div className="flex items-start gap-2">
+          <Building2
+            aria-hidden="true"
+            className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+          />
+          <div className="min-w-0 space-y-0.5">
+            <p className="font-medium leading-snug">
+              {contact.farmName ?? "Chưa có tên trang trại"}
+            </p>
+            {contact.farmAddress && (
+              <p className="flex items-start gap-1 text-xs text-muted-foreground">
+                <MapPin aria-hidden="true" className="mt-0.5 h-3 w-3 shrink-0" />
+                <span>{contact.farmAddress}</span>
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {hasOwner && (
+        <ContactPerson
+          roleLabel="Chủ trang trại"
+          name={contact.ownerName}
+          phone={contact.ownerPhone}
+        />
+      )}
+
+      {hasManager && (
+        <ContactPerson
+          roleLabel={
+            contact.zoneName
+              ? `Quản lý vùng · ${contact.zoneName}`
+              : "Quản lý vùng"
+          }
+          name={contact.managerName}
+          phone={contact.managerPhone}
+        />
+      )}
+    </div>
+  );
+}
+
+function ContactPerson({
+  roleLabel,
+  name,
+  phone,
+}: {
+  roleLabel: string;
+  name: string | null;
+  phone: string | null;
+}) {
+  return (
+    <div className="flex items-start gap-2">
+      <UserRound
+        aria-hidden="true"
+        className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+      />
+      <div className="min-w-0 space-y-0.5">
+        <p className="text-xs text-muted-foreground">{roleLabel}</p>
+        <p className="font-medium leading-snug">{name ?? "Chưa có tên"}</p>
+        <p className="flex items-center gap-1 text-sm">
+          <Phone aria-hidden="true" className="h-3 w-3 shrink-0" />
+          {phone ? (
+            <span>{phone}</span>
+          ) : (
+            <span className="text-muted-foreground">Chưa có số điện thoại</span>
+          )}
+        </p>
+      </div>
     </div>
   );
 }

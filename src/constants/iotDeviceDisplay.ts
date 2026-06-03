@@ -4,6 +4,7 @@ import {
   CloudRain,
   Cpu,
   Droplets,
+  MapPinOff,
   Package,
   PackageCheck,
   PlugZap,
@@ -38,6 +39,7 @@ export const DEVICE_STATUS_LABEL_ADMIN: Record<DeviceStatusType, string> = {
   active: "Hoạt động",
   error: "Lỗi",
   revoked: "Thu hồi",
+  lost: "Bị mất",
 };
 
 export const DEVICE_STATUS_LABEL_USER: Record<DeviceStatusType, string> = {
@@ -48,6 +50,7 @@ export const DEVICE_STATUS_LABEL_USER: Record<DeviceStatusType, string> = {
   active: "Hoạt động",
   error: "Lỗi",
   revoked: "Thu hồi",
+  lost: "Bị mất",
 };
 
 export const STATUS_META: Record<
@@ -107,6 +110,13 @@ export const STATUS_META: Record<
     badgeClass:
       "border-zinc-300 bg-zinc-100 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300",
     icon: ShieldOff,
+  },
+  lost: {
+    labelAdmin: DEVICE_STATUS_LABEL_ADMIN.lost,
+    labelUser: DEVICE_STATUS_LABEL_USER.lost,
+    badgeClass:
+      "border-purple-300 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950 dark:text-purple-300",
+    icon: MapPinOff,
   },
 };
 

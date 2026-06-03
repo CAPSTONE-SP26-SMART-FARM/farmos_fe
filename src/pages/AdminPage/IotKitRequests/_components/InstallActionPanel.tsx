@@ -5,7 +5,8 @@ import { vi } from "date-fns/locale";
 import { CalendarClock, PackageCheck, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -190,13 +191,16 @@ function ScheduleInstallCard({
             name="scheduledTime"
             rules={{ required: "Vui lòng chọn giờ hẹn" }}
             render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="install-time">Giờ hẹn</FieldLabel>
+              <div className="space-y-1">
+                <Label htmlFor="install-time">Giờ hẹn</Label>
                 <Select
                   value={field.value}
                   onValueChange={field.onChange}
                 >
-                  <SelectTrigger id="install-time">
+                  <SelectTrigger
+                    id="install-time"
+                    className="w-full"
+                  >
                     <SelectValue placeholder="Chọn giờ (mỗi 15 phút)" />
                   </SelectTrigger>
                   <SelectContent className="max-h-72">
@@ -211,13 +215,15 @@ function ScheduleInstallCard({
                   </SelectContent>
                 </Select>
                 {fieldState.error ? (
-                  <FieldError>{fieldState.error.message}</FieldError>
+                  <p className="text-destructive text-xs">
+                    {fieldState.error.message}
+                  </p>
                 ) : (
                   <p className="text-xs text-muted-foreground">
                     Khung giờ làm việc 07:00 – 18:00, cách 15 phút.
                   </p>
                 )}
-              </Field>
+              </div>
             )}
           />
         </div>
@@ -287,24 +293,20 @@ function StartInstallCard({
       </div>
 
       <div className="space-y-3">
-        <div className="grid gap-4 md:grid-cols-2 md:items-start">
-          <div className="space-y-3">
-            {request.scheduledAt && (
-              <ScheduledSummary
-                title="Đã hẹn lắp đặt"
-                scheduledAt={request.scheduledAt}
-              />
-            )}
-          </div>
-
-          <DeviceChecklist
-            devices={devices}
-            selected={selected}
-            allChecked={allChecked}
-            onToggle={toggle}
-            onToggleAll={toggleAll}
+        {request.scheduledAt && (
+          <ScheduledSummary
+            title="Đã hẹn lắp đặt"
+            scheduledAt={request.scheduledAt}
           />
-        </div>
+        )}
+
+        <DeviceChecklist
+          devices={devices}
+          selected={selected}
+          allChecked={allChecked}
+          onToggle={toggle}
+          onToggleAll={toggleAll}
+        />
 
         <div className="flex justify-end">
           <Button
