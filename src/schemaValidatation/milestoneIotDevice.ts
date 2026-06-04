@@ -7,6 +7,8 @@ export const AvailableIotDeviceResSchema = z.object({
   id: z.string().uuid(),
   farmId: z.string().uuid(),
   deviceName: z.string(),
+  /** Nhãn dán vật lý unique tự tăng (K001, W001...). Null với mô-đun LoRa. */
+  label: z.string().nullable().optional(),
   deviceType: z.string(),
   macAddress: z.string().nullable(),
   status: z.string(),

@@ -20,6 +20,10 @@ import {
   STATUS_META,
 } from "@/constants/iotDeviceDisplay";
 import { formatDateVi } from "@/lib/format";
+import {
+  boardPrimaryLabel,
+  boardSecondaryName,
+} from "@/lib/milestone-iot-display";
 import { cn } from "@/lib/utils";
 import { useOwnerIotDeviceDetail } from "@/queries/useIotDevice";
 import { Cpu, Gauge, History, MapPin } from "lucide-react";
@@ -64,11 +68,16 @@ export default function ProvisionedDeviceDetailDialog({
         <DialogHeader className="pr-8">
           <DialogTitle className="flex items-center gap-2">
             <Cpu className="h-5 w-5 text-primary" />
-            {device?.deviceName ?? "Chi tiết thiết bị"}
+            {device ? boardPrimaryLabel(device) : "Chi tiết thiết bị"}
           </DialogTitle>
           <DialogDescription>
             {device
-              ? DEVICE_TYPE_LABEL[device.deviceType] ?? device.deviceType
+              ? [
+                  boardSecondaryName(device),
+                  DEVICE_TYPE_LABEL[device.deviceType] ?? device.deviceType,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")
               : "Đang tải thông tin thiết bị…"}
           </DialogDescription>
           {statusMeta && (

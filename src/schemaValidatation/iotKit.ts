@@ -311,6 +311,8 @@ export type ListOwnersWithAvailableKitsResType = z.infer<
 export const ProvisionedDeviceSummarySchema = z.object({
   id: z.string().uuid(),
   deviceName: z.string(),
+  /** Nhãn dán vật lý (K001, W001…). Null với mô-đun LoRa. */
+  label: z.string().nullable().optional(),
   deviceType: z.string(),
   status: z.string(),
   installedAt: z.string(),
