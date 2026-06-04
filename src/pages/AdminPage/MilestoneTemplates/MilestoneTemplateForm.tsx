@@ -199,14 +199,14 @@ export default function MilestoneTemplateForm({
       if (isEdit && template) {
         const body: UpdateMilestoneTemplateBodyType = { ...basePayload };
         await updateAsync({ id: template.id, data: body });
-        toast.success("Đã cập nhật milestone template.");
+        toast.success("Đã cập nhật mẫu cột mốc");
       } else {
         const body: CreateMilestoneTemplateBodyType = {
           ...basePayload,
           type: "crop_season",
         };
         await createAsync(body);
-        toast.success("Đã tạo milestone template mới.");
+        toast.success("Đã tạo mẫu cột mốc mới");
       }
 
       form.reset(values);
@@ -223,12 +223,12 @@ export default function MilestoneTemplateForm({
 
       if (isApiErrorResponse(error)) {
         toast.error(
-          error.response?.data.message || "Không thể lưu milestone template.",
+          error.response?.data.message || "Không thể lưu mẫu cột mốc",
         );
         return;
       }
 
-      toast.error("Không thể lưu milestone template.");
+      toast.error("Không thể lưu mẫu cột mốc");
     }
   };
 

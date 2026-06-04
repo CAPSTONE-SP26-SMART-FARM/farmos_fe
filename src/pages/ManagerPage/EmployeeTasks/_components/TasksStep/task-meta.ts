@@ -11,7 +11,7 @@ export const STATUS_META: Record<
   TaskStatusType,
   { label: string; variant: BadgeVariant }
 > = {
-  pending: { label: "Chờ xử lý", variant: "secondary" },
+  pending: { label: "Chưa bắt đầu", variant: "secondary" },
   in_progress: { label: "Đang thực hiện", variant: "default" },
   completed: { label: "Hoàn thành", variant: "outline" },
   verified: { label: "Đã xác minh", variant: "default" },

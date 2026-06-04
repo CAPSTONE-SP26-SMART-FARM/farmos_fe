@@ -37,6 +37,8 @@ import {
   boardPrimaryLabel,
   boardSecondaryName,
 } from "@/lib/milestone-iot-display";
+import { useAuthStore } from "@/stores/authStore";
+import { RoleName } from "@/constants/role";
 
 type IotActor = "owner" | "manager";
 
@@ -254,6 +256,7 @@ function DeviceCard({
   const sMeta = STATUS_META[device.status] ?? STATUS_META.available;
   const SIcon = sMeta.icon;
   const DIcon = DEVICE_TYPE_ICON[device.deviceType] ?? Cpu;
+  const isAdmin = useAuthStore((s) => s.user?.role === RoleName.Admin);
 
   return (
     <button
@@ -302,7 +305,7 @@ function DeviceCard({
         )}
       </div>
 
-      {device.latestLog && (
+      {isAdmin && device.latestLog && (
         <p className="mt-2 text-[10px] text-muted-foreground">
           Log mới nhất:{" "}
           {new Date(device.latestLog.createdAt).toLocaleDateString("vi-VN")}

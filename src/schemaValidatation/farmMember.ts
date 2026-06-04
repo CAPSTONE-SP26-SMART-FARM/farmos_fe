@@ -28,6 +28,7 @@ export const FarmMemberFarmSchema = z.object({
 // ============================================================
 export const CreateFarmMemberBodySchema = z
   .object({
+    fullName: z.string().min(1, "Mời nhập họ tên").max(255),
     email: z.email().max(255),
     phone: z.string().max(20),
     role: z.enum(["farmer", "manager"]),
@@ -37,6 +38,7 @@ export const CreateFarmMemberBodySchema = z
 
 export const UpdateFarmMemberBodySchema = z
   .object({
+    fullName: z.string().min(1, "Mời nhập họ tên").max(255).optional(),
     email: z.email().max(255).optional(),
     phone: z.string().max(20).optional(),
     role: z.enum(["farmer", "manager"]).optional(),

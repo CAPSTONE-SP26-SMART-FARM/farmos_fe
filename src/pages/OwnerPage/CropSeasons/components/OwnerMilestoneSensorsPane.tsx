@@ -83,6 +83,7 @@ export function OwnerMilestoneSensorsPane({
             <AlertsPanel
               isLoading={isLoading}
               zoneId={zoneId}
+              milestoneId={milestone?.id}
             />
           </div>
         </div>

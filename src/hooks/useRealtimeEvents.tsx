@@ -160,8 +160,12 @@ const NOTIFY_EVENTS: RealtimeEventName[] = [
   RealtimeEvents.AlertCreated,
   RealtimeEvents.SensorAlertRecovered,
   RealtimeEvents.SensorHardwareIssueDetected,
-  RealtimeEvents.SensorTimeoutDetected,
-  RealtimeEvents.SensorTimeoutRecovered,
+  // SensorTimeoutDetected / SensorTimeoutRecovered KHÔNG vào bell — BE đã emit
+  // `notification.created` riêng (chi tiết tên kit + zone, throttle 1/board/24h)
+  // cho cả timeout lẫn recovery. 2 event này phát per-sensor, không throttle, payload
+  // không có title/content → nếu vào bell sẽ đẻ noti generic "Cảm biến mất tín hiệu"
+  // trùng lặp (mỗi sensor 1 cái). Cùng lý do với IotKitRequest bên dưới. Sensor card
+  // tô đỏ qua IotDeviceStatusChanged, không phụ thuộc 2 event này.
   RealtimeEvents.NotificationCreated,
   RealtimeEvents.IncidentTicketCreated,
   RealtimeEvents.IncidentTicketEnded,

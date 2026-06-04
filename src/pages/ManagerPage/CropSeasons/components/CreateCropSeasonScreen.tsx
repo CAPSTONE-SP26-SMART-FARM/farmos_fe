@@ -2,7 +2,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { useClearServerFieldErrors } from "@/hooks/useClearServerFieldErrors";
 import { handleApiErrorUnprocessentity } from "@/lib/axios";
 import {
@@ -446,18 +445,6 @@ export function CreateCropSeasonScreen({
                   category={selectedCategory}
                 />
               </div>
-            </section>
-
-            {/* ── Phần 4: Ghi chú ───────────────────────────────────────── */}
-            <section className="space-y-2">
-              <Field label="Ghi chú">
-                <Textarea
-                  {...form.register("notes")}
-                  rows={2}
-                  placeholder="Ghi chú thêm (tuỳ chọn)"
-                  className="resize-none"
-                />
-              </Field>
             </section>
 
             <p className="text-xs text-muted-foreground">

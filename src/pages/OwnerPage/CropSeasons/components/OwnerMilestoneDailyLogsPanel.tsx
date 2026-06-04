@@ -4,6 +4,7 @@ import DatePickerField from "@/components/common/DatePickerField";
 import EmptyState from "@/components/common/EmptyState";
 import ErrorState from "@/components/common/ErrorState";
 import { DataTable } from "@/components/common/DataTable";
+import { DailyLogAttachmentsCell } from "@/components/common/DailyLogAttachmentsCell";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useOwnerDailyLogsByFarm } from "@/queries/useDailyLog";
 import { useOwnerGetMyFarm } from "@/queries/useOwner";
@@ -124,6 +125,16 @@ export function OwnerMilestoneDailyLogsPanel({
             </p>
           )}
         </div>
+      ),
+    },
+    {
+      id: "attachments",
+      header: "Hình ảnh",
+      cell: ({ row }) => (
+        <DailyLogAttachmentsCell
+          attachments={row.original.attachments}
+          authorName={row.original.farmer.fullName}
+        />
       ),
     },
     {

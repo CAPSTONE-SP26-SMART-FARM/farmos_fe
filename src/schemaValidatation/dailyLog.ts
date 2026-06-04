@@ -57,6 +57,19 @@ export const DailyLogTaskBriefSchema = z.object({
   milestoneId: z.string().uuid().nullable(),
 });
 
+// Ảnh / tệp đính kèm gửi kèm nhật ký — mirror backend TaskAttachmentResSchema
+export const DailyLogAttachmentSchema = z.object({
+  id: z.string().uuid(),
+  employeeTaskId: z.string().uuid().nullable(),
+  dailyLogId: z.string().uuid().nullable(),
+  uploadedBy: z.string().uuid(),
+  url: z.string(),
+  fileName: z.string().nullable(),
+  mimeType: z.string().nullable(),
+  sizeBytes: z.number().int().nullable(),
+  createdAt: z.string(),
+});
+
 export const DailyLogResSchema = z.object({
   id: z.string().uuid(),
   zoneId: z.string().uuid(),
@@ -69,6 +82,8 @@ export const DailyLogResSchema = z.object({
   notes: z.string().nullable(),
   loggedBy: z.string().uuid(),
   farmer: DailyLogFarmerSchema,
+  // BE luôn trả mảng (rỗng nếu không có ảnh); default cho an toàn với cache cũ
+  attachments: z.array(DailyLogAttachmentSchema).default([]),
   createdAt: z.string(),
 });
 
@@ -189,6 +204,7 @@ export type ListManagerTodayTasksQueryType = z.infer<
 export type ManagerTasksWithLogStatusListResType = z.infer<
   typeof ManagerTasksWithLogStatusListResSchema
 >;
+export type DailyLogAttachmentType = z.infer<typeof DailyLogAttachmentSchema>;
 export type DailyLogResType = z.infer<typeof DailyLogResSchema>;
 export type ListDailyLogsQueryType = z.infer<typeof ListDailyLogsQuerySchema>;
 export type ListDailyLogsResType = z.infer<typeof ListDailyLogsResSchema>;

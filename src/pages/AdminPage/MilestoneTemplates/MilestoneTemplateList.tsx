@@ -422,7 +422,7 @@ export default function MilestoneTemplateList({
 
           deleteMutation.mutate(deleteId, {
             onSuccess: () => {
-              toast.success("Đã xóa milestone template.");
+              toast.success("Đã xóa mẫu cột mốc");
               setDeleteId(null);
             },
             onError: (error) => {

@@ -47,7 +47,7 @@ const PRIORITY_RANK: Record<TaskPriorityType, number> = {
 };
 
 const STATUS_LABELS: Record<TaskStatusEnumType, string> = {
-  pending: "Chờ xử lý",
+  pending: "Chưa bắt đầu",
   in_progress: "Đang làm",
   completed: "Đã xong",
   verified: "Đã duyệt",
