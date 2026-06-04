@@ -229,6 +229,7 @@ export const mockManagerRecentLogs: DailyLogResType[] = [
     notes: null,
     loggedBy: uuid(401),
     farmer: { id: uuid(401), fullName: "Phạm Quang Minh", ...FARMER_BASE },
+    attachments: [],
     createdAt: isoMinutesAgo(20),
   },
   {
@@ -243,6 +244,7 @@ export const mockManagerRecentLogs: DailyLogResType[] = [
     notes: "Phát hiện rệp ở mép sector 5, đã xử lý.",
     loggedBy: uuid(402),
     farmer: { id: uuid(402), fullName: "Lê Đức Anh", ...FARMER_BASE },
+    attachments: [],
     createdAt: isoMinutesAgo(70),
   },
   {
@@ -257,6 +259,7 @@ export const mockManagerRecentLogs: DailyLogResType[] = [
     notes: null,
     loggedBy: uuid(403),
     farmer: { id: uuid(403), fullName: "Nguyễn Văn Tài", ...FARMER_BASE },
+    attachments: [],
     createdAt: isoMinutesAgo(140),
   },
   {
@@ -271,6 +274,7 @@ export const mockManagerRecentLogs: DailyLogResType[] = [
     notes: null,
     loggedBy: uuid(404),
     farmer: { id: uuid(404), fullName: "Hoàng Thị Mai", ...FARMER_BASE },
+    attachments: [],
     createdAt: isoMinutesAgo(220),
   },
   {
@@ -285,6 +289,7 @@ export const mockManagerRecentLogs: DailyLogResType[] = [
     notes: "Cần thêm thùng cọc tre tuần sau.",
     loggedBy: uuid(401),
     farmer: { id: uuid(401), fullName: "Phạm Quang Minh", ...FARMER_BASE },
+    attachments: [],
     createdAt: isoMinutesAgo(310),
   },
 ];

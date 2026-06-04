@@ -11,11 +11,10 @@ import {
 import { formatCurrencyVnd } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
-  KIT_MODULE_LABEL_VI,
   SENSOR_TYPE_LABEL_VI,
   type IotDeviceKitResType,
 } from "@/schemaValidatation/iotKit";
-import { Boxes, Cpu, PackageX, Sprout } from "lucide-react";
+import { Cpu, PackageX, Ruler, Sprout } from "lucide-react";
 
 interface IotKitCardProps {
   kit: IotDeviceKitResType;
@@ -35,8 +34,8 @@ export default function IotKitCard({
   disabledReason,
 }: IotKitCardProps) {
   const sensors = kit.includedSensors ?? [];
-  const modules = kit.includedModules ?? [];
-  const coverageM2 = kit.deviceCount * 4;
+  const perUnitM2 = kit.coverageSqm ?? 4;
+  const coverageM2 = perUnitM2 * kit.deviceCount;
 
   return (
     <Card
@@ -49,9 +48,7 @@ export default function IotKitCard({
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-1">
             <CardTitle className="text-lg">{kit.name}</CardTitle>
-            <CardDescription>
-              Mã: {kit.code} · Phủ ~{coverageM2} m²
-            </CardDescription>
+            <CardDescription>Phủ ~{coverageM2} m²</CardDescription>
           </div>
           <div className="flex flex-col items-end gap-1">
             {highlighted && <Badge>Khuyến nghị</Badge>}
@@ -65,44 +62,32 @@ export default function IotKitCard({
         </div>
         <p className="mt-3 text-2xl font-bold">{formatCurrencyVnd(kit.price)}</p>
         <p className="text-xs text-muted-foreground">
-          / {kit.deviceCount} bộ board chính
+          / {kit.deviceCount} bộ thiết bị
         </p>
       </CardHeader>
       <CardContent className="space-y-3 pt-4">
-        <p className="line-clamp-2 text-sm text-muted-foreground">
-          {kit.description ??
-            "Bộ Kit IoT gồm board chính, module truyền dẫn và 4 cảm biến tiêu chuẩn."}
-        </p>
-        <ul className="space-y-1.5 text-sm">
+        <ul className="space-y-2 text-sm">
           <li className="flex items-center gap-2">
-            <Cpu className="h-4 w-4 text-muted-foreground" aria-hidden />
-            {kit.deviceCount} bộ board chính
+            <Cpu className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+            Trọn bộ {kit.deviceCount} thiết bị, dùng được ngay
           </li>
           <li className="flex items-center gap-2">
-            <Boxes className="h-4 w-4 text-muted-foreground" aria-hidden />
-            {modules.length} loại module truyền dẫn
-            {modules.length > 0 && (
-              <span className="text-muted-foreground">
-                (
-                {modules
-                  .map((m) => KIT_MODULE_LABEL_VI[m] ?? m)
-                  .join(", ")}
-                )
-              </span>
-            )}
+            <Ruler className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+            Mỗi bộ theo dõi được khoảng {perUnitM2} m² vườn
           </li>
-          <li className="flex items-center gap-2">
-            <Sprout className="h-4 w-4 text-muted-foreground" aria-hidden />
-            {sensors.length} loại cảm biến
-            {sensors.length > 0 && (
-              <span className="text-muted-foreground">
-                (
+          <li className="flex items-start gap-2">
+            <Sprout
+              className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+              aria-hidden
+            />
+            <span>
+              Đo {sensors.length} chỉ số cây trồng:{" "}
+              <span className="font-medium text-foreground">
                 {sensors
                   .map((s) => SENSOR_TYPE_LABEL_VI[s] ?? s)
                   .join(", ")}
-                )
               </span>
-            )}
+            </span>
           </li>
         </ul>
       </CardContent>

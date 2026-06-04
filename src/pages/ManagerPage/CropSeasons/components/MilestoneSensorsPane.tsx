@@ -96,7 +96,11 @@ export function MilestoneSensorsPane({
               <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
               <h4 className="text-sm font-semibold">Cảnh báo</h4>
             </div>
-            <AlertsPanel isLoading={isLoading} zoneId={zoneId} />
+            <AlertsPanel
+              isLoading={isLoading}
+              zoneId={zoneId}
+              milestoneId={milestone?.id}
+            />
           </div>
         </div>
       )}

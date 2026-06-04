@@ -14,7 +14,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { useOwnerCreateFarm, useOwnerUpdateFarm } from "@/queries/useOwner";
 import {
   CreateFarmBodySchema,
@@ -97,8 +96,8 @@ function CreateFarmBody({ onClose }: { onClose: () => void }) {
 
   const handleSubmit = async (data: CreateFarmBodyType) => {
     try {
-      const result = await mutateAsync(data);
-      toast.success(result.message);
+      await mutateAsync(data);
+      toast.success("Đã tạo nông trại");
       onClose();
     } catch (error) {
       if (isApiErrorUnprocessableEntityResponse(error)) {
@@ -186,8 +185,8 @@ function UpdateFarmBody({
 
   const handleSubmit = async (data: UpdateFarmBodyType) => {
     try {
-      const result = await mutateAsync({ id: farm.id, data });
-      toast.success(result.message);
+      await mutateAsync({ id: farm.id, data });
+      toast.success("Đã cập nhật nông trại");
       onClose();
     } catch (error) {
       if (isApiErrorUnprocessableEntityResponse(error)) {
@@ -331,22 +330,6 @@ function FarmFields(props: FarmFieldsControl) {
         )}
       />
 
-      <Controller
-        name="description"
-        control={control}
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor="farm-description">Mô tả</FieldLabel>
-            <Textarea
-              {...field}
-              id="farm-description"
-              placeholder="Mô tả ngắn về nông trại"
-              className="min-h-20"
-            />
-            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-          </Field>
-        )}
-      />
     </FieldGroup>
   );
 }

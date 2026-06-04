@@ -110,27 +110,11 @@ export const sidebarData: SidebarData = {
           title: "Thiết bị",
           url: "/dashboard/admin/iot-devices",
           icon: Cpu,
-          items: [
-            {
-              title: "Danh sách thiết bị",
-              url: "/dashboard/admin/iot-devices",
-            },
-          ],
         },
         {
           title: "Gói Kit",
           url: "/dashboard/admin/iot-kits",
           icon: PackagePlus,
-          items: [
-            {
-              title: "Danh mục Kit",
-              url: "/dashboard/admin/iot-kits",
-            },
-            {
-              title: "Gán Kit cho Owner",
-              url: "/dashboard/admin/iot-kits/assignments",
-            },
-          ],
         },
         {
           title: "Yêu cầu hỗ trợ thiết bị",

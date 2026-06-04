@@ -60,6 +60,7 @@ const AddMemberDialog = ({ farmCode, open, onOpenChange }: Props) => {
     resolver: zodResolver(CreateFarmMemberBodySchema),
     defaultValues: {
       farmCode,
+      fullName: "",
       email: "",
       phone: "",
       role: "farmer",
@@ -72,7 +73,7 @@ const AddMemberDialog = ({ farmCode, open, onOpenChange }: Props) => {
 
   useEffect(() => {
     if (!open) {
-      form.reset({ farmCode, email: "", phone: "", role: "farmer" });
+      form.reset({ farmCode, fullName: "", email: "", phone: "", role: "farmer" });
       setGeneratedPassword(null);
     }
   }, [open, farmCode, form]);
@@ -115,6 +116,12 @@ const AddMemberDialog = ({ farmCode, open, onOpenChange }: Props) => {
 
             <div className="space-y-4">
               <div className="rounded-md border bg-muted/50 p-4 space-y-3">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Họ tên</p>
+                  <p className="text-sm font-medium">
+                    {form.getValues("fullName")}
+                  </p>
+                </div>
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Email</p>
                   <p className="font-mono text-sm font-medium">
@@ -163,6 +170,24 @@ const AddMemberDialog = ({ farmCode, open, onOpenChange }: Props) => {
               className="space-y-6"
             >
               <FieldGroup>
+                <Controller
+                  name="fullName"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="member-fullname">Họ tên</FieldLabel>
+                      <Input
+                        {...field}
+                        id="member-fullname"
+                        placeholder="Ví dụ: Nguyễn Văn An"
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+
                 <Controller
                   name="email"
                   control={form.control}

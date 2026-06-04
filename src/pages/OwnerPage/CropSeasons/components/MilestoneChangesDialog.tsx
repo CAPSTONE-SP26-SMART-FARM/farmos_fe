@@ -2,7 +2,14 @@
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
-import { ChevronLeft, ChevronRight, ListChecks, Workflow } from "lucide-react";
+import {
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  ListChecks,
+  User,
+  Workflow,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import TableSkeleton from "@/components/common/TableSkeleton";
 import EmptyState from "@/components/common/EmptyState";
 import ErrorState from "@/components/common/ErrorState";
@@ -37,20 +45,74 @@ interface Props {
 // Số nhóm công việc hiển thị mỗi trang trong dialog (tránh thanh cuộn).
 const TASKS_PER_PAGE = 2;
 
+// ── Phân loại field → tông màu để timeline có điểm nhấn dễ quét mắt ──────────
+type FieldTone = "status" | "date" | "person" | "text";
+
+function getFieldTone(fieldName: string, dataType: string): FieldTone {
+  if (fieldName === "status") return "status";
+  if (fieldName === "assignedTo" || fieldName === "priority") return "person";
+  if (dataType === "date" || dataType === "datetime") return "date";
+  return "text";
+}
+
+const DOT_CLASS: Record<FieldTone, string> = {
+  status: "bg-emerald-500",
+  date: "bg-sky-500",
+  person: "bg-amber-500",
+  text: "bg-slate-400",
+};
+
+const NEW_PILL_CLASS: Record<FieldTone, string> = {
+  status: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  date: "bg-sky-50 text-sky-700 ring-sky-200",
+  person: "bg-amber-50 text-amber-700 ring-amber-200",
+  text: "bg-muted text-foreground ring-border",
+};
+
 function isEmptyValue(v: unknown): boolean {
   return v === null || v === undefined || v === "";
 }
 
+/** Pill bọc 1 giá trị — cũ (gạch ngang) hoặc mới (màu theo tông field). */
+function ValuePill({
+  children,
+  variant,
+  tone,
+}: {
+  children: ReactNode;
+  variant: "old" | "new";
+  tone: FieldTone;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex max-w-full items-center truncate rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset",
+        variant === "old"
+          ? "bg-muted/60 text-muted-foreground line-through decoration-muted-foreground/40 ring-transparent"
+          : NEW_PILL_CLASS[tone],
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
 /** Render old → new transition for one tracked field change. */
-function renderChange(item: {
-  oldValueJson: unknown;
-  newValueJson: unknown;
-  oldValueLabel?: string | null;
-  newValueLabel?: string | null;
-  dataType: string;
-  entityType: TrackingEntityType;
-  fieldName: string;
-  changeType?: string;
+function ChangeValue({
+  item,
+  tone,
+}: {
+  tone: FieldTone;
+  item: {
+    oldValueJson: unknown;
+    newValueJson: unknown;
+    oldValueLabel?: string | null;
+    newValueLabel?: string | null;
+    dataType: string;
+    entityType: TrackingEntityType;
+    fieldName: string;
+    changeType?: string;
+  };
 }) {
   const ctx = { entityType: item.entityType, fieldName: item.fieldName };
   // Ưu tiên label BE đã resolve (vd assignedTo → tên nông dân thật).
@@ -63,57 +125,83 @@ function renderChange(item: {
 
   if (item.changeType === "snapshot") {
     return (
-      <span>
-        <span className="text-muted-foreground">Mốc ban đầu: </span>
-        <span className="font-medium">{newStr}</span>
+      <span className="flex flex-wrap items-center gap-1.5">
+        <span className="text-xs text-muted-foreground">Mốc ban đầu</span>
+        <ValuePill variant="new" tone={tone}>
+          {newStr}
+        </ValuePill>
       </span>
     );
   }
   if (item.changeType === "create" || (oldEmpty && !newEmpty)) {
     return (
-      <span>
-        <span className="text-muted-foreground">Ghi nhận: </span>
-        <span className="font-medium">{newStr}</span>
+      <span className="flex flex-wrap items-center gap-1.5">
+        <span className="text-xs text-muted-foreground">Ghi nhận</span>
+        <ValuePill variant="new" tone={tone}>
+          {newStr}
+        </ValuePill>
       </span>
     );
   }
   if (item.changeType === "delete" || (newEmpty && !oldEmpty)) {
     return (
-      <span>
-        <span className="text-muted-foreground">Đã xóa giá trị </span>
-        <span className="text-muted-foreground/70">(trước đó: {oldStr})</span>
+      <span className="flex flex-wrap items-center gap-1.5">
+        <span className="text-xs text-muted-foreground">Đã xóa</span>
+        <ValuePill variant="old" tone={tone}>
+          {oldStr}
+        </ValuePill>
       </span>
     );
   }
   if (oldEmpty && newEmpty) {
-    return <span className="text-muted-foreground">Không thay đổi</span>;
+    return <span className="text-xs text-muted-foreground">Không thay đổi</span>;
   }
   return (
-    <span className="flex flex-wrap items-center gap-2">
-      <span className="text-muted-foreground line-through decoration-muted-foreground/40">
+    <span className="flex flex-wrap items-center gap-1.5">
+      <ValuePill variant="old" tone={tone}>
         {oldStr}
-      </span>
-      <span>→</span>
-      <span className="font-medium">{newStr}</span>
+      </ValuePill>
+      <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      <ValuePill variant="new" tone={tone}>
+        {newStr}
+      </ValuePill>
     </span>
   );
 }
 
-function LogRow({ item }: { item: TrackingLogItemType }) {
+function LogRow({ item, isLast }: { item: TrackingLogItemType; isLast: boolean }) {
   const actor = getTrackingActorLines(item);
+  const tone = getFieldTone(item.fieldName, item.dataType);
   return (
-    <li className="flex items-start gap-3 px-3 py-2">
-      <span className="w-24 shrink-0 pt-0.5 text-xs tabular-nums text-muted-foreground">
-        {format(parseISO(item.changedAt), "HH:mm dd/MM")}
-      </span>
-      <div className="min-w-0 flex-1 text-sm">
-        <span className="text-muted-foreground">
-          {getFieldLabel(item.fieldName)}
-        </span>
-        <div className="mt-1 text-xs">{renderChange(item)}</div>
+    <li className="flex gap-3">
+      {/* ── Rail: chấm màu + đường nối dọc ── */}
+      <div className="flex flex-col items-center self-stretch">
+        <span
+          className={cn(
+            "mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ring-4 ring-background",
+            DOT_CLASS[tone],
+          )}
+        />
+        {!isLast ? <span className="w-px flex-1 bg-border" /> : null}
+      </div>
+
+      {/* ── Nội dung thay đổi ── */}
+      <div className={cn("min-w-0 flex-1", isLast ? "pb-0" : "pb-4")}>
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="text-sm font-medium text-foreground">
+            {getFieldLabel(item.fieldName)}
+          </span>
+          <time className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
+            {format(parseISO(item.changedAt), "HH:mm dd/MM")}
+          </time>
+        </div>
+        <div className="mt-1.5">
+          <ChangeValue item={item} tone={tone} />
+        </div>
         {actor.primary ? (
-          <div className="mt-0.5 text-[11px] text-muted-foreground/80">
-            bởi {actor.primary}
+          <div className="mt-1.5 flex items-center gap-1 text-[11px] text-muted-foreground">
+            <User className="h-3 w-3 shrink-0" aria-hidden="true" />
+            <span className="truncate">{actor.primary}</span>
           </div>
         ) : null}
       </div>
@@ -134,17 +222,17 @@ function ChangeGroup({
   const logs = group.logs.filter((l) => l.fieldName !== "sensorBinding");
   if (logs.length === 0) return null;
   return (
-    <div className="rounded-md border bg-background">
-      <div className="flex items-center gap-2 border-b bg-muted/30 px-3 py-2">
+    <div className="overflow-hidden rounded-lg border bg-background shadow-sm">
+      <div className="flex items-center gap-2 border-b bg-muted/40 px-4 py-2.5">
         {icon}
         <span className="truncate text-sm font-semibold">{title}</span>
         <Badge variant="secondary" className="ml-auto shrink-0 text-xs">
           {logs.length} thay đổi
         </Badge>
       </div>
-      <ul className="divide-y">
-        {logs.map((item) => (
-          <LogRow key={item.id} item={item} />
+      <ul className="px-4 py-3">
+        {logs.map((item, idx) => (
+          <LogRow key={item.id} item={item} isLast={idx === logs.length - 1} />
         ))}
       </ul>
     </div>
@@ -212,11 +300,11 @@ export default function MilestoneChangesDialog({
             description="Giai đoạn này chưa ghi nhận thay đổi nào được theo dõi."
           />
         ) : (
-          <div className="space-y-4">
+          <div className="max-h-[70vh] space-y-4 overflow-y-auto pr-1">
             {detail ? (
               <ChangeGroup
                 title="Thay đổi của giai đoạn"
-                icon={<Workflow className="h-4 w-4 text-emerald-600" />}
+                icon={<Workflow className="h-4 w-4 shrink-0 text-emerald-600" />}
                 group={detail.milestone}
               />
             ) : null}
@@ -259,7 +347,7 @@ export default function MilestoneChangesDialog({
                   <ChangeGroup
                     key={task.entityId}
                     title={task.label ?? "Công việc"}
-                    icon={<ListChecks className="h-4 w-4 text-sky-600" />}
+                    icon={<ListChecks className="h-4 w-4 shrink-0 text-sky-600" />}
                     group={task}
                   />
                 ))}

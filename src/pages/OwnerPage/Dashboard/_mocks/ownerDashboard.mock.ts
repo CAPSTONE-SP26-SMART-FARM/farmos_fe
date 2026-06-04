@@ -296,6 +296,7 @@ export const mockRecentLogs: DailyLogResType[] = [
       fullName: "Phạm Quang Minh",
       ...MOCK_FARMER_BASE,
     },
+    attachments: [],
     createdAt: isoMinutesAgo(15),
   },
   {
@@ -314,6 +315,7 @@ export const mockRecentLogs: DailyLogResType[] = [
       fullName: "Lê Đức Anh",
       ...MOCK_FARMER_BASE,
     },
+    attachments: [],
     createdAt: isoMinutesAgo(85),
   },
   {
@@ -332,6 +334,7 @@ export const mockRecentLogs: DailyLogResType[] = [
       fullName: "Nguyễn Văn Tài",
       ...MOCK_FARMER_BASE,
     },
+    attachments: [],
     createdAt: isoMinutesAgo(180),
   },
   {
@@ -350,6 +353,7 @@ export const mockRecentLogs: DailyLogResType[] = [
       fullName: "Hoàng Thị Mai",
       ...MOCK_FARMER_BASE,
     },
+    attachments: [],
     createdAt: isoMinutesAgo(260),
   },
   {
@@ -368,6 +372,7 @@ export const mockRecentLogs: DailyLogResType[] = [
       fullName: "Phạm Quang Minh",
       ...MOCK_FARMER_BASE,
     },
+    attachments: [],
     createdAt: isoMinutesAgo(340),
   },
 ];

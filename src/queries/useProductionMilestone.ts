@@ -99,13 +99,13 @@ export const useManagerCreateProductionMilestone = (cropSeasonId: string) => {
     mutationFn: (body: CreateProductionMilestoneItemBodyType) =>
       productionMilestoneService.createItem(cropSeasonId, body),
     onSuccess: () => {
-      toast.success("Tạo milestone thành công!");
+      toast.success("Đã tạo cột mốc");
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.manager.productionMilestones.list(cropSeasonId),
       });
     },
     onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(error?.response?.data?.message ?? "Tạo milestone thất bại");
+      toast.error(error?.response?.data?.message ?? "Tạo cột mốc thất bại");
     },
   });
 };
@@ -118,13 +118,13 @@ export const useManagerCreateProductionMilestoneBatch = (
     mutationFn: (body: CreateProductionMilestoneBatchBodyType) =>
       productionMilestoneService.createBatch(cropSeasonId, body),
     onSuccess: () => {
-      toast.success("Tạo milestones thành công!");
+      toast.success("Đã tạo các cột mốc");
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.manager.productionMilestones.list(cropSeasonId),
       });
     },
     onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(error?.response?.data?.message ?? "Tạo milestones thất bại");
+      toast.error(error?.response?.data?.message ?? "Tạo các cột mốc thất bại");
     },
   });
 };
@@ -152,7 +152,7 @@ export const useManagerUpdateProductionMilestone = (
     }) => productionMilestoneService.update(milestoneId, cropSeasonId, body),
     onSuccess: (_res, { milestoneId, body }) => {
       if (!silent) {
-        toast.success("Cập nhật milestone thành công!");
+        toast.success("Đã cập nhật cột mốc");
       }
 
       if (invalidateOnSuccess) {
@@ -172,7 +172,7 @@ export const useManagerUpdateProductionMilestone = (
     onError: (error: AxiosError<ApiResponseType>) => {
       if (!silent) {
         toast.error(
-          error?.response?.data?.message ?? "Cập nhật milestone thất bại",
+          error?.response?.data?.message ?? "Cập nhật cột mốc thất bại",
         );
       }
     },
@@ -185,7 +185,7 @@ export const useManagerDeleteProductionMilestone = (cropSeasonId: string) => {
     mutationFn: (milestoneId: string) =>
       productionMilestoneService.delete(milestoneId, cropSeasonId),
     onSuccess: (_res, milestoneId) => {
-      toast.success("Xóa milestone thành công!");
+      toast.success("Đã xóa cột mốc");
       qc.invalidateQueries({
         queryKey: QUERY_KEYS.manager.productionMilestones.list(cropSeasonId),
       });
@@ -194,7 +194,7 @@ export const useManagerDeleteProductionMilestone = (cropSeasonId: string) => {
       });
     },
     onError: (error: AxiosError<ApiResponseType>) => {
-      toast.error(error?.response?.data?.message ?? "Xóa milestone thất bại");
+      toast.error(error?.response?.data?.message ?? "Xóa cột mốc thất bại");
     },
   });
 };
