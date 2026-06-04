@@ -19,7 +19,31 @@ export type MilestoneIotDeviceDisplay = {
   deviceName?: string | null;
   deviceCode?: string | null;
   deviceType?: string | null;
+  /** Nhãn dán vật lý (K001, W001…) — ưu tiên làm tên hiển thị nếu có. */
+  label?: string | null;
 };
+
+/**
+ * Hiển thị board theo nhãn dán vật lý: ưu tiên `label` (K001, W001…) làm tên
+ * chính cho dễ đối chiếu với thiết bị thật. Board không có nhãn (mô-đun LoRa)
+ * thì fallback về `deviceName`.
+ */
+export type BoardLabelDisplay = {
+  label?: string | null;
+  deviceName?: string | null;
+};
+
+/** Dòng tên chính: nhãn dán nếu có, không thì tên thiết bị. */
+export function boardPrimaryLabel(device: BoardLabelDisplay): string {
+  return device.label?.trim() || device.deviceName?.trim() || "Thiết bị không xác định";
+}
+
+/** Dòng phụ dưới tên: tên thiết bị, chỉ hiện khi đã dùng nhãn dán làm tên chính. */
+export function boardSecondaryName(device: BoardLabelDisplay): string | undefined {
+  const name = device.deviceName?.trim();
+  if (!name) return undefined;
+  return device.label?.trim() ? name : undefined;
+}
 
 /** Tên hiển thị + (mã) chỉ khi mã không phải UUID */
 export function formatMilestoneIotDeviceWithOptionalCode(
@@ -50,7 +74,10 @@ export function formatMilestoneIotDetailDeviceLabel(
   device: MilestoneIotDeviceDisplay,
 ): string {
   const typeLabel = milestoneIotModuleTypeVi(device.deviceType);
-  const base = formatMilestoneIotDeviceWithOptionalCode(device);
+  // Ưu tiên nhãn dán vật lý (K001…) làm tên cho dễ đối chiếu; không có thì
+  // mới dùng tên thiết bị (+ mã nếu mã không phải UUID).
+  const base =
+    device.label?.trim() || formatMilestoneIotDeviceWithOptionalCode(device);
   return typeLabel ? `${base} · ${typeLabel}` : base;
 }
 

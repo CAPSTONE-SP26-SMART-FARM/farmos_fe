@@ -86,6 +86,8 @@ import {
 } from "react-router";
 import { cn } from "@/lib/utils";
 import {
+  boardPrimaryLabel,
+  boardSecondaryName,
   formatMilestoneIotDetailDeviceLabel,
   milestoneIotModuleTypeVi,
 } from "@/lib/milestone-iot-display";
@@ -1032,9 +1034,7 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
       const next = new Set(prev);
       for (const b of previousBoards) {
         next.add(b.id);
-        if (b.deviceName?.trim()) {
-          deviceLabelByIdRef.current.set(b.id, b.deviceName.trim());
-        }
+        deviceLabelByIdRef.current.set(b.id, boardPrimaryLabel(b));
       }
       return next;
     });
@@ -1043,8 +1043,8 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
   /** Capture device names as boards load so pre-selected rows show real labels in result modal. */
   useEffect(() => {
     for (const b of boards) {
-      if (selected.has(b.id) && b.deviceName?.trim()) {
-        deviceLabelByIdRef.current.set(b.id, b.deviceName.trim());
+      if (selected.has(b.id)) {
+        deviceLabelByIdRef.current.set(b.id, boardPrimaryLabel(b));
       }
     }
   }, [boards, selected]);
@@ -1089,8 +1089,8 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
       const next = new Set(prev);
       if (checked) {
         next.add(deviceId);
-        const nm = boards.find((b) => b.id === deviceId)?.deviceName?.trim();
-        if (nm) deviceLabelByIdRef.current.set(deviceId, nm);
+        const b = boards.find((b) => b.id === deviceId);
+        if (b) deviceLabelByIdRef.current.set(deviceId, boardPrimaryLabel(b));
       } else {
         next.delete(deviceId);
         deviceLabelByIdRef.current.delete(deviceId);
@@ -1108,8 +1108,7 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
       for (const b of boards) {
         if (checked) {
           next.add(b.id);
-          const nm = b.deviceName?.trim();
-          if (nm) deviceLabelByIdRef.current.set(b.id, nm);
+          deviceLabelByIdRef.current.set(b.id, boardPrimaryLabel(b));
         } else {
           next.delete(b.id);
           deviceLabelByIdRef.current.delete(b.id);
@@ -1306,11 +1305,12 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
                 </div>
                 <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
                   {Array.from(selected).map((id) => {
+                    const matched =
+                      boards.find((b) => b.id === id) ??
+                      previousBoards.find((b) => b.id === id);
                     const label =
                       deviceLabelByIdRef.current.get(id) ??
-                      boards.find((b) => b.id === id)?.deviceName ??
-                      previousBoards.find((b) => b.id === id)?.deviceName ??
-                      "Thiết bị đã chọn";
+                      (matched ? boardPrimaryLabel(matched) : "Thiết bị đã chọn");
                     return (
                       <span
                         key={id}
@@ -1402,8 +1402,13 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
                       />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">
-                          {dev.deviceName}
+                          {boardPrimaryLabel(dev)}
                         </p>
+                        {boardSecondaryName(dev) && (
+                          <p className="text-xs text-muted-foreground leading-snug truncate">
+                            {boardSecondaryName(dev)}
+                          </p>
+                        )}
                         {milestoneIotModuleTypeVi(dev.deviceType) && (
                           <p className="text-xs text-muted-foreground leading-snug">
                             {milestoneIotModuleTypeVi(dev.deviceType)}
@@ -1503,8 +1508,13 @@ const IotBulkAssignSection = ({ milestoneId }: { milestoneId: string }) => {
                       />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">
-                          {dev.deviceName}
+                          {boardPrimaryLabel(dev)}
                         </p>
+                        {boardSecondaryName(dev) && (
+                          <p className="text-xs text-muted-foreground leading-snug truncate">
+                            {boardSecondaryName(dev)}
+                          </p>
+                        )}
                         {milestoneIotModuleTypeVi(dev.deviceType) && (
                           <p className="text-xs text-muted-foreground leading-snug">
                             {milestoneIotModuleTypeVi(dev.deviceType)}
@@ -2119,7 +2129,9 @@ function ZoneBulkThresholdPanel({
               className="inline-flex items-center gap-1"
             >
               <Cpu className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate max-w-48">{a.device.deviceName}</span>
+              <span className="truncate max-w-48">
+                {boardPrimaryLabel(a.device)}
+              </span>
             </span>
           ))}
         </div>

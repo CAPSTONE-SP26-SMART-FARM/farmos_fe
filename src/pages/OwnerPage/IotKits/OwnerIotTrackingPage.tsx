@@ -15,6 +15,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DataTable } from "@/components/common/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatCurrencyVnd, formatDateVi } from "@/lib/format";
+import {
+  boardPrimaryLabel,
+  boardSecondaryName,
+} from "@/lib/milestone-iot-display";
 import { cn, isApiErrorResponse } from "@/lib/utils";
 import { useMyIotTracking } from "@/queries/useIotKit";
 import {
@@ -503,11 +507,20 @@ function DeviceTable({
   const columns: ColumnDef<ProvisionedDeviceSummaryType>[] = [
     {
       accessorKey: "deviceName",
-      header: "Tên thiết bị",
+      header: "Thiết bị",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <Cpu className="h-4 w-4 text-muted-foreground" />
-          <span className="font-medium">{row.original.deviceName}</span>
+          <div className="flex flex-col">
+            <span className="font-medium leading-tight">
+              {boardPrimaryLabel(row.original)}
+            </span>
+            {boardSecondaryName(row.original) && (
+              <span className="text-xs text-muted-foreground">
+                {boardSecondaryName(row.original)}
+              </span>
+            )}
+          </div>
         </div>
       ),
     },

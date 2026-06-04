@@ -36,6 +36,10 @@ import {
   SENSOR_TYPE_LABEL,
   STATUS_META,
 } from "@/constants/iotDeviceDisplay";
+import {
+  boardPrimaryLabel,
+  boardSecondaryName,
+} from "@/lib/milestone-iot-display";
 import { DeviceLogCard } from "./IotDeviceLogCard";
 import { ReportFaultButton } from "@/components/iot-kit-request/ReportFaultButton";
 
@@ -140,7 +144,16 @@ export default function IotDeviceDetail({
         </Button>
         <div className="h-4 w-px bg-border" />
         <DIcon className="h-5 w-5 text-primary" />
-        <h2 className="text-lg font-semibold">{device.deviceName}</h2>
+        <div className="flex flex-col">
+          <h2 className="text-lg font-semibold leading-tight">
+            {boardPrimaryLabel(device)}
+          </h2>
+          {boardSecondaryName(device) && (
+            <span className="text-xs text-muted-foreground">
+              {boardSecondaryName(device)}
+            </span>
+          )}
+        </div>
         <span
           className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium ${sMeta.badgeClass}`}
         >
@@ -399,7 +412,16 @@ function SubDeviceCard({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <DIcon className="h-4 w-4 text-primary" />
-          <span className="font-medium">{device.deviceName}</span>
+          <div className="flex flex-col">
+            <span className="font-medium leading-tight">
+              {boardPrimaryLabel(device)}
+            </span>
+            {boardSecondaryName(device) && (
+              <span className="text-xs text-muted-foreground">
+                {boardSecondaryName(device)}
+              </span>
+            )}
+          </div>
         </div>
         <Badge variant="outline">
           {DEVICE_TYPE_LABEL[device.deviceType] ?? device.deviceType}

@@ -33,6 +33,10 @@ import {
   DEVICE_TYPE_LABEL,
   STATUS_META,
 } from "@/constants/iotDeviceDisplay";
+import {
+  boardPrimaryLabel,
+  boardSecondaryName,
+} from "@/lib/milestone-iot-display";
 
 type IotActor = "owner" | "manager";
 
@@ -262,9 +266,14 @@ function DeviceCard({
           <div className="flex items-center gap-2">
             <DIcon className="h-4 w-4 shrink-0 text-primary" />
             <p className="truncate font-medium leading-tight">
-              {device.deviceName}
+              {boardPrimaryLabel(device)}
             </p>
           </div>
+          {boardSecondaryName(device) && (
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+              {boardSecondaryName(device)}
+            </p>
+          )}
           <div className="mt-1.5 flex flex-wrap gap-1">
             <Badge variant="outline" className="text-[10px]">
               {DEVICE_TYPE_LABEL[device.deviceType] ?? device.deviceType}
