@@ -42,6 +42,7 @@ import {
   InfoRow,
   DetailSkeleton,
 } from "./productionRequestHelpers";
+import CropSeasonMilestonesCoverageHint from "@/components/common/CropSeasonMilestonesCoverageHint";
 
 interface Props {
   requestId: string;
@@ -409,6 +410,9 @@ export default function ProductionRequestDetailPanel({
                 <CardTitle className="text-base">Phản hồi yêu cầu</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {season?.id && (
+                  <CropSeasonMilestonesCoverageHint cropSeasonId={season.id} />
+                )}
                 {showRejectForm && (
                   <form
                     onSubmit={handleRejectSubmit}

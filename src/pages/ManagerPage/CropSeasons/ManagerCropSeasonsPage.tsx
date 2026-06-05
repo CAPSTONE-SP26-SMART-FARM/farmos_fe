@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, BarChart3, Plus, Wheat } from "lucide-react";
+import { ArrowLeft, BarChart3, MapPin, Plus, Wheat } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import {
@@ -267,8 +267,8 @@ export default function ManagerCropSeasonsPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* ── Header row ───────────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 border-b pb-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-3 min-w-0">
           <Button
             variant="ghost"
             size="icon"
@@ -280,14 +280,25 @@ export default function ManagerCropSeasonsPage() {
               next.delete("seasonId");
               setSearchParams(next);
             }}
+            aria-label="Quay lại"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <MapPin className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
             <p className="text-xs text-muted-foreground">Quản lý mùa vụ</p>
-            <h1 className="text-xl font-bold leading-tight">
-              {selectedZoneName ?? "Khu vực"}
-            </h1>
+            <div className="flex items-baseline gap-2 flex-wrap">
+              <h1 className="text-xl font-bold leading-tight truncate">
+                {selectedZoneName ?? "Khu vực"}
+              </h1>
+              {selectedZoneAreaSqm != null && (
+                <span className="text-sm text-muted-foreground">
+                  {selectedZoneAreaSqm.toLocaleString("vi-VN")} m²
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -508,7 +519,10 @@ export default function ManagerCropSeasonsPage() {
       >
         <DialogContent
           showCloseButton
-          className="max-w-6xl! w-[95vw] max-h-[92vh] overflow-y-auto sm:max-w-6xl!"
+          // Canh mép trên (top-[4vh] translate-y-0) thay vì giữa màn hình: khi
+          // mở form thu hoạch làm content cao lên, Dialog chỉ dài xuống dưới
+          // thay vì re-center → không bị giật/nhảy.
+          className="top-[4vh] max-w-6xl! w-[95vw] max-h-[92vh] translate-y-0 overflow-y-auto sm:max-w-6xl!"
         >
           <DialogHeader>
             <DialogTitle>

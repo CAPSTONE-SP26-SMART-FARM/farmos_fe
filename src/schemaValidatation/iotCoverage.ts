@@ -75,3 +75,30 @@ export const MilestoneIotCoverageResSchema = z.object({
 export type MilestoneIotCoverageResType = z.infer<
   typeof MilestoneIotCoverageResSchema
 >;
+
+// BE: GET /crop-seasons/:id/milestones-iot-coverage?kitId=...
+// Breakdown độ phủ của TỪNG mốc trong 1 mùa vụ + summary cả mùa vụ (các field
+// top-level giống crop-season scope). Mỗi mốc so độ phủ riêng với cùng mẫu số
+// là cropSeason.totalAreaSqm. Dùng làm GỢI Ý lúc gửi duyệt / duyệt mùa vụ —
+// không chặn flow.
+export const MilestoneCoverageBreakdownItemSchema = z.object({
+  milestoneId: z.string().uuid(),
+  stageName: z.string(),
+  milestoneOrder: z.number().int(),
+  currentActiveCoverage: z.number(),
+  activeDeviceCount: z.number().int(),
+  // null khi cropSeasonAreaSqm null.
+  gapSqm: z.number().nullable(),
+  status: IotCoverageStatusEnum,
+});
+export type MilestoneCoverageBreakdownItem = z.infer<
+  typeof MilestoneCoverageBreakdownItemSchema
+>;
+
+export const CropSeasonMilestonesIotCoverageResSchema =
+  CropSeasonIotCoverageResSchema.extend({
+    milestones: z.array(MilestoneCoverageBreakdownItemSchema),
+  });
+export type CropSeasonMilestonesIotCoverageResType = z.infer<
+  typeof CropSeasonMilestonesIotCoverageResSchema
+>;

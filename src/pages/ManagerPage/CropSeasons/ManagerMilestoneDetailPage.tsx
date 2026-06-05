@@ -10,13 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -58,6 +52,7 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
   Cpu,
   Info,
   MoreVertical,
@@ -76,6 +71,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from "react";
 import {
   Link,
@@ -401,6 +397,38 @@ const STEP_DEFS: StepDefinition[] = [
 ];
 
 const FIXED_IOT_READING_INTERVAL_SECONDS = 10;
+
+// Icon đại diện cho từng bước wizard — hiển thị ở đầu khối nội dung bước.
+const STEP_ICONS = [Cpu, Radio, ClipboardList] as const;
+
+/**
+ * Hộp thông báo nhỏ trong header bước (cảnh báo chưa đủ điều kiện hoặc xác nhận
+ * đã hoàn tất). Dùng chung để mọi hint trong wizard nhất quán màu sắc.
+ */
+const StepHint = ({
+  tone,
+  children,
+}: {
+  tone: "warning" | "success";
+  children: ReactNode;
+}) => (
+  <div
+    className={cn(
+      "flex items-start gap-2 rounded-md border px-3 py-2 text-xs leading-relaxed",
+      tone === "warning" &&
+        "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-300",
+      tone === "success" &&
+        "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/20 dark:text-emerald-300",
+    )}
+  >
+    {tone === "warning" ? (
+      <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+    ) : (
+      <Check className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+    )}
+    <span>{children}</span>
+  </div>
+);
 
 // ============================================================
 // Edit Form
@@ -2297,18 +2325,22 @@ const TasksAndAssignmentStep = ({
   milestoneId,
   canEdit,
   lockComplete,
+  milestoneInProgress,
 }: {
   milestoneId: string;
   canEdit: boolean;
   hasTasks: boolean;
   /** True khi cropSeason ở planning → ẩn nút "Hoàn thành" + lock status select. */
   lockComplete: boolean;
+  /** True khi mốc đang thực hiện → mới hiện thanh tiến độ của từng task. */
+  milestoneInProgress: boolean;
 }) => {
   return (
     <TasksStepContainer
       milestoneId={milestoneId}
       canEdit={canEdit}
       lockComplete={lockComplete}
+      milestoneInProgress={milestoneInProgress}
     />
   );
 };
@@ -2697,31 +2729,35 @@ const ManagerMilestoneDetailPage = () => {
       </Breadcrumb>
 
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate(backTarget)}
+            className="shrink-0"
+            aria-label="Quay lại"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold">
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground">Cấu hình mốc</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl font-bold leading-tight">
                 #{milestone.milestoneOrder} {milestone.stageName}
               </h1>
               <Badge variant={STATUS_META[milestone.status].variant}>
                 {STATUS_META[milestone.status].label}
               </Badge>
             </div>
-            {milestone.expectedStartDate && (
-              <p className="text-sm text-muted-foreground mt-1">
-                {formatDate(milestone.expectedStartDate)}
-                {milestone.expectedEndDate
-                  ? ` → ${formatDate(milestone.expectedEndDate)}`
-                  : ""}
-              </p>
+            {(milestone.expectedStartDate || milestone.expectedEndDate) && (
+              <div className="mt-1 text-xs text-muted-foreground flex items-center gap-1.5">
+                <CalendarDays className="h-3 w-3 shrink-0" />
+                <span>
+                  Kế hoạch: {formatDate(milestone.expectedStartDate)} –{" "}
+                  {formatDate(milestone.expectedEndDate)}
+                </span>
+              </div>
             )}
           </div>
         </div>
@@ -2755,169 +2791,181 @@ const ManagerMilestoneDetailPage = () => {
         </DropdownMenu>
       </div>
 
-      {/* Stepper */}
-      <Card>
-        <CardContent className="pt-4 pb-4">
-          {/* Stepper display-only — user chuyển step bằng nút "Bước trước"/"Bước tiếp". */}
-          <MilestoneStepper
-            steps={STEP_DEFS}
-            currentStep={currentStep}
-            stepStatuses={stepStatuses}
-          />
-        </CardContent>
-      </Card>
+      {/* Wizard — gom stepper + nội dung bước + thanh điều hướng vào một thẻ
+          liền mạch, các phần ngăn nhau bằng đường kẻ ngang cho gọn gàng. */}
+      {(() => {
+        const StepIcon = STEP_ICONS[currentStep] ?? Cpu;
+        return (
+          <Card className="gap-0 overflow-hidden py-0">
+            {/* Stepper — chỉ hiển thị tiến trình, user chuyển bước bằng nút
+                điều hướng ở chân thẻ. */}
+            <div className="px-4 py-5 sm:px-6">
+              <MilestoneStepper
+                steps={STEP_DEFS}
+                currentStep={currentStep}
+                stepStatuses={stepStatuses}
+              />
+            </div>
 
-      {/* Step content */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-base">
-                {STEP_DEFS[currentStep].label}
-              </CardTitle>
-              <CardDescription>
-                {currentStep === 0 &&
-                  "Gán thiết bị IoT cho mốc và chọn loại chỉ báo cần theo dõi. Có thể bỏ qua hoàn toàn nếu mốc này không dùng IoT."}
-                {currentStep === 1 &&
-                  "Các chỉ báo đã nối theo board. Nhập khoảng nhỏ nhất – lớn nhất mong muốn rồi lưu; muốn thêm bớt loại chỉ báo phải quay lại bước Cấu hình IoT."}
-                {currentStep === 2 &&
-                  "Soạn nhiệm vụ và giao việc cho nông dân trong mốc."}
-              </CardDescription>
+            {/* Tiêu đề + mô tả + cảnh báo của bước hiện tại */}
+            <div className="space-y-3 border-t px-4 py-5 sm:px-6">
+              <div className="flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <StepIcon className="h-4 w-4" />
+                </span>
+                <div className="min-w-0 space-y-0.5">
+                  <h2 className="text-base font-semibold leading-tight">
+                    {STEP_DEFS[currentStep].label}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {currentStep === 0 &&
+                      "Gán thiết bị IoT cho mốc và chọn loại chỉ báo cần theo dõi. Có thể bỏ qua hoàn toàn nếu mốc này không dùng IoT."}
+                    {currentStep === 1 &&
+                      "Các chỉ báo đã nối theo board. Nhập khoảng nhỏ nhất – lớn nhất mong muốn rồi lưu; muốn thêm bớt loại chỉ báo phải quay lại bước Cấu hình IoT."}
+                    {currentStep === 2 &&
+                      "Soạn nhiệm vụ và giao việc cho nông dân trong mốc."}
+                  </p>
+                </div>
+              </div>
+
               {currentStep === 0 && hasDevice && !isIotConfigured && (
-                <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
-                  <AlertTriangle className="h-3 w-3" />
+                <StepHint tone="warning">
                   Đã có thiết bị nhưng chưa lưu loại chỉ báo — nhớ bấm lưu cấu
                   hình.
-                </p>
+                </StepHint>
               )}
               {currentStep === 2 && !hasTasks && (
-                <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
-                  <AlertTriangle className="h-3 w-3" />
-                  Ít nhất cần một nhiệm vụ trong mốc trước khi kết thúc bước
-                  này.
-                </p>
+                <StepHint tone="warning">
+                  Ít nhất cần một nhiệm vụ trong mốc trước khi kết thúc bước này.
+                </StepHint>
               )}
               {currentStep === 2 && hasTasks && !allTasksAssigned && (
-                <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
-                  <AlertTriangle className="h-3 w-3" />
+                <StepHint tone="warning">
                   Phải chỉ định đủ người làm cho tất cả nhiệm vụ trước khi hoàn
                   thành.
-                </p>
+                </StepHint>
               )}
               {currentStep === 2 && canCompleteMilestoneSetup && (
-                <p className="text-xs text-emerald-600 mt-1 flex items-center gap-1">
-                  <Check className="h-3 w-3" />
+                <StepHint tone="success">
                   Đã hoàn thành các bước cấu hình cần có cho mốc.
-                </p>
+                </StepHint>
               )}
             </div>
-            <div className="flex gap-2">
-              {currentStep === 0 && !hasDevice && canEditMilestone && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSkipIotEntirely}
-                >
-                  Bỏ qua bước IoT
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              )}
-              {currentStep > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    handleStepClick(
-                      // Khi user đang ở Step 2 (Nhiệm vụ) mà chưa gán device,
-                      // Step 1 (Cảm biến) đang locked → lùi thẳng về Step 0.
-                      currentStep === 2 && !hasDevice ? 0 : currentStep - 1,
-                    )
-                  }
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  Bước trước
-                </Button>
-              )}
+
+            {/* Nội dung bước */}
+            <div className="border-t px-4 py-6 sm:px-6">
+              {/* Step 0: IoT — độ phủ (trên) + gán device + chọn loại chỉ báo */}
               {currentStep === 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={advancingStep0}
-                  onClick={handleAdvanceFromStep0}
-                >
-                  {advancingStep0 ? "Đang lưu..." : "Bước tiếp"}
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
+                <div className="space-y-6">
+                  {/* Độ phủ IoT của RIÊNG mốc này — chỉ tính thiết bị đã gán cho
+                      mốc, đối chiếu diện tích vùng trồng. Giúp manager biết còn
+                      thiếu bao nhiêu m² ngay khi đang gán thiết bị. */}
+                  {msId ? <IotCoverageWidget milestoneId={msId} /> : null}
+                  <IotBulkAssignSection milestoneId={msId} />
+                  <div className="border-t pt-6">
+                    <IotConfigSection
+                      ref={iotConfigRef}
+                      cropSeasonId={csId}
+                      milestoneId={msId}
+                      isPlanning={isPlanningCropSeason}
+                      hasDevice={hasDevice}
+                      onSavedAdvance={() => setCurrentStep(1)}
+                    />
+                  </div>
+                </div>
               )}
+
+              {/* Step 1: Cảm biến — ngưỡng theo khu vực, lưu đồng loạt */}
               {currentStep === 1 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={advancingStep1}
-                  onClick={handleAdvanceFromStep1}
-                >
-                  {advancingStep1 ? "Đang lưu..." : "Bước tiếp"}
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
+                <MilestoneSensorThresholdStepSection
+                  ref={thresholdRef}
+                  milestoneId={msId}
+                  allowedSensorTypes={iotConfig?.sensorTypes}
+                />
               )}
+
+              {/* Step 2: Tasks & Farmer Assignment (final step) */}
               {currentStep === 2 && (
-                <Button
-                  size="sm"
-                  disabled={
-                    !canEditMilestone ||
-                    taskValidationQuery.isLoading ||
-                    !canCompleteMilestoneSetup
-                  }
-                  onClick={handleFinish}
-                >
-                  Hoàn thành
-                </Button>
+                <TasksAndAssignmentStep
+                  milestoneId={msId}
+                  canEdit={canEditMilestone}
+                  hasTasks={hasTasks}
+                  lockComplete={isPlanningCropSeason}
+                  milestoneInProgress={milestone?.status === "in_progress"}
+                />
               )}
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {/* Step 0: IoT — độ phủ (trên) + gán device + chọn loại chỉ báo */}
-          {currentStep === 0 && (
-            <div className="space-y-6">
-              {/* Độ phủ IoT của RIÊNG mốc này — chỉ tính thiết bị đã gán cho
-                  mốc, đối chiếu diện tích vùng trồng. Giúp manager biết còn
-                  thiếu bao nhiêu m² ngay khi đang gán thiết bị. */}
-              {msId ? <IotCoverageWidget milestoneId={msId} /> : null}
-              <IotBulkAssignSection milestoneId={msId} />
-              <div className="border-t pt-6">
-                <IotConfigSection
-                  ref={iotConfigRef}
-                  cropSeasonId={csId}
-                  milestoneId={msId}
-                  isPlanning={isPlanningCropSeason}
-                  hasDevice={hasDevice}
-                  onSavedAdvance={() => setCurrentStep(1)}
-                />
+
+            {/* Thanh điều hướng — Bước trước bên trái, hành động tiến/hoàn thành
+                bên phải (chuẩn wizard). */}
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t px-4 py-4 sm:px-6">
+              <div>
+                {currentStep > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      handleStepClick(
+                        // Khi user đang ở Step 2 (Nhiệm vụ) mà chưa gán device,
+                        // Step 1 (Cảm biến) đang locked → lùi thẳng về Step 0.
+                        currentStep === 2 && !hasDevice ? 0 : currentStep - 1,
+                      )
+                    }
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Bước trước
+                  </Button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                {currentStep === 0 && !hasDevice && canEditMilestone && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSkipIotEntirely}
+                  >
+                    Bỏ qua bước IoT
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                )}
+                {currentStep === 0 && (
+                  <Button
+                    size="sm"
+                    disabled={advancingStep0}
+                    onClick={handleAdvanceFromStep0}
+                  >
+                    {advancingStep0 ? "Đang lưu..." : "Bước tiếp"}
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                )}
+                {currentStep === 1 && (
+                  <Button
+                    size="sm"
+                    disabled={advancingStep1}
+                    onClick={handleAdvanceFromStep1}
+                  >
+                    {advancingStep1 ? "Đang lưu..." : "Bước tiếp"}
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                )}
+                {currentStep === 2 && (
+                  <Button
+                    size="sm"
+                    disabled={
+                      !canEditMilestone ||
+                      taskValidationQuery.isLoading ||
+                      !canCompleteMilestoneSetup
+                    }
+                    onClick={handleFinish}
+                  >
+                    Hoàn thành
+                  </Button>
+                )}
               </div>
             </div>
-          )}
-
-          {/* Step 1: Cảm biến — ngưỡng theo khu vực, lưu đồng loạt */}
-          {currentStep === 1 && (
-            <MilestoneSensorThresholdStepSection
-              ref={thresholdRef}
-              milestoneId={msId}
-              allowedSensorTypes={iotConfig?.sensorTypes}
-            />
-          )}
-
-          {/* Step 2: Tasks & Farmer Assignment (final step) */}
-          {currentStep === 2 && (
-            <TasksAndAssignmentStep
-              milestoneId={msId}
-              canEdit={canEditMilestone}
-              hasTasks={hasTasks}
-              lockComplete={isPlanningCropSeason}
-            />
-          )}
-        </CardContent>
-      </Card>
+          </Card>
+        );
+      })()}
 
       {/* Edit Dialog */}
       {editingMilestone &&

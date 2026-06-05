@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TaskProgressBar } from "@/components/common/TaskProgressBar";
 import { Textarea } from "@/components/ui/textarea";
 import useDebounce from "@/hooks/useDebounce";
 import { TaskLogHistoryPanel } from "@/pages/ManagerPage/CropSeasons/components/TaskLogHistoryPanel";
@@ -757,6 +758,14 @@ function TaskDetailSheet({
                         {STATUS_META[task.status].label}
                       </p>
                     </div>
+                    <div className="col-span-2">
+                      <p className="text-xs text-muted-foreground">Tiến độ</p>
+                      <TaskProgressBar
+                        value={task.progress}
+                        className="mt-1"
+                        barClassName="w-40"
+                      />
+                    </div>
                     <div>
                       <p className="text-xs text-muted-foreground">
                         Người được gán
@@ -1361,6 +1370,10 @@ export function ManagerMilestoneTaskAssignmentScreen({
                       Gán lúc {formatDate(task.assignedDate)}
                     </span>
                   )}
+                  <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    Tiến độ:
+                    <TaskProgressBar value={task.progress} barClassName="w-16" />
+                  </span>
                 </div>
 
                 {canEdit && !isTaskLocked(task) && (
@@ -1992,6 +2005,11 @@ export default function ManagerMilestoneTasksSection({
                     )}
                   </div>
                   <div className="flex items-center gap-2 shrink-0 ml-2">
+                    <TaskProgressBar
+                      value={task.progress}
+                      barClassName="w-14"
+                      className="hidden sm:flex"
+                    />
                     <Badge
                       variant={getTaskDisplayStatus(task).variant}
                       className="text-[10px]"

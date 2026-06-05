@@ -23,6 +23,8 @@ export const EmployeeTaskResSchema = z.object({
   description: z.string().nullable(),
   priority: TaskPrioritySchema,
   status: TaskStatusSchema,
+  // % tiến độ 0..100. BE tự set 100 khi task hoàn thành/xác minh.
+  progress: z.number().int().min(0).max(100).catch(0),
   dueDate: z.string().nullable(),
   startDate: z.string().nullable(),
   completedAt: z.string().nullable(),

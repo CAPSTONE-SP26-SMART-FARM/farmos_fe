@@ -22,7 +22,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { useOwnerCropSeasonDetail } from "@/queries/useCropSeason";
 import { useOwnerListProductionMilestones } from "@/queries/useProductionMilestone";
 import { useDynamicBreadcrumb } from "@/stores/breadcrumbStore";
-import type { CropSeasonType } from "@/types/cropSeason";
+import { ProductionStatusName, type CropSeasonType } from "@/types/cropSeason";
 import type { ProductionMilestoneResType } from "@/schemaValidatation/productionMilestone";
 import {
   formatDate,
@@ -130,6 +130,12 @@ export default function OwnerMilestoneViewPage() {
     variant: "secondary" as const,
   };
 
+  // Mốc đã hoàn thành → không còn dữ liệu cảm biến thời gian thực, ẩn hẳn tab
+  // "Cảm biến". Nếu URL đang trỏ tab sensors thì fallback về "Công việc".
+  const isCompleted = milestone.status === "completed";
+  const effectiveTab: TabValue =
+    isCompleted && activeTab === "sensors" ? "tasks" : activeTab;
+
   return (
     <div className="space-y-6">
       <Breadcrumb>
@@ -197,17 +203,19 @@ export default function OwnerMilestoneViewPage() {
       </div>
 
       <Tabs
-        value={activeTab}
+        value={effectiveTab}
         onValueChange={(v) => setActiveTab(v as TabValue)}
       >
         <TabsList className="w-full md:w-auto">
-          <TabsTrigger
-            value="sensors"
-            className="flex items-center gap-1.5"
-          >
-            <Radio className="h-3.5 w-3.5" />
-            Cảm biến
-          </TabsTrigger>
+          {!isCompleted && (
+            <TabsTrigger
+              value="sensors"
+              className="flex items-center gap-1.5"
+            >
+              <Radio className="h-3.5 w-3.5" />
+              Cảm biến
+            </TabsTrigger>
+          )}
           <TabsTrigger
             value="incidents"
             className="flex items-center gap-1.5"
@@ -224,16 +232,19 @@ export default function OwnerMilestoneViewPage() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent
-          value="sensors"
-          className="mt-4"
-        >
-          <OwnerMilestoneSensorsPane
-            milestone={milestone}
-            zoneId={zoneId || cropSeason?.zoneId || ""}
-            isLoading={listQuery.isLoading}
-          />
-        </TabsContent>
+        {!isCompleted && (
+          <TabsContent
+            value="sensors"
+            className="mt-4"
+          >
+            <OwnerMilestoneSensorsPane
+              milestone={milestone}
+              zoneId={zoneId || cropSeason?.zoneId || ""}
+              isLoading={listQuery.isLoading}
+              isPlanning={cropSeason?.status === ProductionStatusName.Planning}
+            />
+          </TabsContent>
+        )}
 
         <TabsContent
           value="incidents"

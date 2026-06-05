@@ -1,14 +1,8 @@
 import EmptyState from "@/components/common/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { DataTable } from "@/components/common/DataTable";
 import type { ColumnDef } from "@tanstack/react-table";
 import DatePickerField from "@/components/common/DatePickerField";
@@ -23,7 +17,8 @@ import type {
 } from "@/schemaValidatation/harvestRecord";
 import type { CropSeasonType } from "@/types/cropSeason";
 import { format } from "date-fns";
-import { Loader2, Pencil, Plus, Trash2, Wheat } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Loader2, Pencil, Plus, Trash2, Wheat, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import HarvestRecordFormSheet from "./HarvestRecordFormSheet";
@@ -74,8 +69,9 @@ export default function HarvestRecordTab({ cropSeason, readOnly = false }: Props
   const [fromInput, setFromInput] = useState(defaultFromDate);
   const [toInput, setToInput] = useState(defaultToDate);
 
-  // Form dialog (inner). State độc lập với harvest dialog (outer) — không
-  // touch outer state từ đây, đóng form chỉ reset form state.
+  // Form inline (collapsible) — create / edit ngay trong tab, KHÔNG mở dialog
+  // chồng lên dialog "Thu hoạch" chứa tab này. `formOpen` điều khiển collapsible,
+  // `editTarget` quyết định mode create vs edit.
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<HarvestRecordResType | null>(
     null,
@@ -94,6 +90,14 @@ export default function HarvestRecordTab({ cropSeason, readOnly = false }: Props
     const all = listQuery.data?.data?.data ?? [];
     return all.filter((r) => r.cropSeasonId === cropSeasonId);
   }, [listQuery.data, cropSeasonId]);
+
+  // Tổng sản lượng gộp theo đơn vị (tạ/kg/tấn… có thể lẫn lộn nên không cộng
+  // chung) — hiển thị làm dải tóm tắt phía trên bảng cho đỡ trống.
+  const totalsByUnit = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const r of items) m.set(r.unit, (m.get(r.unit) ?? 0) + r.quantity);
+    return [...m.entries()];
+  }, [items]);
 
   const handleApplyFilter = () => {
     setQuery((prev) => ({
@@ -118,6 +122,15 @@ export default function HarvestRecordTab({ cropSeason, readOnly = false }: Props
   const handleOpenCreate = () => {
     setEditTarget(null);
     setFormOpen(true);
+  };
+
+  // Nút header: đang mở ở chế độ tạo mới thì bấm lần nữa để đóng (toggle).
+  const handleToggleCreate = () => {
+    if (formOpen && !editTarget) {
+      handleCloseForm();
+    } else {
+      handleOpenCreate();
+    }
   };
 
   const handleOpenEdit = (record: HarvestRecordResType) => {
@@ -157,20 +170,41 @@ export default function HarvestRecordTab({ cropSeason, readOnly = false }: Props
         </div>
         {!readOnly && (
           <Button
-            onClick={handleOpenCreate}
+            onClick={handleToggleCreate}
             disabled={!canCreate}
+            variant={formOpen && !editTarget ? "outline" : "default"}
             title={
               canCreate
                 ? undefined
                 : "Chỉ có thể tạo bản ghi khi mùa vụ đã được duyệt, đang hoạt động hoặc đã hoàn tất."
             }
           >
-            <Plus className="mr-2 h-4 w-4" />
-            Tạo bản ghi
+            {formOpen && !editTarget ? (
+              <>
+                <X className="mr-2 h-4 w-4" />
+                Đóng
+              </>
+            ) : (
+              <>
+                <Plus className="mr-2 h-4 w-4" />
+                Tạo bản ghi
+              </>
+            )}
           </Button>
         )}
       </div>
 
+      {/* Danh sách + form: 2 card cạnh nhau. Khi chưa tạo, card danh sách ôm
+          full width; bấm "Tạo bản ghi" thì card form trượt ra bên phải và card
+          danh sách tự co lại (mượt nhờ `layout`). Form chỉ animate opacity +
+          transform `x` nên Dialog canh giữa không bị re-center → không giật. */}
+      <div className="flex flex-col items-stretch gap-4 lg:flex-row">
+        {/* Card trái — danh sách bản ghi. KHÔNG dùng `layout` (animate width =
+            reflow → Dialog canh giữa re-center từng frame → giật). Card co lại
+            tức thì 1 nhịp khi form mở; form bên phải mới là phần trượt mượt. */}
+        <div className="w-full min-w-0 flex-1">
+          <Card className="h-full gap-4 py-4">
+            <CardContent className="space-y-4 px-4">
       {/* Filter bar */}
       <div className="flex flex-wrap items-end gap-3 rounded-md border bg-muted/30 p-3">
         <div className="w-44">
@@ -231,8 +265,28 @@ export default function HarvestRecordTab({ cropSeason, readOnly = false }: Props
           }
         />
       ) : (
-        <div className="overflow-x-auto rounded-md border">
-          <DataTable
+        <div className="space-y-3">
+          {/* Dải tóm tắt: số đợt + tổng sản lượng theo từng đơn vị */}
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+            <span className="font-medium">{items.length} đợt thu hoạch</span>
+            {totalsByUnit.length > 0 && (
+              <>
+                <span className="text-muted-foreground">· Tổng sản lượng:</span>
+                {totalsByUnit.map(([unit, qty]) => (
+                  <Badge
+                    key={unit}
+                    variant="secondary"
+                    className="tabular-nums"
+                  >
+                    {qty.toLocaleString("vi-VN")} {unit}
+                  </Badge>
+                ))}
+              </>
+            )}
+          </div>
+
+          <div className="overflow-x-auto">
+            <DataTable
             columns={
               [
                 {
@@ -310,7 +364,8 @@ export default function HarvestRecordTab({ cropSeason, readOnly = false }: Props
                   ]
             }
             emptyText="Chưa có bản ghi."
-          />
+            />
+          </div>
         </div>
       )}
 
@@ -347,41 +402,61 @@ export default function HarvestRecordTab({ cropSeason, readOnly = false }: Props
           </div>
         </div>
       )}
+            </CardContent>
+          </Card>
+        </div>
 
-      {/* Form Dialog (inner) — create / edit. Radix tự stack lên trên dialog
-          chứa tab này; ESC + click overlay chỉ đóng dialog top-most. */}
-      <Dialog
-        open={formOpen}
-        onOpenChange={(open) => {
-          if (!open) handleCloseForm();
-          else setFormOpen(true);
-        }}
-      >
-        <DialogContent
-          className="max-w-lg! sm:max-w-lg! p-0 flex flex-col max-h-[85vh]"
-          showCloseButton
-        >
-          <DialogHeader className="px-6 pt-6 pb-2">
-            <DialogTitle>
-              {editTarget ? "Chỉnh sửa bản ghi" : "Tạo bản ghi thu hoạch"}
-            </DialogTitle>
-            <DialogDescription>
-              Ghi nhận sản lượng và chất lượng cho mùa vụ {cropSeason.cropName}.
-            </DialogDescription>
-          </DialogHeader>
-          {formOpen && (
-            <HarvestRecordFormSheet
-              key={editTarget?.id ?? "create"}
-              mode={editTarget ? "edit" : "create"}
-              zoneId={zoneId}
-              cropSeasonId={cropSeasonId}
-              initialData={editTarget}
-              onSuccess={handleCloseForm}
-              onCancel={handleCloseForm}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+        {/* Card phải — form tạo / sửa, mở ra giống collapsible (slide + fade). */}
+        {!readOnly && (
+          <AnimatePresence initial={false}>
+            {formOpen && (
+              <motion.div
+                initial={{ opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 16 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+                className="w-full shrink-0 lg:w-95"
+              >
+                <Card className="h-full gap-4 py-4">
+                  <CardContent className="px-4">
+                    <div className="mb-3 flex items-start justify-between gap-2">
+                      <div>
+                        <h4 className="font-semibold text-sm">
+                          {editTarget
+                            ? "Chỉnh sửa bản ghi"
+                            : "Tạo bản ghi thu hoạch"}
+                        </h4>
+                        <p className="text-xs text-muted-foreground">
+                          Ghi nhận sản lượng và chất lượng cho mùa vụ{" "}
+                          {cropSeason.cropName}.
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0"
+                        onClick={handleCloseForm}
+                        aria-label="Đóng biểu mẫu"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <HarvestRecordFormSheet
+                      key={editTarget?.id ?? "create"}
+                      mode={editTarget ? "edit" : "create"}
+                      zoneId={zoneId}
+                      cropSeasonId={cropSeasonId}
+                      initialData={editTarget}
+                      onSuccess={handleCloseForm}
+                      onCancel={handleCloseForm}
+                    />
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        )}
+      </div>
 
       {/* Delete confirm */}
       <ConfirmDialog

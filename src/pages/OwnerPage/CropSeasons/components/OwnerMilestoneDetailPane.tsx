@@ -25,9 +25,12 @@ import { cn } from "@/lib/utils";
 function IotConfigTab({
   cropSeasonId,
   milestoneId,
+  hideCoverage = false,
 }: {
   cropSeasonId: string;
   milestoneId: string;
+  /** Mốc đã hoàn thành → ẩn widget độ phủ (không còn ý nghĩa nhắc bổ sung). */
+  hideCoverage?: boolean;
 }) {
   const cfgQuery = useOwnerIotConfig(cropSeasonId, milestoneId, true);
   const config = cfgQuery.data?.data;
@@ -35,7 +38,9 @@ function IotConfigTab({
     <div className="space-y-4">
       {/* Độ phủ IoT của RIÊNG mốc này — chỉ tính thiết bị đã gán cho mốc, đối
           chiếu diện tích vùng trồng. */}
-      {milestoneId ? <IotCoverageWidget milestoneId={milestoneId} /> : null}
+      {milestoneId && !hideCoverage ? (
+        <IotCoverageWidget milestoneId={milestoneId} />
+      ) : null}
       <MilestoneIotConfigSummary
         config={config}
         isLoading={cfgQuery.isLoading}
@@ -86,6 +91,8 @@ export function OwnerMilestoneDetailPane({
     label: milestone.status,
     variant: "secondary" as const,
   };
+  // Mốc đã hoàn thành → ẩn widget độ phủ IoT (không còn ý nghĩa nhắc bổ sung).
+  const isCompleted = milestone.status === "completed";
 
   return (
     <div className="space-y-3 overflow-y-auto">
@@ -135,7 +142,11 @@ export function OwnerMilestoneDetailPane({
           </TabsContent>
 
           <TabsContent value="iot" className="mt-3">
-            <IotConfigTab cropSeasonId={milestone.cropSeasonId ?? ""} milestoneId={milestone.id} />
+            <IotConfigTab
+              cropSeasonId={milestone.cropSeasonId ?? ""}
+              milestoneId={milestone.id}
+              hideCoverage={isCompleted}
+            />
           </TabsContent>
         </Tabs>
       ) : (
@@ -144,7 +155,11 @@ export function OwnerMilestoneDetailPane({
             <Cpu className="h-3.5 w-3.5" />
             IoT &amp; Cảm biến
           </h4>
-          <IotConfigTab cropSeasonId={milestone.cropSeasonId ?? ""} milestoneId={milestone.id} />
+          <IotConfigTab
+            cropSeasonId={milestone.cropSeasonId ?? ""}
+            milestoneId={milestone.id}
+            hideCoverage={isCompleted}
+          />
         </section>
       )}
     </div>

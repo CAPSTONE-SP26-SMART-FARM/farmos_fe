@@ -20,6 +20,7 @@ import { useState } from "react";
 import { Clock, Loader2, Send } from "lucide-react";
 import { Field } from "./Field";
 import { canSend } from "./helpers";
+import CropSeasonMilestonesCoverageHint from "@/components/common/CropSeasonMilestonesCoverageHint";
 
 export function SendRequestDialog({ season }: { season: CropSeasonType }) {
   const [open, setOpen] = useState(false);
@@ -74,6 +75,7 @@ export function SendRequestDialog({ season }: { season: CropSeasonType }) {
             Gửi mùa vụ <strong>{season.cropName}</strong> lên chủ trang trại để phê duyệt. Sau khi gửi,
             mùa vụ <strong>không thể chỉnh sửa thêm</strong>.
           </p>
+          <CropSeasonMilestonesCoverageHint cropSeasonId={season.id} />
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <Field label="Ghi chú cho chủ trang trại (tuỳ chọn)">
               <Textarea

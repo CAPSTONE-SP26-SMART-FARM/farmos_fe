@@ -7,11 +7,8 @@ import {
   CalendarClock,
   CheckCircle2,
   Lock,
-  PackageCheck,
-  Recycle,
   Tractor,
   Warehouse,
-  XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
@@ -22,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import DatePickerField from "@/components/common/DatePickerField";
 import { DEVICE_STATUS_LABEL_ADMIN } from "@/constants/iotDeviceDisplay";
 import { cn } from "@/lib/utils";
@@ -35,7 +31,6 @@ import {
   scheduleRecoverySchema,
   type CompleteRecoveryBodyType,
   type KitRequestDetailResType,
-  type RecoveryBoardOutcomeType,
 } from "@/schemaValidatation/iotKitRequest";
 import { useAuthStore } from "@/stores/authStore";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -243,28 +238,7 @@ function RecoveryScheduleCard({
   );
 }
 
-// ── Phải — Danh sách board + ghi tình trạng & xác nhận ────────────────────
-
-const OUTCOME_LABEL: Record<
-  RecoveryBoardOutcomeType,
-  { label: string; description: string; icon: typeof PackageCheck }
-> = {
-  recovered_good: {
-    label: "Thu được, còn tốt",
-    description: "Kit còn dùng được",
-    icon: PackageCheck,
-  },
-  recovered_damaged: {
-    label: "Thu được, đã hỏng",
-    description: "Kit hỏng, cần kiểm tra",
-    icon: Recycle,
-  },
-  not_recovered: {
-    label: "Không thu được",
-    description: "Owner không cho, mất...",
-    icon: XCircle,
-  },
-};
+// ── Phải — Danh sách board + xác nhận thu hồi ─────────────────────────────
 
 function RecoveryCompleteCard({
   request,
@@ -442,101 +416,28 @@ function RecoveryCompleteForm({
         onSubmit={onSubmit}
         className="space-y-3"
       >
-        <div className="max-h-56 space-y-2 overflow-y-auto">
-          {boards.map((board, index) => (
-            <div
+        <ul className="max-h-56 space-y-2 overflow-y-auto">
+          {boards.map((board) => (
+            <li
               key={board.id}
-              className="space-y-2 rounded-md border bg-background p-3"
+              className="min-w-0 rounded-md border bg-background p-3"
             >
-              <div className="min-w-0">
-                <p className="truncate font-medium">
-                  {board.label ?? board.deviceName}
+              <p className="truncate font-medium">
+                {board.label ?? board.deviceName}
+              </p>
+              {board.label && board.label !== board.deviceName ? (
+                <p className="text-xs text-muted-foreground">
+                  {board.deviceName}
                 </p>
-                {board.label && board.label !== board.deviceName ? (
-                  <p className="text-xs text-muted-foreground">
-                    {board.deviceName}
-                  </p>
-                ) : null}
-              </div>
-              <Controller
-                control={form.control}
-                name={`outcomes.${index}.outcome`}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel
-                      htmlFor={`outcome-${board.id}`}
-                      className="text-xs text-muted-foreground"
-                    >
-                      Tình trạng
-                    </FieldLabel>
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger id={`outcome-${board.id}`}>
-                        <SelectValue placeholder="Chọn tình trạng" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {(
-                          Object.keys(OUTCOME_LABEL) as RecoveryBoardOutcomeType[]
-                        ).map((key) => {
-                          const opt = OUTCOME_LABEL[key];
-                          const Icon = opt.icon;
-                          return (
-                            <SelectItem
-                              key={key}
-                              value={key}
-                            >
-                              <span className="flex items-center gap-2">
-                                <Icon
-                                  aria-hidden="true"
-                                  className="h-3.5 w-3.5"
-                                />
-                                <span>
-                                  <span className="font-medium">
-                                    {opt.label}
-                                  </span>
-                                  <span className="ml-2 text-xs text-muted-foreground">
-                                    {opt.description}
-                                  </span>
-                                </span>
-                              </span>
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                    {fieldState.error ? (
-                      <FieldError>{fieldState.error.message}</FieldError>
-                    ) : null}
-                  </Field>
-                )}
-              />
-            </div>
-          ))}
-        </div>
-
-        <Controller
-          control={form.control}
-          name="resolutionNote"
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="complete-recovery-note">
-                Ghi chú chung (tùy chọn)
-              </FieldLabel>
-              <Textarea
-                id="complete-recovery-note"
-                {...field}
-                value={field.value ?? ""}
-                rows={3}
-                placeholder="VD: Owner hợp tác tốt, kit còn nguyên vẹn."
-              />
-              {fieldState.error ? (
-                <FieldError>{fieldState.error.message}</FieldError>
               ) : null}
-            </Field>
-          )}
-        />
+            </li>
+          ))}
+        </ul>
+
+        <p className="text-xs text-muted-foreground">
+          Tất cả thiết bị trên sẽ được ghi nhận đã thu về nguyên vẹn khi bạn xác
+          nhận.
+        </p>
 
         {!canSubmit && (
           <p className="text-xs text-amber-600 dark:text-amber-400">

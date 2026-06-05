@@ -11,6 +11,7 @@ import {
   ArrowLeft,
   BarChart3,
   ClipboardCheck,
+  MapPin,
   Wheat,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -138,7 +139,8 @@ export default function OwnerCropSeasonsPageV2() {
   );
   const isZonesLoading = farmQuery.isLoading || zonesQuery.isLoading;
   const hasZones = zones.length > 0;
-  const selectedZoneName = zones.find((z) => z.id === zoneId)?.name;
+  const selectedZone = zones.find((z) => z.id === zoneId);
+  const selectedZoneName = selectedZone?.name;
 
   // Drop stale zoneId from URL if it doesn't match any zone
   const isZonesFetching = farmQuery.isFetching || zonesQuery.isFetching;
@@ -275,8 +277,8 @@ export default function OwnerCropSeasonsPageV2() {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* ── Header ────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 border-b pb-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-3 min-w-0">
           <Button
             variant="ghost"
             size="icon"
@@ -292,11 +294,21 @@ export default function OwnerCropSeasonsPageV2() {
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <MapPin className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
             <p className="text-xs text-muted-foreground">Quản lý mùa vụ</p>
-            <h1 className="text-xl font-bold leading-tight">
-              {selectedZoneName ?? "Khu vực"}
-            </h1>
+            <div className="flex items-baseline gap-2 flex-wrap">
+              <h1 className="text-xl font-bold leading-tight truncate">
+                {selectedZoneName ?? "Khu vực"}
+              </h1>
+              {selectedZone?.areaSqm != null && (
+                <span className="text-sm text-muted-foreground">
+                  {selectedZone.areaSqm.toLocaleString("vi-VN")} m²
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -413,7 +425,6 @@ export default function OwnerCropSeasonsPageV2() {
           <div className="space-y-4">
             <CropSeasonSummaryCard
               season={historyDetail}
-              hideSendRequest
               actions={
                 <Button
                   size="sm"

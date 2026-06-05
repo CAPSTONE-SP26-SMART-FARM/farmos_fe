@@ -42,9 +42,15 @@ interface Props {
   canEdit: boolean;
   /** True khi cropSeason đang ở planning — chỉ ảnh hưởng status select trong row. */
   lockComplete: boolean;
+  /** True khi mốc đang thực hiện — chỉ lúc này mới hiện thanh tiến độ của task. */
+  milestoneInProgress: boolean;
 }
 
-function TasksStepContainer({ milestoneId, canEdit }: Props) {
+function TasksStepContainer({
+  milestoneId,
+  canEdit,
+  milestoneInProgress,
+}: Props) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<TaskStatusType | "all">("all");
   const [priority, setPriority] = useState<TaskPriorityType | "all">("all");
@@ -324,6 +330,7 @@ function TasksStepContainer({ milestoneId, canEdit }: Props) {
                   onUnassign={() => setUnassignTarget(task)}
                   onDelete={() => setDeleteTarget(task)}
                   isPending={isAssignPending}
+                  showProgress={milestoneInProgress}
                 />
               ))}
             </div>
