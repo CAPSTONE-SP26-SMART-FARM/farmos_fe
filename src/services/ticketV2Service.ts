@@ -6,6 +6,7 @@ import type {
   ListTicketsV2QueryType,
   ListTicketsV2ResType,
   TicketBalanceResType,
+  TicketV2ResType,
 } from "@/schemaValidatation/ticketV2";
 import type { MessageResType } from "@/types/api";
 
@@ -19,6 +20,7 @@ const ticketV2Service = {
         skipNull: true,
       })}`,
     ),
+  detail: (id: string) => api.get<TicketV2ResType>(TV2.DETAIL(id)),
   cancel: (id: string, body: CancelTicketV2BodyType) =>
     api.post<MessageResType, CancelTicketV2BodyType>(TV2.CANCEL(id), body),
   myBalance: () => api.get<TicketBalanceResType>(TV2.ME_BALANCE),

@@ -16,43 +16,9 @@ import type {
 import type { AbandonTicketBodyType } from "@/schemaValidatation/abandonLog";
 import type { CloseTicketBodyType } from "@/schemaValidatation/ticket";
 
-// ── Owner ─────────────────────────────────────────────────────────────────
-
-export const useOwnerTicketList = (
-  farmId: string,
-  query: ListIncidentTicketsQueryType,
-) =>
-  useQuery({
-    queryKey: QUERY_KEYS.tickets.ownerList(farmId, query),
-    queryFn: () => ticketService.ownerListByFarm(farmId, query),
-    enabled: !!farmId,
-  });
-
-export const useOwnerTicketDetail = (ticketId: string) =>
-  useQuery({
-    queryKey: QUERY_KEYS.tickets.ownerDetail(ticketId),
-    queryFn: () => ticketService.ownerDetail(ticketId),
-    enabled: !!ticketId,
-  });
-
-// ── Manager ───────────────────────────────────────────────────────────────
-
-export const useManagerTicketList = (
-  zoneId: string,
-  query: ListIncidentTicketsQueryType,
-) =>
-  useQuery({
-    queryKey: QUERY_KEYS.tickets.managerList(zoneId, query),
-    queryFn: () => ticketService.managerListByZone(zoneId, query),
-    enabled: !!zoneId,
-  });
-
-export const useManagerTicketDetail = (ticketId: string) =>
-  useQuery({
-    queryKey: QUERY_KEYS.tickets.managerDetail(ticketId),
-    queryFn: () => ticketService.managerDetail(ticketId),
-    enabled: !!ticketId,
-  });
+// Owner/Manager đã migrate sang `useTicketV2List` + `useTicketV2Detail`
+// (`@/queries/useTicketV2`). Legacy v1 `/ticket/incident/owner|manager/*`
+// endpoints không còn được FE web gọi (xem memory project_ticket_v2_migration).
 
 // ── Doctor ────────────────────────────────────────────────────────────────
 

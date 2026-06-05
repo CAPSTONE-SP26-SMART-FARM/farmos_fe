@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -7,52 +6,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { DataTable } from "@/components/common/DataTable";
+import { SeverityBadge } from "@/components/common/SeverityBadge";
+import { TicketStatusBadge } from "@/components/common/TicketStatusBadge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Eye, Ticket } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useNavigate } from "react-router";
 import { cn } from "@/lib/utils";
-import { useOwnerTicketList } from "@/queries/useTicket";
+import { useTicketV2List } from "@/queries/useTicketV2";
 import type { TicketIncidentResType } from "@/schemaValidatation/ticket";
-
-const SEVERITY_LABEL: Record<string, string> = {
-  low: "Thấp",
-  medium: "Trung bình",
-  high: "Cao",
-  critical: "Nghiêm trọng",
-};
-
-const SEVERITY_VARIANT: Record<
-  string,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  low: "secondary",
-  medium: "default",
-  high: "destructive",
-  critical: "destructive",
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  open: "Mở",
-  assigned: "Đã phân công",
-  in_progress: "Đang xử lý",
-  resolved: "Đã giải quyết",
-  closed: "Đã đóng",
-  cancelled: "Đã hủy",
-};
-
-const STATUS_VARIANT: Record<
-  string,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  open: "default",
-  assigned: "secondary",
-  in_progress: "default",
-  resolved: "secondary",
-  closed: "outline",
-  cancelled: "outline",
-};
 
 interface RecentIncidentsCardProps {
   farmId: string;
@@ -62,9 +25,10 @@ interface RecentIncidentsCardProps {
 function RecentIncidentsCard({ farmId, className }: RecentIncidentsCardProps) {
   const navigate = useNavigate();
 
-  const { data, isLoading, isError } = useOwnerTicketList(farmId, {
+  const { data, isLoading, isError } = useTicketV2List({
     page: 1,
     limit: 10,
+    farmId: farmId || undefined,
   });
 
   const tickets = (data?.data.data ?? []) as TicketIncidentResType[];
@@ -92,26 +56,12 @@ function RecentIncidentsCard({ farmId, className }: RecentIncidentsCardProps) {
     {
       accessorKey: "severity",
       header: "Mức độ",
-      cell: ({ row }) => (
-        <Badge
-          variant={SEVERITY_VARIANT[row.original.severity]}
-          className="text-xs"
-        >
-          {SEVERITY_LABEL[row.original.severity]}
-        </Badge>
-      ),
+      cell: ({ row }) => <SeverityBadge severity={row.original.severity} />,
     },
     {
       accessorKey: "status",
       header: "Trạng thái",
-      cell: ({ row }) => (
-        <Badge
-          variant={STATUS_VARIANT[row.original.status]}
-          className="text-xs"
-        >
-          {STATUS_LABEL[row.original.status]}
-        </Badge>
-      ),
+      cell: ({ row }) => <TicketStatusBadge status={row.original.status} />,
     },
     {
       accessorKey: "createdAt",
