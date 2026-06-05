@@ -92,7 +92,7 @@ const STATUS_META: Record<
     variant: "default" | "secondary" | "outline" | "destructive";
   }
 > = {
-  pending: { label: "Chưa bắt đầu", variant: "secondary" },
+  pending: { label: "Chờ xử lý", variant: "secondary" },
   in_progress: { label: "Đang thực hiện", variant: "default" },
   completed: { label: "Hoàn thành", variant: "outline" },
   verified: { label: "Đã xác minh", variant: "default" },
@@ -1196,7 +1196,7 @@ export function ManagerMilestoneTaskAssignmentScreen({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả</SelectItem>
-              <SelectItem value="pending">Chưa bắt đầu</SelectItem>
+              <SelectItem value="pending">Chờ xử lý</SelectItem>
               <SelectItem value="in_progress">Đang thực hiện</SelectItem>
               <SelectItem value="completed">Hoàn thành</SelectItem>
               <SelectItem value="verified">Đã xác minh</SelectItem>
@@ -1811,7 +1811,7 @@ export default function ManagerMilestoneTasksSection({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả</SelectItem>
-              <SelectItem value="pending">Chưa bắt đầu</SelectItem>
+              <SelectItem value="pending">Chờ xử lý</SelectItem>
               <SelectItem value="in_progress">Đang thực hiện</SelectItem>
               <SelectItem value="completed">Hoàn thành</SelectItem>
               <SelectItem value="verified">Đã xác minh</SelectItem>

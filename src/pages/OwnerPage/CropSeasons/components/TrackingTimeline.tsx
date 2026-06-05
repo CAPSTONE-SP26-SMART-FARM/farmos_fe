@@ -77,7 +77,16 @@ function renderChange(item: {
     );
   }
 
-  if (item.changeType === "create" || (oldEmpty && !newEmpty)) {
+  if (item.changeType === "create") {
+    return (
+      <span>
+        <span className="font-semibold text-emerald-600">Phát sinh: </span>
+        <span className="font-medium">{newStr}</span>
+      </span>
+    );
+  }
+
+  if (oldEmpty && !newEmpty) {
     return (
       <span>
         <span className="text-muted-foreground">Ghi nhận: </span>

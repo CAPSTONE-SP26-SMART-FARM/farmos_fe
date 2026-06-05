@@ -9,9 +9,7 @@ import {
   ArrowRight,
   CalendarClock,
   CheckCircle2,
-  PackageCheck,
   PackageOpen,
-  Recycle,
   Replace,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,12 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/common/EmptyState";
 import DatePickerField from "@/components/common/DatePickerField";
 import { DEVICE_STATUS_LABEL_ADMIN } from "@/constants/iotDeviceDisplay";
-import { cn } from "@/lib/utils";
 import {
   useFinishSwapAtSite,
   useReplacementDevices,
@@ -500,56 +496,11 @@ function CompleteSwapCard({
         className="space-y-3"
       >
         {!isResume && (
-          <Controller
-            control={form.control}
-            name="oldBoardOutcome"
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel>Xử lý thiết bị cũ</FieldLabel>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <OutcomeOption
-                    icon={Recycle}
-                    label="Thu hồi do hỏng"
-                    description="Đánh dấu hỏng vĩnh viễn, không tái dùng."
-                    checked={field.value === "revoked"}
-                    onSelect={() => field.onChange("revoked")}
-                  />
-                  <OutcomeOption
-                    icon={PackageCheck}
-                    label="Đưa về kho"
-                    description="Còn dùng được, sẽ kiểm tra để dùng lại."
-                    checked={field.value === "available"}
-                    onSelect={() => field.onChange("available")}
-                  />
-                </div>
-                {fieldState.error ? (
-                  <FieldError>{fieldState.error.message}</FieldError>
-                ) : null}
-              </Field>
-            )}
-          />
+          <p className="text-xs text-muted-foreground">
+            Thiết bị cũ sẽ được thu hồi và ngưng hoạt động. Thiết bị mới tự kích
+            hoạt khi gửi dữ liệu đầu tiên.
+          </p>
         )}
-        <Controller
-          control={form.control}
-          name="resolutionNote"
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="complete-swap-note">
-                Ghi chú xử lý (tùy chọn)
-              </FieldLabel>
-              <Textarea
-                id="complete-swap-note"
-                {...field}
-                value={field.value ?? ""}
-                rows={3}
-                placeholder="VD: Đã thay xong, owner xác nhận thiết bị mới chạy ổn."
-              />
-              {fieldState.error ? (
-                <FieldError>{fieldState.error.message}</FieldError>
-              ) : null}
-            </Field>
-          )}
-        />
         <div className="flex justify-end pt-1">
           <Button
             type="submit"
@@ -653,42 +604,3 @@ function SwapDevicePair({
   );
 }
 
-interface OutcomeOptionProps {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  description: string;
-  checked: boolean;
-  onSelect: () => void;
-}
-
-function OutcomeOption({
-  icon: Icon,
-  label,
-  description,
-  checked,
-  onSelect,
-}: OutcomeOptionProps) {
-  return (
-    <Button
-      type="button"
-      variant="outline"
-      role="radio"
-      aria-checked={checked}
-      onClick={onSelect}
-      className={cn(
-        "flex h-auto flex-col items-start gap-1 whitespace-normal p-3 text-left",
-        checked && "border-primary bg-primary/5 hover:bg-primary/10",
-      )}
-    >
-      <Icon
-        aria-hidden="true"
-        className={cn(
-          "h-4 w-4",
-          checked ? "text-primary" : "text-muted-foreground",
-        )}
-      />
-      <span className="text-sm font-medium">{label}</span>
-      <span className="text-xs text-muted-foreground">{description}</span>
-    </Button>
-  );
-}

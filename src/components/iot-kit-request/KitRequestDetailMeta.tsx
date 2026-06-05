@@ -2,9 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { DEVICE_STATUS_LABEL_ADMIN } from "@/constants/iotDeviceDisplay";
 import {
-  KitRequestBoardOutcomeBadge,
   KitRequestInstallReasonBadge,
-  KitRequestRecoveryReasonBadge,
   KitRequestStatusBadge,
   KitRequestTypeBadge,
 } from "./KitRequestBadges";
@@ -65,8 +63,6 @@ export function KitRequestDetailMeta({
       : null;
   const oldBoardOutcome = request.metadata?.oldBoardOutcome;
   const installReason = request.metadata?.installReason;
-  const recoveryReason = request.metadata?.recoveryReason;
-  const boardOutcomeOnComplete = request.metadata?.boardOutcomeOnComplete;
 
   // Section "devices" only → render gọn không separator/header trùng
   if (section === "devices") {
@@ -77,10 +73,6 @@ export function KitRequestDetailMeta({
             devices={devices}
             kind={isRecoverySchedule ? "recovery" : "install"}
             installReason={isInstallSchedule ? installReason : undefined}
-            recoveryReason={isRecoverySchedule ? recoveryReason : undefined}
-            boardOutcomeOnComplete={
-              isRecoverySchedule ? boardOutcomeOnComplete : undefined
-            }
           />
         </div>
       );
@@ -152,10 +144,6 @@ export function KitRequestDetailMeta({
             devices={devices}
             kind={isRecoverySchedule ? "recovery" : "install"}
             installReason={isInstallSchedule ? installReason : undefined}
-            recoveryReason={isRecoverySchedule ? recoveryReason : undefined}
-            boardOutcomeOnComplete={
-              isRecoverySchedule ? boardOutcomeOnComplete : undefined
-            }
           />
           <Separator />
         </>
@@ -451,17 +439,10 @@ function DevicesSection({
   devices,
   kind,
   installReason,
-  recoveryReason,
-  boardOutcomeOnComplete,
 }: {
   devices: NonNullable<KitRequestDetailResType["devices"]>;
   kind: "install" | "recovery";
   installReason?: "crop_approved" | "milestone_started";
-  recoveryReason?:
-    | "milestone_transition"
-    | "cropseason_completed"
-    | "subscription_ended";
-  boardOutcomeOnComplete?: "purchase" | "available";
 }) {
   const heading =
     kind === "recovery"
@@ -494,12 +475,6 @@ function DevicesSection({
     );
   }
 
-  // Đếm theo status để show summary
-  const statusCount = devices.reduce<Record<string, number>>((acc, d) => {
-    acc[d.status] = (acc[d.status] ?? 0) + 1;
-    return acc;
-  }, {});
-
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
@@ -517,30 +492,6 @@ function DevicesSection({
             className="text-xs"
           />
         )}
-        {recoveryReason && (
-          <KitRequestRecoveryReasonBadge
-            reason={recoveryReason}
-            className="text-xs"
-          />
-        )}
-        {boardOutcomeOnComplete && (
-          <KitRequestBoardOutcomeBadge
-            outcome={boardOutcomeOnComplete}
-            className="text-xs"
-          />
-        )}
-        {Object.entries(statusCount).map(([status, count]) => (
-          <Badge
-            key={status}
-            variant="outline"
-            className="text-xs"
-          >
-            {DEVICE_STATUS_LABEL_ADMIN[
-              status as keyof typeof DEVICE_STATUS_LABEL_ADMIN
-            ] ?? status}
-            : {count}
-          </Badge>
-        ))}
       </div>
       <ul className="space-y-1 rounded-md border bg-muted/20 p-2 text-sm">
         {devices.map((d) => (

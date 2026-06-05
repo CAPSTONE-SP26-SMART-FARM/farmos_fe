@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 
 const STATUS_OPTIONS: Array<{ value: TaskStatusType; label: string }> = [
-  { value: "pending", label: "Chưa bắt đầu" },
+  { value: "pending", label: "Chờ xử lý" },
   { value: "in_progress", label: "Đang thực hiện" },
   { value: "completed", label: "Hoàn thành" },
   { value: "verified", label: "Đã xác minh" },
