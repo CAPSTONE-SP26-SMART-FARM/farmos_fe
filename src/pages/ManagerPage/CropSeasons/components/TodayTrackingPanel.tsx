@@ -26,7 +26,7 @@ function getInitials(name: string) {
 }
 
 const STATUS_LABEL: Record<string, string> = {
-  pending: "Chưa bắt đầu",
+  pending: "Chờ xử lý",
   in_progress: "Đang thực hiện",
   completed: "Hoàn thành",
   verified: "Đã xác minh",

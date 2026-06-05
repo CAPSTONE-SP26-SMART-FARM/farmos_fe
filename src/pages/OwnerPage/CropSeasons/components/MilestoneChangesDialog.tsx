@@ -45,6 +45,10 @@ interface Props {
 // Số nhóm công việc hiển thị mỗi trang trong dialog (tránh thanh cuộn).
 const TASKS_PER_PAGE = 2;
 
+// Field không hiển thị trong nhật ký thay đổi: sensorBinding (kỹ thuật), progress (tiến độ — nhiễu).
+const HIDDEN_TRACKING_FIELDS = new Set(["sensorBinding", "progress"]);
+const isVisibleField = (fieldName: string) => !HIDDEN_TRACKING_FIELDS.has(fieldName);
+
 // ── Phân loại field → tông màu để timeline có điểm nhấn dễ quét mắt ──────────
 type FieldTone = "status" | "date" | "person" | "text";
 
@@ -133,7 +137,16 @@ function ChangeValue({
       </span>
     );
   }
-  if (item.changeType === "create" || (oldEmpty && !newEmpty)) {
+  if (item.changeType === "create") {
+    return (
+      <span className="flex flex-wrap items-center gap-1.5">
+        <ValuePill variant="new" tone={tone}>
+          {newStr}
+        </ValuePill>
+      </span>
+    );
+  }
+  if (oldEmpty && !newEmpty) {
     return (
       <span className="flex flex-wrap items-center gap-1.5">
         <span className="text-xs text-muted-foreground">Ghi nhận</span>
@@ -218,14 +231,28 @@ function ChangeGroup({
   icon: ReactNode;
   group: MilestoneChangeGroupType;
 }) {
-  // Bỏ field kỹ thuật sensorBinding khỏi danh sách hiển thị.
-  const logs = group.logs.filter((l) => l.fieldName !== "sensorBinding");
+  // Bỏ các field ẩn (sensorBinding kỹ thuật, progress tiến độ) khỏi danh sách hiển thị.
+  const visibleLogs = group.logs.filter((l) => isVisibleField(l.fieldName));
+  // "Phát sinh" = công việc tạo lúc mùa vụ đang active (createdInPlan=false). Dựa thẳng vào cờ từ BE.
+  const isNewlyCreated = group.createdInPlan === false;
+  // Dòng `create` chỉ có nghĩa với task phát sinh — giữ đúng 1 dòng `status` để task vừa phát sinh
+  // vẫn xuất hiện (kèm badge). Với task baseline (tạo lúc planning), dòng create là dữ liệu thừa/cũ:
+  // giá trị đầu đã là vế "từ" của thay đổi đầu tiên nên bỏ hẳn, chỉ còn các thay đổi thật.
+  const logs = visibleLogs.filter((l) => {
+    if (l.changeType !== "create") return true;
+    return isNewlyCreated && l.fieldName === "status";
+  });
   if (logs.length === 0) return null;
   return (
     <div className="overflow-hidden rounded-lg border bg-background shadow-sm">
       <div className="flex items-center gap-2 border-b bg-muted/40 px-4 py-2.5">
         {icon}
         <span className="truncate text-sm font-semibold">{title}</span>
+        {isNewlyCreated ? (
+          <Badge className="shrink-0 border-emerald-200 bg-emerald-50 text-xs font-semibold text-emerald-700">
+            Phát sinh
+          </Badge>
+        ) : null}
         <Badge variant="secondary" className="ml-auto shrink-0 text-xs">
           {logs.length} thay đổi
         </Badge>
@@ -259,11 +286,11 @@ export default function MilestoneChangesDialog({
 
   const detail = data?.data;
   const milestoneLogs =
-    detail?.milestone.logs.filter((l) => l.fieldName !== "sensorBinding") ?? [];
+    detail?.milestone.logs.filter((l) => isVisibleField(l.fieldName)) ?? [];
   const taskGroups = useMemo(
     () =>
       (detail?.tasks ?? []).filter((t) =>
-        t.logs.some((l) => l.fieldName !== "sensorBinding"),
+        t.logs.some((l) => isVisibleField(l.fieldName)),
       ),
     [detail?.tasks],
   );

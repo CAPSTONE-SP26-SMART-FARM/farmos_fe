@@ -155,7 +155,7 @@ const ENTITY_FIELD_VALUE_LABEL: Partial<
   },
   employee_task: {
     status: {
-      pending: "Chưa bắt đầu",
+      pending: "Chờ xử lý",
       in_progress: "Đang thực hiện",
       completed: "Hoàn thành",
       cancelled: "Đã hủy",

@@ -14,7 +14,7 @@ const ENTITY_COLOR_MAP: Record<string, string> = {
 };
 
 const CHANGE_TYPE_MAP: Record<string, { label: string; className: string }> = {
-  create: { label: "Tạo mới", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  create: { label: "Phát sinh", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
   update: { label: "Cập nhật", className: "bg-blue-50 text-blue-700 border-blue-200" },
   delete: { label: "Xóa", className: "bg-red-50 text-red-700 border-red-200" },
   snapshot: { label: "Ảnh chụp", className: "bg-muted text-muted-foreground border-border" },

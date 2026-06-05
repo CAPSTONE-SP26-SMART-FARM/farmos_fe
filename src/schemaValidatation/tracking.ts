@@ -273,6 +273,9 @@ export type FieldHistoryResType = TrackingLogListResType;
 export const MilestoneChangeGroupSchema = z.object({
   entityId: z.string().uuid(),
   label: z.string().nullable(),
+  // Task: true = tạo lúc planning (baseline), false = tạo lúc season active ("phát sinh").
+  // Null cho nhóm milestone (không áp dụng).
+  createdInPlan: z.boolean().nullable(),
   logs: z.array(TrackingLogItemSchema),
 });
 export type MilestoneChangeGroupType = z.infer<
