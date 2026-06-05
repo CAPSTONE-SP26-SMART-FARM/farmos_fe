@@ -63,6 +63,11 @@ export function useRealtimeTicketDetail(
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.ticketsExt.adminFull(ticketId),
       });
+      // v2 detail panel cần refresh metadata (status, assignee, attachments)
+      // ngay khi lifecycle event đổi state.
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.ticketsV2.detail(ticketId),
+      });
     };
 
     const onAssigned = (raw: unknown) => {
@@ -83,8 +88,9 @@ export function useRealtimeTicketDetail(
       const parsed = TicketClosedPayloadSchema.safeParse(raw);
       if (!parsed.success || parsed.data.ticketId !== ticketId) return;
       invalidateFull();
-      // Khi ticket close → list cũng cần refresh.
+      // Khi ticket close → list cũng cần refresh (legacy doctor list + v2).
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.tickets.all });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ticketsV2.root });
       optionsRef.current?.onClosed?.();
     };
 

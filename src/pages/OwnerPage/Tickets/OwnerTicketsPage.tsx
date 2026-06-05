@@ -7,265 +7,26 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { DataTable } from "@/components/common/DataTable";
+import { SeverityBadge } from "@/components/common/SeverityBadge";
+import { TicketStatusBadge } from "@/components/common/TicketStatusBadge";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Separator } from "@/components/ui/separator";
 import { useOwnerGetMyFarm } from "@/queries/useOwner";
-import {
-  useOwnerTicketList,
-  useOwnerTicketDetail,
-  useTicketPrescriptions,
-} from "@/queries/useTicket";
+import { useTicketV2List } from "@/queries/useTicketV2";
 import { useRealtimeTicket } from "@/hooks/useRealtimeTicket";
-import { useTicketQualityFlag } from "@/hooks/useTicketQualityFlag";
 import TicketDetailPanelV2 from "@/components/ticket-quality/TicketDetailPanelV2";
 import { RoleName } from "@/constants/role";
 import type { TicketIncidentResType } from "@/schemaValidatation/ticket";
 import {
-  ArrowLeft,
   ChevronLeft,
   ChevronRight,
   Eye,
-  Pill,
   Ticket,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { useAuthStore } from "@/stores/authStore";
-
-// ── Constants ──────────────────────────────────────────────────────────────
-
-const SEVERITY_LABEL: Record<string, string> = {
-  low: "Thấp",
-  medium: "Trung bình",
-  high: "Cao",
-  critical: "Nghiêm trọng",
-};
-
-const SEVERITY_VARIANT: Record<
-  string,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  low: "secondary",
-  medium: "default",
-  high: "destructive",
-  critical: "destructive",
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  open: "Mở",
-  assigned: "Đã phân công",
-  in_progress: "Đang xử lý",
-  resolved: "Đã giải quyết",
-  closed: "Đã đóng",
-  cancelled: "Đã hủy",
-};
-
-const STATUS_VARIANT: Record<
-  string,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  open: "default",
-  assigned: "secondary",
-  in_progress: "default",
-  resolved: "secondary",
-  closed: "outline",
-  cancelled: "outline",
-};
-
-// ── Ticket Detail Panel ────────────────────────────────────────────────────
-
-interface TicketDetailPanelProps {
-  ticketId: string;
-  onBack: () => void;
-}
-
-// Module 3 wrapper — gate UI mới qua feature flag. Phải tách thành component
-// riêng để tránh vi phạm rules-of-hooks (early return trước khi gọi hooks
-// của TicketDetailPanelLegacy).
-function TicketDetailPanel(props: TicketDetailPanelProps) {
-  const { enabled: tqEnabled, isLoading: flagLoading } = useTicketQualityFlag();
-  const user = useAuthStore((s) => s.user);
-
-  // Khi flag chưa load xong: render skeleton thay vì lộ panel cũ.
-  if (flagLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-10 w-1/3" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    );
-  }
-
-  if (tqEnabled && user?.id) {
-    return (
-      <TicketDetailPanelV2
-        ticketId={props.ticketId}
-        onBack={props.onBack}
-        viewerRole="owner"
-        viewerUserId={user.id}
-      />
-    );
-  }
-
-  return <TicketDetailPanelLegacy {...props} />;
-}
-
-function TicketDetailPanelLegacy({ ticketId, onBack }: TicketDetailPanelProps) {
-  const [show, setShow] = useState(false);
-  const [rxPage] = useState(1);
-
-  const { data: ticketData, isLoading: ticketLoading } =
-    useOwnerTicketDetail(ticketId);
-  const { data: rxData } = useTicketPrescriptions(ticketId, {
-    page: rxPage,
-    limit: 20,
-  });
-
-  const ticket = ticketData?.data;
-  const prescriptions = rxData?.data.data ?? [];
-
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => setShow(true));
-    return () => cancelAnimationFrame(frame);
-  }, []);
-
-  const handleBack = () => {
-    setShow(false);
-    setTimeout(onBack, 300);
-  };
-
-  return (
-    <div
-      className={`space-y-6 transition-all duration-300 ease-out ${show ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
-    >
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleBack}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <Badge className="mb-1">Chi tiết ticket</Badge>
-          <h1 className="text-2xl font-bold">
-            {ticketLoading ? "Đang tải..." : (ticket?.title ?? "Ticket")}
-          </h1>
-        </div>
-      </div>
-
-      <Separator />
-
-      {ticketLoading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton
-              key={i}
-              className="h-8 w-full"
-            />
-          ))}
-        </div>
-      ) : !ticket ? (
-        <p className="text-sm text-muted-foreground">Không tìm thấy ticket.</p>
-      ) : (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Ticket className="h-4 w-4" />
-                Thông tin sự cố
-              </CardTitle>
-              <CardDescription>
-                Chi tiết ticket được tạo và tiến trình xử lý.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Mã ticket</span>
-                <span className="font-mono text-xs">
-                  {ticket.ticketNumber}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Trạng thái</span>
-                <Badge variant={STATUS_VARIANT[ticket.status]}>
-                  {STATUS_LABEL[ticket.status]}
-                </Badge>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Mức độ</span>
-                <Badge variant={SEVERITY_VARIANT[ticket.severity]}>
-                  {SEVERITY_LABEL[ticket.severity]}
-                </Badge>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Khu vực</span>
-                <span>{ticket.zone?.name ?? "—"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Bác sĩ</span>
-                <span>{ticket.assignee?.fullName ?? "Chưa phân công"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Tạo lúc</span>
-                <span>
-                  {format(new Date(ticket.createdAt), "dd/MM/yyyy HH:mm", {
-                    locale: vi,
-                  })}
-                </span>
-              </div>
-              <Separator />
-              <p className="text-muted-foreground text-xs">Mô tả</p>
-              <p className="text-sm leading-relaxed">{ticket.description}</p>
-            </CardContent>
-          </Card>
-
-          {/* Prescriptions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Pill className="h-4 w-4" />
-                Đơn thuốc ({prescriptions.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {prescriptions.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  Chưa có đơn thuốc.
-                </p>
-              ) : (
-                prescriptions.map((rx) => (
-                  <div
-                    key={rx.id}
-                    className="rounded-md border p-3 text-sm"
-                  >
-                    <p className="font-medium">{rx.medicineName}</p>
-                    <p className="text-muted-foreground text-xs mt-0.5">
-                      Liều: {rx.dosage}
-                    </p>
-                    <p className="text-muted-foreground text-xs">
-                      {format(new Date(rx.createdAt), "dd/MM HH:mm", {
-                        locale: vi,
-                      })}
-                    </p>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// (CreateTicketPanel đã được gỡ — web FE không còn tạo ticket; toàn bộ luồng
-// tạo ticket nay thuộc mobile. Owner chỉ xem & quản lý ticket trên dashboard.)
 
 // ── Main Page ──────────────────────────────────────────────────────────────
 
@@ -302,9 +63,10 @@ function OwnerTicketsPage() {
   const { data: myFarmData, isLoading: farmLoading } = useOwnerGetMyFarm();
   const farmId = myFarmData?.data.id ?? "";
 
-  const { data, isLoading, isError } = useOwnerTicketList(farmId, {
+  const { data, isLoading, isError } = useTicketV2List({
     page,
     limit,
+    farmId: farmId || undefined,
   });
 
   // Realtime: invalidate list khi có ticket mới / kết thúc thuộc farm này.
@@ -342,26 +104,12 @@ function OwnerTicketsPage() {
     {
       accessorKey: "severity",
       header: "Mức độ",
-      cell: ({ row }) => (
-        <Badge
-          variant={SEVERITY_VARIANT[row.original.severity]}
-          className="text-xs"
-        >
-          {SEVERITY_LABEL[row.original.severity]}
-        </Badge>
-      ),
+      cell: ({ row }) => <SeverityBadge severity={row.original.severity} />,
     },
     {
       accessorKey: "status",
       header: "Trạng thái",
-      cell: ({ row }) => (
-        <Badge
-          variant={STATUS_VARIANT[row.original.status]}
-          className="text-xs"
-        >
-          {STATUS_LABEL[row.original.status]}
-        </Badge>
-      ),
+      cell: ({ row }) => <TicketStatusBadge status={row.original.status} />,
     },
     {
       id: "assignee",
@@ -387,9 +135,10 @@ function OwnerTicketsPage() {
 
   if (viewingTicketId) {
     return (
-      <TicketDetailPanel
+      <TicketDetailPanelV2
         ticketId={viewingTicketId}
         onBack={() => setViewingTicketId(null)}
+        viewerRole="owner"
       />
     );
   }
@@ -413,7 +162,7 @@ function OwnerTicketsPage() {
               <Ticket className="h-8 w-8 text-muted-foreground" />
             </div>
             {farmLoading ? (
-              <Skeleton className="h-6 w-48" />
+              <p className="text-sm text-muted-foreground">Đang tải...</p>
             ) : (
               <>
                 <h3 className="text-lg font-semibold mb-1">
@@ -482,6 +231,7 @@ function OwnerTicketsPage() {
                         size="sm"
                         disabled={!meta.hasPreviousPage}
                         onClick={() => setPage((p) => p - 1)}
+                        aria-label="Trang trước"
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
@@ -490,6 +240,7 @@ function OwnerTicketsPage() {
                         size="sm"
                         disabled={!meta.hasNextPage}
                         onClick={() => setPage((p) => p + 1)}
+                        aria-label="Trang sau"
                       >
                         <ChevronRight className="h-4 w-4" />
                       </Button>

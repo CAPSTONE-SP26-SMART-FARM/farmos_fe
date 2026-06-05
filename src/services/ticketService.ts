@@ -31,23 +31,9 @@ const T = API_ENDPOINTS.TICKET;
 const ADMIN_T = API_ENDPOINTS.ADMIN_TICKETS;
 
 const ticketService = {
-  // ── Incident (Owner) ──────────────────────────────────────────────────
-  ownerListByFarm: (farmId: string, query: ListIncidentTicketsQueryType) =>
-    api.get<TicketIncidentListResType>(
-      `${T.INCIDENT.OWNER_LIST_BY_FARM(farmId)}?${queryString.stringify(query, { skipNull: true, skipEmptyString: true })}`,
-    ),
-
-  ownerDetail: (ticketId: string) =>
-    api.get<TicketIncidentResType>(T.INCIDENT.OWNER_DETAIL(ticketId)),
-
-  // ── Incident (Manager) ────────────────────────────────────────────────
-  managerListByZone: (zoneId: string, query: ListIncidentTicketsQueryType) =>
-    api.get<TicketIncidentListResType>(
-      `${T.INCIDENT.MANAGER_LIST_BY_ZONE(zoneId)}?${queryString.stringify(query, { skipNull: true, skipEmptyString: true })}`,
-    ),
-
-  managerDetail: (ticketId: string) =>
-    api.get<TicketIncidentResType>(T.INCIDENT.MANAGER_DETAIL(ticketId)),
+  // Owner/Manager đã migrate sang ticketV2Service (`GET /tickets[/:id]`).
+  // Các endpoint legacy `/ticket/incident/owner|manager/*` không còn dùng
+  // ở FE web — xem memory project_ticket_v2_migration.
 
   // ── Incident (Doctor) ─────────────────────────────────────────────────
   doctorList: (query: ListIncidentTicketsQueryType) =>

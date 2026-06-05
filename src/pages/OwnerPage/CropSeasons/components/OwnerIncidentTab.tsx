@@ -1,54 +1,15 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/common/DataTable";
+import { SeverityBadge } from "@/components/common/SeverityBadge";
+import { TicketStatusBadge } from "@/components/common/TicketStatusBadge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Eye, Ticket } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useNavigate } from "react-router";
-import { useOwnerGetMyFarm } from "@/queries/useOwner";
-import { useOwnerTicketList } from "@/queries/useTicket";
 import { useTicketV2List } from "@/queries/useTicketV2";
 import type { TicketIncidentResType } from "@/schemaValidatation/ticket";
 import type { CropSeasonType } from "@/types/cropSeason";
-
-const SEVERITY_LABEL: Record<string, string> = {
-  low: "Thấp",
-  medium: "Trung bình",
-  high: "Cao",
-  critical: "Nghiêm trọng",
-};
-
-const SEVERITY_VARIANT: Record<
-  string,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  low: "secondary",
-  medium: "default",
-  high: "destructive",
-  critical: "destructive",
-};
-
-const TICKET_STATUS_LABEL: Record<string, string> = {
-  open: "Mở",
-  assigned: "Đã phân công",
-  in_progress: "Đang xử lý",
-  resolved: "Đã giải quyết",
-  closed: "Đã đóng",
-  cancelled: "Đã hủy",
-};
-
-const TICKET_STATUS_VARIANT: Record<
-  string,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  open: "default",
-  assigned: "secondary",
-  in_progress: "default",
-  resolved: "secondary",
-  closed: "outline",
-  cancelled: "outline",
-};
 
 export function OwnerIncidentTab({
   cropSeason,
@@ -59,34 +20,22 @@ export function OwnerIncidentTab({
   milestoneId?: string;
 }) {
   const navigate = useNavigate();
-  const farmQuery = useOwnerGetMyFarm();
-  const farmId = farmQuery.data?.data?.id ?? "";
 
-  // Có milestoneId → dùng v2 endpoint với filter milestoneId (BE auto scope
-  // theo role owner). Không → fallback legacy list-by-farm rồi filter zone.
-  const v2Query = useTicketV2List({
-    page: 1,
-    limit: 20,
-    milestoneId,
-  });
-  const legacyQuery = useOwnerTicketList(milestoneId ? "" : farmId, {
-    page: 1,
-    limit: 50,
-  });
+  // BE v2 hierarchical scope tự lọc theo role owner. Có milestoneId →
+  // filter chính xác mốc; không → scope theo zone của crop season.
+  const ticketsQuery = useTicketV2List(
+    milestoneId
+      ? { page: 1, limit: 20, milestoneId }
+      : { page: 1, limit: 50, zoneId: cropSeason.zoneId },
+  );
 
-  const v2Tickets = (v2Query.data?.data.data ?? []) as TicketIncidentResType[];
-  const legacyAll = (legacyQuery.data?.data.data ??
+  const tickets = (ticketsQuery.data?.data.data ??
     []) as TicketIncidentResType[];
-  const tickets = milestoneId
-    ? v2Tickets
-    : legacyAll.filter((t) => t.zoneId === cropSeason.zoneId);
 
   const toDetail = (ticketId: string) =>
     navigate(`/dashboard/owner/tickets?ticketId=${ticketId}`);
 
-  const isLoading = milestoneId
-    ? v2Query.isLoading
-    : farmQuery.isLoading || legacyQuery.isLoading;
+  const isLoading = ticketsQuery.isLoading;
 
   const columns: ColumnDef<TicketIncidentResType>[] = [
     {
@@ -108,26 +57,12 @@ export function OwnerIncidentTab({
     {
       accessorKey: "severity",
       header: "Mức độ",
-      cell: ({ row }) => (
-        <Badge
-          variant={SEVERITY_VARIANT[row.original.severity]}
-          className="text-xs"
-        >
-          {SEVERITY_LABEL[row.original.severity]}
-        </Badge>
-      ),
+      cell: ({ row }) => <SeverityBadge severity={row.original.severity} />,
     },
     {
       accessorKey: "status",
       header: "Trạng thái",
-      cell: ({ row }) => (
-        <Badge
-          variant={TICKET_STATUS_VARIANT[row.original.status]}
-          className="text-xs"
-        >
-          {TICKET_STATUS_LABEL[row.original.status]}
-        </Badge>
-      ),
+      cell: ({ row }) => <TicketStatusBadge status={row.original.status} />,
     },
     {
       id: "creator",

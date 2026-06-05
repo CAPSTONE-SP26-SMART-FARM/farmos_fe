@@ -1,47 +1,15 @@
-import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/common/DataTable";
+import { SeverityBadge } from "@/components/common/SeverityBadge";
+import { TicketStatusBadge } from "@/components/common/TicketStatusBadge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Eye, Ticket } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useNavigate } from "react-router";
-import { useManagerTicketList } from "@/queries/useTicket";
 import { useTicketV2List } from "@/queries/useTicketV2";
 import type { TicketIncidentResType } from "@/schemaValidatation/ticket";
 import type { CropSeasonType } from "@/types/cropSeason";
 import { IncidentTicketQuotaPanel } from "./IncidentTicketQuotaPanel";
-
-const SEVERITY_LABEL: Record<string, string> = {
-  low: "Thấp",
-  medium: "Trung bình",
-  high: "Cao",
-  critical: "Nghiêm trọng",
-};
-
-const SEVERITY_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  low: "secondary",
-  medium: "default",
-  high: "destructive",
-  critical: "destructive",
-};
-
-const TICKET_STATUS_LABEL: Record<string, string> = {
-  open: "Mở",
-  assigned: "Đã phân công",
-  in_progress: "Đang xử lý",
-  resolved: "Đã giải quyết",
-  closed: "Đã đóng",
-  cancelled: "Đã hủy",
-};
-
-const TICKET_STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  open: "default",
-  assigned: "secondary",
-  in_progress: "default",
-  resolved: "secondary",
-  closed: "outline",
-  cancelled: "outline",
-};
 
 export function IncidentTab({
   cropSeason,
@@ -54,19 +22,14 @@ export function IncidentTab({
   const navigate = useNavigate();
   const zoneId = cropSeason.zoneId;
 
-  // Có milestoneId → dùng endpoint v2 hierarchical (`GET /tickets`) với filter
-  // milestoneId. Không có → fallback list theo zone (legacy endpoint).
-  const v2Query = useTicketV2List(
+  // BE v2 hierarchical scope tự lọc theo role manager (giới hạn theo zone
+  // được phân công). Có milestoneId → filter mốc; không → scope zone.
+  const ticketQuery = useTicketV2List(
     milestoneId
       ? { page: 1, limit: 20, milestoneId }
       : { page: 1, limit: 20, zoneId },
   );
-  const legacyQuery = useManagerTicketList(
-    milestoneId ? "" : zoneId,
-    { page: 1, limit: 20 },
-  );
 
-  const ticketQuery = milestoneId ? v2Query : legacyQuery;
   const tickets = (ticketQuery.data?.data.data ?? []) as TicketIncidentResType[];
 
   const toDetail = (ticketId: string) =>
@@ -92,20 +55,12 @@ export function IncidentTab({
     {
       accessorKey: "severity",
       header: "Mức độ",
-      cell: ({ row }) => (
-        <Badge variant={SEVERITY_VARIANT[row.original.severity]} className="text-xs">
-          {SEVERITY_LABEL[row.original.severity]}
-        </Badge>
-      ),
+      cell: ({ row }) => <SeverityBadge severity={row.original.severity} />,
     },
     {
       accessorKey: "status",
       header: "Trạng thái",
-      cell: ({ row }) => (
-        <Badge variant={TICKET_STATUS_VARIANT[row.original.status]} className="text-xs">
-          {TICKET_STATUS_LABEL[row.original.status]}
-        </Badge>
-      ),
+      cell: ({ row }) => <TicketStatusBadge status={row.original.status} />,
     },
     {
       id: "creator",

@@ -46,7 +46,11 @@ export function useRealtimeTicket(
     const debouncedInvalidate = () => {
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
+        // tickets.all = ["tickets"] — match doctor list / messages /
+        // prescriptions. ticketsV2.root = ["tickets-v2"] — separate prefix
+        // sau khi owner/manager đã migrate sang v2 endpoint.
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.tickets.all });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ticketsV2.root });
       }, REALTIME_INVALIDATE_DEBOUNCE_MS);
     };
 

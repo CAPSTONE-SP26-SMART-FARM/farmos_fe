@@ -1,5 +1,4 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -7,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { RatingTagBadge } from "@/components/common/RatingTagBadge";
 import { cn } from "@/lib/utils";
 import type { RatingResType } from "@/schemaValidatation/rating";
 import { format } from "date-fns";
@@ -75,17 +75,16 @@ export default function RatingDisplay({ rating }: RatingDisplayProps) {
               </div>
             )}
 
-            {/* Tags (BE schema: any nullable — array string nếu có) */}
+            {/* Tags (BE schema: any nullable — array string nếu có).
+                BE trả snake_case English; RatingTagBadge tự dịch sang tiếng
+                Việt + tô màu theo tone (positive xanh / negative đỏ). */}
             {Array.isArray(rating.tags) && rating.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {(rating.tags as string[]).map((tag) => (
-                  <Badge
+                  <RatingTagBadge
                     key={tag}
-                    variant="secondary"
-                    className="text-xs"
-                  >
-                    {tag}
-                  </Badge>
+                    tag={tag}
+                  />
                 ))}
               </div>
             )}

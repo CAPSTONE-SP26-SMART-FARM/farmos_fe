@@ -517,6 +517,7 @@ export const API_ENDPOINTS = {
   },
   TICKET_V2: {
     LIST: "/tickets",
+    DETAIL: (id: string) => `/tickets/${id}`,
     CANCEL: (id: string) => `/tickets/${id}/cancel`,
     // BE: GET /me/ticket-balance — per-category balance (subscription + purchased).
     // Manager → BE resolves ownerId from zone-manager assignment; orphan → [].
@@ -535,13 +536,6 @@ export const API_ENDPOINTS = {
       DOCTOR_ACCEPT: (ticketId: string) =>
         `/ticket/incident/doctor/${ticketId}/accept`,
       END: (ticketId: string) => `/ticket/incident/${ticketId}/end`,
-      OWNER_LIST_BY_FARM: (farmId: string) =>
-        `/ticket/incident/owner/farm/${farmId}`,
-      OWNER_DETAIL: (ticketId: string) => `/ticket/incident/owner/${ticketId}`,
-      MANAGER_LIST_BY_ZONE: (zoneId: string) =>
-        `/ticket/incident/manager/zone/${zoneId}`,
-      MANAGER_DETAIL: (ticketId: string) =>
-        `/ticket/incident/manager/${ticketId}`,
     },
     MESSAGES: {
       LIST: (ticketId: string) => `/ticket/${ticketId}/messages`,
@@ -1608,24 +1602,6 @@ export const QUERY_KEYS = {
   },
   tickets: {
     all: ["tickets"],
-    ownerList: (farmId: string, query?: Record<string, unknown>) => [
-      "tickets",
-      "owner",
-      "farm",
-      farmId,
-      "list",
-      ...(query !== undefined ? [query] : []),
-    ],
-    ownerDetail: (ticketId: string) => ["tickets", "owner", ticketId],
-    managerList: (zoneId: string, query?: Record<string, unknown>) => [
-      "tickets",
-      "manager",
-      "zone",
-      zoneId,
-      "list",
-      ...(query !== undefined ? [query] : []),
-    ],
-    managerDetail: (ticketId: string) => ["tickets", "manager", ticketId],
     doctorList: (query?: Record<string, unknown>) => [
       "tickets",
       "doctor",
@@ -1768,6 +1744,7 @@ export const QUERY_KEYS = {
     root: ["tickets-v2"] as const,
     list: (query?: Record<string, unknown>) =>
       ["tickets-v2", "list", ...(query !== undefined ? [query] : [])] as const,
+    detail: (id: string) => ["tickets-v2", "detail", id] as const,
     myBalance: ["tickets-v2", "me", "balance"] as const,
   },
   seasonTemplates: {

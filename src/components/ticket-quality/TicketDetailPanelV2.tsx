@@ -1,13 +1,5 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import LoadingCard from "@/components/common/LoadingCard";
@@ -20,17 +12,10 @@ import { useRealtimeTicket } from "@/hooks/useRealtimeTicket";
 import { RoleName, type RoleNameType } from "@/constants/role";
 import { getApiErrorMessageVi } from "@/lib/error-message";
 import { useTicketFull } from "@/queries/useTicket";
-import type { TicketBasicResType } from "@/schemaValidatation/ticket";
+import { useTicketV2Detail } from "@/queries/useTicketV2";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import {
-  ArrowLeft,
-  Bot,
-  CheckCircle,
-  ShieldAlert,
-  Ticket,
-  Wallet,
-} from "lucide-react";
+import { ArrowLeft, Bot, CheckCircle, ShieldAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import AddendumList from "./AddendumList";
@@ -38,49 +23,29 @@ import BroadcastTimeline from "./BroadcastTimeline";
 import PrescriptionItemsCard from "./PrescriptionItemsCard";
 import RatingDisplay from "./RatingDisplay";
 import SolutionViewCard from "./SolutionViewCard";
+import { TicketAttachmentsCard } from "./_panel/TicketAttachmentsCard";
+import { TicketDescriptionCard } from "./_panel/TicketDescriptionCard";
+import { TicketDetailHeader } from "./_panel/TicketDetailHeader";
+import { TicketParticipantsCard } from "./_panel/TicketParticipantsCard";
+import { TicketPaymentCard } from "./_panel/TicketPaymentCard";
 
 interface TicketDetailPanelV2Props {
   ticketId: string;
   onBack: () => void;
+  /**
+   * Role của viewer — chỉ dùng để scope realtime list-invalidate (Owner theo
+   * farmId, Manager theo zoneId). BE đã tự ACL ở `GET /tickets/:id` nên không
+   * cần phân nhánh API theo role.
+   */
   viewerRole: "owner" | "manager";
-  viewerUserId: string;
 }
-
-// ── Helpers ──────────────────────────────────────────────────────────────
-
-const STATUS_LABEL: Record<TicketBasicResType["status"], string> = {
-  OPEN: "Mở",
-  ASSIGNED: "Đã phân công",
-  IN_PROGRESS: "Đang xử lý",
-  RESOLVED: "Đã giải quyết",
-  CLOSED: "Đã đóng",
-  CANCELLED: "Đã huỷ",
-};
-
-const STATUS_BADGE_CLASS: Record<TicketBasicResType["status"], string> = {
-  OPEN: "bg-muted text-foreground",
-  ASSIGNED: "bg-cyan-500/10 text-cyan-700 border-cyan-200",
-  IN_PROGRESS: "bg-amber-500/10 text-amber-700 border-amber-200",
-  RESOLVED: "bg-emerald-500/10 text-emerald-700 border-emerald-200",
-  CLOSED: "bg-muted text-muted-foreground",
-  CANCELLED: "bg-red-500/10 text-red-700 border-red-200",
-};
-
-const SEVERITY_LABEL: Record<string, string> = {
-  low: "Thấp",
-  medium: "Trung bình",
-  high: "Cao",
-  critical: "Nghiêm trọng",
-};
-
-// ── Main component ───────────────────────────────────────────────────────
 
 export default function TicketDetailPanelV2({
   ticketId,
   onBack,
   viewerRole,
 }: TicketDetailPanelV2Props) {
-  // Slide-in animation pattern (DEVELOPMENT.md mục Animation Patterns).
+  // Slide-in animation pattern.
   const [show, setShow] = useState(false);
   useEffect(() => {
     const frame = requestAnimationFrame(() => setShow(true));
@@ -91,20 +56,21 @@ export default function TicketDetailPanelV2({
     setTimeout(onBack, 300);
   };
 
-  // Data — view-only: chỉ cần ticket full, không cần messages/mutations.
+  // ── Data — 2 query song song ───────────────────────────────────────────
+  // metaQuery: ticket v2 detail (creator/farm/zone/assignee/attachments + snapshot).
+  // fullQuery: lifecycle (solution/prescription/addenda/rating/broadcasts).
+  const metaQuery = useTicketV2Detail(ticketId);
   const fullQuery = useTicketFull(ticketId);
 
   // Realtime list-scope invalidate (để list refresh khi state đổi).
   const role: RoleNameType =
     viewerRole === "owner" ? RoleName.Owner : RoleName.Manager;
-  const fullData = fullQuery.data?.data;
-  const ticket = fullData?.ticket;
+  const meta = metaQuery.data?.data;
   useRealtimeTicket(role, {
-    farmId: ticket?.farmId ?? undefined,
-    zoneId: ticket?.zoneId ?? undefined,
+    farmId: meta?.farmId ?? undefined,
+    zoneId: meta?.zoneId ?? undefined,
   });
-  // Realtime detail-scope: chỉ dùng để invalidate full payload + toast info,
-  // không trigger modal vì panel này view-only.
+  // Realtime detail-scope: invalidate detail + full payload + toast info.
   useRealtimeTicketDetail(ticketId, {
     onResolved: () => {
       toast.info("Bác sĩ đã cập nhật giải pháp cho ticket.");
@@ -114,8 +80,12 @@ export default function TicketDetailPanelV2({
     },
   });
 
-  // Loading / error guard.
-  if (fullQuery.isLoading) {
+  // ── Loading / error guard ──────────────────────────────────────────────
+  const isLoading = metaQuery.isLoading || fullQuery.isLoading;
+  const isError = metaQuery.isError || fullQuery.isError;
+  const errorObj = metaQuery.error ?? fullQuery.error;
+
+  if (isLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-10 w-1/3" />
@@ -124,21 +94,20 @@ export default function TicketDetailPanelV2({
     );
   }
 
-  if (fullQuery.isError || !fullQuery.data?.data) {
+  if (isError || !meta || !fullQuery.data?.data) {
     return (
       <div className="space-y-4">
         <Button
           variant="ghost"
           size="icon"
           onClick={handleBack}
+          aria-label="Quay lại danh sách"
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <Alert variant="destructive">
           <ShieldAlert className="h-4 w-4" />
-          <AlertDescription>
-            {getApiErrorMessageVi(fullQuery.error)}
-          </AlertDescription>
+          <AlertDescription>{getApiErrorMessageVi(errorObj)}</AlertDescription>
         </Alert>
       </div>
     );
@@ -153,28 +122,13 @@ export default function TicketDetailPanelV2({
     <div
       className={`space-y-6 transition-all duration-300 ease-out ${show ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
     >
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleBack}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="min-w-0 flex-1">
-          <Badge className="mb-1">Chi tiết ticket</Badge>
-          <h1 className="text-2xl font-bold truncate">{t.title}</h1>
-        </div>
-        <Badge
-          variant="outline"
-          className={STATUS_BADGE_CLASS[t.status]}
-        >
-          {STATUS_LABEL[t.status]}
-        </Badge>
-      </div>
-
-      <Separator />
+      <TicketDetailHeader
+        ticketNumber={meta.ticketNumber}
+        title={meta.title}
+        status={meta.status}
+        severity={meta.severity}
+        onBack={handleBack}
+      />
 
       {/* Banners */}
       {t.isAIResolved && (
@@ -215,125 +169,48 @@ export default function TicketDetailPanelV2({
         </Alert>
       )}
 
-      {/* Layout 2 cột — view-only, không còn cột hội thoại. */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Cột trái */}
-        <div className="space-y-4">
-          {/* Card thông tin sự cố */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Ticket className="h-4 w-4" />
-                Thông tin sự cố
-              </CardTitle>
-              <CardDescription>
-                Chi tiết ticket được tạo và tiến trình xử lý.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Mã ticket</span>
-                <span className="font-mono text-xs">{t.ticketNumber}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Mức độ</span>
-                <span>{SEVERITY_LABEL[t.severity] ?? t.severity}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Tạo lúc</span>
-                <span className="text-xs">
-                  {format(new Date(t.createdAt), "HH:mm dd/MM/yy", {
-                    locale: vi,
-                  })}
-                </span>
-              </div>
-              {t.resolvedAt && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Giải quyết lúc</span>
-                  <span className="text-xs">
-                    {format(new Date(t.resolvedAt), "HH:mm dd/MM/yy", {
-                      locale: vi,
-                    })}
-                  </span>
-                </div>
-              )}
-              {t.closedAt && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Đóng lúc</span>
-                  <span className="text-xs">
-                    {format(new Date(t.closedAt), "HH:mm dd/MM/yy", {
-                      locale: vi,
-                    })}
-                  </span>
-                </div>
-              )}
-              <Separator />
-              <p className="text-muted-foreground text-xs">Mô tả</p>
-              <p className="leading-relaxed">{t.description}</p>
-            </CardContent>
-          </Card>
+      {/* Layout 2 cột — view-only */}
+      <div className="grid gap-6 lg:grid-cols-12">
+        {/* Cột trái — content chính */}
+        <div className="space-y-4 lg:col-span-7">
+          <TicketDescriptionCard ticket={meta} />
 
-          {/* Card đơn thuốc */}
-          <PrescriptionItemsCard prescription={full.prescription} />
+          <TicketAttachmentsCard attachments={meta.attachments} />
 
-          {/* Card ghi chú bổ sung — chỉ render khi có */}
-          {full.addenda.length > 0 && (
-            <AddendumList addenda={full.addenda} />
-          )}
+          <Separator className="lg:hidden" />
 
-          {/* Card lịch sử broadcast */}
-          {full.broadcasts.length > 0 && (
-            <BroadcastTimeline broadcasts={full.broadcasts} />
-          )}
-        </div>
-
-        {/* Cột phải */}
-        <div className="space-y-4">
-          {/* Card giải pháp — render khi state ≥ RESOLVED */}
           {(isResolved || isClosed) && (
             <SolutionViewCard solution={full.solution} />
           )}
 
-          {/* Card đánh giá */}
+          <PrescriptionItemsCard prescription={full.prescription} />
+
+          {full.addenda.length > 0 && (
+            <AddendumList addenda={full.addenda} />
+          )}
+        </div>
+
+        {/* Cột phải — meta + state */}
+        <div className="space-y-4 lg:col-span-5">
+          <TicketParticipantsCard
+            creator={meta.creator}
+            assignee={meta.assignee}
+          />
+
           {(isClosed || full.rating) && (
             <RatingDisplay rating={full.rating} />
           )}
 
-          {/* Card thanh toán — chỉ khi closed && có payoutAt */}
-          {isClosed && t.unitPriceSnapshot != null && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Wallet className="h-4 w-4" />
-                  Thanh toán
-                </CardTitle>
-                <CardDescription>
-                  Thông tin thanh toán hoa hồng cho bác sĩ tại thời điểm đóng
-                  ticket.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Đơn giá ticket</span>
-                  <span className="font-medium tabular-nums">
-                    {new Intl.NumberFormat("vi-VN", {
-                      style: "currency",
-                      currency: "VND",
-                      maximumFractionDigits: 0,
-                    }).format(t.unitPriceSnapshot)}
-                  </span>
-                </div>
-                {t.isAIResolved ? (
-                  <p className="text-xs text-muted-foreground">
-                    Ticket xử lý bởi AI — không thanh toán cho bác sĩ.
-                  </p>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    Hệ thống đã tính hoa hồng theo cấu hình hiện tại.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+          {isClosed && (
+            <TicketPaymentCard
+              unitPrice={t.unitPriceSnapshot}
+              payoutAt={t.payoutAt}
+              isAIResolved={t.isAIResolved}
+            />
+          )}
+
+          {full.broadcasts.length > 0 && (
+            <BroadcastTimeline broadcasts={full.broadcasts} />
           )}
         </div>
       </div>
