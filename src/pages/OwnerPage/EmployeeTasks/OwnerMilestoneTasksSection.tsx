@@ -33,6 +33,7 @@ import {
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TaskProgressBar } from "@/components/common/TaskProgressBar";
 import {
   Plus,
   Trash2,
@@ -584,6 +585,14 @@ function TaskDetailSheet({
                       {STATUS_META[task.status].label}
                     </p>
                   </div>
+                  <div className="col-span-2">
+                    <p className="text-xs text-muted-foreground">Tiến độ</p>
+                    <TaskProgressBar
+                      value={task.progress}
+                      className="mt-1"
+                      barClassName="w-40"
+                    />
+                  </div>
                   <div>
                     <p className="text-xs text-muted-foreground">
                       Người được gán
@@ -1044,6 +1053,11 @@ export default function OwnerMilestoneTasksSection({
                   )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0 ml-2">
+                  <TaskProgressBar
+                    value={task.progress}
+                    barClassName="w-14"
+                    className="hidden sm:flex"
+                  />
                   <Badge
                     variant={STATUS_META[task.status].variant}
                     className="text-[10px]"

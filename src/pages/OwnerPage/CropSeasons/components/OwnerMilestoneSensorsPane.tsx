@@ -15,10 +15,16 @@ export function OwnerMilestoneSensorsPane({
   milestone,
   zoneId,
   isLoading,
+  isPlanning = false,
 }: {
   milestone: ProductionMilestoneResType | undefined;
   zoneId: string;
   isLoading: boolean;
+  /**
+   * Lúc lập kế hoạch (Planning) → widget độ phủ hiện đầy đủ cả gợi ý mua thêm
+   * Kit. Khi mùa vụ đã chạy → vẫn hiện số liệu độ phủ nhưng ẩn phần nhắc mua.
+   */
+  isPlanning?: boolean;
 }) {
   useZoneSubscription(zoneId || undefined);
   useMilestoneAssignmentsRealtime("owner");
@@ -52,15 +58,25 @@ export function OwnerMilestoneSensorsPane({
   // Cảnh báo ngưỡng cảm biến chỉ ý nghĩa khi giai đoạn đang diễn ra.
   const showAlerts = milestone?.status === "in_progress";
 
+  // Mốc đã hoàn thành → việc nhắc độ phủ IoT không còn ý nghĩa, ẩn widget.
+  const isCompleted = milestone?.status === "completed";
+
   return (
     <div className="flex gap-5 min-h-90">
       <div className="flex-1 min-w-0 space-y-6">
         {/* Độ phủ tính theo RIÊNG mốc này (chỉ thiết bị đã gán cho mốc).
-            Khi không xác định được mốc → fallback zone scope. */}
-        {milestone?.id ? (
-          <IotCoverageWidget milestoneId={milestone.id} />
+            Khi không xác định được mốc → fallback zone scope.
+            Lúc đang chạy ẩn phần nhắc mua thêm Kit (showProcurementAdvice). */}
+        {isCompleted ? null : milestone?.id ? (
+          <IotCoverageWidget
+            milestoneId={milestone.id}
+            showProcurementAdvice={isPlanning}
+          />
         ) : zoneId ? (
-          <IotCoverageWidget zoneId={zoneId} />
+          <IotCoverageWidget
+            zoneId={zoneId}
+            showProcurementAdvice={isPlanning}
+          />
         ) : null}
         {milestone ? (
           <MilestoneSensorSection milestone={milestone} />

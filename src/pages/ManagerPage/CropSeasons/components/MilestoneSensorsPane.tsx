@@ -20,6 +20,7 @@ export function MilestoneSensorsPane({
   zoneId,
   isLoading,
   backUrl,
+  isPlanning = false,
 }: {
   milestone: ProductionMilestoneResType | undefined;
   zoneId: string;
@@ -29,6 +30,11 @@ export function MilestoneSensorsPane({
    * `?from=<backUrl>` để nút "Quay lại" về đúng trang milestone này.
    */
   backUrl?: string;
+  /**
+   * Lúc lập kế hoạch (Planning) → widget độ phủ hiện đầy đủ cả gợi ý mua thêm
+   * Kit. Khi mùa vụ đã chạy → vẫn hiện số liệu độ phủ nhưng ẩn phần nhắc mua.
+   */
+  isPlanning?: boolean;
 }) {
   useZoneSubscription(zoneId || undefined);
   useMilestoneAssignmentsRealtime("manager");
@@ -69,11 +75,18 @@ export function MilestoneSensorsPane({
     <div className="flex gap-5 min-h-90">
       <div className="flex-1 min-w-0 space-y-6">
         {/* Độ phủ tính theo RIÊNG mốc này (chỉ thiết bị đã gán cho mốc).
-            Khi không xác định được mốc → fallback zone scope. */}
+            Khi không xác định được mốc → fallback zone scope.
+            Lúc đang chạy ẩn phần nhắc mua thêm Kit (showProcurementAdvice). */}
         {milestone?.id ? (
-          <IotCoverageWidget milestoneId={milestone.id} />
+          <IotCoverageWidget
+            milestoneId={milestone.id}
+            showProcurementAdvice={isPlanning}
+          />
         ) : zoneId ? (
-          <IotCoverageWidget zoneId={zoneId} />
+          <IotCoverageWidget
+            zoneId={zoneId}
+            showProcurementAdvice={isPlanning}
+          />
         ) : null}
         {milestone ? (
           <MilestoneSensorSection

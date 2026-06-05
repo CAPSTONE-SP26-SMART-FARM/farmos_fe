@@ -66,6 +66,10 @@ type IotCoverageWidgetProps = IotCoverageWidgetScope & {
   // CTA "Mua thêm bộ Kit" — caller cung cấp khi user có quyền mua (owner).
   // Bấm sẽ nhận kitId hiện đang chọn để điều hướng đến trang chi tiết kit.
   onBuyKit?: (kitId: string) => void;
+  // Phần gợi ý mua/bổ sung Kit (picker ước tính số bộ, câu "mua thêm Kit",
+  // badge "+N bộ", nút mua) chỉ có ý nghĩa lúc lập kế hoạch. Khi mùa vụ đã
+  // chạy → truyền `false` để chỉ giữ lại số liệu độ phủ, ẩn các nhắc nhở mua.
+  showProcurementAdvice?: boolean;
 };
 
 function formatM2(n: number | null | undefined) {
@@ -83,8 +87,10 @@ export default function IotCoverageWidget({
   className,
   onEditZoneArea,
   onBuyKit,
+  showProcurementAdvice = true,
 }: IotCoverageWidgetProps) {
-  const hasPicker = Array.isArray(kitOptions) && kitOptions.length > 0;
+  const hasPicker =
+    showProcurementAdvice && Array.isArray(kitOptions) && kitOptions.length > 0;
 
   // Chỉ giữ những kit đã được khai báo coverageSqm — kit chưa cấu hình sẽ
   // làm widget trả về `kitCoverageSqm = null` (không tính được "cần thêm
@@ -328,6 +334,7 @@ export default function IotCoverageWidget({
           selectedKitName={selectedKit?.name}
           selectedKitId={selectedKit?.id}
           hasPicker={hasPicker}
+          showProcurementAdvice={showProcurementAdvice}
           onEditZoneArea={onEditZoneArea}
           onBuyKit={onBuyKit}
         />
@@ -432,6 +439,7 @@ function StatusBanner({
   selectedKitName,
   selectedKitId,
   hasPicker,
+  showProcurementAdvice,
   onEditZoneArea,
   onBuyKit,
 }: {
@@ -441,6 +449,7 @@ function StatusBanner({
   selectedKitName?: string;
   selectedKitId?: string;
   hasPicker: boolean;
+  showProcurementAdvice: boolean;
   onEditZoneArea?: () => void;
   onBuyKit?: (kitId: string) => void;
 }) {
@@ -488,7 +497,7 @@ function StatusBanner({
   }
 
   // under_covered
-  const canBuyMore = !!onBuyKit && !!selectedKitId;
+  const canBuyMore = showProcurementAdvice && !!onBuyKit && !!selectedKitId;
   return (
     <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100">
       <div className="flex items-start gap-3">
@@ -496,7 +505,9 @@ function StatusBanner({
         <div className="flex-1 space-y-0.5">
           <p className="font-semibold">Khu vực chưa đủ thiết bị IoT</p>
           <p className="text-xs opacity-90">
-            {needMoreKits != null && selectedKitName ? (
+            {!showProcurementAdvice ? (
+              <>Còn thiếu {formatM2(gapSqm)} m² so với diện tích khu vực.</>
+            ) : needMoreKits != null && selectedKitName ? (
               <>
                 Cần bổ sung thêm{" "}
                 <span className="font-semibold">{needMoreKits} bộ</span>{" "}
@@ -517,7 +528,7 @@ function StatusBanner({
           </p>
         </div>
         <Badge variant="outline" className="border-amber-300 bg-white/60 text-amber-800 dark:bg-amber-950/60 dark:text-amber-200 shrink-0">
-          {needMoreKits != null ? (
+          {showProcurementAdvice && needMoreKits != null ? (
             <>
               <Package className="h-3 w-3 mr-1" />+{needMoreKits} bộ
             </>

@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { TaskProgressBar } from "@/components/common/TaskProgressBar";
 import {
   Select,
   SelectContent,
@@ -41,6 +42,8 @@ interface Props {
   onUnassign: () => void;
   onDelete: () => void;
   isPending: boolean;
+  /** Chỉ hiện thanh tiến độ khi mốc đang thực hiện — lúc khác task chưa chạy nên ẩn. */
+  showProgress: boolean;
 }
 
 function TaskRowBase({
@@ -53,6 +56,7 @@ function TaskRowBase({
   onUnassign,
   onDelete,
   isPending,
+  showProgress,
 }: Props) {
   const status = getTaskDisplayStatus(task);
   const priority = PRIORITY_META[task.priority];
@@ -117,6 +121,12 @@ function TaskRowBase({
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
           <span>Bắt đầu: {formatDate(task.startDate)}</span>
           <span>Hạn: {formatDate(task.dueDate)}</span>
+          {showProgress && (
+            <span className="flex items-center gap-1.5">
+              <span>Tiến độ:</span>
+              <TaskProgressBar value={task.progress} barClassName="w-20" />
+            </span>
+          )}
         </div>
       </div>
 

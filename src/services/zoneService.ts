@@ -20,6 +20,7 @@ import type {
 import type { MessageResType } from "@/types/api";
 import type {
   CropSeasonIotCoverageResType,
+  CropSeasonMilestonesIotCoverageResType,
   IotCoverageResType,
   MilestoneIotCoverageResType,
 } from "@/schemaValidatation/iotCoverage";
@@ -83,6 +84,21 @@ export const zoneService = {
   getMilestoneIotCoverage: (milestoneId: string, kitId?: string | null) =>
     api.get<MilestoneIotCoverageResType>(
       `${ZONES.MILESTONE_IOT_COVERAGE(milestoneId)}?${queryString.stringify(
+        { kitId: kitId || undefined },
+        { skipEmptyString: true, skipNull: true },
+      )}`,
+    ),
+
+  // Breakdown độ phủ từng mốc của 1 mùa vụ + summary cả mùa vụ. Dùng làm gợi ý
+  // lúc gửi duyệt / duyệt mùa vụ. Không truyền kitId vẫn nhận đủ status + gap.
+  getCropSeasonMilestonesIotCoverage: (
+    cropSeasonId: string,
+    kitId?: string | null,
+  ) =>
+    api.get<CropSeasonMilestonesIotCoverageResType>(
+      `${ZONES.CROP_SEASON_MILESTONES_IOT_COVERAGE(
+        cropSeasonId,
+      )}?${queryString.stringify(
         { kitId: kitId || undefined },
         { skipEmptyString: true, skipNull: true },
       )}`,

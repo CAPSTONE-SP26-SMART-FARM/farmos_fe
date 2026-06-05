@@ -1,6 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { CalendarDays, ChevronRight } from "lucide-react";
+import { CalendarDays, CheckCheck, ChevronRight } from "lucide-react";
 import type { ProductionMilestoneResType } from "@/schemaValidatation/productionMilestone";
 import { cn } from "@/lib/utils";
 import {
@@ -9,15 +8,33 @@ import {
 } from "@/pages/ManagerPage/CropSeasons/components/helpers";
 
 /**
- * Owner-side read-only milestone card.
- * Click → mở page chi tiết milestone của owner (giống manager click → page riêng).
+ * Owner-side read-only milestone node (timeline style).
+ * Click → mở page chi tiết milestone của owner.
  * Không có drag handle, không có dropdown CRUD, không có quick start/complete.
  */
+
+// Màu chấm trạng thái trên rail timeline — khớp với MILESTONE_STATUS_META.
+const STATUS_DOT: Record<string, string> = {
+  pending: "bg-muted-foreground/30 ring-muted-foreground/10",
+  in_progress: "bg-amber-500 ring-amber-500/20",
+  completed: "bg-emerald-500 ring-emerald-500/20",
+};
+
+// Màu thanh accent trái của card.
+const STATUS_ACCENT: Record<string, string> = {
+  pending: "before:bg-border",
+  in_progress: "before:bg-amber-400",
+  completed: "before:bg-emerald-400",
+};
+
 export function OwnerMilestoneCard({
   milestone,
+  isLast = false,
   onOpen,
 }: {
   milestone: ProductionMilestoneResType;
+  /** Mốc cuối — ẩn đường nối timeline phía dưới. */
+  isLast?: boolean;
   onOpen: () => void;
 }) {
   const meta =
@@ -25,38 +42,50 @@ export function OwnerMilestoneCard({
       label: milestone.status,
       variant: "secondary" as const,
     };
+  const isDone = milestone.status === "completed";
 
   return (
-    <Card
-      role="button"
-      tabIndex={0}
-      onClick={onOpen}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onOpen();
-        }
-      }}
-      className="cursor-pointer hover:border-primary/60 hover:bg-accent/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-    >
-      <div className="flex items-center gap-3 px-4 py-3">
-        <div className="shrink-0 flex h-9 w-9 items-center justify-center rounded-full bg-muted text-sm font-mono font-semibold">
-          #{milestone.milestoneOrder}
+    <div className="relative flex gap-3">
+      {/* ── Rail timeline: chấm trạng thái + đường nối ─────────────────────── */}
+      <div className="relative flex flex-col items-center">
+        <div
+          className={cn(
+            "z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ring-4 text-[11px] font-mono font-semibold text-white",
+            STATUS_DOT[milestone.status] ?? STATUS_DOT.pending,
+          )}
+        >
+          {isDone ? (
+            <CheckCheck className="h-3.5 w-3.5" />
+          ) : (
+            <span className={cn(milestone.status === "pending" && "text-foreground/60")}>
+              {milestone.milestoneOrder}
+            </span>
+          )}
         </div>
+        {!isLast && <div className="w-px grow bg-border" />}
+      </div>
 
-        <div className="flex-1 min-w-0">
+      {/* ── Card nội dung ─────────────────────────────────────────────────── */}
+      <button
+        type="button"
+        onClick={onOpen}
+        className={cn(
+          "group relative mb-2 flex w-full items-center gap-3 overflow-hidden rounded-lg border bg-card px-4 py-3 text-left transition-colors",
+          "before:absolute before:inset-y-0 before:left-0 before:w-1",
+          "hover:border-primary/50 hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          STATUS_ACCENT[milestone.status] ?? STATUS_ACCENT.pending,
+        )}
+      >
+        <div className="min-w-0 flex-1 pl-1">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-medium truncate">
               {milestone.stageName}
             </span>
-            <Badge
-              variant={meta.variant}
-              className={cn("text-[10px]", meta.className)}
-            >
+            <Badge variant={meta.variant} className={cn("text-[10px]", meta.className)}>
               {meta.label}
             </Badge>
           </div>
-          <div className="mt-1 text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap">
+          <div className="mt-1 flex items-center gap-1.5 flex-wrap text-xs text-muted-foreground">
             <CalendarDays className="h-3 w-3 shrink-0" />
             <span>
               Kế hoạch: {formatDate(milestone.expectedStartDate)} –{" "}
@@ -74,8 +103,8 @@ export function OwnerMilestoneCard({
           </div>
         </div>
 
-        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-      </div>
-    </Card>
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+      </button>
+    </div>
   );
 }

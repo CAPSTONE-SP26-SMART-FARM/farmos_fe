@@ -62,3 +62,27 @@ export const useMilestoneIotCoverage = (
     retry: false,
   });
 };
+
+// Breakdown độ phủ từng mốc của cả mùa vụ (1 call) + summary mùa vụ. Dùng cho
+// gợi ý "độ phủ chưa đủ" lúc manager gửi duyệt / owner duyệt mùa vụ. Advisory
+// thuần — không chặn flow nên để retry: false (404 mùa vụ không phải lỗi tạm).
+export const useCropSeasonMilestonesIotCoverage = (
+  cropSeasonId: string | null | undefined,
+  kitId?: string | null,
+  enabled = true,
+) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.iotCoverage.byCropSeasonMilestones(
+      cropSeasonId ?? "",
+      kitId ?? null,
+    ),
+    queryFn: () =>
+      zoneService.getCropSeasonMilestonesIotCoverage(
+        cropSeasonId ?? "",
+        kitId ?? null,
+      ),
+    enabled: !!cropSeasonId && enabled,
+    staleTime: 30 * 1000,
+    retry: false,
+  });
+};

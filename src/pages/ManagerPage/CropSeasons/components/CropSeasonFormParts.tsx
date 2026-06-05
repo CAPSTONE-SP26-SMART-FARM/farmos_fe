@@ -73,16 +73,12 @@ export function CropCategoryPicker({
             >
               <div className="flex flex-col">
                 <span className="font-medium">{cat.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {cat.code}
-                  {cat.code !== "OTHER" && (
-                    <>
-                      {" · "}
-                      {formatDensity(cat.minPlantingDensity)}–
-                      {formatDensity(cat.maxPlantingDensity)} cây/m²
-                    </>
-                  )}
-                </span>
+                {cat.code !== "OTHER" && (
+                  <span className="text-xs text-muted-foreground">
+                    {formatDensity(cat.minPlantingDensity)}–
+                    {formatDensity(cat.maxPlantingDensity)} cây/m²
+                  </span>
+                )}
               </div>
             </SelectItem>
           ))}

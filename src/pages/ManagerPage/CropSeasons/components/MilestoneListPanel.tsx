@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Layers, Plus, Sparkles } from "lucide-react";
 import { useState } from "react";
@@ -276,49 +277,15 @@ export function MilestoneListPanel({
   }
 
   const isEmpty = orderedMilestones.length === 0;
+  const completedCount = orderedMilestones.filter(
+    (m) => m.status === "completed",
+  ).length;
+  const totalMilestones = orderedMilestones.length;
+  const progressPct =
+    totalMilestones > 0 ? (completedCount / totalMilestones) * 100 : 0;
 
   return (
     <div className="space-y-3">
-      {!isEmpty && (
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <h2 className="text-base font-semibold flex items-center gap-2">
-            <Layers className="h-4 w-4" />
-            Mốc công việc
-            <span className="text-sm font-normal text-muted-foreground">
-              ({orderedMilestones.length})
-            </span>
-            {canEditConfig && (
-              <span className="text-xs font-normal text-muted-foreground">
-                · Kéo thả để sắp xếp
-              </span>
-            )}
-          </h2>
-
-          {canEditConfig && (
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setTemplateOpen(true)}
-              >
-                <Sparkles className="h-3 w-3 mr-1.5" />
-                Áp template
-              </Button>
-              <Button size="sm" onClick={() => setCreateOpen(true)}>
-                <Plus className="h-3 w-3 mr-1.5" />
-                Tạo mốc mới
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {isReordering && (
-        <div className="rounded-md border border-dashed bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
-          Đang lưu thứ tự mốc mới...
-        </div>
-      )}
-
       {isEmpty ? (
         <div className="flex flex-col items-center justify-center py-16 text-center border rounded-md bg-muted/20">
           <Layers className="h-10 w-10 text-muted-foreground/30 mb-3" />
@@ -344,7 +311,54 @@ export function MilestoneListPanel({
           )}
         </div>
       ) : (
-        <ul className="space-y-2">
+        <div className="rounded-xl border bg-card p-4 sm:p-5 space-y-4">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <h2 className="text-base font-semibold flex items-center gap-2">
+              <Layers className="h-4 w-4 text-primary" />
+              Mốc công việc
+              <span className="text-sm font-normal text-muted-foreground">
+                ({orderedMilestones.length})
+              </span>
+              {canEditConfig && (
+                <span className="text-xs font-normal text-muted-foreground">
+                  · Kéo thả để sắp xếp
+                </span>
+              )}
+            </h2>
+
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-2.5 min-w-40">
+                <Progress value={progressPct} className="h-1.5 flex-1" />
+                <span className="text-xs font-medium text-muted-foreground shrink-0">
+                  {completedCount}/{totalMilestones} hoàn thành
+                </span>
+              </div>
+              {canEditConfig && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setTemplateOpen(true)}
+                  >
+                    <Sparkles className="h-3 w-3 mr-1.5" />
+                    Áp template
+                  </Button>
+                  <Button size="sm" onClick={() => setCreateOpen(true)}>
+                    <Plus className="h-3 w-3 mr-1.5" />
+                    Tạo mốc mới
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {isReordering && (
+            <div className="rounded-md border border-dashed bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+              Đang lưu thứ tự mốc mới...
+            </div>
+          )}
+
+          <ul>
           {orderedMilestones.map((m, index) => (
             <li key={m.id}>
               <MilestoneCard
@@ -388,7 +402,8 @@ export function MilestoneListPanel({
               />
             </li>
           ))}
-        </ul>
+          </ul>
+        </div>
       )}
 
       {/* ── Dialogs ──────────────────────────────────────────────────────── */}

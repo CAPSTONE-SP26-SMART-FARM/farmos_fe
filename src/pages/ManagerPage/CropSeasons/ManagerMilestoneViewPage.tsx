@@ -156,6 +156,12 @@ export default function ManagerMilestoneViewPage() {
     variant: "secondary" as const,
   };
 
+  // Mốc đã hoàn thành → không còn dữ liệu cảm biến thời gian thực, ẩn hẳn tab
+  // "Cảm biến". Nếu URL đang trỏ tab sensors thì fallback về "Công việc".
+  const isCompleted = milestone.status === "completed";
+  const effectiveTab: TabValue =
+    isCompleted && activeTab === "sensors" ? "tasks" : activeTab;
+
   // Khi season chưa active (planning/sent/approved), task chưa nên đánh dấu
   // hoàn thành — match logic của ManagerMilestoneTasksSection.lockComplete.
   const lockComplete =
@@ -388,14 +394,16 @@ export default function ManagerMilestoneViewPage() {
 
       {/* ── Tabs ────────────────────────────────────────────────────────── */}
       <Tabs
-        value={activeTab}
+        value={effectiveTab}
         onValueChange={(v) => setActiveTab(v as TabValue)}
       >
         <TabsList className="w-full md:w-auto">
-          <TabsTrigger value="sensors" className="flex items-center gap-1.5">
-            <Radio className="h-3.5 w-3.5" />
-            Cảm biến
-          </TabsTrigger>
+          {!isCompleted && (
+            <TabsTrigger value="sensors" className="flex items-center gap-1.5">
+              <Radio className="h-3.5 w-3.5" />
+              Cảm biến
+            </TabsTrigger>
+          )}
           <TabsTrigger value="incidents" className="flex items-center gap-1.5">
             <AlertTriangle className="h-3.5 w-3.5" />
             Sự cố
@@ -406,14 +414,17 @@ export default function ManagerMilestoneViewPage() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="sensors" className="mt-4">
-          <MilestoneSensorsPane
-            milestone={milestone}
-            zoneId={zoneId || cropSeason?.zoneId || ""}
-            isLoading={listQuery.isLoading}
-            backUrl={milestoneViewBackUrl}
-          />
-        </TabsContent>
+        {!isCompleted && (
+          <TabsContent value="sensors" className="mt-4">
+            <MilestoneSensorsPane
+              milestone={milestone}
+              zoneId={zoneId || cropSeason?.zoneId || ""}
+              isLoading={listQuery.isLoading}
+              backUrl={milestoneViewBackUrl}
+              isPlanning={cropSeason?.status === ProductionStatusName.Planning}
+            />
+          </TabsContent>
+        )}
 
         <TabsContent value="incidents" className="mt-4">
           {cropSeason ? (

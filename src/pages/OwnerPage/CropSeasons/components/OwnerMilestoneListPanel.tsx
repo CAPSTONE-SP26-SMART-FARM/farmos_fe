@@ -1,4 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
 import { Layers } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useOwnerListProductionMilestones } from "@/queries/useProductionMilestone";
@@ -28,6 +29,12 @@ export function OwnerMilestoneListPanel({
   const milestones = (listQuery.data?.data.data ?? [])
     .slice()
     .sort((a, b) => a.milestoneOrder - b.milestoneOrder);
+
+  const completedCount = milestones.filter(
+    (m) => m.status === "completed",
+  ).length;
+  const total = milestones.length;
+  const progressPct = total > 0 ? (completedCount / total) * 100 : 0;
 
   const milestoneUrl = (milestoneId: string) => {
     const base = `/dashboard/owner/crop-seasons/${cropSeason.id}/milestones/${milestoneId}`;
@@ -62,27 +69,33 @@ export function OwnerMilestoneListPanel({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="rounded-xl border bg-card p-4 sm:p-5 space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <h2 className="text-base font-semibold flex items-center gap-2">
-          <Layers className="h-4 w-4" />
+          <Layers className="h-4 w-4 text-primary" />
           Mốc công việc
           <span className="text-sm font-normal text-muted-foreground">
-            ({milestones.length})
+            ({total})
           </span>
         </h2>
+        <div className="flex items-center gap-2.5 min-w-40">
+          <Progress value={progressPct} className="h-1.5 flex-1" />
+          <span className="text-xs font-medium text-muted-foreground shrink-0">
+            {completedCount}/{total} hoàn thành
+          </span>
+        </div>
       </div>
 
-      <ul className="space-y-2">
-        {milestones.map((m) => (
-          <li key={m.id}>
-            <OwnerMilestoneCard
-              milestone={m}
-              onOpen={() => navigate(milestoneUrl(m.id))}
-            />
-          </li>
+      <div>
+        {milestones.map((m, idx) => (
+          <OwnerMilestoneCard
+            key={m.id}
+            milestone={m}
+            isLast={idx === milestones.length - 1}
+            onOpen={() => navigate(milestoneUrl(m.id))}
+          />
         ))}
-      </ul>
+      </div>
     </div>
   );
 }

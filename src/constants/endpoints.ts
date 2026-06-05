@@ -484,6 +484,12 @@ export const API_ENDPOINTS = {
     // any UI scoped to a single milestone.
     MILESTONE_IOT_COVERAGE: (milestoneId: string) =>
       `/production-milestones/${milestoneId}/iot-coverage`,
+    // BE: GET /crop-seasons/:id/milestones-iot-coverage?kitId=... (admin, owner, manager)
+    // Per-milestone coverage breakdown for the whole crop season + season summary.
+    // Advisory only — shown when manager submits / owner approves to hint that
+    // some milestones are under-covered. Never blocks the submit/approve flow.
+    CROP_SEASON_MILESTONES_IOT_COVERAGE: (cropSeasonId: string) =>
+      `/crop-seasons/${cropSeasonId}/milestones-iot-coverage`,
   },
   // ── Ticket v2 ─────────────────────────────────────────────────────────
   TICKET_CATEGORIES: {
@@ -1591,6 +1597,12 @@ export const QUERY_KEYS = {
       "iot-coverage",
       "milestone",
       milestoneId,
+      kitId ?? null,
+    ],
+    byCropSeasonMilestones: (cropSeasonId: string, kitId?: string | null) => [
+      "iot-coverage",
+      "crop-season-milestones",
+      cropSeasonId,
       kitId ?? null,
     ],
   },
