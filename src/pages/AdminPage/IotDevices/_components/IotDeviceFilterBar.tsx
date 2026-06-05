@@ -64,16 +64,16 @@ export function IotDeviceFilterBar({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Tất cả trạng thái</SelectItem>
-          {(Object.keys(DEVICE_STATUS_LABEL_ADMIN) as DeviceStatusType[]).map(
-            (s) => (
+          {(Object.keys(DEVICE_STATUS_LABEL_ADMIN) as DeviceStatusType[])
+            .filter((s) => s !== "lost")
+            .map((s) => (
               <SelectItem
                 key={s}
                 value={s}
               >
                 {DEVICE_STATUS_LABEL_ADMIN[s]}
               </SelectItem>
-            ),
-          )}
+            ))}
         </SelectContent>
       </Select>
 
