@@ -258,17 +258,17 @@ export default function MilestoneTemplateForm({
 
         <div className="min-w-0 flex-1">
           <h2 className="text-xl font-bold tracking-tight">
-            {isEdit ? "Chỉnh sửa milestone template" : "Tạo milestone template"}
+            {isEdit ? "Chỉnh sửa mẫu cột mốc" : "Tạo mẫu cột mốc"}
           </h2>
           <p className="text-sm text-muted-foreground">
-            Thiết lập các giai đoạn mốc chuẩn để manager áp dụng khi lập kế
+            Thiết lập các giai đoạn mốc chuẩn để quản lý áp dụng khi lập kế
             hoạch.
           </p>
         </div>
 
         <Badge variant="secondary" className="gap-1">
           <Milestone className="h-3 w-3" />
-          Crop season
+          Mùa vụ
         </Badge>
       </div>
 
@@ -288,7 +288,7 @@ export default function MilestoneTemplateForm({
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>Tên template *</FieldLabel>
+                      <FieldLabel>Tên mẫu *</FieldLabel>
                       <Input
                         {...field}
                         placeholder="Ví dụ: Quy trình canh tác rau ăn lá"
@@ -365,14 +365,13 @@ export default function MilestoneTemplateForm({
                     <Textarea
                       {...field}
                       value={field.value ?? ""}
-                      placeholder="Mô tả phạm vi áp dụng của milestone template"
+                      placeholder="Mô tả phạm vi áp dụng của mẫu cột mốc"
                     />
                     {fieldState.invalid ? (
                       <FieldError errors={[fieldState.error]} />
                     ) : (
                       <FieldDescription>
-                        Mô tả ngắn giúp manager chọn đúng template khi tạo crop
-                        season.
+                        Mô tả ngắn giúp quản lý chọn đúng mẫu khi tạo mùa vụ.
                       </FieldDescription>
                     )}
                   </Field>
@@ -441,8 +440,8 @@ export default function MilestoneTemplateForm({
             <Separator />
 
             <p className="text-xs text-muted-foreground">
-              Tổng {fields.length} giai đoạn. Kéo thả để thay đổi thứ tự
-              milestone.
+              Tổng {fields.length} giai đoạn. Kéo thả để thay đổi thứ tự các
+              giai đoạn.
             </p>
           </CardContent>
         </Card>
@@ -474,8 +473,8 @@ export default function MilestoneTemplateForm({
 
       <ConfirmDialog
         open={confirmSave}
-        title="Cập nhật milestone template?"
-        description="Thao tác này sẽ ghi đè danh sách giai đoạn milestone hiện có."
+        title="Cập nhật mẫu cột mốc?"
+        description="Thao tác này sẽ ghi đè danh sách giai đoạn hiện có."
         confirmLabel="Cập nhật"
         cancelLabel="Hủy"
         onCancel={() => {

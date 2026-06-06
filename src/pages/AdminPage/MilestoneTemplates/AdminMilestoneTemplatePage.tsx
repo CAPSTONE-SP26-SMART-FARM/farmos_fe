@@ -52,12 +52,12 @@ function AdminMilestoneTemplatePage() {
         <div className="pointer-events-none absolute inset-0 bg-muted/20" />
         <div className="relative flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <Badge className="mb-2">Admin Portal</Badge>
+            <Badge className="mb-2">Trang quản trị</Badge>
             <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-              Milestone Templates
+              Mẫu cột mốc
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground md:text-base">
-              Chuẩn hóa các mốc sản xuất mẫu để manager lập kế hoạch mùa vụ
+              Chuẩn hóa các mốc sản xuất mẫu để quản lý lập kế hoạch mùa vụ
               nhanh hơn, nhất quán hơn.
             </p>
           </div>
@@ -68,7 +68,7 @@ function AdminMilestoneTemplatePage() {
             </p>
             <div className="mt-1 flex items-center gap-2 text-sm font-medium">
               <Milestone className="h-4 w-4 text-primary" />
-              Milestone Templates
+              Mẫu cột mốc
             </div>
             <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
               <ChevronRight className="h-3 w-3" />

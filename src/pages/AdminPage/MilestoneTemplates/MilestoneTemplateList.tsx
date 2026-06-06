@@ -117,9 +117,9 @@ export default function MilestoneTemplateList({
         <CardHeader className="bg-muted/30">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
-              <CardTitle>Danh sách milestone template</CardTitle>
+              <CardTitle>Danh sách mẫu cột mốc</CardTitle>
               <CardDescription className="mt-1">
-                Quản lý mẫu mốc sản xuất dùng cho crop season
+                Quản lý mẫu mốc sản xuất dùng cho mùa vụ
               </CardDescription>
             </div>
             <Button onClick={onCreate}>
@@ -137,7 +137,7 @@ export default function MilestoneTemplateList({
                   setSearch(event.target.value);
                   setQuery((prev) => ({ ...prev, page: 1 }));
                 }}
-                placeholder="Tìm theo tên template hoặc mô tả..."
+                placeholder="Tìm theo tên mẫu hoặc mô tả..."
                 className="pl-9"
               />
             </div>
@@ -188,7 +188,7 @@ export default function MilestoneTemplateList({
                 <AlertCircle className="mt-0.5 h-4 w-4 text-destructive" />
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-destructive">
-                    Không thể tải danh sách milestone template
+                    Không thể tải danh sách mẫu cột mốc
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {getErrorMessage(listQuery.error)}
@@ -207,10 +207,10 @@ export default function MilestoneTemplateList({
             <div className="rounded-lg border border-dashed p-10 text-center">
               <Milestone className="mx-auto h-8 w-8 text-muted-foreground" />
               <p className="mt-3 text-sm font-medium">
-                Chưa có template phù hợp
+                Chưa có mẫu phù hợp
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Bắt đầu bằng cách tạo milestone template mới cho canh tác.
+                Bắt đầu bằng cách tạo mẫu cột mốc mới cho canh tác.
               </p>
               <Button
                 className="mt-4"
@@ -218,7 +218,7 @@ export default function MilestoneTemplateList({
                 onClick={onCreate}
               >
                 <Plus className="mr-1 h-4 w-4" />
-                Tạo template đầu tiên
+                Tạo mẫu đầu tiên
               </Button>
             </div>
           ) : (
@@ -405,8 +405,8 @@ export default function MilestoneTemplateList({
 
       <ConfirmDialog
         open={!!deleteId}
-        title="Xóa milestone template?"
-        description="Hành động này sẽ xóa mềm template và template sẽ không còn khả dụng cho phiên lập kế hoạch mới."
+        title="Xóa mẫu cột mốc?"
+        description="Hành động này sẽ xóa mềm mẫu và mẫu sẽ không còn khả dụng cho phiên lập kế hoạch mới."
         confirmLabel={deleteMutation.isPending ? "Đang xóa..." : "Xóa"}
         cancelLabel="Hủy"
         variant="destructive"

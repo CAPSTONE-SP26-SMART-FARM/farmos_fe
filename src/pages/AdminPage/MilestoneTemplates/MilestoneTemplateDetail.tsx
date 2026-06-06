@@ -63,7 +63,7 @@ export default function MilestoneTemplateDetail({
         <h2 className="text-lg font-semibold">{template.name}</h2>
         <Badge variant="secondary" className="gap-1">
           <Milestone className="h-3 w-3" />
-          Milestone
+          Cột mốc
         </Badge>
         {onEdit && !template.deletedAt && (
           <Button
@@ -80,13 +80,13 @@ export default function MilestoneTemplateDetail({
       <Card>
         <CardHeader>
           <CardTitle>Thông tin cơ bản</CardTitle>
-          <CardDescription>Chi tiết milestone template.</CardDescription>
+          <CardDescription>Chi tiết mẫu cột mốc.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Tên template
+                Tên mẫu
               </p>
               <p className="text-sm font-medium">{template.name}</p>
             </div>
@@ -177,7 +177,7 @@ export default function MilestoneTemplateDetail({
         <CardContent>
           {orderedItems.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted-foreground">
-              Template chưa có giai đoạn nào.
+              Mẫu chưa có giai đoạn nào.
             </p>
           ) : (
             <div className="space-y-3">

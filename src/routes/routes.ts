@@ -12,7 +12,7 @@ import AdminKitAssignmentDetailPage from "@/pages/AdminPage/IotKits/AdminKitAssi
 import AdminInvoiceDetailPage from "@/pages/AdminPage/Invoices/AdminInvoiceDetailPage";
 import AdminInvoicesPage from "@/pages/AdminPage/Invoices/AdminInvoicesPage";
 import AdminIotDevicesPage from "@/pages/AdminPage/IotDevices/AdminIotDevicesPage";
-import AdminIotDashboardPage from "@/pages/AdminPage/IotDevices/AdminIotDashboardPage";
+// import AdminIotDashboardPage from "@/pages/AdminPage/IotDevices/AdminIotDashboardPage";
 import AdminIotDeviceDecisionPage from "@/pages/AdminPage/IotDevices/AdminIotDeviceDecisionPage";
 import AdminIotKitRequestsPage from "@/pages/AdminPage/IotKitRequests/AdminIotKitRequestsPage";
 import OwnerIotKitRequestsPage from "@/pages/OwnerPage/IotKitRequests/OwnerIotKitRequestsPage";
@@ -199,11 +199,11 @@ const routes: AppRoutes = [
         component: AdminIotDevicesPage,
         allowedRoles: [RoleName.Admin],
       },
-      {
-        path: "/dashboard/admin/iot-devices/dashboard",
-        component: AdminIotDashboardPage,
-        allowedRoles: [RoleName.Admin],
-      },
+      // {
+      //   path: "/dashboard/admin/iot-devices/dashboard",
+      //   component: AdminIotDashboardPage,
+      //   allowedRoles: [RoleName.Admin],
+      // },
       {
         path: "/dashboard/admin/iot-kit-requests",
         component: AdminIotKitRequestsPage,

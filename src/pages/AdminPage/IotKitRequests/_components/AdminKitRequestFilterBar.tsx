@@ -80,10 +80,12 @@ export function AdminKitRequestFilterBar({
       <SelectField
         label="Trạng thái"
         value={status}
-        options={Object.entries(KIT_REQUEST_STATUS_LABEL).map(([k, v]) => ({
-          value: k,
-          label: v,
-        }))}
+        options={Object.entries(KIT_REQUEST_STATUS_LABEL)
+          .filter(([k]) => k !== "accepted")
+          .map(([k, v]) => ({
+            value: k,
+            label: v,
+          }))}
         onChange={(v) => onChange("status", v)}
       />
 
