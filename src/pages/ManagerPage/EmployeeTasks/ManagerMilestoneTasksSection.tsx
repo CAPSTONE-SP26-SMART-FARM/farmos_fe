@@ -1743,12 +1743,12 @@ export default function ManagerMilestoneTasksSection({
             >
               Task thực thi theo mốc
             </Badge>
-            <Badge
+            {/* <Badge
               variant="secondary"
               className="text-[10px]"
             >
               Template chỉ dùng để tạo nháp
-            </Badge>
+            </Badge> */}
           </div>
         </div>
         {canEdit && (

@@ -25,10 +25,8 @@ import type {
   KitRequestTypeType,
   ListKitRequestsQueryType,
 } from "@/schemaValidatation/iotKitRequest";
-import { useAuthStore } from "@/stores/authStore";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ClipboardList, Eye } from "lucide-react";
-import { useMemo } from "react";
 import { useSearchParams } from "react-router";
 import { AdminKitRequestDetailDialog } from "./_components/AdminKitRequestDetailDialog";
 import { AdminKitRequestFilterBar } from "./_components/AdminKitRequestFilterBar";
@@ -53,7 +51,6 @@ const PAGE_LIMIT = 10;
 
 export default function AdminIotKitRequestsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const me = useAuthStore((s) => s.user);
 
   const page = Number(searchParams.get("page") ?? "1");
   const requestId = searchParams.get("requestId");
@@ -91,35 +88,6 @@ export default function AdminIotKitRequestsPage() {
   const data = listQuery.data?.data;
   const items = data?.data ?? [];
   const meta = data?.meta;
-
-  const kpi = useMemo(() => {
-    let pendingClaim = 0;
-    let myInProgress = 0;
-    let awaitingOwner = 0;
-    let resolvedToday = 0;
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-
-    for (const r of items) {
-      if (r.status === "pending" && r.type === "FAULT_REPORT") {
-        pendingClaim += 1;
-      }
-      if (r.status === "in_progress" && r.handlerId === me?.id) {
-        myInProgress += 1;
-      }
-      if (r.status === "pending" && r.type === "INSTALL_SCHEDULE") {
-        awaitingOwner += 1;
-      }
-      if (
-        r.status === "resolved" &&
-        r.resolvedAt &&
-        new Date(r.resolvedAt) >= startOfDay
-      ) {
-        resolvedToday += 1;
-      }
-    }
-    return { pendingClaim, myInProgress, awaitingOwner, resolvedToday };
-  }, [items, me?.id]);
 
   const columns: ColumnDef<KitRequestResType>[] = [
     {
@@ -188,26 +156,7 @@ export default function AdminIotKitRequestsPage() {
         </p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          label="Chờ nhận"
-          value={kpi.pendingClaim}
-          tone={kpi.pendingClaim > 0 ? "warning" : "default"}
-        />
-        <KpiCard
-          label="Bạn đang xử lý"
-          value={kpi.myInProgress}
-        />
-        <KpiCard
-          label="Chờ chủ duyệt lịch"
-          value={kpi.awaitingOwner}
-        />
-        <KpiCard
-          label="Xong hôm nay"
-          value={kpi.resolvedToday}
-          tone="success"
-        />
-      </div>
+     
 
       <Card>
         <CardHeader>
@@ -280,32 +229,5 @@ export default function AdminIotKitRequestsPage() {
         onClose={() => updateParams({ requestId: null })}
       />
     </div>
-  );
-}
-
-function KpiCard({
-  label,
-  value,
-  tone = "default",
-}: {
-  label: string;
-  value: number;
-  tone?: "default" | "warning" | "success";
-}) {
-  const valueClass =
-    tone === "warning"
-      ? "text-amber-600 dark:text-amber-400"
-      : tone === "success"
-        ? "text-emerald-600 dark:text-emerald-400"
-        : "text-foreground";
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-          {label}
-        </p>
-        <p className={`mt-2 text-2xl font-bold ${valueClass}`}>{value}</p>
-      </CardContent>
-    </Card>
   );
 }
