@@ -26,8 +26,6 @@ interface PlanCardProps {
   subscribePending?: boolean;
 }
 
-const FEATURE_PREVIEW_LIMIT = 5;
-
 function formatFeatureValue(value: string): string {
   const lower = value.trim().toLowerCase();
   if (lower === "true") return "Có";
@@ -54,8 +52,6 @@ function PlanCard({
 
   const activeVersion = versionsQuery.data?.data?.data?.find((v) => v.isActive);
   const features = activeVersion?.features ?? [];
-  const previewFeatures = features.slice(0, FEATURE_PREVIEW_LIMIT);
-  const extraFeatureCount = Math.max(0, features.length - previewFeatures.length);
 
   const outOfStock = !plan.inStock;
   const canSubscribe = !isCurrent && !disableSubscribe && !outOfStock;
@@ -133,13 +129,13 @@ function PlanCard({
               <Skeleton className="h-4 w-4/6" />
               <Skeleton className="h-4 w-3/6" />
             </div>
-          ) : previewFeatures.length === 0 ? (
+          ) : features.length === 0 ? (
             <p className="text-xs text-muted-foreground">
               Chi tiết tính năng sẽ được cập nhật.
             </p>
           ) : (
             <ul className="space-y-1.5">
-              {previewFeatures.map((f) => {
+              {features.map((f) => {
                 const label = f.featureName ?? f.featureCode;
                 const unit = f.featureUnit;
                 const formattedValue = formatFeatureValue(f.value);
@@ -161,11 +157,6 @@ function PlanCard({
                   </li>
                 );
               })}
-              {extraFeatureCount > 0 && (
-                <li className="text-xs text-muted-foreground">
-                  +{extraFeatureCount} tính năng khác
-                </li>
-              )}
             </ul>
           )}
         </div>
