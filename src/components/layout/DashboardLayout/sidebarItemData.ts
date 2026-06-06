@@ -101,11 +101,11 @@ export const sidebarData: SidebarData = {
     {
       label: "IoT & Thiết bị",
       items: [
-        {
-          title: "Tổng quan IoT",
-          url: "/dashboard/admin/iot-devices/dashboard",
-          icon: ChartColumnIncreasing,
-        },
+        // {
+        //   title: "Tổng quan IoT",
+        //   url: "/dashboard/admin/iot-devices/dashboard",
+        //   icon: ChartColumnIncreasing,
+        // },
         {
           title: "Thiết bị",
           url: "/dashboard/admin/iot-devices",

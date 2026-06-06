@@ -273,14 +273,14 @@ export default function AdminIotDevicesPage() {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>Điều hướng IoT</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
+              {/* <DropdownMenuItem
                 onClick={() =>
                   navigate("/dashboard/admin/iot-devices/dashboard")
                 }
               >
                 <LayoutDashboard className="mr-2 h-4 w-4" />
                 Tổng quan IoT
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               <DropdownMenuItem
                 onClick={() =>
                   navigate(
