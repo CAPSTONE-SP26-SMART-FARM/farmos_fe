@@ -184,6 +184,13 @@ export function CropSeasonSummaryCard({
               value={season.plantCount.toLocaleString("vi-VN")}
             />
           )}
+          {season.expectedHarvestDate && (
+            <StatCell
+              icon={CalendarClock}
+              label="Ngày dự kiến kết thúc"
+              value={formatDate(season.expectedHarvestDate)}
+            />
+          )}
           {currentDensity != null && (
             <StatCell
               icon={Gauge}
