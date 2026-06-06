@@ -23,7 +23,6 @@ import {
   TERMINAL_KIT_REQUEST_STATUSES,
 } from "@/constants/iotKitRequestLabel";
 import {
-  useMyKitRequestCount,
   useMyKitRequests,
 } from "@/queries/useIotKitRequest";
 import type {
@@ -95,34 +94,6 @@ export default function OwnerIotKitRequestsPage() {
   const data = query.data?.data;
   const items = data?.data ?? [];
   const meta = data?.meta;
-
-  // KPI đếm chính xác qua meta.totalItems (mỗi thẻ 1 query nhẹ limit:1),
-  // không phụ thuộc trang đang xem.
-  const startOfMonthISO = useMemo(() => {
-    const d = new Date();
-    d.setDate(1);
-    d.setHours(0, 0, 0, 0);
-    return d.toISOString();
-  }, []);
-
-  const needsResponseCount = useMyKitRequestCount({
-    direction: "ADMIN_TO_OWNER",
-    type: "INSTALL_SCHEDULE",
-    status: "pending",
-  });
-  const inProgressCount = useMyKitRequestCount({ status: "in_progress" });
-  const scheduledCount = useMyKitRequestCount({ status: "accepted" });
-  const closedThisMonthCount = useMyKitRequestCount({
-    statuses: TERMINAL_KIT_REQUEST_STATUSES,
-    updatedFrom: startOfMonthISO,
-  });
-
-  const kpi = {
-    needsResponse: needsResponseCount.data ?? 0,
-    inProgress: inProgressCount.data ?? 0,
-    scheduled: scheduledCount.data ?? 0,
-    closedThisMonth: closedThisMonthCount.data ?? 0,
-  };
 
   const columns: ColumnDef<KitRequestResType>[] = useMemo(() => {
     const base: ColumnDef<KitRequestResType>[] = [
@@ -246,28 +217,7 @@ export default function OwnerIotKitRequestsPage() {
           Theo dõi yêu cầu hỗ trợ thiết bị: báo lỗi, lịch lắp đặt, thay thế và thu hồi.
         </p>
       </div>
-
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          label="Chờ bạn duyệt"
-          value={kpi.needsResponse}
-          tone={kpi.needsResponse > 0 ? "warning" : "default"}
-        />
-        <KpiCard
-          label="Đang xử lý"
-          value={kpi.inProgress}
-        />
-        <KpiCard
-          label="Đã hẹn lịch"
-          value={kpi.scheduled}
-        />
-        <KpiCard
-          label="Xong tháng này"
-          value={kpi.closedThisMonth}
-          tone="success"
-        />
-      </div>
-
+      
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -334,32 +284,5 @@ export default function OwnerIotKitRequestsPage() {
         onClose={closeDetail}
       />
     </div>
-  );
-}
-
-function KpiCard({
-  label,
-  value,
-  tone = "default",
-}: {
-  label: string;
-  value: number;
-  tone?: "default" | "warning" | "success";
-}) {
-  const valueClass =
-    tone === "warning"
-      ? "text-amber-600 dark:text-amber-400"
-      : tone === "success"
-        ? "text-emerald-600 dark:text-emerald-400"
-        : "text-foreground";
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-          {label}
-        </p>
-        <p className={`mt-2 text-2xl font-bold ${valueClass}`}>{value}</p>
-      </CardContent>
-    </Card>
   );
 }

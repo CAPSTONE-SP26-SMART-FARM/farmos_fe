@@ -17,7 +17,6 @@ import {
   AlertCircle,
   ChevronDown,
   Cpu,
-  LayoutDashboard,
   Loader2,
   Package,
   PackageCheck,

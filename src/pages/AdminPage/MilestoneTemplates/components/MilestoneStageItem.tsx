@@ -212,7 +212,7 @@ export function SortableStageItem({
                   <FieldError errors={[fieldState.error]} />
                 ) : (
                   <FieldDescription>
-                    Dùng để ước tính timeline triển khai milestone.
+                    Dùng để ước tính tiến độ triển khai các giai đoạn.
                   </FieldDescription>
                 )}
               </Field>
