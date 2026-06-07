@@ -24,9 +24,10 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { useManagerDailyLogsByZone } from "@/queries/useDailyLog";
 import { useManagerListAssignedZones } from "@/queries/useZone";
 import { formatDateTimeVi, formatDateVi } from "@/lib/format";
-import { Map as MapIcon, NotebookPen } from "lucide-react";
+import { Eye, Map as MapIcon, NotebookPen, Paperclip } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
+import ManagerDailyLogDetailSheet from "./_components/ManagerDailyLogDetailSheet";
 
 const DEFAULT_LIMIT = 10;
 
@@ -48,6 +49,7 @@ function ManagerDailyLogsPage() {
   const today = new Date().toISOString().slice(0, 10);
   const [fromDateInput, setFromDateInput] = useState(fromDateParam || today);
   const [toDateInput, setToDateInput] = useState(toDateParam || today);
+  const [detailLogId, setDetailLogId] = useState<string | null>(null);
 
   const zonesQuery = useManagerListAssignedZones({ page: 1, limit: 50 });
   const zones = useMemo(
@@ -164,6 +166,34 @@ function ManagerDailyLogsPage() {
         >
           {formatDateVi(row.original.logDate)}
         </span>
+      ),
+    },
+    {
+      id: "attachments",
+      header: "Ảnh",
+      cell: ({ row }) => {
+        const count = row.original.attachments?.length ?? 0;
+        return count === 0 ? (
+          <span className="text-xs text-muted-foreground">—</span>
+        ) : (
+          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+            <Paperclip className="h-3.5 w-3.5" /> {count}
+          </span>
+        );
+      },
+    },
+    {
+      id: "actions",
+      header: "",
+      cell: ({ row }) => (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Xem chi tiết nhật ký"
+          onClick={() => setDetailLogId(row.original.id)}
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
       ),
     },
   ];
@@ -305,6 +335,14 @@ function ManagerDailyLogsPage() {
           )}
         </CardContent>
       </Card>
+
+      <ManagerDailyLogDetailSheet
+        dailyLogId={detailLogId}
+        open={detailLogId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDetailLogId(null);
+        }}
+      />
     </div>
   );
 }

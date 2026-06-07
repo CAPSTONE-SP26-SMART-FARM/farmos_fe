@@ -59,6 +59,12 @@ export const dailyLogService = {
       })}`,
     ),
 
+  getManagerDetail: (dailyLogId: string) =>
+    api.get<DailyLogResType>(DAILY_LOG.MANAGER_DETAIL(dailyLogId)),
+
+  getOwnerDetail: (dailyLogId: string) =>
+    api.get<DailyLogResType>(DAILY_LOG.OWNER_DETAIL(dailyLogId)),
+
   submit: (body: SubmitDailyLogBodyType) =>
     api.post<DailyLogResType>(DAILY_LOG.SUBMIT, body),
 };

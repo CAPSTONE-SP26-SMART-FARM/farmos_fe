@@ -17,9 +17,10 @@ import { useOwnerDailyLogsByFarm } from "@/queries/useDailyLog";
 import { useOwnerGetMyFarm } from "@/queries/useOwner";
 import { formatDateTimeVi, formatDateVi } from "@/lib/format";
 import type { ColumnDef } from "@tanstack/react-table";
-import { NotebookPen, Tractor } from "lucide-react";
+import { Eye, NotebookPen, Paperclip, Tractor } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
+import OwnerDailyLogDetailSheet from "./_components/OwnerDailyLogDetailSheet";
 
 const DEFAULT_LIMIT = 10;
 
@@ -32,6 +33,7 @@ type DailyLogRow = {
   notes?: string | null;
   logDate: string;
   createdAt: string;
+  attachments?: { id: string }[];
 };
 
 function getInitials(name: string): string {
@@ -50,6 +52,7 @@ function OwnerDailyLogsPage() {
 
   const [fromDateInput, setFromDateInput] = useState(fromDateParam);
   const [toDateInput, setToDateInput] = useState(toDateParam);
+  const [detailLogId, setDetailLogId] = useState<string | null>(null);
 
   const farmQuery = useOwnerGetMyFarm();
   const farmId = farmQuery.data?.data.id;
@@ -155,6 +158,34 @@ function OwnerDailyLogsPage() {
           >
             {formatDateVi(row.original.logDate)}
           </span>
+        ),
+      },
+      {
+        id: "attachments",
+        header: "Ảnh",
+        cell: ({ row }) => {
+          const count = row.original.attachments?.length ?? 0;
+          return count === 0 ? (
+            <span className="text-xs text-muted-foreground">—</span>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <Paperclip className="h-3.5 w-3.5" /> {count}
+            </span>
+          );
+        },
+      },
+      {
+        id: "actions",
+        header: "",
+        cell: ({ row }) => (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Xem chi tiết nhật ký"
+            onClick={() => setDetailLogId(row.original.id)}
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
         ),
       },
     ],
@@ -270,6 +301,14 @@ function OwnerDailyLogsPage() {
           )}
         </CardContent>
       </Card>
+
+      <OwnerDailyLogDetailSheet
+        dailyLogId={detailLogId}
+        open={detailLogId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDetailLogId(null);
+        }}
+      />
     </div>
   );
 }

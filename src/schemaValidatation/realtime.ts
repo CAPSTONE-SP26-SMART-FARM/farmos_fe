@@ -124,6 +124,19 @@ export type TicketMessageCreatedPayloadType = z.infer<
   typeof TicketMessageCreatedPayloadSchema
 >;
 
+export const DailyLogSubmittedPayloadSchema = z
+  .object({
+    dailyLogId: z.string().optional(),
+    taskId: z.string().optional(),
+    taskTitle: z.string().optional(),
+    farmerName: z.string().optional(),
+    action: z.enum(["submitted", "updated"]).optional(),
+  })
+  .passthrough();
+export type DailyLogSubmittedPayloadType = z.infer<
+  typeof DailyLogSubmittedPayloadSchema
+>;
+
 export const MilestoneStartReminderPayloadSchema = z
   .object({
     milestoneId: z.string().optional(),

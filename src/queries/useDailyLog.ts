@@ -67,6 +67,26 @@ export const useManagerDailyLogsByZone = (
     enabled: !!zoneId,
   });
 
+export const useManagerDailyLogDetail = (
+  dailyLogId: string | undefined,
+  options?: { enabled?: boolean },
+) =>
+  useQuery({
+    queryKey: QUERY_KEYS.dailyLogs.managerDetail(dailyLogId ?? ""),
+    queryFn: () => dailyLogService.getManagerDetail(dailyLogId as string),
+    enabled: (options?.enabled ?? true) && !!dailyLogId,
+  });
+
+export const useOwnerDailyLogDetail = (
+  dailyLogId: string | undefined,
+  options?: { enabled?: boolean },
+) =>
+  useQuery({
+    queryKey: QUERY_KEYS.dailyLogs.ownerDetail(dailyLogId ?? ""),
+    queryFn: () => dailyLogService.getOwnerDetail(dailyLogId as string),
+    enabled: (options?.enabled ?? true) && !!dailyLogId,
+  });
+
 export const useSubmitDailyLog = () => {
   const queryClient = useQueryClient();
   return useMutation({

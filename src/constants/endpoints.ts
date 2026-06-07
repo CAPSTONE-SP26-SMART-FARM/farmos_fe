@@ -592,9 +592,11 @@ export const API_ENDPOINTS = {
     TASKS: "/daily-log/tasks",
     SUBMIT: "/daily-log/submit",
     OWNER_BY_FARM: (farmId: string) => `/daily-log/owner/farm/${farmId}`,
+    OWNER_DETAIL: (dailyLogId: string) => `/daily-log/owner/${dailyLogId}`,
     MANAGER_BY_ZONE: (zoneId: string) => `/daily-log/manager/zone/${zoneId}`,
     MANAGER_ZONE_TODAY: (zoneId: string) =>
       `/daily-log/manager/zone/${zoneId}/today`,
+    MANAGER_DETAIL: (dailyLogId: string) => `/daily-log/manager/${dailyLogId}`,
   },
   IOT_KITS: {
     // Admin
@@ -1516,6 +1518,18 @@ export const QUERY_KEYS = {
       "zone",
       zoneId,
       ...(query !== undefined ? [query] : []),
+    ],
+    managerDetail: (dailyLogId: string) => [
+      "daily-logs",
+      "manager",
+      "detail",
+      dailyLogId,
+    ],
+    ownerDetail: (dailyLogId: string) => [
+      "daily-logs",
+      "owner",
+      "detail",
+      dailyLogId,
     ],
   },
   cropSeasons: {

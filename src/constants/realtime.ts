@@ -49,6 +49,10 @@ export const RealtimeEvents = {
   // BE: `farm_os_be/src/modules/iot-kit-request/iot-kit-request.service.ts`.
   IotKitRequestCreated: "iot-kit-request.created",
   IotKitRequestUpdated: "iot-kit-request.updated",
+  // Farmer submit / update daily log — emit cho room user của manager + owner
+  // thuộc zone của task. Bell + toast đã đi qua `notification.created` riêng;
+  // event này chỉ dùng để invalidate query refresh list nhật ký realtime.
+  DailyLogSubmitted: "daily-log.submitted",
 } as const;
 export type RealtimeEventName =
   (typeof RealtimeEvents)[keyof typeof RealtimeEvents];

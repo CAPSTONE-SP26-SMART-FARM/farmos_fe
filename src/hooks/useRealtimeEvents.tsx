@@ -24,6 +24,7 @@ import {
   SubscriptionDevicesAutoAssignedPayloadSchema,
   MilestoneStartReminderPayloadSchema,
   NotificationCreatedPayloadSchema,
+  DailyLogSubmittedPayloadSchema,
   SensorAlertRecoveredPayloadSchema,
   SensorHardwarePayloadSchema,
   SensorTimeoutPayloadSchema,
@@ -152,6 +153,7 @@ const EVENT_SCHEMAS: Partial<Record<RealtimeEventName, ZodSchema>> = {
   [RealtimeEvents.IotDeviceStatusChanged]: IotDeviceStatusChangedPayloadSchema,
   [RealtimeEvents.IotKitRequestCreated]: IotKitRequestCreatedPayloadSchema,
   [RealtimeEvents.IotKitRequestUpdated]: IotKitRequestUpdatedPayloadSchema,
+  [RealtimeEvents.DailyLogSubmitted]: DailyLogSubmittedPayloadSchema,
 };
 
 /** Những event muốn surface lên bell / toast. `TicketMessageCreated` không
@@ -271,6 +273,12 @@ function invalidateByEvent(
       return;
     case RealtimeEvents.NotificationCreated:
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      return;
+    case RealtimeEvents.DailyLogSubmitted:
+      // Farmer ghi / cập nhật nhật ký — manager + owner cần refresh list nhật ký
+      // của zone / farm. Bell + toast đã đi qua `notification.created` riêng,
+      // event này CHỈ invalidate query (không add vào notification store).
+      queryClient.invalidateQueries({ queryKey: ["daily-logs"] });
       return;
     case RealtimeEvents.IotKitRequestCreated:
     case RealtimeEvents.IotKitRequestUpdated: {
@@ -459,6 +467,7 @@ export function useRealtimeEvents(): void {
       RealtimeEvents.IotDeviceStatusChanged,
       RealtimeEvents.IotKitRequestCreated,
       RealtimeEvents.IotKitRequestUpdated,
+      RealtimeEvents.DailyLogSubmitted,
     ];
 
     for (const event of allEvents) {
